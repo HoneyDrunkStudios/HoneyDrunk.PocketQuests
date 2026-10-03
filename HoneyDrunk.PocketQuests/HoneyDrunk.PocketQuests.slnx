@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/Docs/">
+    <File Path="../README.md" />
+  </Folder>
+  <Folder Name="/Identity/">
+    <Project Path="../../HoneyDrunk.Identity/HoneyDrunk.Identity/HoneyDrunk.Identity.Abstractions/HoneyDrunk.Identity.Abstractions.csproj" />
+    <Project Path="../../HoneyDrunk.Identity/HoneyDrunk.Identity/HoneyDrunk.Identity.Api/HoneyDrunk.Identity.Api.csproj" />
+    <Project Path="../../HoneyDrunk.Identity/HoneyDrunk.Identity/HoneyDrunk.Identity.Client/HoneyDrunk.Identity.Client.csproj" />
+    <Project Path="../../HoneyDrunk.Identity/HoneyDrunk.Identity/HoneyDrunk.Identity.Database/HoneyDrunk.Identity.Database.sqlproj" Type="42ea0dbd-9cf1-443e-919e-be9c484e4577" />
+    <Project Path="../../HoneyDrunk.Identity/HoneyDrunk.Identity/HoneyDrunk.Identity.Providers.Entra/HoneyDrunk.Identity.Providers.Entra.csproj" />
+    <Project Path="../../HoneyDrunk.Identity/HoneyDrunk.Identity/HoneyDrunk.Identity/HoneyDrunk.Identity.csproj" />
+  </Folder>
+  <Project Path="PocketQuests.Api/PocketQuests.Api.csproj" />
+  <Project Path="PocketQuests.AppHost/PocketQuests.AppHost.csproj" />
+  <Project Path="PocketQuests.Application/PocketQuests.Application.csproj" />
+  <Project Path="PocketQuests.BrowserHost/PocketQuests.BrowserHost.csproj" />
+  <Project Path="PocketQuests.Data/PocketQuests.Data.csproj" />
+  <Project Path="PocketQuests.Database/PocketQuests.Database.sqlproj" Type="42ea0dbd-9cf1-443e-919e-be9c484e4577" />
+  <Project Path="PocketQuests.Domain/PocketQuests.Domain.csproj" />
+  <Project Path="PocketQuests.ServiceDefaults/PocketQuests.ServiceDefaults.csproj" />
+  <Project Path="PocketQuests.Tests/PocketQuests.Tests.csproj" />
+</Solution>

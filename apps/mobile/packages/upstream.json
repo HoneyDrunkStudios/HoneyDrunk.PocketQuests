@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/HoneyDrunkStudios/HoneyDrunk.UI",
+  "revision": "ae9ec4c36a454ba38a43d8e369a8758208b4bce1",
+  "packages": ["@honeydrunk/ui-tokens", "@honeydrunk/ui-native"],
+  "consumption": "Reviewed local workspace source snapshot; not an npm registry release",
+  "files": {
+    "packages/ui-native/package.json": "e7f7cf758c0e9f2e79e03b6ae0ed7ba41bc72f6326d07b08288493e010243913",
+    "packages/ui-native/src/index.tsx": "a9e42ae14a1d4a7ad93f0ee7ea355954596871527df5ac32bd8b1bf1c51106a4",
+    "packages/ui-native/src/styles.ts": "15a79d919b486a44c6dc1ba3a1a07dd1191689215f0002961621c893d234e06b",
+    "packages/ui-tokens/package.json": "84954a4e47a61f3f152cd026eb96e77b7be425081c67610f57eabd4c4a565483",
+    "packages/ui-tokens/src/index.ts": "0002b0c0e44236026dbc91c05ddf086b5ce7ff274034baba9dd4446d4637db34"
+  }
+}
