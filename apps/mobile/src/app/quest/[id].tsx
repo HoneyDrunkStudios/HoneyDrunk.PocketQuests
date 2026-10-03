@@ -6,6 +6,7 @@ import { useSession } from "../../session";
 import { Page, Button, Label, styles } from "../../ui";
 import { QuestRewards } from "../../quest-rewards";
 import { FocusTimer } from "../../focus-timer";
+import { DefinitionManagement } from "../../definition-management";
 export default function QuestDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { state, catalog, command, busy, pending, signedIn } = useSession();
@@ -189,6 +190,10 @@ export default function QuestDetails() {
           }
         />
       )}
+      <DefinitionManagement
+        key={item.occurrence.quest.id}
+        questId={item.occurrence.quest.id}
+      />
       <Planning key={id} id={id} />
       <Text style={styles.subtitle}>Linked goal and steps</Text>
       {item.occurrence.parentId ? (

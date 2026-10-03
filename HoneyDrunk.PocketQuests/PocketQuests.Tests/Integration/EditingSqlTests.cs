@@ -13,6 +13,41 @@ namespace PocketQuests.Tests.Integration;
 /// <summary>Real SQL and authenticated two-service regressions for definitions and onboarding.</summary>
 public sealed partial class SqlApiTests
 {
+    /// <summary>Definition management preserves unfinished commitments and existing eligibility/revision rules.</summary>
+    /// <param name="frozen">Whether the accepted commitment is paused before editing.</param>
+    /// <returns>The completed regression.</returns>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ActiveAndFrozenDefinitions_RemainEditableAndArchivable(bool frozen)
+    {
+        using var host = new Host(Connection);
+        using var client = host.Client("definition-owner");
+        await Setup(client);
+        var quest = new Quest(Guid.NewGuid().ToString(), "My commitment", "Original result", "c07", Rank.F, Effort.Small, [], [], true);
+        await Command(client, new(Guid.NewGuid(), "save-definition", Definition: quest, ExpectedRevision: 0));
+        var accepted = await Command(client, new(Guid.NewGuid(), "accept", QuestId: quest.Id));
+        var occurrence = accepted.Occurrences.Single().Occurrence.Id;
+        if (frozen)
+            await Command(client, new(Guid.NewGuid(), "pause", CategoryId: "c07"));
+        var revised = quest with { Criterion = "Revised clear result", Effort = Effort.Medium };
+        var edited = await Command(client, new(Guid.NewGuid(), "save-definition", Definition: revised, ExpectedRevision: 1));
+        var view = edited.Occurrences.Single(o => o.Occurrence.Id == occurrence);
+        Assert.Equal(frozen ? QuestStatus.Frozen : QuestStatus.Active, view.Status);
+        Assert.Equal("Revised clear result", view.Occurrence.Quest.Criterion);
+        Assert.Equal(80, view.Occurrence.Quest.BaseXp);
+        Assert.Equal(0, edited.OverallXp);
+        Assert.Equal(HttpStatusCode.Conflict, (await client.PostAsJsonAsync("/api/commands", new QuestCommand(Guid.NewGuid(), "save-definition", Definition: revised, ExpectedRevision: 1))).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/commands", new QuestCommand(Guid.NewGuid(), "save-definition", Definition: revised with { Rank = Rank.S }, ExpectedRevision: 2))).StatusCode);
+        var archived = await Command(client, new(Guid.NewGuid(), "archive-definition", QuestId: quest.Id, ExpectedRevision: 2));
+        Assert.True(archived.Definitions.Single().Archived);
+        Assert.Equal(view.Status, archived.Occurrences.Single().Status);
+        Assert.Equal("Revised clear result", archived.Occurrences.Single().Occurrence.Quest.Criterion);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/commands", new QuestCommand(Guid.NewGuid(), "accept", QuestId: quest.Id))).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/commands", new QuestCommand(Guid.NewGuid(), "save-definition", Definition: revised, ExpectedRevision: 3))).StatusCode);
+        Assert.Equal(0, (await Read(client)).OverallXp);
+    }
+
     /// <summary>Checks seed replacement, authoritative eligibility and durable isolated definitions.</summary>
     /// <returns>The completed regression.</returns>
     [Fact]

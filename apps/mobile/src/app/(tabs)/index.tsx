@@ -2,7 +2,7 @@ import { Text, View } from "react-native";
 import { Redirect } from "expo-router";
 import { useSession } from "../../session";
 import { Page, Label, Card, colors, styles } from "../../ui";
-import type { Balance } from "../../contracts";
+import type { Balance, State } from "../../contracts";
 
 function ProgressRow({ item }: { item: Balance }) {
   return (
@@ -19,6 +19,30 @@ function ProgressRow({ item }: { item: Balance }) {
       <Label>
         Level {item.level} · {item.xp} XP
       </Label>
+    </View>
+  );
+}
+function CategoryProgress({
+  item,
+  streak,
+}: {
+  item: Balance;
+  streak?: State["streaks"][number];
+}) {
+  return (
+    <View style={{ gap: 4, paddingBottom: 12 }}>
+      <ProgressRow item={item} />
+      {streak && (
+        <Label>
+          {item.name}: {streak.days} {streak.days === 1 ? "day" : "days"} in
+          this streak.{" "}
+          {streak.qualifiedToday
+            ? "Done today."
+            : streak.days > 0
+              ? "Complete today to continue."
+              : "Complete a quest to start a streak."}
+        </Label>
+      )}
     </View>
   );
 }
@@ -114,7 +138,11 @@ export default function Home() {
       </Text>
       <Card>
         {state.categories.map((item) => (
-          <ProgressRow key={item.id} item={item} />
+          <CategoryProgress
+            key={item.id}
+            item={item}
+            streak={state.streaks.find((s) => s.categoryId === item.id)}
+          />
         ))}
       </Card>
       <Text accessibilityRole="header" style={styles.subtitle}>

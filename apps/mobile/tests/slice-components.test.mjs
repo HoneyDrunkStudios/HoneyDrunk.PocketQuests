@@ -10,15 +10,17 @@ const Module = require("node:module");
 const load = Module._load;
 let state;
 let signedIn = true;
+let pending = false;
 Module._load = function (name, ...rest) {
   if (name === "react-native") return nativeWeb;
+  if (name === "expo-crypto") return { randomUUID: () => "fixture-id" };
   if (name.endsWith("/session"))
     return {
       useSession: () => ({
         state,
         catalog: null,
         busy: false,
-        pending: false,
+        pending,
         signedIn,
       }),
     };
@@ -78,6 +80,7 @@ test("Home exposes the full character sheet with an accessible portrait and no T
     entitlements: [],
     overallXp: 100,
     overallLevel: 2,
+    streaks: [{ categoryId: "c0", days: 1, qualifiedToday: true, rate: 0 }],
     categories: Array.from({ length: 10 }, (_, i) => ({
       id: `c${i}`,
       name: `Category ${i}`,
@@ -111,6 +114,29 @@ test("Home exposes the full character sheet with an accessible portrait and no T
   for (const name of ["Category 9", "Attribute 7", "Skill 17", "Global rank F"])
     assert.ok(html.includes(name));
   assert.doesNotMatch(html, /Complete:|Today quests|No quests planned/);
+  assert.match(html, /Category 0: 1 day in this streak\. Done today\./);
+  state.streaks[0] = {
+    categoryId: "c0",
+    days: 20,
+    qualifiedToday: false,
+    rate: 19,
+  };
+  const ongoing = render(Home);
+  assert.match(
+    ongoing,
+    /Category 0: 20 days in this streak\. Complete today to continue\./,
+  );
+  assert.notEqual(html, ongoing);
+  state.streaks[0] = {
+    categoryId: "c0",
+    days: 0,
+    qualifiedToday: false,
+    rate: 0,
+  };
+  assert.match(
+    render(Home),
+    /Category 0: 0 days in this streak\. Complete a quest to start a streak\./,
+  );
 });
 test("quest sections expose selected tab semantics and onboarding remains reachable", () => {
   state = { profile: { onboardingComplete: true }, occurrences: [] };
@@ -160,4 +186,73 @@ test("signed-out quest deep links reach sign-in and missing signed-in quests hav
   signedIn = true;
   state = { occurrences: [] };
   assert.match(render(QuestDetails), /Back to quests/);
+});
+
+test("custom definition controls stay accessible in active/frozen details and respect archive/pending state", () => {
+  const quest = {
+    id: "custom",
+    title: "My quest",
+    criterion: "A clear result",
+    categoryId: "c01",
+    rank: "F",
+    effort: "Small",
+    baseXp: 10,
+    attributes: [],
+    skills: [],
+    isCustom: true,
+  };
+  const definition = { quest, revision: 2, archived: false };
+  const item = {
+    occurrence: {
+      id: "o",
+      quest,
+      dueDate: null,
+      plannedTime: null,
+      parentId: null,
+      acceptedAt: "2026-10-03T12:00:00Z",
+      lifecycle: null,
+    },
+    status: "Active",
+    canUndo: false,
+    completion: null,
+  };
+  state = {
+    occurrences: [item],
+    definitions: [definition],
+    penalties: [],
+    skills: [],
+  };
+  for (const status of ["Active", "Frozen", "Completed"]) {
+    item.status = status;
+    const html = render(QuestDetails);
+    assert.match(html, /role="heading"[^>]*>Manage custom quest/);
+    for (const label of [
+      "Edit: My quest",
+      "Set recurrence: My quest",
+      "Archive definition: My quest",
+    ])
+      assert.ok(html.includes(`aria-label="${label}"`), `${status}: ${label}`);
+    assert.match(
+      html,
+      /Completed snapshots and accepted penalty terms stay preserved/,
+    );
+  }
+  pending = true;
+  const disabled = render(QuestDetails);
+  assert.match(
+    disabled,
+    /aria-disabled="true"[^>]*aria-label="Archive definition: My quest"|aria-label="Archive definition: My quest"[^>]*aria-disabled="true"/,
+  );
+  pending = false;
+  definition.archived = true;
+  assert.doesNotMatch(
+    render(QuestDetails),
+    /aria-label="(?:Edit|Archive definition|Set recurrence): My quest"/,
+  );
+  state.definitions = [];
+  quest.isCustom = false;
+  assert.doesNotMatch(
+    render(QuestDetails),
+    /Manage custom quest|aria-label="Edit:/,
+  );
 });

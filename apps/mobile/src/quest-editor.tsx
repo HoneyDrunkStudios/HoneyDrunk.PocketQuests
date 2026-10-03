@@ -101,9 +101,11 @@ function Allocations({
 export function QuestEditor({
   initial,
   onClose,
+  closeLabel = "Back to available quests",
 }: {
   initial?: Definition;
   onClose(): void;
+  closeLabel?: string;
 }) {
   const { state, catalog, command, busy, pending } = useSession();
   const [draft, setDraft] = useState<Quest>(
@@ -294,7 +296,7 @@ export function QuestEditor({
           })
         }
       />
-      <Button title="Back to available quests" secondary onPress={onClose} />
+      <Button title={closeLabel} secondary onPress={onClose} />
     </View>
   );
 }

@@ -38,6 +38,12 @@ public sealed partial class SqlQuestStore(QuestDbContext db) : IQuestStore, ISyn
     public async Task<QuestExport> Export(AccountIdentity identity, DateTimeOffset now, CancellationToken token) =>
         (await Transact(identity, null, null, now, token, exporting: true)).export!;
 
+    // A validated anchor may lead receipt time by up to five seconds. Live state must
+    // include committed events at that logical time, including immediate reads/replay.
+    // Keep the recorded timestamp and domain deadline/Undo validation unchanged.
+    private static DateTimeOffset CommittedProjectionTime(QuestAggregate aggregate, DateTimeOffset now) =>
+        aggregate.Completions.Select(c => c.RecordedAt).Concat(aggregate.Undos.Select(u => u.RecordedAt)).Append(now).Max();
+
     private async Task<(QuestState state, QuestExport? export)> Transact(AccountIdentity identity, string? initialZone, QuestCommand? command, DateTimeOffset now, CancellationToken token, bool exporting = false, SyncAnchorEntity? issuingAnchor = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(identity.Issuer);
@@ -93,14 +99,16 @@ public sealed partial class SqlQuestStore(QuestDbContext db) : IQuestStore, ISyn
             account.Profile is null ? null : JsonSerializer.Deserialize<PlayerProfile>(account.Profile),
             account.Schedule is null ? null : JsonSerializer.Deserialize<ScheduleState>(account.Schedule));
         aggregate.Reconcile(now);
-        var beforeCompletion = command?.Action == QuestActions.Complete ? aggregate.Project(now) : null;
+        QuestState? beforeCompletion = null;
         if (command is not null)
         {
             var recordedAt = await RecordedAt(account.Id, command, aggregate, now, token);
+            if (command.Action == QuestActions.Complete)
+                beforeCompletion = aggregate.Project(CommittedProjectionTime(aggregate, recordedAt > now ? recordedAt : now));
             aggregate.Apply(command, recordedAt);
         }
 
-        var state = aggregate.Project(now);
+        var state = aggregate.Project(CommittedProjectionTime(aggregate, now));
         if (beforeCompletion is not null && command?.OccurrenceId is { } completedOccurrence)
             state = state with { CompletionOutcome = CompletionOutcome.Between(beforeCompletion, state, command.OperationId, completedOccurrence) };
         if (issuingAnchor is not null)

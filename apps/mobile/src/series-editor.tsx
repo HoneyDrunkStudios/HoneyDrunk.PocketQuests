@@ -10,10 +10,12 @@ export function SeriesEditor({
   quest,
   initial,
   onClose,
+  closeLabel = "Back to quest board",
 }: {
   quest: Quest;
   initial?: Series;
   onClose(): void;
+  closeLabel?: string;
 }) {
   const { state, command, busy, pending } = useSession();
   const [id] = useState(initial?.id ?? Crypto.randomUUID());
@@ -114,7 +116,7 @@ export function SeriesEditor({
           })
         }
       />
-      <Button title="Back to quest board" secondary onPress={onClose} />
+      <Button title={closeLabel} secondary onPress={onClose} />
     </View>
   );
 }

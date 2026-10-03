@@ -107,6 +107,93 @@ public sealed partial class SqlApiTests
         Assert.Equal(0, (await ExecuteAt(account, new(Guid.NewGuid(), "undo", occurrenceId, CompletionId: completionId, RecordedTime: Proof(4)), now.AddDays(3))).OverallXp);
     }
 
+    /// <summary>Accepted clock lead is visible in durable receipts and immediate live reads.</summary>
+    /// <param name="leadSeconds">Validated lead over receipt time, including both tolerance boundaries.</param>
+    /// <returns>The completed regression.</returns>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(5)]
+    public async Task AnchoredCompletionClockLead_PreservesReceiptLevelUpAndImmediateUndo(int leadSeconds)
+    {
+        var account = new AccountIdentity("test", "clock-lead-owner");
+        var now = new DateTimeOffset(2026, 10, 3, 12, 0, 0, TimeSpan.Zero);
+        await using (var db = Context())
+            await new SqlQuestStore(db).Read(account, "UTC", now, default);
+        for (var count = 0; count < 9; count++)
+        {
+            var accepted = await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07"), now);
+            var id = accepted.Occurrences.Single(o => o.Status == QuestStatus.Active).Occurrence.Id;
+            await ExecuteAt(account, new(Guid.NewGuid(), "complete", id), now);
+        }
+
+        var next = await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07"), now);
+        var occurrence = next.Occurrences.Single(o => o.Status == QuestStatus.Active).Occurrence.Id;
+        var anchor = await AnchorAt(account, now);
+        var recorded = now.AddSeconds(leadSeconds);
+        var proof = new RecordedActionTime(anchor.Id, anchor.BootId, 1, leadSeconds * 1000, recorded);
+        var command = new QuestCommand(Guid.NewGuid(), "complete", occurrence, RecordedTime: proof);
+        var receipt = await ExecuteAt(account, command, now);
+        Assert.Equal(100, receipt.OverallXp);
+        Assert.Equal(2, receipt.OverallLevel);
+        var completed = receipt.Occurrences.Single(o => o.Occurrence.Id == occurrence);
+        Assert.Equal(QuestStatus.Completed, completed.Status);
+        Assert.Equal(recorded, completed.Completion!.RecordedAt);
+        Assert.Equal(command.OperationId, receipt.CompletionOutcome!.CompletionId);
+        Assert.Contains(receipt.CompletionOutcome.LevelUps, l => l.Track == "Overall" && l.From == 1 && l.To == 2);
+        Assert.Equal(10, Assert.Single(receipt.Ledger, e => e.EventId == command.OperationId && e.Track == "Overall").Amount);
+        await using (var db = Context())
+        {
+            var current = await new SqlQuestStore(db).Read(account, "UTC", now, default);
+            Assert.Equal(100, current.OverallXp);
+            Assert.Equal(command.OperationId, current.Occurrences.Single(o => o.Occurrence.Id == occurrence).Completion!.Id);
+            Assert.Null(current.CompletionOutcome);
+        }
+
+        var noOp = await ExecuteAt(account, new(Guid.NewGuid(), "complete", occurrence), now);
+        Assert.Equal(100, noOp.OverallXp);
+        Assert.Null(noOp.CompletionOutcome);
+        var replay = await ExecuteAt(account, command, now.AddSeconds(6));
+        Assert.Equal(System.Text.Json.JsonSerializer.Serialize(receipt), System.Text.Json.JsonSerializer.Serialize(replay));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => ExecuteAt(account, command with { Action = "undo" }, now.AddSeconds(6)));
+
+        var undoAt = recorded.AddMilliseconds(100);
+        var undoProof = proof with { Ordinal = 2, ElapsedMilliseconds = (leadSeconds * 1000) + 100, DeviceUtc = undoAt };
+        var undone = await ExecuteAt(account, new(Guid.NewGuid(), "undo", occurrence, CompletionId: command.OperationId, RecordedTime: undoProof), now.AddSeconds(1));
+        Assert.Equal(90, undone.OverallXp);
+        Assert.Equal(1, undone.OverallLevel);
+        Assert.DoesNotContain(undone.Ledger, e => e.EventId == command.OperationId);
+        await using var final = Context();
+        Assert.Equal(90, (await new SqlQuestStore(final).Read(account, "UTC", now.AddSeconds(1), default)).OverallXp);
+        Assert.Equal(10, await final.Completions.CountAsync());
+        Assert.Equal(1, await final.Undos.CountAsync());
+    }
+
+    /// <summary>The projection watermark does not permit a claimed completion at or beyond its deadline.</summary>
+    /// <param name="leadMilliseconds">Clock lead reaching or crossing the deadline.</param>
+    /// <returns>The completed regression.</returns>
+    [Theory]
+    [InlineData(1000)]
+    [InlineData(5000)]
+    public async Task AnchoredFutureCompletion_StillRejectsDeadlineAndExcessiveLead(int leadMilliseconds)
+    {
+        var account = new AccountIdentity("test", "deadline-owner");
+        var now = new DateTimeOffset(2026, 10, 3, 23, 59, 59, TimeSpan.Zero);
+        await using (var db = Context())
+            await new SqlQuestStore(db).Read(account, "UTC", now, default);
+        var accepted = await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07", DueDate: "2026-10-03"), now);
+        var anchor = await AnchorAt(account, now);
+        var proof = new RecordedActionTime(anchor.Id, anchor.BootId, 1, leadMilliseconds, now.AddMilliseconds(leadMilliseconds));
+        var command = new QuestCommand(Guid.NewGuid(), "complete", accepted.Occurrences.Single().Occurrence.Id, RecordedTime: proof);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => ExecuteAt(account, command, now));
+        var excessive = command with { RecordedTime = proof with { ElapsedMilliseconds = 5001, DeviceUtc = now.AddMilliseconds(5001) } };
+        await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(account, excessive, now));
+        await using var final = Context();
+        Assert.Equal(0, await final.Completions.CountAsync());
+        Assert.Equal(1, await final.Operations.CountAsync());
+        Assert.Equal(0, (await new SqlQuestStore(final).Read(account, "UTC", now, default)).OverallXp);
+    }
+
     private async Task<SyncAnchor> AnchorAt(AccountIdentity identity, DateTimeOffset at)
     {
         await using var db = Context();

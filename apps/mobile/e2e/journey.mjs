@@ -197,6 +197,54 @@ try {
   await page.getByRole("link", { name: "Open quest", exact: true }).click();
   await page
     .getByRole("button", {
+      name: "Edit: Browser verified custom quest",
+      exact: true,
+    })
+    .click();
+  await page
+    .getByLabel("Completion criterion", { exact: true })
+    .fill("I have delivered and reviewed the working result");
+  await page
+    .getByRole("button", { name: "Save custom quest", exact: true })
+    .click();
+  await expect(visibleText(/Saved revision 2/)).toBeVisible();
+  await page
+    .getByRole("button", { name: "Back to quest details", exact: true })
+    .click();
+  await expect(
+    visibleText("I have delivered and reviewed the working result", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", {
+      name: "Set recurrence: Browser verified custom quest",
+      exact: true,
+    })
+    .click();
+  await expect(
+    visibleText("Repeat: Browser verified custom quest", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Back to quest details", exact: true })
+    .click();
+  await page
+    .getByRole("button", {
+      name: "Archive definition: Browser verified custom quest",
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.getByRole("button", {
+      name: "Edit: Browser verified custom quest",
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  console.log(
+    "Verified active definition editing, recurrence access and archival without losing its occurrence.",
+  );
+  await page
+    .getByRole("button", {
       name: "Complete: Browser verified custom quest",
       exact: true,
     })
@@ -233,6 +281,11 @@ try {
   ).toBeVisible();
   console.log("Verified completion response-loss retry and character totals.");
   await expect(page.getByRole("button", { name: /^Complete:/ })).toHaveCount(0);
+  await expect(
+    visibleText("Work & Purpose: 1 day in this streak. Done today.", {
+      exact: true,
+    }),
+  ).toBeVisible();
   await page.screenshot({
     path: path.join(artifacts, "character-home.png"),
     fullPage: false,

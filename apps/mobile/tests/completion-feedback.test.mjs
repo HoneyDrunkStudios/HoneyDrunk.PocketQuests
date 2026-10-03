@@ -135,6 +135,23 @@ test("confirmed feedback uses only the matching reward ledger and announces ever
     /Strength Training reached level 2/,
   );
 });
+test("a tolerated future timestamp remains celebratable through receipt replay and current-state reconciliation", () => {
+  const receipt = confirmed();
+  receipt.occurrences[0].completion.recordedAt = "2026-10-03T12:00:05Z";
+  receipt.ledger = receipt.ledger.map((entry) => ({
+    ...entry,
+    at: "2026-10-03T12:00:05Z",
+  }));
+  const notice = completionFeedback(before(), receipt, command);
+  const current = { ...structuredClone(receipt), completionOutcome: null };
+  assert.equal(notice.completionId, command.operationId);
+  assert.match(completionAnnouncement(notice), /Overall reached level 2/);
+  const replayed = completionFeedback(current, receipt, command);
+  assert.deepEqual(survivingFeedback([notice, replayed], current), [notice]);
+  const undone = before();
+  assert.deepEqual(survivingFeedback([replayed], undone), []);
+});
+
 test("pending, missing ledger and no-op repeated completion cannot celebrate XP", () => {
   const prior = before();
   const pending = pendingProjection(prior, [command], { quests: [quest] });
