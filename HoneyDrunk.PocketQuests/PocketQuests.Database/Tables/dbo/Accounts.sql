@@ -3,6 +3,7 @@ CREATE TABLE [dbo].[Accounts] (
     [IdentityKey] varchar(64) NOT NULL,
     [Zone] nvarchar(100) NOT NULL,
     [CreatedAt] datetimeoffset NOT NULL,
+    [LastRecordedAt] datetimeoffset NULL,
     [Profile] nvarchar(max) NULL,
     [Schedule] nvarchar(max) NULL,
     CONSTRAINT [PK_Accounts] PRIMARY KEY ([Id])

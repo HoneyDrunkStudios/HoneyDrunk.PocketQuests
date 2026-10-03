@@ -4,6 +4,7 @@ CREATE TABLE [dbo].[SyncAnchors] (
     [DeviceId] uniqueidentifier NOT NULL,
     [BootId] uniqueidentifier NOT NULL,
     [ServerUtc] datetimeoffset NOT NULL,
+    [RecordedTimeFloor] datetimeoffset NULL,
     [DeviceUtc] datetimeoffset NOT NULL,
     [LastOrdinal] bigint NOT NULL,
     [LastElapsedMilliseconds] float NOT NULL,

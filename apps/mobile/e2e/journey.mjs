@@ -149,9 +149,55 @@ try {
   await page.getByRole("button", { name: "Medium", exact: true }).click();
   let rejectSave = true;
   let loseCompletionResponse = true;
+  let skewNextCompletion = false;
+  let clockRecordedAt = null;
+  let clockAnchor = null;
+  let clockUndoPayload = null;
+  let clockUndoReceipt = null;
+  let clockRetryVerified = false;
   await context.route("http://localhost:5217/api/commands", async (route) => {
     if (route.request().method() !== "POST") return route.continue();
     const command = route.request().postDataJSON();
+    if (command.action === "complete" && skewNextCompletion) {
+      skewNextCompletion = false;
+      const committed = await route.fetch();
+      expect(committed.ok()).toBe(true);
+      const receipt = await committed.json();
+      clockRecordedAt = receipt.occurrences.find(
+        (item) => item.completion?.id === command.operationId,
+      ).completion.recordedAt;
+      expect(Date.parse(clockRecordedAt)).toBeGreaterThan(Date.now());
+      // Restore the physical clock before production drain requests its next anchor.
+      // The command proof was created and persisted by the real session, not rewritten here.
+      await page.evaluate(() => {
+        Object.defineProperty(performance, "now", {
+          configurable: true,
+          value: window.pocketQuestsOriginalNow,
+        });
+        delete window.pocketQuestsOriginalNow;
+      });
+      return route.fulfill({ response: committed });
+    }
+    if (command.action === "undo" && clockRecordedAt && !clockRetryVerified) {
+      if (!clockUndoPayload) {
+        clockUndoPayload = command;
+        expect(
+          Date.parse(clockAnchor.serverUtc) +
+            command.recordedTime.elapsedMilliseconds,
+        ).toBeLessThan(Date.parse(clockRecordedAt));
+        const committed = await route.fetch();
+        expect(committed.ok()).toBe(true);
+        clockUndoReceipt = await committed.json();
+        expect(clockUndoReceipt.overallXp).toBe(280);
+        return route.abort("failed");
+      }
+      expect(command).toEqual(clockUndoPayload);
+      const replay = await route.fetch();
+      expect(replay.ok()).toBe(true);
+      expect(await replay.json()).toEqual(clockUndoReceipt);
+      clockRetryVerified = true;
+      return route.fulfill({ response: replay });
+    }
     if (command.action === "save-definition" && rejectSave) {
       rejectSave = false;
       return route.fulfill({
@@ -388,6 +434,56 @@ try {
     }),
   ).toBeEnabled();
   console.log("Verified offline completion and matching Undo.");
+  // Reproduce the reported clock decrease across normal anchor refresh in the actual client.
+  // The server receives an untouched, durably queued proof with a bounded clock lead.
+  await page.evaluate(() => {
+    window.pocketQuestsOriginalNow = performance.now.bind(performance);
+    Object.defineProperty(performance, "now", {
+      configurable: true,
+      value: () => window.pocketQuestsOriginalNow() + 3500,
+    });
+  });
+  skewNextCompletion = true;
+  const refreshedAfterSkew = page.waitForResponse(
+    (response) =>
+      response.url() === "http://localhost:5217/api/sync-anchor" &&
+      response.request().method() === "POST",
+  );
+  await page
+    .getByRole("button", { name: "Complete: Enjoy some downtime", exact: true })
+    .click();
+  const clockAnchorResponse = await refreshedAfterSkew;
+  expect(clockAnchorResponse.ok()).toBe(true);
+  clockAnchor = await clockAnchorResponse.json();
+  expect(Date.parse(clockAnchor.recordedTimeFloor)).toBeGreaterThanOrEqual(
+    Date.parse(clockRecordedAt),
+  );
+  await expect(visibleText("Quest complete!", { exact: true })).toBeVisible();
+  await page
+    .getByRole("button", { name: "Undo recent completion", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Synchronize recorded changes", exact: true }),
+  ).toBeEnabled();
+  await page
+    .getByRole("button", { name: "Synchronize recorded changes", exact: true })
+    .click();
+  const completeAgain = page.getByRole("button", {
+    name: "Complete: Enjoy some downtime",
+    exact: true,
+  });
+  await expect(completeAgain).toBeEnabled();
+  expect(clockRetryVerified).toBe(true);
+  // A subsequent real command must drain normally; no discard or proof mutation is allowed.
+  await completeAgain.click();
+  await expect(visibleText("Quest complete!", { exact: true })).toBeVisible();
+  await page
+    .getByRole("button", { name: "Undo recent completion", exact: true })
+    .click();
+  await expect(completeAgain).toBeEnabled();
+  console.log(
+    "Verified future-skew completion, refreshed anchor, immediate Undo, lost-response immutable retry and an unblocked next command.",
+  );
   const synced = await (
     await context.request.get("http://localhost:5217/api/state", {
       headers: { Authorization: `Bearer ${fixture.token}` },

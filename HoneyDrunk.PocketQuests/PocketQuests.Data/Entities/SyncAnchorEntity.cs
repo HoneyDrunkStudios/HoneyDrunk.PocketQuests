@@ -18,6 +18,9 @@ public sealed class SyncAnchorEntity
     /// <summary>Gets or sets server UTC at issuance.</summary>
     public DateTimeOffset ServerUtc { get; set; }
 
+    /// <summary>Gets or sets the immutable account ordering floor at issuance, separate from elapsed wall time.</summary>
+    public DateTimeOffset? RecordedTimeFloor { get; set; }
+
     /// <summary>Gets or sets device wall-clock baseline.</summary>
     public DateTimeOffset DeviceUtc { get; set; }
 

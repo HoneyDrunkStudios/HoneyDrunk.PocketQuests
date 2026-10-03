@@ -172,6 +172,8 @@ export type Anchor = {
   deviceId: string;
   bootId: string;
   serverUtc: string;
+  // Server-owned issuance floor; elapsed time remains relative to serverUtc.
+  recordedTimeFloor?: string | null;
   deviceUtc: string;
   monotonic: number;
   ordinal: number;

@@ -1,5 +1,7 @@
 # PR #1 review follow-up
 
+The subsequent fresh-anchor immediate-Undo finding and its corrected timing/upgrade contract are documented in [clock-ordering.md](clock-ordering.md). The verification counts below describe the earlier `2ef81c2` follow-up; the PR description records checks for each replacement head.
+
 This follow-up addresses the three independently reproduced P2 findings against `251c77d6cfd45120c90006a53bb8b9bb95187d94`, plus the requested folder organization. It does not change canonical rewards, authentication, deadline/Undo validation, dependency versions or the reviewed UI snapshot.
 
 ## Confirmed completion time and immutable receipts

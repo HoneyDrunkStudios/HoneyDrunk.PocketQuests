@@ -38,11 +38,16 @@ public sealed partial class SqlQuestStore(QuestDbContext db) : IQuestStore, ISyn
     public async Task<QuestExport> Export(AccountIdentity identity, DateTimeOffset now, CancellationToken token) =>
         (await Transact(identity, null, null, now, token, exporting: true)).export!;
 
-    // A validated anchor may lead receipt time by up to five seconds. Live state must
-    // include committed events at that logical time, including immediate reads/replay.
-    // Keep the recorded timestamp and domain deadline/Undo validation unchanged.
-    private static DateTimeOffset CommittedProjectionTime(QuestAggregate aggregate, DateTimeOffset now) =>
-        aggregate.Completions.Select(c => c.RecordedAt).Concat(aggregate.Undos.Select(u => u.RecordedAt)).Append(now).Max();
+    // Recover the clock floor from durable history for pre-upgrade accounts as well.
+    // Future deadlines are not events and must never advance the ordering clock.
+    private static DateTimeOffset CommittedProjectionTime(QuestAggregate aggregate, DateTimeOffset now, DateTimeOffset? lastRecordedAt = null) =>
+        aggregate.Completions.Select(c => c.RecordedAt)
+            .Concat(aggregate.Undos.Select(u => u.RecordedAt))
+            .Concat(aggregate.Occurrences.SelectMany(o => new[] { o.AcceptedAt, o.Lifecycle?.FrozenAt ?? DateTimeOffset.MinValue, o.Lifecycle?.AbandonedAt ?? DateTimeOffset.MinValue }))
+            .Concat(aggregate.Schedule.Pauses.SelectMany(p => new[] { p.StartedAt, p.EndedAt ?? DateTimeOffset.MinValue }))
+            .Concat(aggregate.Profile.AssessmentHistory?.Select(a => a.At) ?? [])
+            .Concat(aggregate.Profile.ZoneHistory?.Select(z => z.At) ?? [])
+            .Append(lastRecordedAt ?? now).Append(now).Max();
 
     private async Task<(QuestState state, QuestExport? export)> Transact(AccountIdentity identity, string? initialZone, QuestCommand? command, DateTimeOffset now, CancellationToken token, bool exporting = false, SyncAnchorEntity? issuingAnchor = null)
     {
@@ -98,22 +103,27 @@ public sealed partial class SqlQuestStore(QuestDbContext db) : IQuestStore, ISyn
             definitions.Select(d => JsonSerializer.Deserialize<QuestDefinition>(d.Document)!),
             account.Profile is null ? null : JsonSerializer.Deserialize<PlayerProfile>(account.Profile),
             account.Schedule is null ? null : JsonSerializer.Deserialize<ScheduleState>(account.Schedule));
-        aggregate.Reconcile(now);
+        var logicalNow = CommittedProjectionTime(aggregate, now, account.LastRecordedAt);
+        aggregate.Reconcile(logicalNow);
         QuestState? beforeCompletion = null;
         if (command is not null)
         {
-            var recordedAt = await RecordedAt(account.Id, command, aggregate, now, token);
+            var recordedAt = await RecordedAt(account.Id, command, aggregate, now, logicalNow, token);
             if (command.Action == QuestActions.Complete)
-                beforeCompletion = aggregate.Project(CommittedProjectionTime(aggregate, recordedAt > now ? recordedAt : now));
+                beforeCompletion = aggregate.Project(recordedAt > logicalNow ? recordedAt : logicalNow);
             aggregate.Apply(command, recordedAt);
+            account.LastRecordedAt = recordedAt > logicalNow ? recordedAt : logicalNow;
         }
 
-        var state = aggregate.Project(CommittedProjectionTime(aggregate, now));
+        var state = aggregate.Project(CommittedProjectionTime(aggregate, now, account.LastRecordedAt));
         if (beforeCompletion is not null && command?.OccurrenceId is { } completedOccurrence)
             state = state with { CompletionOutcome = CompletionOutcome.Between(beforeCompletion, state, command.OperationId, completedOccurrence) };
         if (issuingAnchor is not null)
         {
+            if (logicalNow > now.AddSeconds(5))
+                throw new ArgumentException("Server time is behind committed account history. Reconnect when its clock is reconciled.");
             issuingAnchor.AccountId = account.Id;
+            issuingAnchor.RecordedTimeFloor = logicalNow;
             issuingAnchor.Snapshot = JsonSerializer.Serialize(state.Occurrences);
             db.SyncAnchors.Add(issuingAnchor);
         }

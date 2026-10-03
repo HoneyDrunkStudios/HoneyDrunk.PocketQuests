@@ -15,6 +15,9 @@ public sealed class AccountEntity
     /// <summary>Gets or sets the server timestamp of initial setup.</summary>
     public DateTimeOffset CreatedAt { get; set; }
 
+    /// <summary>Gets or sets the latest committed command time; null marks accounts created before clock ordering was persisted.</summary>
+    public DateTimeOffset? LastRecordedAt { get; set; }
+
     /// <summary>Gets or sets preferences and replaceable skill seeds.</summary>
     public string? Profile { get; set; }
 
