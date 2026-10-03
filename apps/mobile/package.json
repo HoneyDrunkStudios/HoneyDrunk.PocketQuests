@@ -43,6 +43,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "test:logic": "node --experimental-strip-types --test tests/*.test.mjs",
+    "test:ci": "node scripts/test-ci.cjs",
     "check:ui": "node scripts/ui-snapshot.cjs",
     "pretypecheck": "npm run check:ui"
   },

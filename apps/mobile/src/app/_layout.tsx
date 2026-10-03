@@ -16,6 +16,7 @@ export default function Layout() {
         >
           <Stack.Screen name="index" options={{ title: "Pocket Quests" }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="quest/[id]" options={{ title: "Quest" }} />
         </Stack>
         <CompletionOverlay />
       </SessionProvider>

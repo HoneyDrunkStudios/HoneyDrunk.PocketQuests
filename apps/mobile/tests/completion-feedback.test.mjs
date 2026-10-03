@@ -3,6 +3,7 @@ import { strict as assert } from "node:assert";
 import {
   completionFeedback,
   completionAnnouncement,
+  survivingFeedback,
 } from "../src/completion-feedback.ts";
 import { rewardPreview, allocatedPreview } from "../src/reward-preview.ts";
 import { createRequire } from "node:module";
@@ -95,6 +96,23 @@ function confirmed() {
       amount: 999,
     },
   ];
+  state.completionOutcome = {
+    completionId: "completion",
+    occurrenceId: "o",
+    levelUps: [
+      { track: "Overall", trackId: "overall", name: "Overall", from: 1, to: 2 },
+      { track: "Category", trackId: "c01", name: "Health", from: 1, to: 2 },
+      {
+        track: "Skill",
+        trackId: "s01",
+        name: "Strength Training",
+        from: 1,
+        to: 2,
+      },
+    ],
+    rankUp: null,
+    unlocks: [],
+  };
   return state;
 }
 test("confirmed feedback uses only the matching reward ledger and announces every level-up", () => {
@@ -117,7 +135,7 @@ test("confirmed feedback uses only the matching reward ledger and announces ever
     /Strength Training reached level 2/,
   );
 });
-test("pending, missing ledger, no-op repeated completion and receipt replay cannot celebrate XP", () => {
+test("pending, missing ledger and no-op repeated completion cannot celebrate XP", () => {
   const prior = before();
   const pending = pendingProjection(prior, [command], { quests: [quest] });
   assert.equal(pending.overallXp, 90);
@@ -127,7 +145,14 @@ test("pending, missing ledger, no-op repeated completion and receipt replay cann
     completionFeedback(prior, { ...confirmed(), ledger: undefined }, command),
     null,
   );
-  assert.equal(completionFeedback(confirmed(), confirmed(), command), null);
+  assert.equal(
+    completionFeedback(
+      confirmed(),
+      { ...confirmed(), completionOutcome: null },
+      command,
+    ),
+    null,
+  );
   assert.equal(
     completionFeedback(prior, confirmed(), {
       ...command,
@@ -167,9 +192,50 @@ test("rank promotion and earned rewards appear only when newly confirmed", () =>
   ];
   const prior = before();
   prior.entitlements = [{ id: "old", earned: true }];
+  state.completionOutcome.rankUp = "E";
+  state.completionOutcome.unlocks = [{ id: "new", name: "New badge" }];
   const result = completionFeedback(prior, state, command);
   assert.equal(result.rankUp, "E");
   assert.deepEqual(result.unlocks, ["New badge"]);
+});
+test("lost-response acknowledgement retains exact level changes despite an already refreshed cache", () => {
+  const after = confirmed();
+  const result = completionFeedback(after, after, command);
+  assert.equal(result.levelUps[0].from, 1);
+  const stale = before();
+  stale.overallLevel = 99;
+  assert.deepEqual(completionFeedback(stale, after, command), result);
+  const legacy = completionFeedback(
+    before(),
+    { ...after, completionOutcome: null },
+    command,
+  );
+  assert.equal(legacy.rewards[0].xp, 10);
+  assert.deepEqual(legacy.levelUps, []);
+});
+test("acknowledgements are deduplicated, ordered, and suppressed after matching Undo or recompletion", () => {
+  const state = confirmed();
+  const feedback = completionFeedback(before(), state, command);
+  assert.deepEqual(survivingFeedback([feedback, feedback], state), [feedback]);
+  state.occurrences[0].completion.id = "later";
+  assert.deepEqual(survivingFeedback([feedback], state), []);
+  state.occurrences[0].status = "Active";
+  assert.deepEqual(survivingFeedback([feedback], state), []);
+  const second = {
+    ...feedback,
+    completionId: "second",
+    occurrenceId: "second-o",
+  };
+  const current = confirmed();
+  current.occurrences.push({
+    ...current.occurrences[0],
+    occurrence: { ...occurrence.occurrence, id: "second-o" },
+    completion: { id: "second" },
+  });
+  assert.deepEqual(survivingFeedback([feedback, second], current), [
+    feedback,
+    second,
+  ]);
 });
 test("display previews conserve the canonical pools and break remainder ties by stable ID", () => {
   assert.deepEqual(
@@ -209,4 +275,23 @@ test("focus expiry and pause produce only time values and preserve remaining dur
   assert.equal(remainingFocus(pauseFocus(clock, 31_000), 99_000), 30_000);
   assert.equal(remainingFocus(clock, 61_000), 0);
   assert.equal(remainingFocus(clock, 100_000), 0);
+});
+test("a queued definition stays explicitly unconfirmed while its entered content is preserved", () => {
+  const draft = {
+    ...quest,
+    title: "My entered title",
+    criterion: "My entered criterion",
+  };
+  const state = pendingProjection(
+    before(),
+    [{ action: "save-definition", definition: draft, expectedRevision: 0 }],
+    { quests: [] },
+  );
+  assert.deepEqual(state.definitions[0], {
+    quest: draft,
+    revision: 1,
+    archived: false,
+    pendingSave: true,
+  });
+  assert.equal(state.overallXp, 90);
 });

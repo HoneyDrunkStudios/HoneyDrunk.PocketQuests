@@ -1,5 +1,12 @@
-import { useEffect, useState } from "react";
-import { AccessibilityInfo, AppState, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import {
+  AccessibilityInfo,
+  AppState,
+  Platform,
+  Text,
+  View,
+} from "react-native";
 import { Button, Input, Label, styles } from "./ui";
 import { pauseFocus, remainingFocus, type FocusClock } from "./focus-clock";
 
@@ -7,7 +14,13 @@ import { pauseFocus, remainingFocus, type FocusClock } from "./focus-clock";
 export function FocusTimer() {
   const [minutes, setMinutes] = useState("10");
   const [clock, setClock] = useState<FocusClock | null>(null);
-  const [now, setNow] = useState(Date.now);
+  const [now, setNow] = useState(() => performance.now());
+  const pause = useCallback(() => {
+    const time = performance.now();
+    setClock((current) => (current ? pauseFocus(current, time) : current));
+    setNow(time);
+  }, []);
+  useFocusEffect(useCallback(() => pause, [pause]));
   const duration = Number(minutes);
   const valid = /^\d{1,3}$/.test(minutes) && duration >= 1 && duration <= 180;
   const remaining = clock ? remainingFocus(clock, now) : 0;
@@ -15,23 +28,25 @@ export function FocusTimer() {
   useEffect(() => {
     if (clock?.startedAt === null || !clock) return;
     const tick = setInterval(() => {
-      const time = Date.now();
+      const time = performance.now();
       setNow(time);
       if (remainingFocus(clock, time) === 0)
         setClock({ remainingMs: 0, startedAt: null });
     }, 250);
     const subscription = AppState.addEventListener("change", (status) => {
-      if (status !== "active") {
-        const time = Date.now();
-        setClock((current) => (current ? pauseFocus(current, time) : current));
-        setNow(time);
-      }
+      if (status !== "active") pause();
     });
+    // Android notification drawers can blur the app without changing AppState.
+    const blur =
+      Platform.OS === "android"
+        ? AppState.addEventListener("blur", pause)
+        : null;
     return () => {
       clearInterval(tick);
       subscription.remove();
+      blur?.remove();
     };
-  }, [clock]);
+  }, [clock, pause]);
   useEffect(() => {
     if (done) {
       AccessibilityInfo.announceForAccessibility(
@@ -46,7 +61,8 @@ export function FocusTimer() {
       </Text>
       <Label>
         Use this when a focused session helps. It pauses when the app leaves the
-        foreground. Complete the quest yourself when its criterion is met.
+        foreground or you leave this quest. Complete the quest yourself when its
+        criterion is met.
       </Label>
       {!clock ? (
         <>
@@ -60,7 +76,7 @@ export function FocusTimer() {
             title="Start focus timer"
             disabled={!valid}
             onPress={() => {
-              const time = Date.now();
+              const time = performance.now();
               setNow(time);
               setClock({ remainingMs: duration * 60_000, startedAt: time });
             }}
@@ -89,7 +105,7 @@ export function FocusTimer() {
                   : "Pause focus timer"
               }
               onPress={() => {
-                const time = Date.now();
+                const time = performance.now();
                 setNow(time);
                 setClock(
                   clock.startedAt === null

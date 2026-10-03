@@ -48,7 +48,7 @@ export function CompletionCelebration({
       <Label>{feedback.title}</Label>
       <View style={{ gap: 8 }}>
         {feedback.rewards.map((r) => (
-          <Label key={`${r.track}:${r.name}`}>
+          <Label key={`${r.track}:${r.trackId}`}>
             {r.name} · +{r.xp} {r.track.toLowerCase()} XP
           </Label>
         ))}
@@ -59,7 +59,7 @@ export function CompletionCelebration({
             Level up!
           </Text>
           {feedback.levelUps.map((l) => (
-            <Label key={`${l.track}:${l.name}`}>
+            <Label key={`${l.track}:${l.trackId}`}>
               {l.name} · Level {l.from} → {l.to}
             </Label>
           ))}

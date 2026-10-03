@@ -1,0 +1,46 @@
+# Proposed local smoke flow. Not device-validated; see README.md for isolated fixtures.
+appId: com.honeydrunk.pocketquests
+name: Quest completion and matching Undo
+env:
+  QUEST_TITLE: Maestro slice quest
+---
+- launchApp:
+    clearState: false
+    permissions:
+      all: deny
+- assertVisible: Your character
+- tapOn: Quests
+- tapOn: Available
+- scrollUntilVisible:
+    element:
+      text: "Start: ${QUEST_TITLE}"
+    direction: DOWN
+- tapOn: "Start: ${QUEST_TITLE}"
+- tapOn: Active
+- tapOn: Open quest
+- doubleTapOn: "Complete: ${QUEST_TITLE}"
+- extendedWaitUntil:
+    visible: Quest complete!
+    timeout: 30000
+- assertVisible: Level up!
+- takeScreenshot: completion-native
+- scrollUntilVisible:
+    element:
+      text: Keep adventuring
+    direction: DOWN
+- tapOn: Keep adventuring
+- scrollUntilVisible:
+    element:
+      text: Undo this completion
+    direction: DOWN
+- tapOn: Undo this completion
+- extendedWaitUntil:
+    visible: "Complete: ${QUEST_TITLE}"
+    timeout: 30000
+- stopApp
+- launchApp:
+    clearState: false
+    permissions:
+      all: deny
+- assertVisible: Your character
+- assertVisible: 90 overall XP earned

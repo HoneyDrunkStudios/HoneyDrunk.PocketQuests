@@ -1,6 +1,6 @@
 # Production slice checkpoint · October 3, 2026
 
-This is an unfinished local implementation checkpoint for resuming on the user's requested GPT-6 Astra model. It is not release acceptance or authorization to publish.
+Historical handoff checkpoint. See [production-slice-delivery.md](production-slice-delivery.md) for the completed local review, final UI pin, current evidence and remaining release gates. This checkpoint is not release acceptance or authorization to publish.
 
 ## Preservation and checkout
 

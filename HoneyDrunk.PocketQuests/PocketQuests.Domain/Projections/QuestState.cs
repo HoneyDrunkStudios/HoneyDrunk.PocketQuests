@@ -10,4 +10,5 @@ namespace PocketQuests.Domain.Projections;
 public record QuestState(string Zone, string Today, ImmutableArray<OccurrenceView> Occurrences,
     long OverallXp, int OverallLevel, ImmutableArray<Balance> Categories, ImmutableArray<Balance> Attributes,
     ImmutableArray<Balance> Skills, RankProgress Rank, ImmutableArray<Streak> Streaks, ImmutableArray<Entitlement> Entitlements,
-    ImmutableArray<QuestDefinition> Definitions, PlayerProfile Profile, ScheduleState Schedule, ImmutableArray<PenaltyAssessment> Penalties, ImmutableArray<XpEntry> Ledger, ImmutableList<DateTimeOffset>? FutureWarnings = null);
+    ImmutableArray<QuestDefinition> Definitions, PlayerProfile Profile, ScheduleState Schedule, ImmutableArray<PenaltyAssessment> Penalties, ImmutableArray<XpEntry> Ledger, ImmutableList<DateTimeOffset>? FutureWarnings = null,
+    CompletionOutcome? CompletionOutcome = null);

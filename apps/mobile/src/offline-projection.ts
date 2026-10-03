@@ -17,6 +17,7 @@ export function pendingProjection(
         quest: command.definition,
         revision: (command.expectedRevision ?? 0) + 1,
         archived: false,
+        pendingSave: true,
       };
       if (index < 0) state.definitions.push(definition);
       else state.definitions[index] = definition;

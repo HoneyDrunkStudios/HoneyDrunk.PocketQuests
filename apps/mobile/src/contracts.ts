@@ -45,7 +45,12 @@ export type OccurrenceView = {
 };
 export type CustomSkill = Named & { revision: number; archived: boolean };
 export type Experience = "New" | "Practiced" | "Experienced" | "Expert";
-export type Definition = { quest: Quest; revision: number; archived: boolean };
+export type Definition = {
+  quest: Quest;
+  revision: number;
+  archived: boolean;
+  pendingSave?: boolean;
+};
 export type Cadence = "Days" | "Weeks" | "Months" | "Years";
 export type Series = {
   id: string;
@@ -78,6 +83,19 @@ export type ZonePreview = {
   }[];
 };
 export type State = {
+  completionOutcome?: {
+    completionId: string;
+    occurrenceId: string;
+    levelUps: {
+      track: string;
+      trackId: string;
+      name: string;
+      from: number;
+      to: number;
+    }[];
+    rankUp: Rank | null;
+    unlocks: { id: string; name: string }[];
+  } | null;
   ledger?: {
     eventId: string;
     occurrenceId: string;

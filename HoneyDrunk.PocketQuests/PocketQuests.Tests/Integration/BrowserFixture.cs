@@ -17,9 +17,9 @@ public sealed partial class SqlApiTests
         File.Delete(ready);
         File.Delete(done);
         var fixture = new SqlApiTests();
-        await fixture.InitializeAsync();
         try
         {
+            await fixture.InitializeAsync();
             using var host = new Host(fixture.Connection, networkIdentity: true);
             host.UseKestrel(5217);
             using var client = host.Client("browser-user");

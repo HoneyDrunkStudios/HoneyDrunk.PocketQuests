@@ -93,6 +93,7 @@ public sealed partial class SqlQuestStore(QuestDbContext db) : IQuestStore, ISyn
             account.Profile is null ? null : JsonSerializer.Deserialize<PlayerProfile>(account.Profile),
             account.Schedule is null ? null : JsonSerializer.Deserialize<ScheduleState>(account.Schedule));
         aggregate.Reconcile(now);
+        var beforeCompletion = command?.Action == QuestActions.Complete ? aggregate.Project(now) : null;
         if (command is not null)
         {
             var recordedAt = await RecordedAt(account.Id, command, aggregate, now, token);
@@ -100,6 +101,8 @@ public sealed partial class SqlQuestStore(QuestDbContext db) : IQuestStore, ISyn
         }
 
         var state = aggregate.Project(now);
+        if (beforeCompletion is not null && command?.OccurrenceId is { } completedOccurrence)
+            state = state with { CompletionOutcome = CompletionOutcome.Between(beforeCompletion, state, command.OperationId, completedOccurrence) };
         if (issuingAnchor is not null)
         {
             issuingAnchor.AccountId = account.Id;

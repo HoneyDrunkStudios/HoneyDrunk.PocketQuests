@@ -1,7 +1,8 @@
-import { Modal, ScrollView, View } from "react-native";
+import { AccessibilityInfo, Modal, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSession } from "./session";
 import { CompletionCelebration } from "./completion-celebration";
+import { completionAnnouncement } from "./completion-feedback";
 
 /** A single root overlay keeps reward feedback visible from every scroll position. */
 export function CompletionOverlay() {
@@ -11,10 +12,16 @@ export function CompletionOverlay() {
   if (!recentCompletion) return null;
   return (
     <Modal
+      key={recentCompletion.completionId}
       visible
       transparent
       animationType="none"
       onRequestClose={dismissCompletion}
+      onShow={() =>
+        AccessibilityInfo.announceForAccessibility(
+          completionAnnouncement(recentCompletion),
+        )
+      }
     >
       <View
         accessibilityViewIsModal

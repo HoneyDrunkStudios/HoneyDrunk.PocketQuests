@@ -3,15 +3,17 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 const root = path.resolve("../..");
+const artifacts = path.resolve(
+  root,
+  process.env.POCKETQUESTS_ARTIFACT_DIRECTORY ?? "artifacts",
+);
+await fs.mkdir(artifacts, { recursive: true });
+const fixtureDirectory = path.resolve(
+  root,
+  process.env.POCKETQUESTS_FIXTURE_DIRECTORY ?? ".local/browser",
+);
 const fixture = JSON.parse(
-  await fs.readFile(
-    path.join(
-      root,
-      process.env.POCKETQUESTS_FIXTURE_DIRECTORY ?? ".local/browser",
-      "ready.json",
-    ),
-    "utf8",
-  ),
+  await fs.readFile(path.join(fixtureDirectory, "ready.json"), "utf8"),
 );
 const browser = await chromium.launch();
 const context = await browser.newContext({
@@ -19,6 +21,12 @@ const context = await browser.newContext({
   reducedMotion: "reduce",
 });
 const page = await context.newPage();
+// Native navigation retains hidden screens; assertions target the visible one.
+const visibleText = (text, options) =>
+  page
+    .getByText(text, options)
+    .and(page.locator(':not([aria-hidden="true"], [aria-hidden="true"] *)'))
+    .filter({ visible: true });
 page.setDefaultTimeout(15000);
 const failures = [];
 page.on("pageerror", (error) => failures.push(error.message));
@@ -100,7 +108,7 @@ try {
   await expect(signIn).toBeEnabled({ timeout: 90000 });
   await signIn.click();
   await expect(
-    page.getByText("Your interests and experience", { exact: true }),
+    visibleText("Your interests and experience", { exact: true }),
   ).toBeVisible({ timeout: 30000 });
   await page
     .getByRole("button", { name: "Choose: Work & Purpose", exact: true })
@@ -112,7 +120,7 @@ try {
     .getByRole("button", { name: "Programming: Expert", exact: true })
     .click();
   await expect(
-    page.getByText("Current assessment: Expert", { exact: true }),
+    visibleText("Current assessment: Expert", { exact: true }),
   ).toBeVisible();
   await page
     .getByRole("button", {
@@ -137,10 +145,45 @@ try {
     .click();
   await page.getByRole("button", { name: "Rank A", exact: true }).click();
   await page.getByRole("button", { name: "Medium", exact: true }).click();
+  let rejectSave = true;
+  let loseCompletionResponse = true;
+  await context.route("http://localhost:5217/api/commands", async (route) => {
+    if (route.request().method() !== "POST") return route.continue();
+    const command = route.request().postDataJSON();
+    if (command.action === "save-definition" && rejectSave) {
+      rejectSave = false;
+      return route.fulfill({
+        status: 503,
+        headers: cors,
+        json: { detail: "Temporary save failure for retry verification." },
+      });
+    }
+    if (command.action === "complete" && loseCompletionResponse) {
+      loseCompletionResponse = false;
+      const committed = await route.fetch();
+      expect(committed.ok()).toBe(true);
+      return route.abort("failed"); // SQL committed, but the device receives no receipt.
+    }
+    return route.continue();
+  });
   await page
     .getByRole("button", { name: "Save custom quest", exact: true })
     .click();
-  await expect(page.getByText(/Saved revision 1/)).toBeVisible();
+  await expect(
+    visibleText("Temporary save failure for retry verification.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Quest title", { exact: true })).toHaveValue(
+    "Browser verified custom quest",
+  );
+  await expect(
+    page.getByLabel("Completion criterion", { exact: true }),
+  ).toHaveValue("I have delivered the working result");
+  await page
+    .getByRole("button", { name: "Retry pending action", exact: true })
+    .click();
+  await expect(visibleText(/Saved revision 1/)).toBeVisible();
   await page
     .getByRole("button", { name: "Back to available quests", exact: true })
     .click();
@@ -159,32 +202,44 @@ try {
     })
     .click({ clickCount: 2 });
   await expect(
-    page.getByText("Quest complete!", { exact: true }),
+    visibleText(/Offline.*showing your private device cache/),
   ).toBeVisible();
-  await expect(page.getByText("Level up!", { exact: true })).toBeVisible();
+  await expect(visibleText("Quest complete!", { exact: true })).toHaveCount(0);
+  const committed = await (
+    await context.request.get("http://localhost:5217/api/state", {
+      headers: { Authorization: `Bearer ${fixture.token}` },
+    })
+  ).json();
+  expect(committed.overallXp).toBe(280);
+  await page
+    .getByRole("button", { name: "Synchronize recorded changes", exact: true })
+    .click();
+  await expect(visibleText("Quest complete!", { exact: true })).toBeVisible();
+  await expect(visibleText("Level up!", { exact: true })).toBeVisible();
   await expect(
-    page.getByText("Overall · Level 1 → 2", { exact: true }),
+    visibleText("Overall · Level 1 → 2", { exact: true }),
   ).toBeVisible();
   await page.screenshot({
-    path: path.join(root, "artifacts/completion-celebration.png"),
+    path: path.join(artifacts, "completion-celebration.png"),
     fullPage: false,
   });
   await page
     .getByRole("button", { name: "Keep adventuring", exact: true })
     .click();
   await page.getByRole("link", { name: "Back to Home", exact: true }).click();
-  await expect(page.getByText("Your character", { exact: true })).toBeVisible();
+  await expect(visibleText("Your character", { exact: true })).toBeVisible();
   await expect(
-    page.getByText("280 overall XP earned", { exact: true }),
+    visibleText("280 overall XP earned", { exact: true }),
   ).toBeVisible();
+  console.log("Verified completion response-loss retry and character totals.");
   await expect(page.getByRole("button", { name: /^Complete:/ })).toHaveCount(0);
   await page.screenshot({
-    path: path.join(root, "artifacts/character-home.png"),
+    path: path.join(artifacts, "character-home.png"),
     fullPage: false,
   });
   await page.getByRole("tab", { name: "Progress", exact: true }).click();
   await expect(
-    page.getByText("280 base XP earned", { exact: true }),
+    visibleText("280 base XP earned", { exact: true }),
   ).toBeVisible();
   const response = await context.request.get(
     "http://localhost:5217/api/state",
@@ -195,6 +250,9 @@ try {
   expect(state.definitions).toHaveLength(1);
   expect(state.skills.find((s) => s.id === "s07").xp).toBe(12285);
   expect(state.occurrences[0].status).toBe("Completed");
+  expect(
+    state.ledger.filter((entry) => entry.track === "Overall"),
+  ).toHaveLength(1);
   const downloadEvent = page.waitForEvent("download");
   await page
     .getByRole("button", { name: "Download full JSON export", exact: true })
@@ -206,6 +264,11 @@ try {
     "Browser verified custom quest",
   );
   await page.getByRole("tab", { name: "Quests", exact: true }).click();
+  await page.getByRole("tab", { name: "Completed", exact: true }).click();
+  await expect(
+    visibleText("Browser verified custom quest", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Complete:/ })).toHaveCount(0);
   await page.getByRole("tab", { name: "Available", exact: true }).click();
   await page
     .getByRole("button", { name: "Start: Enjoy some downtime", exact: true })
@@ -227,6 +290,12 @@ try {
     })
   ).json();
   expect(duringTimer.overallXp).toBe(280);
+  console.log("Verified completed list, export, and timer without XP award.");
+  await page.getByRole("link", { name: "Back to Home", exact: true }).click();
+  await page.goBack();
+  await expect(
+    page.getByRole("button", { name: "Resume focus timer", exact: true }),
+  ).toBeVisible();
   await page
     .getByRole("button", { name: "Close focus timer", exact: true })
     .click();
@@ -235,20 +304,17 @@ try {
     .getByRole("button", { name: "Complete: Enjoy some downtime", exact: true })
     .click();
   await expect(
-    page.getByText(/Offline - showing your private device cache/).first(),
+    visibleText(/Offline.*showing your private device cache/),
   ).toBeVisible();
-  await expect(page.getByText("Quest complete!", { exact: true })).toHaveCount(
-    0,
-  );
-  await page.reload();
+  await expect(visibleText("Quest complete!", { exact: true })).toHaveCount(0);
+  // The web adapter intentionally uses memory-only storage. Native process-death
+  // persistence must be tested on a native development build, not inferred here.
   await expect(
-    page.getByText(/Rewards will be confirmed when synchronized/),
+    visibleText(/Rewards will be confirmed when synchronized/),
   ).toBeVisible();
   await context.setOffline(false);
-  await page
-    .getByRole("button", { name: "Synchronize recorded changes", exact: true })
-    .click();
-  await expect(page.getByText("Quest complete!", { exact: true })).toBeVisible({
+  // The adapter's existing online listener automatically resumes the queued sync.
+  await expect(visibleText("Quest complete!", { exact: true })).toBeVisible({
     timeout: 30000,
   });
   await page
@@ -260,7 +326,7 @@ try {
       exact: true,
     }),
   ).toBeEnabled();
-  await page.reload();
+  console.log("Verified offline completion and matching Undo.");
   const synced = await (
     await context.request.get("http://localhost:5217/api/state", {
       headers: { Authorization: `Bearer ${fixture.token}` },
@@ -270,31 +336,56 @@ try {
   expect(
     synced.occurrences.filter((o) => o.status === "Completed"),
   ).toHaveLength(1);
+  await page.reload();
+  // Fresh adapter session, same isolated test account: verifies server persistence.
+  await expect(signIn).toBeEnabled();
+  await signIn.click();
+  await expect(
+    visibleText("280 overall XP earned", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("tab", { name: "Quests", exact: true }).click();
+  await page.getByRole("tab", { name: "Active", exact: true }).click();
+  await page.getByRole("link", { name: "Open quest", exact: true }).click();
   await expect(
     page.getByRole("button", {
       name: "Complete: Enjoy some downtime",
       exact: true,
     }),
   ).toBeEnabled();
+  await page.getByRole("link", { name: "Back to Home", exact: true }).click();
+  for (const [width, height] of [
+    [320, 720],
+    [430, 932],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await expect(
+      visibleText("280 overall XP earned", { exact: true }),
+    ).toBeVisible();
+    await page.screenshot({
+      path: path.join(artifacts, `home-${width}.png`),
+    });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  }
   expect(failures).toEqual([]);
   console.log(
-    "Native web adapter / real SQL slice journey passed: PKCE fixture → real Identity → onboarding → custom A quest → SQL completion → profile → private JSON download → offline completion → reconnect reconciliation.",
+    "Web adapter / real API and isolated SQL journey passed: test OIDC/PKCE, save failure and retry, double tap with lost completion response, exact level-up, character sheet, export, completed list, optional timer and route pause, offline completion, reconnect, matching Undo, fresh-session SQL persistence. No real-provider or native-device claim.",
   );
 } catch (error) {
   await page.screenshot({
-    path: path.join(root, "artifacts/browser-failure.png"),
+    path: path.join(artifacts, "browser-failure.png"),
     fullPage: false,
   });
+  await fs.writeFile(
+    path.join(artifacts, "browser-failure.html"),
+    await page.content(),
+  );
   console.error((await page.locator("body").innerText()).slice(0, 5000));
   throw error;
 } finally {
   await browser.close();
-  await fs.writeFile(
-    path.join(
-      root,
-      process.env.POCKETQUESTS_FIXTURE_DIRECTORY ?? ".local/browser",
-      "done",
-    ),
-    "done",
-  );
+  await fs.writeFile(path.join(fixtureDirectory, "done"), "done");
 }

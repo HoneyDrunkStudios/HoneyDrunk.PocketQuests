@@ -9,10 +9,12 @@ export default function Layout() {
       screenOptions={{
         tabBarActiveTintColor: colors.green,
         tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: { backgroundColor: colors.paper },
+        tabBarStyle: { backgroundColor: colors.paper, minHeight: 64 },
         headerStyle: { backgroundColor: colors.paper },
         headerTintColor: colors.ink,
         tabBarIcon: () => null,
+        tabBarIconStyle: { display: "none" },
+        tabBarLabelPosition: "beside-icon",
         tabBarLabelStyle: { fontSize: 12 },
         tabBarItemStyle: { minHeight: 48 },
       }}

@@ -4,6 +4,7 @@
 **/.expo/
 **/dist/
 **/TestResults/
+apps/mobile/reports/
 .vs/
 .env
 .env.*

@@ -1,6 +1,6 @@
 import { questActions } from "../../commands/quest-actions";
 import { useState } from "react";
-import { Link, useLocalSearchParams } from "expo-router";
+import { Link, Redirect, useLocalSearchParams } from "expo-router";
 import { Text, TextInput, View } from "react-native";
 import { useSession } from "../../session";
 import { Page, Button, Label, styles } from "../../ui";
@@ -8,14 +8,24 @@ import { QuestRewards } from "../../quest-rewards";
 import { FocusTimer } from "../../focus-timer";
 export default function QuestDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { state, catalog, command, busy, pending } = useSession();
+  const { state, catalog, command, busy, pending, signedIn } = useSession();
   const [confirmLoss, setConfirmLoss] = useState(false);
   const [focus, setFocus] = useState(false);
   const item = state?.occurrences.find((o) => o.occurrence.id === id);
+  if (!signedIn && !busy) return <Redirect href="/" />;
+  if (!state && busy)
+    return (
+      <Page>
+        <Label>Loading your quest.</Label>
+      </Page>
+    );
   if (!item)
     return (
       <Page>
         <Label>Quest unavailable. Sign in to its account and refresh.</Label>
+        <Link href="/(tabs)/board" style={styles.text}>
+          Back to quests
+        </Link>
       </Page>
     );
   return (

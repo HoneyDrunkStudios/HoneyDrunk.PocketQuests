@@ -145,8 +145,11 @@ export function QuestEditor({
       </Text>
       {current && (
         <Label>
-          Saved revision {current.revision}. Completed history keeps its
-          original terms. Active occurrences use your saved changes.
+          {current.pendingSave ? "Recorded revision" : "Saved revision"}{" "}
+          {current.revision}
+          {current.pendingSave ? ", awaiting confirmation" : ""}. Completed
+          history keeps its original terms. Active occurrences use your saved
+          changes.
         </Label>
       )}
       {current && current.revision !== revision && (

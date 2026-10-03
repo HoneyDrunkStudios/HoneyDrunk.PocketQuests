@@ -9,17 +9,26 @@ const { renderToStaticMarkup } = require("react-dom/server");
 const Module = require("node:module");
 const load = Module._load;
 let state;
+let signedIn = true;
 Module._load = function (name, ...rest) {
   if (name === "react-native") return nativeWeb;
   if (name.endsWith("/session"))
     return {
-      useSession: () => ({ state, catalog: null, busy: false, pending: false }),
+      useSession: () => ({
+        state,
+        catalog: null,
+        busy: false,
+        pending: false,
+        signedIn,
+      }),
     };
   if (name === "expo-router")
     return {
-      Redirect: () => null,
+      Redirect: ({ href }) =>
+        React.createElement("span", { "data-redirect": href }),
       Link: ({ children }) => React.createElement("a", null, children),
       useLocalSearchParams: () => ({ id: "o" }),
+      useFocusEffect: () => {},
     };
   if (name === "react-native-safe-area-context")
     return { useSafeAreaInsets: () => ({ top: 0, bottom: 0 }) };
@@ -53,6 +62,7 @@ const Home = require("../src/app/(tabs)/index.tsx").default;
 const Quests = require("../src/app/(tabs)/board.tsx").default;
 const { CompletionCelebration } = require("../src/completion-celebration.tsx");
 const { FocusTimer } = require("../src/focus-timer.tsx");
+const QuestDetails = require("../src/app/quest/[id].tsx").default;
 const render = (component, props = {}) =>
   renderToStaticMarkup(
     React.createElement(
@@ -142,4 +152,12 @@ test("focus timer begins as an optional input without a completion action", () =
   assert.match(html, /aria-label="Focus minutes, 1 to 180"/);
   assert.match(html, /Start focus timer/);
   assert.doesNotMatch(html, /Complete:|Quest complete!/);
+});
+test("signed-out quest deep links reach sign-in and missing signed-in quests have a recovery route", () => {
+  state = null;
+  signedIn = false;
+  assert.match(render(QuestDetails), /data-redirect="\/"/);
+  signedIn = true;
+  state = { occurrences: [] };
+  assert.match(render(QuestDetails), /Back to quests/);
 });

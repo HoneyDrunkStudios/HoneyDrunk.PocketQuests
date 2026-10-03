@@ -1,5 +1,7 @@
 # Review and verification
 
+This file records the preserved foundation's earlier review. For the current October 3 app slice and advisory counts, see `production-slice-delivery.md` and `dependency-security.md`; historical passes below do not replace current acceptance evidence.
+
 ## Explicit publication review
 
 Reviewed server authority, SQL transaction locks, account ownership, command replay and Undo, bounded offline storage/replay, account lifecycle/erasure boundaries, audit persistence, native credential storage, SQL schema upgrades, source portability, package contracts and CI paths.

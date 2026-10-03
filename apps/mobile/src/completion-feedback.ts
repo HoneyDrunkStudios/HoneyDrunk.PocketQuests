@@ -4,13 +4,19 @@ export type CompletionFeedback = {
   occurrenceId: string;
   completionId: string;
   title: string;
-  rewards: { track: string; name: string; xp: number }[];
-  levelUps: { track: string; name: string; from: number; to: number }[];
+  rewards: { track: string; trackId: string; name: string; xp: number }[];
+  levelUps: {
+    track: string;
+    trackId: string;
+    name: string;
+    from: number;
+    to: number;
+  }[];
   rankUp: string | null;
   unlocks: string[];
 };
 
-/** Read the confirmed event ledger. Pending projections never award rewards. */
+/** Called only when acknowledging a queued command, never on a general state refresh. */
 export function completionFeedback(
   before: State,
   after: State,
@@ -22,8 +28,7 @@ export function completionFeedback(
   );
   if (
     item?.status !== "Completed" ||
-    item.completion?.id !== command.operationId ||
-    before.occurrences.some((o) => o.completion?.id === item.completion?.id)
+    item.completion?.id !== command.operationId
   )
     return null;
   const entries =
@@ -34,54 +39,39 @@ export function completionFeedback(
         e.amount > 0,
     ) ?? [];
   if (!entries.some((e) => e.track === "Overall")) return null;
+  const outcome = after.completionOutcome;
+  if (
+    outcome &&
+    (outcome.completionId !== command.operationId ||
+      outcome.occurrenceId !== command.occurrenceId)
+  )
+    return null;
+  // Older receipts can still confirm XP, but cannot establish transaction-local level changes.
+  if (
+    !outcome &&
+    before.occurrences.some((o) => o.completion?.id === command.operationId)
+  )
+    return null;
   const groups = {
-    Category: [before.categories, after.categories],
-    Attribute: [before.attributes, after.attributes],
-    Skill: [before.skills, after.skills],
+    Category: after.categories,
+    Attribute: after.attributes,
+    Skill: after.skills,
   } as const;
-  const levelUps: CompletionFeedback["levelUps"] = [];
   const rewards = entries.map((e) => {
-    if (e.track === "Overall") {
-      if (after.overallLevel > before.overallLevel)
-        levelUps.push({
-          track: e.track,
-          name: "Overall",
-          from: before.overallLevel,
-          to: after.overallLevel,
-        });
-      return { track: e.track, name: "Overall", xp: e.amount };
-    }
-    const [previous, next] = groups[e.track];
-    const balance = next.find((b) => b.id === e.trackId);
-    const prior = previous.find((b) => b.id === e.trackId);
-    if (balance && prior && balance.level > prior.level)
-      levelUps.push({
-        track: e.track,
-        name: balance.name,
-        from: prior.level,
-        to: balance.level,
-      });
-    return { track: e.track, name: balance?.name ?? e.trackId, xp: e.amount };
+    const name =
+      e.track === "Overall"
+        ? "Overall"
+        : (groups[e.track].find((b) => b.id === e.trackId)?.name ?? e.trackId);
+    return { track: e.track, trackId: e.trackId, name, xp: e.amount };
   });
   return {
     occurrenceId: item.occurrence.id,
     completionId: item.completion.id,
     title: item.occurrence.quest.title,
     rewards,
-    levelUps,
-    rankUp:
-      after.rank.current !== before.rank.current &&
-      "FEDCBAS".indexOf(after.rank.current) >
-        "FEDCBAS".indexOf(before.rank.current)
-        ? after.rank.current
-        : null,
-    unlocks: after.entitlements
-      .filter(
-        (e) =>
-          e.earned &&
-          !before.entitlements.some((b) => b.id === e.id && b.earned),
-      )
-      .map((e) => e.name),
+    levelUps: outcome?.levelUps ?? [],
+    rankUp: outcome?.rankUp ?? null,
+    unlocks: outcome?.unlocks.map((e) => e.name) ?? [],
   };
 }
 
@@ -99,4 +89,23 @@ export function completionAnnouncement(feedback: CompletionFeedback) {
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+/** Reconcile acknowledged receipts with current truth before showing a celebration. */
+export function survivingFeedback(notices: CompletionFeedback[], state: State) {
+  const seen = new Set<string>();
+  return notices.filter((notice) => {
+    if (
+      seen.has(notice.completionId) ||
+      !state.occurrences.some(
+        (o) =>
+          o.status === "Completed" &&
+          o.occurrence.id === notice.occurrenceId &&
+          o.completion?.id === notice.completionId,
+      )
+    )
+      return false;
+    seen.add(notice.completionId);
+    return true;
+  });
 }

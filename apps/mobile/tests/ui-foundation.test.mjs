@@ -24,7 +24,7 @@ for (const extension of [".ts", ".tsx"])
   };
 const React = require("react");
 const { renderToStaticMarkup } = require("react-dom/server");
-const { foundation } = require("@honeydrunk/ui-tokens");
+const { foundation, resolveTheme } = require("@honeydrunk/ui-tokens");
 const {
   ThemeProvider,
   Button,
@@ -136,6 +136,7 @@ test("Pocket Quests body, muted, error and button text meet AA contrast", () => 
     [c.danger, c.surface],
     [c.onPrimary, c.primary],
     [c.text, c.input],
+    [c.accent, c.surface],
   ]) {
     const a = luminance(fg),
       b = luminance(bg);
@@ -143,5 +144,18 @@ test("Pocket Quests body, muted, error and button text meet AA contrast", () => 
       (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) >= 4.5,
       fg + " on " + bg,
     );
+  }
+});
+test("product control boundaries and focus indicators meet non-text contrast on their adjacent surfaces", () => {
+  const c = resolveTheme(pocketQuestsTheme).colors;
+  for (const fg of [c.border, c.focus]) {
+    for (const bg of [c.background, c.surface, c.input]) {
+      const a = luminance(fg),
+        b = luminance(bg);
+      assert.ok(
+        (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) >= 3,
+        `${fg} on ${bg}`,
+      );
+    }
   }
 });

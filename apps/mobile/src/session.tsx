@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { AccessibilityInfo, AppState, Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 import * as Crypto from "expo-crypto";
 import type {
   Anchor,
@@ -30,8 +30,8 @@ import { saveExport } from "./export-download";
 import { syncWarnings } from "./notifications";
 import { RequestError } from "./request-error";
 import {
-  completionAnnouncement,
   completionFeedback,
+  survivingFeedback,
   type CompletionFeedback,
 } from "./completion-feedback";
 import {
@@ -152,8 +152,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   );
   const [offline, setOffline] = useState(false);
   const [needsSignIn, setNeedsSignIn] = useState(false);
-  const [recentCompletion, setRecentCompletion] =
-    useState<SessionContext["recentCompletion"]>(null);
+  const [completionNotices, setCompletionNotices] = useState<
+    (CompletionFeedback & { until: number })[]
+  >([]);
+  const awaitingConfirmation = useRef<CompletionFeedback[]>([]);
   const localRef = useRef<LocalAccount | null>(null);
   const sessionRef = useRef<Session | null>(null);
   const inFlight = useRef(false);
@@ -163,15 +165,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     await saveAccount(value);
     localRef.current = value;
     if (mounted.current) setLocal(value);
-    setRecentCompletion((notice) =>
-      notice &&
-      !value.state.occurrences.some(
-        (o) =>
-          o.status === "Completed" && o.completion?.id === notice.completionId,
-      )
-        ? null
-        : notice,
-    );
   }, []);
   const forgetInactive = useCallback(async (status: AccountStatus) => {
     if (
@@ -195,7 +188,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setSession(null);
     setNeedsSignIn(false);
     setOffline(false);
-    setRecentCompletion(null);
+    setCompletionNotices([]);
+    awaitingConfirmation.current = [];
     inactiveRef.current = status;
     setInactiveAccount(status);
   }, []);
@@ -268,22 +262,29 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             c.completionId === feedback.completionId,
         )
       ) {
-        setRecentCompletion({
-          ...feedback,
-          until: Date.now() + completionNoticeDurationMs,
-        });
-        AccessibilityInfo.announceForAccessibility(
-          completionAnnouncement(feedback),
-        );
+        awaitingConfirmation.current.push(feedback);
       }
       if (action.action === questActions.undo)
-        setRecentCompletion((notice) =>
-          notice?.completionId === action.completionId ? null : notice,
+        setCompletionNotices((notices) =>
+          notices.filter(
+            (notice) => notice.completionId !== action.completionId,
+          ),
         );
     }
     const state = await request<State>("/api/state", active.token);
     const anchor = await anchorFor(active.token);
     await publish({ ...localRef.current, state, anchor });
+    // A replayed receipt is historical. Confirm its completion still survives before displaying it.
+    const acknowledged = awaitingConfirmation.current;
+    awaitingConfirmation.current = [];
+    setCompletionNotices((notices) =>
+      survivingFeedback([...notices, ...acknowledged], state).map((notice) => ({
+        ...notice,
+        until:
+          notices.find((prior) => prior.completionId === notice.completionId)
+            ?.until ?? Date.now() + completionNoticeDurationMs,
+      })),
+    );
     setOffline(false);
     setNeedsSignIn(false);
   }, [anchorFor, publish]);
@@ -349,6 +350,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           sessionRef.current = null;
           setLocal(null);
           setSession(null);
+          setCompletionNotices([]);
+          awaitingConfirmation.current = [];
           throw new RequestError(
             403,
             "This account is inactive; private cached data was cleared.",
@@ -372,6 +375,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         if (sessionRef.current && sessionRef.current.userId !== user.userId) {
           await syncWarnings(null);
           await clearAccount(sessionRef.current.userId);
+          setCompletionNotices([]);
+          awaitingConfirmation.current = [];
         }
         inactiveRef.current = null;
         setInactiveAccount(null);
@@ -513,8 +518,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         anchor: anchor ? { ...anchor, ordinal: anchor.ordinal + 1 } : null,
       });
       if (item.action === questActions.undo)
-        setRecentCompletion((notice) =>
-          notice?.completionId === item.completionId ? null : notice,
+        setCompletionNotices((notices) =>
+          notices.filter((notice) => notice.completionId !== item.completionId),
         );
       if (!offline) await drain();
       else
@@ -563,7 +568,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       setNeedsSignIn(false);
       setOffline(false);
-      setRecentCompletion(null);
+      setCompletionNotices([]);
+      awaitingConfirmation.current = [];
     } catch {
       setError(
         "Could not clear private storage. Please try signing out again.",
@@ -652,8 +658,20 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         pending: !!local?.queue.length && !offline,
         offline,
         queuedCount: local?.queue.length ?? 0,
-        recentCompletion,
-        dismissCompletion: () => setRecentCompletion(null),
+        recentCompletion: completionNotices[0] ?? null,
+        dismissCompletion: () =>
+          setCompletionNotices((notices) =>
+            notices
+              .slice(1)
+              .map((notice, index) =>
+                index === 0
+                  ? {
+                      ...notice,
+                      until: Date.now() + completionNoticeDurationMs,
+                    }
+                  : notice,
+              ),
+          ),
         connect,
         refresh,
         command,
