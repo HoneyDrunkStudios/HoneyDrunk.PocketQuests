@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\PocketQuests.Application\PocketQuests.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HoneyDrunk.Audit.Data" Version="0.2.1" />
+    <PackageReference Include="HoneyDrunk.Data.EntityFramework" Version="0.7.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HoneyDrunk.Data.Outbox" Version="0.7.1" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseIdentitySource)' != 'true'">
+    <PackageReference Include="HoneyDrunk.Identity.Abstractions" Version="[$(IdentityClientVersion)]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseIdentitySource)' == 'true'">
+    <ProjectReference Include="$(IdentitySourceRoot)/HoneyDrunk.Identity/HoneyDrunk.Identity.Abstractions/HoneyDrunk.Identity.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

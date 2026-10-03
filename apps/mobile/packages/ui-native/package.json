@@ -1,0 +1,14 @@
+{
+  "name": "@honeydrunk/ui-native",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.tsx",
+  "types": "src/index.tsx",
+  "dependencies": {
+    "@honeydrunk/ui-tokens": "0.1.0"
+  },
+  "peerDependencies": {
+    "react": "^19.2.3",
+    "react-native": "^0.86.3"
+  }
+}

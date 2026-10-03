@@ -1,0 +1,58 @@
+# Inactive publication candidate; replace NODE_QUALITY_COMMIT only after publication.
+name: Validate Pocket Quests
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: product
+      - uses: actions/checkout@v5
+        with:
+          repository: HoneyDrunkStudios/HoneyDrunk.Identity
+          ref: a18ba880351b0a76d87c6b68eac45b38551c4e1a
+          path: identity
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: product/global.json
+      - name: Configure explicit Identity source
+        shell: pwsh
+        run: ./product/scripts/Initialize-Local.ps1 -IdentitySourceRoot "$env:GITHUB_WORKSPACE/identity"
+      - name: Restore locked source dependencies
+        run: dotnet restore product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --locked-mode
+      - name: Build solution and DACPACs
+        run: dotnet build product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore
+      - name: Start isolated development SQL instance
+        shell: pwsh
+        run: |
+          sqllocaldb create PocketQuests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          sqllocaldb start PocketQuests
+      - name: Test SQL and domain boundaries
+        run: dotnet test product/HoneyDrunk.PocketQuests/PocketQuests.Tests --configuration Release --no-build --logger trx
+  frontend:
+    uses: HoneyDrunkStudios/HoneyDrunk.Actions/.github/workflows/job-node-workspace.yml@NODE_QUALITY_COMMIT
+    with:
+      runs-on: ubuntu-latest
+      working-directory: apps/mobile
+      node-version: "22"
+      package-manager: npm
+      cache-dependency-path: package-lock.json
+      install-command: npm ci
+      build-command: npm exec expo export -- --platform all
+      test-command: npm run test:ci
+      lint-command: npm run lint
+      run-typecheck: true
+      typecheck-command: npm run typecheck
+      test-results-path: reports
+      artifact-name: pocketquests-mobile-contracts
+      artifact-retention-days: 14
+      timeout-minutes: 20

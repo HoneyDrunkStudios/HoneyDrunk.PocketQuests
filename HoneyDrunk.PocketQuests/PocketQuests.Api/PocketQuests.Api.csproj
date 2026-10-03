@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\PocketQuests.Domain\PocketQuests.Domain.csproj" />
+    <ProjectReference Include="..\PocketQuests.Data\PocketQuests.Data.csproj" />
+    <ProjectReference Include="..\PocketQuests.ServiceDefaults\PocketQuests.ServiceDefaults.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.12" />
+  </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>be26a4e2-e7bf-4a13-90b9-86be79a088f4</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(UseIdentitySource)' != 'true'">
+    <PackageReference Include="HoneyDrunk.Identity.Client" Version="[$(IdentityClientVersion)]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseIdentitySource)' == 'true'">
+    <ProjectReference Include="$(IdentitySourceRoot)/HoneyDrunk.Identity/HoneyDrunk.Identity.Client/HoneyDrunk.Identity.Client.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="HoneyDrunk.Data.Outbox.Dispatcher" Version="0.7.1" />
+    <PackageReference Include="HoneyDrunk.Transport.AzureServiceBus" Version="0.7.2" />
+  </ItemGroup>
+</Project>

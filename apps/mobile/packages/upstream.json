@@ -1,0 +1,23 @@
+{
+  "repository": "https://github.com/HoneyDrunkStudios/HoneyDrunk.UI",
+  "revision": "213f3bed78e6609dbc6d900610a5d90c16e55b8c",
+  "packages": [
+    "@honeydrunk/ui-tokens",
+    "@honeydrunk/ui-native"
+  ],
+  "consumption": "Reviewed local workspace source snapshot; not an npm registry release",
+  "files": {
+    "packages/ui-native/CHANGELOG.md": "4964116487cfab7a3ca7b8e2754808182d7153558f1ff2d82bc62d0442133b6e",
+    "packages/ui-native/README.md": "eb8de1bd7b88308984d15ede1ea78697ee01b568ea4c92b73288e48fd3fb055c",
+    "packages/ui-native/package.json": "e7f7cf758c0e9f2e79e03b6ae0ed7ba41bc72f6326d07b08288493e010243913",
+    "packages/ui-native/src/index.tsx": "70a443131121cd9d1d2f6395f8bde719dffaacd884122c57aab55cdae55ad5f1",
+    "packages/ui-native/src/reducedMotion.ts": "d22285538159d810ce21a8c6eed6fe7450e0011fdc8de8bd8a5866019ebcf987",
+    "packages/ui-native/src/status.tsx": "e867f0f65ed4c276fd95510f2c80ee80a8b0e76eea2de4af96bc2011dfb67b2c",
+    "packages/ui-native/src/styles.ts": "890a9500762286a56c56a5540f90ae4997e9a4a534baff2ef114ed9964dc033e",
+    "packages/ui-native/src/theme.tsx": "4258257f1e6f94a1fa4e75e9f66dac24a012277bd46dc69967712716fcbd6818",
+    "packages/ui-tokens/CHANGELOG.md": "66841e154be0bc7ab3d0c2cd7137d6b98031ec13d81896e8d4bd3ea08e8a2b27",
+    "packages/ui-tokens/README.md": "30861dfca7d1bea8d3be465db02f8ca82e0565ff6596cc4ae5ae6d780420b4fc",
+    "packages/ui-tokens/package.json": "84954a4e47a61f3f152cd026eb96e77b7be425081c67610f57eabd4c4a565483",
+    "packages/ui-tokens/src/index.ts": "dbc06a000a6a463f614e2199e02fb60320edcea1edecf4f6ff16e95532409ef9"
+  }
+}

@@ -1,0 +1,21 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/.expo/
+**/dist/
+**/TestResults/
+apps/mobile/reports/
+.vs/
+.env
+.env.*
+!.env.example
+artifacts/
+
+*.log
+.local/
+.packages/
+**/npm-audit.json
+
+# Visual Studio per-user state
+*.user
+*.suo
