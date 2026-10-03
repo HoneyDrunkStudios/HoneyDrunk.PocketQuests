@@ -1,6 +1,7 @@
-import type { Theme } from "@honeydrunk/ui-tokens";
+import { resolveTheme, type Theme } from "@honeydrunk/ui-tokens";
 import type { TextStyle, ViewStyle } from "react-native";
 export function createStyles(theme: Theme) {
+  const resolved = resolveTheme(theme);
   const c = theme.colors,
     t = theme.typography,
     s = theme.spacing,
@@ -14,7 +15,7 @@ export function createStyles(theme: Theme) {
     } satisfies TextStyle,
     subtitle: {
       fontSize: t.subtitleSize,
-      fontWeight: "600",
+      fontWeight: resolved.typography.subtitleWeight,
       color: c.text,
       fontFamily: t.fontFamily,
     } satisfies TextStyle,
@@ -49,6 +50,55 @@ export function createStyles(theme: Theme) {
       backgroundColor: c.input,
       fontFamily: t.fontFamily,
     } satisfies TextStyle,
+    button: {
+      minHeight: theme.controls.minHeight,
+      minWidth: resolved.controls.minWidth,
+      paddingVertical: s.control,
+      paddingHorizontal: resolved.spacing.buttonHorizontal,
+      borderRadius: r.controlRadius,
+      justifyContent: "center",
+      alignItems: "center",
+      borderWidth: r.borderWidth,
+      borderColor: c.primary,
+    } satisfies ViewStyle,
+    buttonText: {
+      fontSize: t.bodySize,
+      lineHeight: t.bodyLineHeight,
+      fontWeight: resolved.typography.buttonWeight,
+      fontFamily: t.fontFamily,
+    } satisfies TextStyle,
+    badge: {
+      alignSelf: "flex-start",
+      backgroundColor: c.surface,
+      borderRadius: r.controlRadius,
+      borderWidth: r.borderWidth,
+      borderColor: c.border,
+      padding: s.control,
+    } satisfies ViewStyle,
+    progressTrack: {
+      height: resolved.controls.progressHeight,
+      borderRadius: r.controlRadius,
+      borderWidth: r.borderWidth,
+      borderColor: c.border,
+      backgroundColor: resolved.colors.progressTrack,
+      overflow: "hidden",
+      flexDirection: "row",
+    } satisfies ViewStyle,
+    progressFill: {
+      height: "100%",
+      backgroundColor: c.primary,
+    } satisfies ViewStyle,
+  };
+}
+
+/** An outline avoids layout shifts and remains separate from an error border. */
+export function focusAppearance(theme: Theme, focused: boolean): ViewStyle {
+  const resolved = resolveTheme(theme);
+  return {
+    outlineColor: resolved.colors.focus,
+    outlineWidth: focused ? resolved.controls.focusWidth : 0,
+    outlineOffset: resolved.controls.focusWidth,
+    outlineStyle: "solid",
   };
 }
 export function buttonAppearance(
