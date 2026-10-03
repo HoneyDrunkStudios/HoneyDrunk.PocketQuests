@@ -4,6 +4,8 @@ A self-improvement app with an Expo/React Native client, .NET 10 API and SQL Ser
 
 ## Structure
 
+Mobile source is grouped by quest, progression and profile features, with separate session, shared contracts/theme and configuration folders. Expo routes remain in `apps/mobile/src/app`; mobile tests mirror their responsibilities. See the [repository structure guide](docs/repository-structure.md) for source, test, documentation and tooling locations.
+
 Open `HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx` in Visual Studio. Projects are peers beside the solution, with internal feature/responsibility folders. Domain types represent rules; persistence types use the `Entity` suffix and Fluent API mappings. `PocketQuests.Database` owns SQL tables, data scripts and DACPAC deployment. The separate Identity checkout appears in the solution's Identity folder.
 
 The application implements the starter catalog, custom quests and revisions, XP/rank/skill progression, completion-specific Undo, planning/recurrence, onboarding, profile rewards, pause/resume rules, local notification planning, bounded offline command replay, export and account lifecycle integration. APIs own mutation validation, time reconciliation and progression. SQL locks, transactional receipts and canonical audit records protect replay and concurrency. Native behavior and production operations still need verification.

@@ -28,6 +28,8 @@ const visibleText = (text, options) =>
     .and(page.locator(':not([aria-hidden="true"], [aria-hidden="true"] *)'))
     .filter({ visible: true });
 page.setDefaultTimeout(15000);
+// A cold Metro compilation can exceed the action timeout; keep navigation bounded separately.
+page.setDefaultNavigationTimeout(60000);
 const failures = [];
 page.on("pageerror", (error) => failures.push(error.message));
 const codes = new Map();
@@ -259,9 +261,15 @@ try {
     })
   ).json();
   expect(committed.overallXp).toBe(280);
+  const synchronized = page.waitForResponse(
+    (response) =>
+      response.url() === "http://localhost:5217/api/sync-anchor" &&
+      response.request().method() === "POST",
+  );
   await page
     .getByRole("button", { name: "Synchronize recorded changes", exact: true })
     .click();
+  expect((await synchronized).ok()).toBe(true);
   await expect(visibleText("Quest complete!", { exact: true })).toBeVisible();
   await expect(visibleText("Level up!", { exact: true })).toBeVisible();
   await expect(

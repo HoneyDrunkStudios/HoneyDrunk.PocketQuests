@@ -1,9 +1,9 @@
 import { Stack } from "expo-router";
-import { SessionProvider } from "../session";
+import { SessionProvider } from "../session/session";
 import { ThemeProvider } from "@honeydrunk/ui-native";
-import { pocketQuestsTheme } from "../theme";
-import { colors } from "../ui";
-import { CompletionOverlay } from "../completion-overlay";
+import { pocketQuestsTheme } from "../shared/theme";
+import { colors } from "../shared/ui";
+import { CompletionOverlay } from "../features/progression/completion-overlay";
 export default function Layout() {
   return (
     <ThemeProvider theme={pocketQuestsTheme}>

@@ -41,8 +41,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "lint": "expo lint",
-    "test:logic": "node --experimental-strip-types --test tests/*.test.mjs",
+    "lint": "expo lint && eslint scripts",
+    "test:logic": "node scripts/test-ci.cjs",
     "test:ci": "node scripts/test-ci.cjs",
     "check:ui": "node scripts/ui-snapshot.cjs",
     "pretypecheck": "npm run check:ui"

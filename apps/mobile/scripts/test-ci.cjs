@@ -2,11 +2,16 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const root = path.resolve(__dirname, "..");
-const tests = fs
-  .readdirSync(path.join(root, "tests"))
-  .filter((name) => name.endsWith(".test.mjs"))
-  .sort()
-  .map((name) => path.join("tests", name));
+function discover(directory) {
+  return fs
+    .readdirSync(path.join(root, directory), { withFileTypes: true })
+    .flatMap((entry) => {
+      const name = path.join(directory, entry.name);
+      if (entry.isDirectory()) return discover(name);
+      return entry.isFile() && entry.name.endsWith(".test.mjs") ? [name] : [];
+    });
+}
+const tests = discover("tests").sort();
 if (!tests.length) throw new Error("No mobile contract test files were found.");
 fs.mkdirSync(path.join(root, "reports"), { recursive: true });
 const result = spawnSync(

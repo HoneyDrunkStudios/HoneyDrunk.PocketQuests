@@ -5,9 +5,9 @@ import { Text, View } from "react-native";
 import { Redirect } from "expo-router";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
-import { identityUrl, useSession } from "../session";
-import { RecoveryPanel } from "../account-settings";
-import { Page, Button, Label, Card, colors, styles } from "../ui";
+import { identityUrl, useSession } from "../session/session";
+import { RecoveryPanel } from "../features/profile/account-settings";
+import { Page, Button, Label, Card, colors, styles } from "../shared/ui";
 WebBrowser.maybeCompleteAuthSession();
 type Configuration = { authority: string; clientId: string; scope: string };
 async function fetchConfiguration(): Promise<Configuration> {

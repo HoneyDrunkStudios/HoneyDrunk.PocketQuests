@@ -1,12 +1,12 @@
-import { questActions } from "../../commands/quest-actions";
+import { questActions } from "../../features/quests/commands/quest-actions";
 import { useState } from "react";
 import { Link, Redirect, useLocalSearchParams } from "expo-router";
 import { Text, TextInput, View } from "react-native";
-import { useSession } from "../../session";
-import { Page, Button, Label, styles } from "../../ui";
-import { QuestRewards } from "../../quest-rewards";
-import { FocusTimer } from "../../focus-timer";
-import { DefinitionManagement } from "../../definition-management";
+import { useSession } from "../../session/session";
+import { Page, Button, Label, styles } from "../../shared/ui";
+import { QuestRewards } from "../../features/quests/quest-rewards";
+import { FocusTimer } from "../../features/quests/focus-timer";
+import { DefinitionManagement } from "../../features/quests/definition-management";
 export default function QuestDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { state, catalog, command, busy, pending, signedIn } = useSession();

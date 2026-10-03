@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { useSession } from "../../session";
-import { Page, Label, QuestCard, colors, styles } from "../../ui";
-import { AvailableQuests } from "../../available-quests";
-import { ProfileEditor } from "../../profile-editor";
+import { useSession } from "../../session/session";
+import { Page, Label, QuestCard, colors, styles } from "../../shared/ui";
+import { AvailableQuests } from "../../features/quests/available-quests";
+import { ProfileEditor } from "../../features/profile/profile-editor";
 
 export default function Quests() {
   const { state } = useSession();

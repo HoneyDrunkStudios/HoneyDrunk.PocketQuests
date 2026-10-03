@@ -1,5 +1,7 @@
 # App testing contract for HoneyDrunk.Actions
 
+Mobile source and test locations are mapped in [repository-structure.md](repository-structure.md). Both `test:logic` and `test:ci` use the existing Node runner with recursive test discovery and nonempty TAP output. Tooling regressions verify nested discovery, failure propagation and zero-file rejection. `npm run lint` includes CommonJS scripts; no lint rule is suppressed.
+
 This is the app-owned interface for the parallel Actions task. HoneyDrunk.Actions owns reusable jobs; HoneyDrunk.Pipelines is deprecated. This slice does not change workflow permissions, install a paid service, or publish a workflow revision. Adopt a reviewed Actions commit only through a separately coordinated consumer update.
 
 The reviewed local Actions contract is `e33803ca10fc28d6b25910cdeea4e565f4cbeba6`, branch `feat/node-quality-foundation`. [ci/validate-actions-candidate.yml](ci/validate-actions-candidate.yml) prepares the exact app caller change: it retains the existing backend job, triggers and permissions, replacing only the frontend steps with `job-node-workspace.yml`. It is outside `.github/workflows` and is **inactive**. `NODE_QUALITY_COMMIT` is deliberately unresolved; do not enable an unpublished remote ref.

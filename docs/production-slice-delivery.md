@@ -1,5 +1,7 @@
 # PocketQuests local production slice - October 3, 2026
 
+Later PR review fixes, folder organization and updated validation counts are recorded in [pr-review-followup.md](pr-review-followup.md). The original local-delivery evidence below remains historical.
+
 The bounded native implementation and local automated checks are complete. **Release acceptance remains blocked** by dependency remediation and real native/device checks. No push, PR, merge, package publication, deployment, credential change or real-user-data operation occurred.
 
 ## Preservation and scope

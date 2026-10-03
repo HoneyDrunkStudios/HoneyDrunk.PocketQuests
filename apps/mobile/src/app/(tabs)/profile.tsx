@@ -1,10 +1,10 @@
-import { questActions } from "../../commands/quest-actions";
+import { questActions } from "../../features/quests/commands/quest-actions";
 import { Text, View } from "react-native";
-import { useSession } from "../../session";
-import { Page, Button, Label, Card, colors, styles } from "../../ui";
-import { SettingsEditor } from "../../settings-editor";
-import { AccountSettings } from "../../account-settings";
-import { ProfileEditor } from "../../profile-editor";
+import { useSession } from "../../session/session";
+import { Page, Button, Label, Card, colors, styles } from "../../shared/ui";
+import { SettingsEditor } from "../../features/profile/settings-editor";
+import { AccountSettings } from "../../features/profile/account-settings";
+import { ProfileEditor } from "../../features/profile/profile-editor";
 export default function Profile() {
   const { state, signOut, refresh, busy, pending, command, exportData } =
     useSession();

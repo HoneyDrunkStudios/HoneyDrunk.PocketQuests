@@ -1,6 +1,6 @@
 import { Redirect, Tabs } from "expo-router";
-import { useSession } from "../../session";
-import { colors } from "../../ui";
+import { useSession } from "../../session/session";
+import { colors } from "../../shared/ui";
 export default function Layout() {
   const { signedIn } = useSession();
   if (!signedIn) return <Redirect href="/" />;

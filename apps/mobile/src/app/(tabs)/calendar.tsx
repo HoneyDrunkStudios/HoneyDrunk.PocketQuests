@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Text, TextInput, View } from "react-native";
-import { useSession } from "../../session";
-import { Page, Button, Label, QuestCard, styles } from "../../ui";
+import { useSession } from "../../session/session";
+import { Page, Button, Label, QuestCard, styles } from "../../shared/ui";
 export default function Calendar() {
   const { state } = useSession();
   const [date, setDate] = useState("");
