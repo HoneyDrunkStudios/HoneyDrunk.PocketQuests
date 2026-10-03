@@ -291,7 +291,7 @@ export function QuestEditor({
           })
         }
       />
-      <Button title="Back to quest board" secondary onPress={onClose} />
+      <Button title="Back to available quests" secondary onPress={onClose} />
     </View>
   );
 }

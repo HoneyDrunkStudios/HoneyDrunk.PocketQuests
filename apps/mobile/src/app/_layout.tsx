@@ -3,6 +3,7 @@ import { SessionProvider } from "../session";
 import { ThemeProvider } from "@honeydrunk/ui-native";
 import { pocketQuestsTheme } from "../theme";
 import { colors } from "../ui";
+import { CompletionOverlay } from "../completion-overlay";
 export default function Layout() {
   return (
     <ThemeProvider theme={pocketQuestsTheme}>
@@ -16,6 +17,7 @@ export default function Layout() {
           <Stack.Screen name="index" options={{ title: "Pocket Quests" }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>
+        <CompletionOverlay />
       </SessionProvider>
     </ThemeProvider>
   );

@@ -1,19 +1,19 @@
 import { foundation, type Theme } from "@honeydrunk/ui-tokens";
-/** Pocket Quests' original anime RPG palette; reusable packages own no product branding. */
+/** Product-owned cream, gold and charcoal; generic packages own no branding. */
 export const pocketQuestsTheme: Theme = {
   ...foundation,
   colors: {
-    text: "#EDF1FF",
-    muted: "#B7C3E0",
-    background: "#0D1225",
-    surface: "#18213B",
-    primary: "#8BE9E1",
-    onPrimary: "#0D1225",
-    border: "#52618B",
-    accent: "#FFD780",
-    danger: "#FFB4C2",
-    input: "#10182E",
+    text: "#27251F",
+    muted: "#625A49",
+    background: "#F6F0E2",
+    surface: "#FFFBF3",
+    primary: "#765718",
+    onPrimary: "#FFFFFF",
+    border: "#89764F",
+    accent: "#765718",
+    danger: "#A12336",
+    input: "#FFFFFF",
   },
-  typography: { ...foundation.typography, titleSize: 34, titleWeight: "900" },
+  typography: { ...foundation.typography, titleSize: 32, titleWeight: "800" },
   shape: { ...foundation.shape, panelRadius: 14, controlRadius: 10 },
 };

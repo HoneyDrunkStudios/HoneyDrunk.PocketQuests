@@ -17,8 +17,8 @@ export default function Layout() {
         tabBarItemStyle: { minHeight: 48 },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Today" }} />
-      <Tabs.Screen name="board" options={{ title: "Quest Board" }} />
+      <Tabs.Screen name="index" options={{ title: "Home" }} />
+      <Tabs.Screen name="board" options={{ title: "Quests" }} />
       <Tabs.Screen name="calendar" options={{ title: "Calendar" }} />
       <Tabs.Screen name="profile" options={{ title: "Progress" }} />
     </Tabs>

@@ -1,82 +1,138 @@
 import { Text, View } from "react-native";
-import { Link, Redirect } from "expo-router";
+import { Redirect } from "expo-router";
 import { useSession } from "../../session";
-import { Page, Label, QuestCard, styles } from "../../ui";
-export default function Today() {
+import { Page, Label, Card, colors, styles } from "../../ui";
+import type { Balance } from "../../contracts";
+
+function ProgressRow({ item }: { item: Balance }) {
+  return (
+    <View
+      style={{
+        paddingVertical: 8,
+        flexDirection: "row",
+        flexWrap: "wrap",
+        justifyContent: "space-between",
+        gap: 8,
+      }}
+    >
+      <Label>{item.name}</Label>
+      <Label>
+        Level {item.level} · {item.xp} XP
+      </Label>
+    </View>
+  );
+}
+export default function Home() {
   const { state } = useSession();
   if (!state)
     return (
       <Page>
-        <Label>Loading your quests…</Label>
+        <Label>Loading your character.</Label>
       </Page>
     );
   if (!state.profile.onboardingComplete)
     return <Redirect href="/(tabs)/board" />;
-  const active = state.occurrences.filter((o) => o.status === "Active");
-  const today = active
-    .filter((o) => o.occurrence.dueDate === state.today)
-    .sort(
-      (a, b) =>
-        (a.occurrence.plannedTime ?? "99:99").localeCompare(
-          b.occurrence.plannedTime ?? "99:99",
-        ) || a.occurrence.acceptedAt.localeCompare(b.occurrence.acceptedAt),
-    );
-  const unscheduled = active.filter((o) => !o.occurrence.dueDate);
+  const badge = state.entitlements.find(
+    (e) => e.id === state.profile.badgeId && e.earned,
+  );
   return (
     <Page>
-      <Text selectable style={styles.title}>
-        A little progress, your way.
+      <Text accessibilityRole="header" selectable style={styles.title}>
+        Your character
       </Text>
-      <Text selectable style={styles.muted}>
-        {state.today} · {state.zone}
-      </Text>
-      {today.length ? (
-        today.map((o) => <QuestCard key={o.occurrence.id} item={o} />)
-      ) : (
-        <View style={styles.card}>
-          <Label>No quests planned for today.</Label>
-          <Link href="/(tabs)/board" style={styles.text}>
-            Choose a quest →
-          </Link>
+      <Label>A record of the things you choose to do.</Label>
+      <Card testID="character-sheet" style={{ gap: 20 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            flexWrap: "wrap",
+            gap: 24,
+            alignItems: "center",
+          }}
+        >
+          <View
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel="Character portrait silhouette"
+            style={{
+              width: 112,
+              minHeight: 144,
+              borderWidth: 2,
+              borderColor: colors.gold,
+              borderRadius: 56,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: colors.paper,
+            }}
+          >
+            <View
+              accessible={false}
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 19,
+                backgroundColor: colors.ink,
+              }}
+            />
+            <View
+              accessible={false}
+              style={{
+                width: 64,
+                height: 56,
+                borderTopLeftRadius: 32,
+                borderTopRightRadius: 32,
+                marginTop: 8,
+                backgroundColor: colors.ink,
+              }}
+            />
+          </View>
+          <View style={{ flexGrow: 1, flexShrink: 1, minWidth: 140, gap: 10 }}>
+            <Text accessibilityRole="header" style={styles.title}>
+              Level {state.overallLevel}
+            </Text>
+            <Label>{state.overallXp} overall XP earned</Label>
+            <Text style={[styles.subtitle, { color: colors.gold }]}>
+              Global rank {state.rank.current}
+            </Text>
+            {badge && <Label>{badge.name}</Label>}
+          </View>
         </View>
-      )}
-      {unscheduled.length > 0 && (
-        <>
-          <Text selectable style={styles.subtitle}>
-            Whenever you’re ready
-          </Text>
-          {unscheduled.map((o) => (
-            <QuestCard key={o.occurrence.id} item={o} />
-          ))}
-        </>
-      )}
-      <Text selectable style={styles.subtitle}>
-        Category streaks
+        {state.rank.current === "S" ? (
+          <Label>All ten paths contribute to rank S.</Label>
+        ) : (
+          <Label>
+            Toward rank {state.rank.requirement.rank}:{" "}
+            {state.rank.qualifyingCategories}/{state.rank.requirement.count}{" "}
+            categories at {state.rank.requirement.floor} XP each, and{" "}
+            {state.rank.total}/{state.rank.requirement.total} combined category
+            XP.
+          </Label>
+        )}
+      </Card>
+      <Text accessibilityRole="header" style={styles.subtitle}>
+        Ten paths · Categories
       </Text>
-      {state.streaks.filter((s) => s.days > 0).length ? (
-        state.streaks
-          .filter((s) => s.days > 0)
-          .map((s) => (
-            <Label key={s.categoryId}>
-              {state.categories.find((c) => c.id === s.categoryId)?.name}:{" "}
-              {s.days} {s.days === 1 ? "day" : "days"} ·{" "}
-              {s.qualifiedToday ? "Done today" : "Complete today to continue"}
-            </Label>
-          ))
-      ) : (
-        <Label>Your first completion starts a category streak.</Label>
-      )}
-      <View style={styles.card}>
-        <Text selectable style={styles.subtitle}>
-          Rank {state.rank.current}
-        </Text>
-        <Label>
-          {state.rank.qualifyingCategories}/{state.rank.requirement.count}{" "}
-          categories at {state.rank.requirement.floor} XP · {state.rank.total}/
-          {state.rank.requirement.total} combined XP toward{" "}
-          {state.rank.requirement.rank}
-        </Label>
-      </View>
+      <Card>
+        {state.categories.map((item) => (
+          <ProgressRow key={item.id} item={item} />
+        ))}
+      </Card>
+      <Text accessibilityRole="header" style={styles.subtitle}>
+        Attributes
+      </Text>
+      <Card>
+        {state.attributes.map((item) => (
+          <ProgressRow key={item.id} item={item} />
+        ))}
+      </Card>
+      <Text accessibilityRole="header" style={styles.subtitle}>
+        Skills
+      </Text>
+      <Card>
+        {state.skills.map((item) => (
+          <ProgressRow key={item.id} item={item} />
+        ))}
+      </Card>
     </Page>
   );
 }

@@ -18,6 +18,7 @@ export type Quest = {
 };
 export type Balance = Named & { xp: number; level: number };
 export type OccurrenceView = {
+  pendingCompletion?: boolean;
   occurrence: {
     id: string;
     quest: Quest;
@@ -77,6 +78,14 @@ export type ZonePreview = {
   }[];
 };
 export type State = {
+  ledger?: {
+    eventId: string;
+    occurrenceId: string;
+    at: string;
+    track: "Overall" | "Category" | "Attribute" | "Skill";
+    trackId: string;
+    amount: number;
+  }[];
   futureWarnings?: string[] | null;
   schedule: {
     series: Series[];

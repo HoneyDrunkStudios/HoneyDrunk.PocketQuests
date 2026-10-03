@@ -4,10 +4,13 @@ import { Link, useLocalSearchParams } from "expo-router";
 import { Text, TextInput, View } from "react-native";
 import { useSession } from "../../session";
 import { Page, Button, Label, styles } from "../../ui";
+import { QuestRewards } from "../../quest-rewards";
+import { FocusTimer } from "../../focus-timer";
 export default function QuestDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { state, command, busy, pending } = useSession();
+  const { state, catalog, command, busy, pending } = useSession();
   const [confirmLoss, setConfirmLoss] = useState(false);
+  const [focus, setFocus] = useState(false);
   const item = state?.occurrences.find((o) => o.occurrence.id === id);
   if (!item)
     return (
@@ -17,8 +20,51 @@ export default function QuestDetails() {
     );
   return (
     <Page>
-      <Text style={styles.title}>{item.occurrence.quest.title}</Text>
+      <Text accessibilityRole="header" style={styles.title}>
+        {item.occurrence.quest.title}
+      </Text>
       <Label>{item.occurrence.quest.criterion}</Label>
+      <QuestRewards
+        quest={item.occurrence.quest}
+        catalog={catalog}
+        state={state}
+      />
+      {item.status === "Active" && (
+        <>
+          <Button
+            title={`Complete: ${item.occurrence.quest.title}`}
+            disabled={busy || pending}
+            onPress={() =>
+              void command({ action: questActions.complete, occurrenceId: id })
+            }
+          />
+          {(item.occurrence.quest.isCustom ||
+            [
+              "PQ-CAT-Q01",
+              "PQ-CAT-Q02",
+              "PQ-CAT-Q03",
+              "PQ-CAT-Q04",
+              "PQ-CAT-Q07",
+              "PQ-CAT-Q08",
+            ].includes(item.occurrence.quest.id)) && (
+            <>
+              <Button
+                title={
+                  focus ? "Close focus timer" : "Do Now with an optional timer"
+                }
+                secondary
+                onPress={() => setFocus(!focus)}
+              />
+              {focus && <FocusTimer key={id} />}
+            </>
+          )}
+        </>
+      )}
+      {item.pendingCompletion && (
+        <Label>
+          Recorded on this device. Rewards will be confirmed when synchronized.
+        </Label>
+      )}
       <Label>
         {item.status} · {item.occurrence.quest.baseXp} XP
       </Label>
@@ -188,7 +234,7 @@ export default function QuestDetails() {
         grants XP or automatically completes a parent.
       </Label>
       <Link href="/(tabs)" style={styles.text}>
-        Back to Today
+        Back to Home
       </Link>
     </Page>
   );

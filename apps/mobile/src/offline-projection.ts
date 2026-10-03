@@ -48,18 +48,28 @@ export function pendingProjection(
     const item = state.occurrences.find(
       (o) => o.occurrence.id === command.occurrenceId,
     );
-    if (item && command.action === questActions.complete) {
+    if (
+      item &&
+      command.action === questActions.complete &&
+      item.status === "Active"
+    ) {
       item.status = "Completed";
       item.completion = {
         id: command.operationId,
         recordedAt: command.recordedTime?.deviceUtc ?? "",
       };
       item.canUndo = true;
+      item.pendingCompletion = true;
     }
-    if (item && command.action === questActions.undo) {
+    if (
+      item &&
+      command.action === questActions.undo &&
+      item.completion?.id === command.completionId
+    ) {
       item.status = "Active";
       item.completion = null;
       item.canUndo = false;
+      item.pendingCompletion = false;
     }
   }
   return state;

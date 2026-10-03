@@ -35,8 +35,6 @@ export function Page({ children }: { children: React.ReactNode }) {
     queuedCount,
     discardPending,
     signOut,
-    recentCompletion,
-    command,
   } = useSession();
   const insets = useSafeAreaInsets();
   return (
@@ -81,22 +79,6 @@ export function Page({ children }: { children: React.ReactNode }) {
               />
             </>
           )}
-        </View>
-      )}
-      {recentCompletion && (
-        <View accessibilityLiveRegion="polite" style={styles.card}>
-          <Label>Completion recorded.</Label>
-          <Button
-            title="Undo recent completion"
-            disabled={busy || pending}
-            onPress={() =>
-              void command({
-                action: questActions.undo,
-                occurrenceId: recentCompletion.occurrenceId,
-                completionId: recentCompletion.completionId,
-              })
-            }
-          />
         </View>
       )}
       {error && (
@@ -144,6 +126,9 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
         </Text>
       </View>
       <Label>{q.criterion}</Label>
+      {item.pendingCompletion && (
+        <Label>Completion awaiting sync · rewards unconfirmed</Label>
+      )}
       <Text selectable style={styles.muted}>
         {item.occurrence.dueDate
           ? `Due ${item.occurrence.dueDate}`
@@ -157,7 +142,7 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
         href={{ pathname: "/quest/[id]", params: { id: item.occurrence.id } }}
         style={styles.text}
       >
-        Quest details and planning
+        Open quest
       </Link>
       {item.occurrence.lifecycle?.lockedLoss != null && (
         <Label>
@@ -170,18 +155,6 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
           Frozen: resume its category/account pause first. Stopped-series
           commitments can then be resumed in quest details.
         </Label>
-      )}
-      {item.status === "Active" && (
-        <Button
-          title={`Complete: ${q.title}`}
-          onPress={() =>
-            void command({
-              action: questActions.complete,
-              occurrenceId: item.occurrence.id,
-            })
-          }
-          disabled={busy || pending}
-        />
       )}
       {item.canUndo && (
         <Button

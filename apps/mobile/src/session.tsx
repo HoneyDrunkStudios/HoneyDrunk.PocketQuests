@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { AppState, Platform } from "react-native";
+import { AccessibilityInfo, AppState, Platform } from "react-native";
 import * as Crypto from "expo-crypto";
 import type {
   Anchor,
@@ -29,6 +29,11 @@ import { pendingProjection } from "./offline-projection";
 import { saveExport } from "./export-download";
 import { syncWarnings } from "./notifications";
 import { RequestError } from "./request-error";
+import {
+  completionAnnouncement,
+  completionFeedback,
+  type CompletionFeedback,
+} from "./completion-feedback";
 import {
   apiUrl,
   identityUrl,
@@ -85,11 +90,8 @@ type SessionContext = {
   pending: boolean;
   offline: boolean;
   queuedCount: number;
-  recentCompletion: {
-    occurrenceId: string;
-    completionId: string;
-    until: number;
-  } | null;
+  recentCompletion: (CompletionFeedback & { until: number }) | null;
+  dismissCompletion(): void;
   connect(token: string): Promise<void>;
   refresh(): Promise<void>;
   command(command: Omit<Command, "operationId">): Promise<void>;
@@ -161,6 +163,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     await saveAccount(value);
     localRef.current = value;
     if (mounted.current) setLocal(value);
+    setRecentCompletion((notice) =>
+      notice &&
+      !value.state.occurrences.some(
+        (o) =>
+          o.status === "Completed" && o.completion?.id === notice.completionId,
+      )
+        ? null
+        : notice,
+    );
   }, []);
   const forgetInactive = useCallback(async (status: AccountStatus) => {
     if (
@@ -242,11 +253,33 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         active.token,
         current.queue[0],
       );
+      const action = current.queue[0];
+      const feedback = completionFeedback(current.state, result, action);
       await publish({
         ...current,
         state: result,
         queue: current.queue.slice(1),
       });
+      if (
+        feedback &&
+        !current.queue.some(
+          (c) =>
+            c.action === questActions.undo &&
+            c.completionId === feedback.completionId,
+        )
+      ) {
+        setRecentCompletion({
+          ...feedback,
+          until: Date.now() + completionNoticeDurationMs,
+        });
+        AccessibilityInfo.announceForAccessibility(
+          completionAnnouncement(feedback),
+        );
+      }
+      if (action.action === questActions.undo)
+        setRecentCompletion((notice) =>
+          notice?.completionId === action.completionId ? null : notice,
+        );
     }
     const state = await request<State>("/api/state", active.token);
     const anchor = await anchorFor(active.token);
@@ -427,14 +460,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       if (Platform.OS === "web") window.removeEventListener("online", online);
     };
   }, [refresh]);
-  useEffect(() => {
-    if (!recentCompletion) return;
-    const timer = setTimeout(
-      () => setRecentCompletion(null),
-      Math.max(0, recentCompletion.until - Date.now()),
-    );
-    return () => clearTimeout(timer);
-  }, [recentCompletion]);
   async function command(input: Omit<Command, "operationId">) {
     const current = localRef.current;
     if (
@@ -487,12 +512,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         queue: [...current.queue, item],
         anchor: anchor ? { ...anchor, ordinal: anchor.ordinal + 1 } : null,
       });
-      if (item.action === questActions.complete)
-        setRecentCompletion({
-          occurrenceId: item.occurrenceId!,
-          completionId: item.operationId,
-          until: Date.now() + completionNoticeDurationMs,
-        });
+      if (item.action === questActions.undo)
+        setRecentCompletion((notice) =>
+          notice?.completionId === item.completionId ? null : notice,
+        );
       if (!offline) await drain();
       else
         setError(
@@ -630,6 +653,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         offline,
         queuedCount: local?.queue.length ?? 0,
         recentCompletion,
+        dismissCompletion: () => setRecentCompletion(null),
         connect,
         refresh,
         command,
