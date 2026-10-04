@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PocketQuests.Application.Identity;
+using PocketQuests.Application.Synchronization;
 using PocketQuests.Data.Repositories;
 using PocketQuests.Domain.Commands;
 using PocketQuests.Domain.Quests.Occurrences;
@@ -196,9 +197,9 @@ public sealed partial class SqlApiTests
         await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(other, undo, now.AddMilliseconds(500)));
         await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(account, undo with { RecordedTime = undo.RecordedTime! with { BootId = Guid.NewGuid() } }, now.AddMilliseconds(500)));
         await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(account, undo with { RecordedTime = undo.RecordedTime! with { DeviceUtc = now.AddMinutes(3) } }, now.AddMilliseconds(500)));
-        await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(account, undo with { RecordedTime = undo.RecordedTime! with { ElapsedMilliseconds = 5001, DeviceUtc = anchor.DeviceUtc.AddMilliseconds(5001) } }, now.AddMilliseconds(200)));
-        await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(account, undo, now.AddMilliseconds(-1)));
-        await Assert.ThrowsAsync<ArgumentException>(() => AnchorAt(account, now.AddMilliseconds(-1)));
+        await Assert.ThrowsAsync<SyncClockNotReadyException>(() => ExecuteAt(account, undo with { RecordedTime = undo.RecordedTime! with { ElapsedMilliseconds = 5001, DeviceUtc = anchor.DeviceUtc.AddMilliseconds(5001) } }, now.AddMilliseconds(200)));
+        await Assert.ThrowsAsync<SyncClockNotReadyException>(() => ExecuteAt(account, undo, now.AddMilliseconds(-1)));
+        await Assert.ThrowsAsync<SyncClockNotReadyException>(() => AnchorAt(account, now.AddMilliseconds(-1)));
         Assert.Equal(0, (await ExecuteAt(account, undo, now.AddMilliseconds(500))).OverallXp);
         await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(account, undo with { OperationId = Guid.NewGuid() }, now.AddSeconds(1)));
         await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(account, undo with { OperationId = Guid.NewGuid(), RecordedTime = undo.RecordedTime! with { Ordinal = 2, ElapsedMilliseconds = 299 } }, now.AddSeconds(1)));

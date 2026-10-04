@@ -2,11 +2,14 @@ import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import * as Crypto from "expo-crypto";
 import type { Anchor, Catalog, Command, State } from "../shared/contracts";
+import type { RejectedCommand } from "./sync-recovery";
 export type LocalAccount = {
   userId: string;
   state: State;
   catalog: Catalog;
   queue: Command[];
+  // Optional when reading caches written before individual sync recovery existed.
+  rejected?: RejectedCommand[];
   anchor: Anchor | null;
 };
 const memory = new Map<string, LocalAccount>();
