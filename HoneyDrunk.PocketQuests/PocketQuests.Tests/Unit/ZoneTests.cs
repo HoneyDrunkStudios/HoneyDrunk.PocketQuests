@@ -1,5 +1,6 @@
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Quests.Aggregates;
-using PocketQuests.Domain.Quests.Occurrences;
 using PocketQuests.Domain.Schedules;
 
 namespace PocketQuests.Tests.Unit;

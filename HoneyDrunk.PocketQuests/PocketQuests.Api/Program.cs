@@ -4,21 +4,20 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using PocketQuests.Api.AccountLifecycle;
 using PocketQuests.Api.Authentication;
+using PocketQuests.Api.Contracts;
+using PocketQuests.Api.Errors;
 using PocketQuests.Api.Exports;
+using PocketQuests.Api.Hosting;
+using PocketQuests.Api.OpenApi;
 using PocketQuests.Api.Quests;
-using PocketQuests.Application.Persistence;
 using PocketQuests.Application.Quests;
-using PocketQuests.Application.Synchronization;
-using PocketQuests.Data.Context;
+using PocketQuests.Data;
 using PocketQuests.ServiceDefaults;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
-builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddApiJson();
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddDbContext<QuestDbContext>(options => options.UseSqlServer(
-    builder.Configuration.GetConnectionString("quests") ?? throw new InvalidOperationException("SQL Server connection 'quests' is required.")));
 builder.Services.AddHealthChecks().AddDbContextCheck<QuestDbContext>();
 builder.AddQuestPersistence();
 builder.Services.AddScoped<QuestService>();
@@ -33,9 +32,12 @@ builder.Services.AddHttpClient<IdentityClient>(client =>
 });
 builder.Services.AddAuthentication("Identity").AddScheme<AuthenticationSchemeOptions, IdentityAuthentication>("Identity", _ => { });
 builder.Services.AddAuthorization();
-builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
-    policy.WithOrigins("http://localhost:8081", "http://127.0.0.1:8081").AllowAnyHeader().AllowAnyMethod()));
+builder.AddApiHttpPolicy();
+builder.Services.AddQuestOpenApi();
 var app = builder.Build();
+app.UseMiddleware<ApiExceptionMiddleware>();
+app.UseApiTransport();
+app.UseRouting();
 app.UseCors();
 app.Use(async (context, next) =>
 {
@@ -52,38 +54,9 @@ app.Use(async (context, next) =>
 app.UseGridContext();
 app.UseAuthentication();
 app.UseAuthorization();
-app.Use(async (context, next) =>
-{
-    try
-    {
-        await next(context);
-    }
-    catch (UnauthorizedAccessException)
-    {
-        await Results.Unauthorized().ExecuteAsync(context);
-    }
-    catch (ReconciliationPendingException)
-    {
-        context.Response.Headers.RetryAfter = "1";
-        await Results.Problem("Recurring deliveries are being reconciled. Retry the exact pending request.", statusCode: 503).ExecuteAsync(context);
-    }
-    catch (SyncClockNotReadyException error)
-    {
-        await Results.Problem(error.Message, statusCode: 503).ExecuteAsync(context);
-    }
-    catch (ArgumentException error)
-    {
-        await Results.Problem(error.Message, statusCode: 400).ExecuteAsync(context);
-    }
-    catch (InvalidOperationException)
-    {
-        await Results.Problem("The action conflicts with current quest state. Refresh and check the deadline or Undo window.", statusCode: 409).ExecuteAsync(context);
-    }
-    catch (KeyNotFoundException)
-    {
-        await Results.NotFound().ExecuteAsync(context);
-    }
-});
+app.UseRateLimiter();
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
+    app.MapOpenApi();
 app.MapDefaultEndpoints();
 app.MapQuestEndpoints();
 app.MapExportEndpoints();

@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Application.Identity;
-using PocketQuests.Data.Relational.Commands;
-using PocketQuests.Data.Relational.Entities;
+using PocketQuests.Data.Entities.Accounts;
+using PocketQuests.Data.Entities.Synchronization;
 using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Progress;
-using PocketQuests.Domain.Quests.Definitions;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Text;
@@ -23,7 +23,7 @@ public sealed class RelationalReceiptSizeTests(SchemaFixture fixture) : IClassFi
     {
         var at = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
         var owner = new AccountIdentity("verified-identity", "usr_" + Guid.NewGuid().ToString("N")[..26].ToUpperInvariant());
-        var store = new RelationalQuestCommands(fixture.Connection);
+        var store = fixture.Commands();
         await store.Initialize(owner, "Etc/UTC", at);
         var skills = Enumerable.Range(0, 64).Select(_ => Guid.NewGuid().ToString("D")).ToArray();
         for (var index = 0; index < skills.Length; index++)

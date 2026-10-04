@@ -1,14 +1,17 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Application.Identity;
-using PocketQuests.Application.Synchronization;
-using PocketQuests.Data.Relational.Commands;
-using PocketQuests.Data.Relational.Entities;
+using PocketQuests.Data.Entities.Accounts;
+using PocketQuests.Data.Entities.Progress;
+using PocketQuests.Data.Entities.Quests;
+using PocketQuests.Data.Entities.Synchronization;
 using PocketQuests.Domain.Catalogs;
 using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Projections;
+using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Synchronization;
 using PocketQuests.Domain.Quests.Aggregates;
-using PocketQuests.Domain.Synchronization;
+using PocketQuests.Domain.Services.Quests;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
@@ -21,12 +24,7 @@ public sealed class RelationalCommandTests(SchemaFixture fixture) : IClassFixtur
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private RelationalQuestCommands Store => new(fixture.Connection);
-
-    /// <summary>Scalar nulls, ownership, immutable fields and lifecycle bypass are rejected under the actual command role.</summary>
-    /// <returns>Completion after thirteen rejected writes and one valid rolled-back control.</returns>
-    [Fact]
-    public Task GeneralizedWriterRejectsInvalidTransactionsUnderRuntimeRole() => fixture.Script("negative-generalized-writer.sql");
+    private IQuestService Store => fixture.Commands();
 
     /// <summary>Every catalog allocation, including presentation order and empty pools, round-trips through typed source rows.</summary>
     /// <returns>Completion after comparing actual public state with the existing Domain.</returns>
@@ -76,7 +74,7 @@ public sealed class RelationalCommandTests(SchemaFixture fixture) : IClassFixtur
         Equal(accepted, await Store.Execute(owner, accept, Start.AddYears(2)));
         Equal(completed, await Store.Execute(owner, complete, Start.AddYears(2)));
         Equal(undone, await Store.Execute(owner, undo, Start.AddYears(2)));
-        await Assert.ThrowsAsync<InvalidOperationException>(() => Store.Execute(owner, complete with { PlannedTime = "12:30" }, Start.AddYears(2)));
+        await Assert.ThrowsAsync<QuestConflictException>(() => Store.Execute(owner, complete with { PlannedTime = "12:30" }, Start.AddYears(2)));
         await using var db = fixture.Context();
         var account = await db.Set<AccountEntity>().SingleAsync(a => a.IdentityUserId == owner.Subject);
         var receipts = await db.Set<CommandReceiptEntity>().Where(r => r.AccountId == account.Id).ToListAsync();
@@ -142,7 +140,7 @@ public sealed class RelationalCommandTests(SchemaFixture fixture) : IClassFixtur
         await Assert.ThrowsAsync<SyncClockNotReadyException>(() => Store.Execute(owner, command, Start));
         await AssertProofUnchanged(owner, anchor.Id, command.OperationId);
         var mismatch = command with { RecordedTime = command.RecordedTime! with { DeviceUtc = Start.AddHours(1) } };
-        await Assert.ThrowsAsync<ArgumentException>(() => Store.Execute(owner, mismatch, Start.AddMinutes(1)));
+        await Assert.ThrowsAsync<QuestValidationException>(() => Store.Execute(owner, mismatch, Start.AddMinutes(1)));
         await AssertProofUnchanged(owner, anchor.Id, command.OperationId);
         var result = await Store.Execute(owner, command, Start.AddSeconds(6));
         Equal(result, await Store.Execute(owner, command, Start.AddSeconds(-30)));
@@ -169,13 +167,13 @@ public sealed class RelationalCommandTests(SchemaFixture fixture) : IClassFixtur
         var accept = Accept();
         await Store.Execute(owner, accept, Start);
         var complete = new QuestCommand(Guid.NewGuid(), QuestActions.Complete, accept.OccurrenceId, RecordedTime: new(anchor.Id, anchor.BootId, 1, 1000, Start.AddSeconds(1)));
-        await Assert.ThrowsAsync<ArgumentException>(() => Store.Execute(owner, complete, Start.AddSeconds(2)));
-        await Assert.ThrowsAsync<ArgumentException>(() => Store.Execute(other, complete, Start.AddSeconds(2)));
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => Store.Execute(other, complete with { RecordedTime = null }, Start.AddSeconds(2)));
+        await Assert.ThrowsAsync<QuestValidationException>(() => Store.Execute(owner, complete, Start.AddSeconds(2)));
+        await Assert.ThrowsAsync<QuestValidationException>(() => Store.Execute(other, complete, Start.AddSeconds(2)));
+        await Assert.ThrowsAsync<QuestNotFoundException>(() => Store.Execute(other, complete with { RecordedTime = null }, Start.AddSeconds(2)));
         var offlineAccept = Accept() with { RecordedTime = new(anchor.Id, anchor.BootId, 1, 2000, Start.AddSeconds(2)) };
         await Store.Execute(owner, offlineAccept, Start.AddDays(90));
         var offlineComplete = new QuestCommand(Guid.NewGuid(), QuestActions.Complete, offlineAccept.OccurrenceId, RecordedTime: new(anchor.Id, anchor.BootId, 2, 3000, Start.AddSeconds(3)));
-        await Assert.ThrowsAsync<ArgumentException>(() => Store.Execute(owner, offlineComplete with { RecordedTime = offlineComplete.RecordedTime! with { BootId = Guid.NewGuid() } }, Start.AddDays(90)));
+        await Assert.ThrowsAsync<QuestValidationException>(() => Store.Execute(owner, offlineComplete with { RecordedTime = offlineComplete.RecordedTime! with { BootId = Guid.NewGuid() } }, Start.AddDays(90)));
         await Store.Execute(owner, offlineComplete, Start.AddDays(90));
 
         // Provider/issuer representation changes do not fork a canonical Identity account.
@@ -222,7 +220,7 @@ public sealed class RelationalCommandTests(SchemaFixture fixture) : IClassFixtur
         var original = await Store.Execute(owner, complete, Start);
         var anchor = await Store.CreateAnchor(owner, Guid.NewGuid(), Guid.NewGuid(), Start, Start);
         var undo = new QuestCommand(Guid.NewGuid(), QuestActions.Undo, accept.OccurrenceId, CompletionId: complete.OperationId);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => Store.Execute(owner, undo, Start.AddHours(24)));
+        await Assert.ThrowsAsync<QuestConflictException>(() => Store.Execute(owner, undo, Start.AddHours(24)));
         var delayed = undo with { RecordedTime = new(anchor.Id, anchor.BootId, 1, 86_399_999.5, Start.AddMilliseconds(86_399_999.5)) };
         var result = await Store.Execute(owner, delayed, Start.AddDays(365));
         Assert.Equal(0, result.OverallXp);
@@ -249,8 +247,8 @@ public sealed class RelationalCommandTests(SchemaFixture fixture) : IClassFixtur
         await fixture.Execute($"ALTER TABLE dbo.AuditRecords ADD CONSTRAINT CK_Test_AuditFailure CHECK (Actor <> N'{owner.Subject}' OR EventName <> N'pocketquests.quest.complete');");
         try
         {
-            var failure = await Assert.ThrowsAsync<SqlException>(() => Store.Execute(owner, complete, Start.AddSeconds(2)));
-            Assert.Equal(547, failure.Number);
+            var failure = await Assert.ThrowsAsync<DbUpdateException>(() => Store.Execute(owner, complete, Start.AddSeconds(2)));
+            Assert.Equal(547, Assert.IsType<SqlException>(failure.InnerException).Number);
             await AssertProofUnchanged(owner, anchor.Id, complete.OperationId);
             Assert.False(await db.Set<QuestCompletionEntity>().AnyAsync(c => c.Id == complete.OperationId));
             Assert.False(await db.Set<QuestOccurrenceEventEntity>().AnyAsync(e => e.Id == complete.OperationId));
@@ -269,20 +267,12 @@ public sealed class RelationalCommandTests(SchemaFixture fixture) : IClassFixtur
         Assert.Contains(complete.OperationId.ToString("N"), (string)audit.Rows[1]["MetadataJson"], StringComparison.Ordinal);
     }
 
-    /// <summary>The SQL service role may execute controlled boundaries but cannot rewrite receipts, history, projections or shared Audit.</summary>
+    /// <summary>The EF service role permits owned application writes but cannot rewrite immutable history, catalogs, or lifecycle fences.</summary>
     /// <returns>Completion after actual SQL impersonation, without provisioning a login.</returns>
     [Fact]
-    public async Task RuntimeRoleDeniesDirectMutationAndAllowsControlledInitialization()
+    public async Task RuntimeRoleAllowsEfWritesAndProtectsCatalogsHistoryAndLifecycle()
     {
         await fixture.Script("runtime-role-probes.sql");
-    }
-
-    /// <summary>Direct procedure calls cannot bypass ownership, concurrency, compact outcome and allocation invariants.</summary>
-    /// <returns>Completion after rollback assertions for each rejected SQL write.</returns>
-    [Fact]
-    public async Task ControlledWriterRejectsInvalidBatchesWithoutPartialHistory()
-    {
-        await fixture.Script("runtime-command-negatives.sql");
     }
 
     /// <summary>Erasure markers and inactive lifecycle state fence account access including old receipt replay.</summary>
@@ -292,15 +282,14 @@ public sealed class RelationalCommandTests(SchemaFixture fixture) : IClassFixtur
     {
         var erased = Identity();
         await fixture.Execute($"INSERT pocketquests.ErasureMarker(Id,CreatedAt) VALUES('{erased.Subject}','2026-01-01T00:00:00+00:00');");
-        var rejected = await Assert.ThrowsAsync<SqlException>(() => Store.Initialize(erased, "Etc/UTC", Start));
-        Assert.Equal(51103, rejected.Number);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Store.Initialize(erased, "Etc/UTC", Start));
         var owner = Identity();
         await Store.Initialize(owner, "Etc/UTC", Start);
         var accept = Accept();
         await Store.Execute(owner, accept, Start);
         await fixture.Execute($"INSERT pocketquests.AccountLifecycleState(Id,IdentityUserId,AccountId,Version,StateCode,EffectiveAt) SELECT NEWID(),IdentityUserId,Id,1,'Inactive','2026-01-01T13:00:00+00:00' FROM pocketquests.Account WHERE IdentityUserId='{owner.Subject}';");
-        Assert.Equal(51103, (await Assert.ThrowsAsync<SqlException>(() => Store.Read(owner, Start.AddHours(1)))).Number);
-        Assert.Equal(51103, (await Assert.ThrowsAsync<SqlException>(() => Store.Execute(owner, accept, Start.AddHours(1)))).Number);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Store.Read(owner, Start.AddHours(1)));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Store.Execute(owner, accept, Start.AddHours(1)));
         await using var db = fixture.Context();
         Assert.False(await db.Set<AccountEntity>().AnyAsync(a => a.IdentityUserId == erased.Subject));
     }

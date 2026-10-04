@@ -1,6 +1,6 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Data.Relational.Entities;
+using PocketQuests.Data.Entities.Quests;
 
 namespace PocketQuests.SchemaTests;
 

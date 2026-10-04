@@ -758,27 +758,21 @@
         "resolved": "1.4.1",
         "contentHash": "V6crLJ8a29raWeNwxYGfH9RTKA3H0nR0D9LAGzN3KtEsbiiaWkUjDor6OT5Oz7pxCK+NaY2hu2FLoYEOa8oCkA=="
       },
-      "pocketquests.application": {
-        "type": "Project",
-        "dependencies": {
-          "PocketQuests.Domain": "[1.0.0, )"
-        }
-      },
       "pocketquests.data": {
         "type": "Project",
         "dependencies": {
           "HoneyDrunk.Audit.Data": "[0.2.1, )",
           "HoneyDrunk.Data.EntityFramework": "[0.7.1, )",
           "HoneyDrunk.Data.Outbox": "[0.7.1, )",
-          "HoneyDrunk.Identity.Abstractions": "[0.1.0-alpha.4, 0.1.0-alpha.4]",
-          "Microsoft.EntityFrameworkCore.SqlServer": "[10.0.12, )",
-          "PocketQuests.Application": "[1.0.0, )"
+          "Microsoft.EntityFrameworkCore.SqlServer": "[10.0.12, )"
         }
       },
       "pocketquests.domain": {
         "type": "Project",
         "dependencies": {
-          "NodaTime": "[3.3.4, )"
+          "HoneyDrunk.Identity.Abstractions": "[0.1.0-alpha.4, 0.1.0-alpha.4]",
+          "NodaTime": "[3.3.4, )",
+          "PocketQuests.Data": "[1.0.0, )"
         }
       }
     }

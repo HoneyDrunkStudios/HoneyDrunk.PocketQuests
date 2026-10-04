@@ -2,10 +2,15 @@ using HoneyDrunk.Identity.Abstractions.AccountLifecycle;
 using HoneyDrunk.Identity.Abstractions.Accounts;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Application.Identity;
-using PocketQuests.Data.Relational.Commands;
-using PocketQuests.Data.Relational.Entities;
+using PocketQuests.Data.Entities.Accounts;
+using PocketQuests.Data.Entities.Lifecycle;
+using PocketQuests.Data.Entities.Quests;
+using PocketQuests.Data.Entities.Synchronization;
 using PocketQuests.Domain.Commands;
+using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Services.Quests;
 using System.Data;
 using System.Text.Json;
 
@@ -17,10 +22,10 @@ public sealed class RelationalLifecycleTests(SchemaFixture fixture) : IClassFixt
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private RelationalQuestCommands Store => new(fixture.Connection);
+    private IQuestService Store => fixture.Commands();
 
-    /// <summary>Private procedures work without table writes and compose with separately owned Outbox dispatcher grants.</summary>
-    /// <returns>Completion after eight permission negatives and transition/acknowledgment/retention/erasure controls.</returns>
+    /// <summary>Private lifecycle EF permissions compose with separately owned Outbox dispatcher grants.</summary>
+    /// <returns>Completion after checking private lifecycle writes and composed dispatcher permissions.</returns>
     [Fact]
     public Task PrivateLifecycleRoleAndSharedDispatcherPermissionsCompose() => fixture.Script("lifecycle-role-probes.sql");
 
@@ -36,8 +41,8 @@ public sealed class RelationalLifecycleTests(SchemaFixture fixture) : IClassFixt
         var anchor = await Store.CreateAnchor(owner, Guid.NewGuid(), Guid.NewGuid(), Start, Start);
         var pausedAt = Start.AddMinutes(1);
         var inactive = Intent(owner, 1, IdentityProtocol.Inactive, pausedAt, pausedAt);
-        await Store.ReceiveLifecycle(inactive, "private-ack", pausedAt);
-        await Store.ReceiveLifecycle(inactive, "private-ack", pausedAt.AddSeconds(1));
+        await fixture.Lifecycle().ReceiveLifecycle(inactive, "private-ack", pausedAt);
+        await fixture.Lifecycle().ReceiveLifecycle(inactive, "private-ack", pausedAt.AddSeconds(1));
         await using var db = fixture.Context();
         var account = await db.Set<AccountEntity>().SingleAsync(a => a.IdentityUserId == owner.Subject);
         Assert.Equal(2, account.MutationVersion);
@@ -47,21 +52,21 @@ public sealed class RelationalLifecycleTests(SchemaFixture fixture) : IClassFixt
         Assert.NotNull((await db.Set<SyncAnchorEntity>().SingleAsync(a => a.Id == anchor.Id)).InvalidatedAt);
         Assert.Equal(1, await db.Set<LifecycleMessageEntity>().CountAsync(m => m.IdentityUserId == owner.Subject));
         var renewed = inactive with { Acknowledgment = Capability() };
-        await Store.ReceiveLifecycle(renewed, "private-ack", pausedAt.AddSeconds(2));
+        await fixture.Lifecycle().ReceiveLifecycle(renewed, "private-ack", pausedAt.AddSeconds(2));
         Assert.Equal(2, await db.Set<LifecycleMessageEntity>().CountAsync(m => m.IdentityUserId == owner.Subject));
         Assert.Equal(2, (await db.Set<AccountEntity>().SingleAsync(a => a.Id == account.Id)).MutationVersion);
-        await Assert.ThrowsAsync<SqlException>(() => Store.Execute(owner, accept, pausedAt));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Store.Execute(owner, accept, pausedAt));
         var recoveredAt = pausedAt.AddMinutes(2);
         var recovered = Intent(owner, 2, IdentityProtocol.Active, recoveredAt, pausedAt);
-        await Store.ReceiveLifecycle(recovered, "private-ack", recoveredAt);
-        await Store.ReceiveLifecycle(inactive, "private-ack", recoveredAt.AddSeconds(1));
+        await fixture.Lifecycle().ReceiveLifecycle(recovered, "private-ack", recoveredAt);
+        await fixture.Lifecycle().ReceiveLifecycle(inactive, "private-ack", recoveredAt.AddSeconds(1));
         Assert.Equal(2, (await db.Set<AccountLifecycleStateEntity>().SingleAsync(b => b.IdentityUserId == owner.Subject)).Version);
         var state = await Store.Read(owner, recoveredAt);
         Assert.True(state.Schedule.AccountPaused);
         Assert.All(state.Schedule.Pauses, p => Assert.Equal(pausedAt, p.StartedAt));
         Assert.Equal(JsonSerializer.Serialize(original), JsonSerializer.Serialize(await Store.Execute(owner, accept, recoveredAt)));
         var staleProof = new QuestCommand(Guid.NewGuid(), QuestActions.Complete, accept.OccurrenceId, RecordedTime: new(anchor.Id, anchor.BootId, 1, 1000, Start.AddSeconds(1)));
-        await Assert.ThrowsAsync<ArgumentException>(() => Store.Execute(owner, staleProof, recoveredAt));
+        await Assert.ThrowsAsync<QuestValidationException>(() => Store.Execute(owner, staleProof, recoveredAt));
         var resume = new QuestCommand(Guid.NewGuid(), QuestActions.Resume);
         var resumed = await Store.Execute(owner, resume, recoveredAt);
         Assert.False(resumed.Schedule.AccountPaused);
@@ -76,10 +81,10 @@ public sealed class RelationalLifecycleTests(SchemaFixture fixture) : IClassFixt
     {
         var owner = Identity();
         var pausedAt = Start.AddMinutes(1);
-        await Store.ReceiveLifecycle(Intent(owner, 1, IdentityProtocol.Inactive, pausedAt, pausedAt), "private-ack", pausedAt);
-        await Assert.ThrowsAsync<SqlException>(() => Store.Initialize(owner, "Etc/UTC", pausedAt));
+        await fixture.Lifecycle().ReceiveLifecycle(Intent(owner, 1, IdentityProtocol.Inactive, pausedAt, pausedAt), "private-ack", pausedAt);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Store.Initialize(owner, "Etc/UTC", pausedAt));
         var active = new UserRecord(owner.Subject, IdentityProtocol.Active, Start, 2, pausedAt);
-        await Store.ObserveActive(active, pausedAt.AddMinutes(1));
+        await fixture.Lifecycle().ObserveActive(active, pausedAt.AddMinutes(1));
         await Store.Initialize(owner, "Etc/UTC", pausedAt.AddMinutes(1));
         await Store.Execute(owner, Accept(), pausedAt.AddMinutes(1));
         await using var db = fixture.Context();
@@ -89,17 +94,17 @@ public sealed class RelationalLifecycleTests(SchemaFixture fixture) : IClassFixt
         await using var connection = new SqlConnection(fixture.Connection);
         await connection.OpenAsync();
         await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync();
-        await using var sql = new SqlCommand("pocketquests.AcquireAccountLock", connection, transaction) { CommandType = CommandType.StoredProcedure };
-        sql.Parameters.Add("@IdentityUserId", SqlDbType.VarChar, 30).Value = owner.Subject;
+        await using var sql = new SqlCommand("DECLARE @result int; EXEC @result=sys.sp_getapplock @Resource=@resource,@LockMode='Exclusive',@LockOwner='Transaction',@LockTimeout=10000; IF @result<0 THROW 51102,'Test account lock unavailable.',1;", connection, transaction);
+        sql.Parameters.Add("@resource", SqlDbType.NVarChar, 255).Value = "pocketquests:" + owner.Subject;
         await sql.ExecuteNonQueryAsync();
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        await Store.ObserveActive(active, pausedAt.AddMinutes(2), timeout.Token);
+        await fixture.Lifecycle().ObserveActive(active, pausedAt.AddMinutes(2), timeout.Token);
         Assert.Equal(before.RowVersion, (await db.Set<AccountEntity>().SingleAsync(a => a.Id == before.Id)).RowVersion);
         Assert.Equal(barrier.RowVersion, (await db.Set<AccountLifecycleStateEntity>().SingleAsync(b => b.Id == barrier.Id)).RowVersion);
         await transaction.RollbackAsync();
-        await Store.ReceiveLifecycle(Intent(owner, 1, IdentityProtocol.Inactive, pausedAt, pausedAt), "private-ack", pausedAt.AddMinutes(2));
+        await fixture.Lifecycle().ReceiveLifecycle(Intent(owner, 1, IdentityProtocol.Inactive, pausedAt, pausedAt), "private-ack", pausedAt.AddMinutes(2));
         Assert.False((await Store.Read(owner, pausedAt.AddMinutes(2))).Schedule.AccountPaused);
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Store.ObserveActive(active with { LifecycleVersion = 1 }, pausedAt.AddMinutes(2)));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => fixture.Lifecycle().ObserveActive(active with { LifecycleVersion = 1 }, pausedAt.AddMinutes(2)));
     }
 
     /// <summary>An outbox insert failure rolls back freezes and erasure together with their owned Audit rows.</summary>
@@ -114,26 +119,26 @@ public sealed class RelationalLifecycleTests(SchemaFixture fixture) : IClassFixt
         var anchor = await Store.CreateAnchor(owner, Guid.NewGuid(), Guid.NewGuid(), Start, Start);
         await using var db = fixture.Context();
         var before = await db.Set<AccountEntity>().SingleAsync(a => a.IdentityUserId == owner.Subject);
-        await fixture.Execute("CREATE TRIGGER outbox.SchemaTestRejectAck ON outbox.OutboxMessages AFTER INSERT AS THROW 51999,'Synthetic acknowledgment insert failure.',1;");
+        await fixture.Execute("ALTER TABLE outbox.OutboxMessages WITH NOCHECK ADD CONSTRAINT CK_SchemaTestRejectAck CHECK (Id IS NULL);");
         try
         {
             var inactive = Intent(owner, 1, IdentityProtocol.Inactive, Start.AddMinutes(1), Start.AddMinutes(1));
-            Assert.Equal(51999, (await Assert.ThrowsAsync<SqlException>(() => Store.ReceiveLifecycle(inactive, "private-ack", Start.AddMinutes(1)))).Number);
+            Assert.Equal(547, Assert.IsType<SqlException>((await Assert.ThrowsAsync<DbUpdateException>(() => fixture.Lifecycle().ReceiveLifecycle(inactive, "private-ack", Start.AddMinutes(1)))).InnerException).Number);
             Assert.Equal(before.RowVersion, (await db.Set<AccountEntity>().SingleAsync(a => a.Id == before.Id)).RowVersion);
             Assert.Null((await db.Set<SyncAnchorEntity>().SingleAsync(a => a.Id == anchor.Id)).InvalidatedAt);
             Assert.False(await db.Set<AccountLifecycleStateEntity>().AnyAsync(b => b.IdentityUserId == owner.Subject));
             var erase = Intent(owner, 2, IdentityProtocol.Erasing, Start.AddDays(30), Start.AddMinutes(1));
-            Assert.Equal(51999, (await Assert.ThrowsAsync<SqlException>(() => Store.ReceiveLifecycle(erase, "private-ack", Start.AddDays(30)))).Number);
+            Assert.Equal(547, Assert.IsType<SqlException>((await Assert.ThrowsAsync<DbUpdateException>(() => fixture.Lifecycle().ReceiveLifecycle(erase, "private-ack", Start.AddDays(30)))).InnerException).Number);
             Assert.True(await db.Set<QuestOccurrenceEntity>().AnyAsync(o => o.Id == accept.OccurrenceId));
             Assert.True(await db.Set<AccountAuditRecordEntity>().AnyAsync(a => a.AccountId == before.Id));
             Assert.False(await db.Set<ErasureMarkerEntity>().AnyAsync(m => m.Id == owner.Subject));
         }
         finally
         {
-            await fixture.Execute("DROP TRIGGER outbox.SchemaTestRejectAck;");
+            await fixture.Execute("ALTER TABLE outbox.OutboxMessages DROP CONSTRAINT CK_SchemaTestRejectAck;");
         }
 
-        await Store.ReceiveLifecycle(Intent(owner, 2, IdentityProtocol.Erasing, Start.AddDays(30), Start.AddMinutes(1)), "private-ack", Start.AddDays(30));
+        await fixture.Lifecycle().ReceiveLifecycle(Intent(owner, 2, IdentityProtocol.Erasing, Start.AddDays(30), Start.AddMinutes(1)), "private-ack", Start.AddDays(30));
         Assert.False(await db.Set<AccountEntity>().AnyAsync(a => a.Id == before.Id));
         Assert.Single(await db.Set<LifecycleMessageEntity>().Where(m => m.IdentityUserId == owner.Subject).ToListAsync());
     }

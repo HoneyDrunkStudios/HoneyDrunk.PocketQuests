@@ -1,4 +1,4 @@
-using PocketQuests.Data.AccountLifecycle;
+using PocketQuests.Domain.Services.Lifecycle;
 
 namespace PocketQuests.Api.AccountLifecycle;
 

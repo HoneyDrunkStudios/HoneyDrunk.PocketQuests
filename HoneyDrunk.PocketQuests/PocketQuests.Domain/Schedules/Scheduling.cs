@@ -1,5 +1,7 @@
 using NodaTime;
 using NodaTime.Text;
+using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Progress;
 
 namespace PocketQuests.Domain.Schedules;
@@ -21,7 +23,7 @@ public static class Scheduling
     /// <param name="id">The stable timezone identifier.</param>
     /// <returns>The TZDB timezone definition.</returns>
     public static DateTimeZone Zone(string id) => DateTimeZoneProviders.Tzdb.GetZoneOrNull(id)
-        ?? throw new ArgumentException("Choose a valid IANA timezone.");
+        ?? throw new QuestValidationException("Choose a valid IANA timezone.");
 
     /// <summary>Finds the first valid instant after the due day, including DST gaps and skipped dates.</summary>
     /// <param name="due">The inclusive local due date.</param>
@@ -57,9 +59,17 @@ public static class Scheduling
         var parsed = LocalTimePattern.CreateWithInvariantCulture("HH:mm").Parse(time);
         Progression.Require(parsed.Success, "Planned time must use HH:mm.");
         var local = ParseDate(date).At(parsed.Value);
+        Progression.Require(local.Year is >= 1 and <= 9999, "Choose a planned date in the supported year range 0001 through 9999.");
         var zone = Zone(zoneId);
         var mapping = zone.MapLocal(local);
         var resolved = mapping.Count == 0 ? mapping.LateInterval.Start.InZone(zone) : mapping.First();
+        Progression.Require(resolved.Year is >= 1 and <= 9999, "The resolved planned date is outside the supported calendar range.");
+
+        // Match NodaTime's DateTimeOffset conversion, which truncates historical offset seconds to minutes.
+        var offsetMinutes = resolved.Offset.Seconds / 60;
+        Progression.Require(offsetMinutes is >= -840 and <= 840, "The selected timezone offset is outside the supported range.");
+        var utcTicks = resolved.LocalDateTime.ToDateTimeUnspecified().Ticks - (offsetMinutes * TimeSpan.TicksPerMinute);
+        Progression.Require(utcTicks >= DateTime.MinValue.Ticks && utcTicks <= DateTime.MaxValue.Ticks, "The planned time is outside the supported instant range in this timezone.");
         return new(local.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture), resolved.LocalDateTime.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture), resolved.ToDateTimeOffset(), mapping.Count == 0, mapping.Count == 2);
     }
 
@@ -92,7 +102,7 @@ public static class Scheduling
             Cadence.Weeks => anchor.PlusDays(checked(n * 7)),
             Cadence.Months => anchor.PlusMonths(n),
             Cadence.Years => anchor.PlusYears(n),
-            _ => throw new ArgumentException("Invalid cadence.")
+            _ => throw new QuestValidationException("Invalid cadence.")
         };
         return original.PlusDays(pauseDays);
     }

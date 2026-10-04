@@ -1,5 +1,6 @@
-using PocketQuests.Domain.Progress;
-using PocketQuests.Domain.Quests.Definitions;
+using PocketQuests.Domain.Models.Catalogs;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
 using System.Collections.Immutable;
 
 namespace PocketQuests.Domain.Catalogs;

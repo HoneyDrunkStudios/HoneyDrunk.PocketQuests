@@ -1,11 +1,12 @@
 using NodaTime;
 using PocketQuests.Domain.Catalogs;
-using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Profiles;
+using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Schedules;
+using PocketQuests.Domain.Models.Skills;
 using PocketQuests.Domain.Progress;
 using PocketQuests.Domain.Quests.Aggregates;
-using PocketQuests.Domain.Quests.Definitions;
-using PocketQuests.Domain.Quests.Occurrences;
 using PocketQuests.Domain.Schedules;
 
 namespace PocketQuests.Tests.Unit;
@@ -79,8 +80,8 @@ public class DomainTests
         for (var xp = 0; xp < 100; xp++)
             Assert.Equal(xp, Progression.Allocate(xp, [new("a", 3333), new("b", 3333), new("c", 3334)]).Values.Sum());
         Assert.Empty(Progression.Allocate(80, []));
-        Assert.Throws<ArgumentException>(() => Progression.Allocate(80, [new("a", 5000), new("a", 5000)]));
-        Assert.Throws<ArgumentException>(() => Progression.Allocate(80, [new("a", 9999)]));
+        Assert.Throws<QuestValidationException>(() => Progression.Allocate(80, [new("a", 5000), new("a", 5000)]));
+        Assert.Throws<QuestValidationException>(() => Progression.Allocate(80, [new("a", 9999)]));
     }
 
     /// <summary>Verifies specialist access ignores global rank but checks zero weight skills.</summary>
@@ -126,7 +127,7 @@ public class DomainTests
         var leap = new LocalDate(2024, 2, 29);
         Assert.Equal(new LocalDate(2025, 2, 28), Scheduling.Recurrence(leap, Cadence.Years, 1, 1));
         Assert.Equal(new LocalDate(2028, 2, 29), Scheduling.Recurrence(leap, Cadence.Years, 1, 4));
-        Assert.Throws<ArgumentException>(() => Scheduling.Recurrence(jan, Cadence.Days, 0, 1));
+        Assert.Throws<QuestValidationException>(() => Scheduling.Recurrence(jan, Cadence.Days, 0, 1));
     }
 
     /// <summary>Verifies actual timezone database resolves cutoffs.</summary>
@@ -169,7 +170,7 @@ public class DomainTests
         var a = new QuestAggregate("UTC");
         a.Apply(new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07", DueDate: "2026-09-28"), now);
         var id = a.Occurrences.Single().Id;
-        Assert.Throws<InvalidOperationException>(() => a.Apply(new(Guid.NewGuid(), "complete", id), now.AddMinutes(1)));
+        Assert.Throws<QuestConflictException>(() => a.Apply(new(Guid.NewGuid(), "complete", id), now.AddMinutes(1)));
         a.Apply(new(Guid.NewGuid(), "complete", id), now);
         a.Apply(new(Guid.NewGuid(), "undo", id, CompletionId: a.Completions.Single().Id), now.AddMinutes(2));
         Assert.Equal(QuestStatus.Missed, a.Project(now.AddMinutes(2)).Occurrences.Single().Status);
@@ -185,7 +186,7 @@ public class DomainTests
         a.Apply(new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07"), now);
         var id = a.Occurrences.Single().Id;
         a.Apply(new(Guid.NewGuid(), "complete", id), now);
-        Assert.Throws<InvalidOperationException>(() => a.Apply(new(Guid.NewGuid(), "undo", id, CompletionId: a.Completions.Single().Id), now.AddHours(24)));
+        Assert.Throws<QuestConflictException>(() => a.Apply(new(Guid.NewGuid(), "undo", id, CompletionId: a.Completions.Single().Id), now.AddHours(24)));
         Assert.False(a.Project(now.AddHours(24)).Occurrences.Single().CanUndo);
     }
 

@@ -43,12 +43,6 @@
           "Microsoft.Extensions.Options": "10.0.12"
         }
       },
-      "HoneyDrunk.Identity.Abstractions": {
-        "type": "Direct",
-        "requested": "[0.1.0-alpha.4, 0.1.0-alpha.4]",
-        "resolved": "0.1.0-alpha.4",
-        "contentHash": "gUv4Reb3RtZjq3LJNPUdS1SvCN4Jz0slE328RArv+IRJaGNsRQ++XexWLT9sjqO3Z03piXCs9bhu0mYUC09sBA=="
-      },
       "HoneyDrunk.Standards": {
         "type": "Direct",
         "requested": "[0.3.0, )",
@@ -675,11 +669,6 @@
         "resolved": "1.0.0",
         "contentHash": "N4KeF3cpcm1PUHym1RmakkzfkEv3GRMyofVv40uXsQhCQeglr2OHNcUk2WOG51AKpGO8ynGpo9M/kFXSzghwug=="
       },
-      "NodaTime": {
-        "type": "Transitive",
-        "resolved": "3.3.4",
-        "contentHash": "iLaEeOFjWHVibXmHa8WOMTkZdxvzTH6b7qNYts7cBmSfttCDenguHvEJsuAQGBDPV4LSA+7c0nyt4A0AR6z6zQ=="
-      },
       "Polly.Core": {
         "type": "Transitive",
         "resolved": "8.4.2",
@@ -762,18 +751,6 @@
         "type": "Transitive",
         "resolved": "1.4.1",
         "contentHash": "V6crLJ8a29raWeNwxYGfH9RTKA3H0nR0D9LAGzN3KtEsbiiaWkUjDor6OT5Oz7pxCK+NaY2hu2FLoYEOa8oCkA=="
-      },
-      "pocketquests.application": {
-        "type": "Project",
-        "dependencies": {
-          "PocketQuests.Domain": "[1.0.0, )"
-        }
-      },
-      "pocketquests.domain": {
-        "type": "Project",
-        "dependencies": {
-          "NodaTime": "[3.3.4, )"
-        }
       }
     }
   }

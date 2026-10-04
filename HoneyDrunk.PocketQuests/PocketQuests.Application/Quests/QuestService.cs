@@ -1,7 +1,6 @@
-using PocketQuests.Application.Identity;
 using PocketQuests.Application.Persistence;
-using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Projections;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Quests;
 
 namespace PocketQuests.Application.Quests;
 
@@ -17,10 +16,9 @@ public sealed class QuestService(IQuestStore store, TimeProvider clock)
 
     /// <summary>Reads current progress at the host clock.</summary>
     /// <param name="identity">The trusted account identity established by authentication.</param>
-    /// <param name="initialZone">The IANA timezone used only when creating the account.</param>
     /// <param name="token">Cancellation for the database operation.</param>
     /// <returns>Current authoritative quest state.</returns>
-    public Task<QuestState> Read(AccountIdentity identity, string initialZone, CancellationToken token) => store.Read(identity, initialZone, clock.GetUtcNow(), token);
+    public Task<QuestState> Read(AccountIdentity identity, CancellationToken token) => store.Read(identity, clock.GetUtcNow(), token);
 
     /// <summary>Executes one command with authoritative server time.</summary>
     /// <param name="identity">The trusted account identity established by authentication.</param>

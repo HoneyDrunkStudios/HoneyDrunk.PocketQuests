@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Application.Synchronization;
-using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Synchronization;
+using PocketQuests.Data.Entities.Quests;
+using PocketQuests.Data.Entities.Synchronization;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Synchronization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -36,8 +37,8 @@ public sealed partial class SqlApiTests
         Assert.Contains("retry", await tooEarly.Content.ReadAsStringAsync(), StringComparison.OrdinalIgnoreCase);
         await using (var db = Context())
         {
-            Assert.Empty(await db.Operations.ToListAsync());
-            Assert.Equal(0, (await db.SyncAnchors.SingleAsync()).LastOrdinal);
+            Assert.Empty(await db.Read.Set<CommandReceiptEntity>().ToListAsync());
+            Assert.Equal(0, (await db.Read.Set<SyncAnchorEntity>().SingleAsync()).LastOrdinal);
         }
 
         clock.Now = now.AddSeconds(2);
@@ -50,8 +51,8 @@ public sealed partial class SqlApiTests
         Assert.Equal(HttpStatusCode.ServiceUnavailable, (await client.PostAsJsonAsync("/api/commands", undo)).StatusCode);
         await using (var db = Context())
         {
-            Assert.Empty(await db.Undos.ToListAsync());
-            Assert.Equal(2, (await db.SyncAnchors.SingleAsync()).LastOrdinal);
+            Assert.Empty(await db.Read.Set<QuestOccurrenceEventEntity>().Where(e => e.EventCode == "Undone").ToListAsync());
+            Assert.Equal(2, (await db.Read.Set<SyncAnchorEntity>().SingleAsync()).LastOrdinal);
         }
 
         clock.Now = now.AddSeconds(3);
@@ -60,8 +61,8 @@ public sealed partial class SqlApiTests
         Assert.Equal(0, (await Command(client, restored)).OverallXp);
         Assert.Equal(saved, JsonSerializer.Serialize(restored));
         await using var final = Context();
-        Assert.Single(await final.Undos.ToListAsync());
-        Assert.Equal(3, await final.Operations.CountAsync());
+        Assert.Single(await final.Read.Set<QuestOccurrenceEventEntity>().Where(e => e.EventCode == "Undone").ToListAsync());
+        Assert.Equal(3, await final.Read.Set<CommandReceiptEntity>().CountAsync());
     }
 
     /// <summary>A permanent rejection leaves the anchor ordinal available for independent queued Undo and acceptance.</summary>
@@ -93,10 +94,10 @@ public sealed partial class SqlApiTests
         Assert.Equal(0, (await Command(client, JsonSerializer.Deserialize<QuestCommand>(savedUndo)!)).OverallXp);
         Assert.Equal(savedUndo, JsonSerializer.Serialize(undo));
         await using var final = Context();
-        Assert.Equal(3, (await final.SyncAnchors.SingleAsync()).LastOrdinal);
-        Assert.Single(await final.Undos.ToListAsync());
-        Assert.Equal(4, await final.Operations.CountAsync());
-        Assert.False(await final.Operations.AnyAsync(operation => operation.Id == rejected.OperationId));
+        Assert.Equal(3, (await final.Read.Set<SyncAnchorEntity>().SingleAsync()).LastOrdinal);
+        Assert.Single(await final.Read.Set<QuestOccurrenceEventEntity>().Where(e => e.EventCode == "Undone").ToListAsync());
+        Assert.Equal(4, await final.Read.Set<CommandReceiptEntity>().CountAsync());
+        Assert.False(await final.Read.Set<CommandReceiptEntity>().AnyAsync(operation => operation.Id == rejected.OperationId));
     }
 
     private sealed class RecoveryClock(DateTimeOffset now) : TimeProvider

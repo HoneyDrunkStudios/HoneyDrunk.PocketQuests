@@ -7,15 +7,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PocketQuests.Api;
-using PocketQuests.Application.Identity;
 using PocketQuests.Application.Persistence;
 using PocketQuests.Application.Synchronization;
-using PocketQuests.Data.AccountLifecycle;
-using PocketQuests.Data.Relational;
-using PocketQuests.Data.Relational.Entities;
-using PocketQuests.Data.Repositories;
+using PocketQuests.Data.Entities.Accounts;
 using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Projections;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Services.Lifecycle;
 using System.Data;
 using System.Net;
 using System.Net.Http.Json;
@@ -31,36 +29,16 @@ public sealed partial class RelationalApiTests(SchemaFixture fixture) : IClassFi
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
 
-    /// <summary>Both persistence selections compose consistently and invalid configuration fails startup.</summary>
-    /// <param name="mode">Explicit selection, or omitted legacy-compatible default.</param>
-    [Theory]
-    [InlineData(null)]
-    [InlineData("Legacy")]
-    [InlineData("Relational")]
-    [InlineData("Invalid")]
-    public void ExplicitModeSelectsStoreAnchorsAndLifecycleTogether(string? mode)
+    /// <summary>Default startup composes the canonical store, anchors and lifecycle together.</summary>
+    [Fact]
+    public void DefaultHostSelectsCanonicalStoreAnchorsAndLifecycleTogether()
     {
-        using var host = new Host(fixture.Connection, mode: mode);
-        if (mode == "Invalid")
-        {
-            Assert.Contains("Persistence:Mode", Assert.Throws<InvalidOperationException>(() => host.CreateClient()).Message, StringComparison.Ordinal);
-            return;
-        }
-
+        using var host = new Host(fixture.Connection);
         using var scope = host.Services.CreateScope();
         var services = scope.ServiceProvider;
-        if (mode == "Relational")
-        {
-            Assert.IsType<RelationalQuestStore>(services.GetRequiredService<IQuestStore>());
-            Assert.Same(services.GetRequiredService<IQuestStore>(), services.GetRequiredService<ISyncAnchors>());
-            Assert.IsType<RelationalQuestLifecycle>(services.GetRequiredService<IQuestLifecycle>());
-        }
-        else
-        {
-            Assert.IsType<SqlQuestStore>(services.GetRequiredService<IQuestStore>());
-            Assert.IsType<SqlQuestStore>(services.GetRequiredService<ISyncAnchors>());
-            Assert.IsType<SqlQuestLifecycle>(services.GetRequiredService<IQuestLifecycle>());
-        }
+        Assert.IsType<QuestStore>(services.GetRequiredService<IQuestStore>());
+        Assert.Same(services.GetRequiredService<IQuestStore>(), services.GetRequiredService<ISyncAnchors>());
+        Assert.IsType<AccountLifecycleStateService>(services.GetRequiredService<IQuestLifecycle>());
     }
 
     /// <summary>GET never initializes or writes and does not wait on the account application lock.</summary>
@@ -86,8 +64,8 @@ public sealed partial class RelationalApiTests(SchemaFixture fixture) : IClassFi
         await using var connection = new SqlConnection(fixture.Connection);
         await connection.OpenAsync();
         await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync();
-        await using var locked = new SqlCommand("pocketquests.AcquireAccountLock", connection, transaction) { CommandType = CommandType.StoredProcedure };
-        locked.Parameters.Add("@IdentityUserId", SqlDbType.VarChar, 30).Value = host.Owner;
+        await using var locked = new SqlCommand("DECLARE @result int; EXEC @result=sys.sp_getapplock @Resource=@resource,@LockMode='Exclusive',@LockOwner='Transaction',@LockTimeout=10000; IF @result<0 THROW 51102,'Test account lock unavailable.',1;", connection, transaction);
+        locked.Parameters.Add("@resource", SqlDbType.NVarChar, 255).Value = "pocketquests:" + host.Owner;
         await locked.ExecuteNonQueryAsync();
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         using var response = await alice.GetAsync(new Uri("/api/state", UriKind.Relative), timeout.Token);
@@ -100,18 +78,15 @@ public sealed partial class RelationalApiTests(SchemaFixture fixture) : IClassFi
     }
 
     /// <summary>Independent hosts preserve exact receipt feedback, Undo and conflict status without double reward.</summary>
-    /// <param name="mode">Explicit persistence selection.</param>
     /// <returns>Completion after real host restart and concurrent retry.</returns>
-    [Theory]
-    [InlineData("Legacy")]
-    [InlineData("Relational")]
-    public async Task RestartReplayUndoAndConflictingPayloadKeepExistingHttpContract(string mode)
+    [Fact]
+    public async Task RestartReplayUndoAndConflictingPayloadKeepExistingHttpContract()
     {
         var owner = NewOwner();
         var accept = new QuestCommand(Guid.NewGuid(), QuestActions.Accept, Guid.NewGuid(), QuestId: "PQ-CAT-Q01");
         var complete = new QuestCommand(Guid.NewGuid(), QuestActions.Complete, accept.OccurrenceId);
         string original;
-        using (var host = new Host(fixture.Connection, owner, mode))
+        using (var host = new Host(fixture.Connection, owner))
         using (var client = host.Client())
         {
             await Setup(client);
@@ -122,8 +97,8 @@ public sealed partial class RelationalApiTests(SchemaFixture fixture) : IClassFi
             Assert.Equal(10, JsonSerializer.Deserialize<QuestState>(original, Json)!.OverallXp);
         }
 
-        using (var host = new Host(fixture.Connection, owner, mode))
-        using (var otherHost = new Host(fixture.Connection, owner, mode))
+        using (var host = new Host(fixture.Connection, owner))
+        using (var otherHost = new Host(fixture.Connection, owner))
         using (var client = host.Client())
         using (var other = otherHost.Client())
         {
@@ -140,7 +115,7 @@ public sealed partial class RelationalApiTests(SchemaFixture fixture) : IClassFi
             Assert.Equal(original, await (await client.PostAsJsonAsync("/api/commands", complete, Json)).Content.ReadAsStringAsync());
         }
 
-        using var restarted = new Host(fixture.Connection, owner, mode);
+        using var restarted = new Host(fixture.Connection, owner);
         using var final = restarted.Client();
         Assert.Equal(0, (await Read(final)).OverallXp);
     }
@@ -169,7 +144,7 @@ public sealed partial class RelationalApiTests(SchemaFixture fixture) : IClassFi
         public override DateTimeOffset GetUtcNow() => Now;
     }
 
-    private sealed class Host(string connection, string? owner = null, string? mode = "Relational", bool reconciliationEnabled = false) : WebApplicationFactory<PocketQuestsApiProgram>
+    private sealed class Host(string connection, string? owner = null, bool reconciliationEnabled = false) : WebApplicationFactory<PocketQuestsApiProgram>
     {
         public string Owner { get; } = owner ?? NewOwner();
 
@@ -191,14 +166,11 @@ public sealed partial class RelationalApiTests(SchemaFixture fixture) : IClassFi
             builder.UseEnvironment("Testing");
 
             // Minimal-host registration reads these settings before ConfigureAppConfiguration callbacks.
-            if (mode is not null)
-                builder.UseSetting("Persistence:Mode", mode);
             builder.UseSetting("Persistence:ReconciliationEnabled", reconciliationEnabled.ToString());
             builder.UseSetting("ConnectionStrings:quests", connection);
             builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:quests"] = connection,
-                ["Persistence:Mode"] = mode,
                 ["Persistence:ReconciliationEnabled"] = reconciliationEnabled.ToString(),
                 ["Lifecycle:ServiceBusNamespace"] = null,
             }));

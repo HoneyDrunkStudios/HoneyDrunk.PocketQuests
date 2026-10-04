@@ -1,10 +1,10 @@
 using NodaTime.Text;
 using PocketQuests.Domain.Catalogs;
-using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Profiles;
+using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Progress;
 using PocketQuests.Domain.Quests.Definitions;
-using PocketQuests.Domain.Quests.Events;
 using PocketQuests.Domain.Schedules;
 
 namespace PocketQuests.Domain.Quests.Aggregates;
@@ -36,7 +36,7 @@ public sealed partial class QuestAggregate
 
     private void SaveDefinition(QuestCommand command, DateTimeOffset now)
     {
-        var input = command.Definition ?? throw new ArgumentException("Definition is required.");
+        var input = command.Definition ?? throw new QuestValidationException("Definition is required.");
         Progression.Require(Guid.TryParseExact(input.Id, "D", out _), "Definition ID: use a stable UUID.");
         Progression.Require(input.IsCustom, "Only custom definitions can be edited.");
         Progression.Require(input.Title?.Trim().Length is >= 1 and <= QuestRules.MaximumTitleLength, "Title: enter 1–120 characters.");
@@ -54,7 +54,7 @@ public sealed partial class QuestAggregate
         var index = Definitions.FindIndex(d => d.Quest.Id == quest.Id);
         var revision = index < 0 ? 0 : Definitions[index].Revision;
         if (command.ExpectedRevision != revision)
-            throw new InvalidOperationException("This definition changed. Reopen it before saving.");
+            throw new QuestConflictException("This definition changed. Reopen it before saving.");
         Progression.Require(index < 0 || !Definitions[index].Archived, "Archived definitions cannot be edited.");
         var affected = Occurrences.Where(o => o.Quest.Id == quest.Id && Surviving(o.Id) is null && (o.Lifecycle?.FrozenAt is not null || o.Deadline is null || now < o.Deadline) && o.Lifecycle?.AbandonedAt is null).ToArray();
         foreach (var occurrence in affected)
@@ -79,9 +79,9 @@ public sealed partial class QuestAggregate
     {
         var index = Definitions.FindIndex(d => d.Quest.Id == command.QuestId);
         if (index < 0)
-            throw new KeyNotFoundException("Custom definition not found.");
+            throw new QuestNotFoundException("Custom definition not found.");
         if (command.ExpectedRevision != Definitions[index].Revision)
-            throw new InvalidOperationException("Definition changed.");
+            throw new QuestConflictException("Definition changed.");
         Definitions[index] = Definitions[index] with { Archived = true, Revision = Definitions[index].Revision + 1 };
         foreach (var series in Schedule.Series.Where(s => s.Quest.Id == command.QuestId && !s.Stopped).ToArray())
             StopSeries(command with { SeriesId = series.Id }, now);
@@ -101,7 +101,7 @@ public sealed partial class QuestAggregate
 
     private void SetInterests(QuestCommand command)
     {
-        var interests = command.Interests ?? throw new ArgumentException("Interests are required; an empty list is allowed.");
+        var interests = command.Interests ?? throw new QuestValidationException("Interests are required; an empty list is allowed.");
         Progression.Require(
             interests.Length <= Catalog.Categories.Length && interests.Distinct(StringComparer.Ordinal).Count() == interests.Length
             && interests.All(id => Catalog.Categories.Any(c => c.Id == id)),
@@ -111,7 +111,7 @@ public sealed partial class QuestAggregate
 
     private void Plan(QuestCommand command, DateTimeOffset now)
     {
-        var occurrence = Occurrences.SingleOrDefault(o => o.Id == command.OccurrenceId) ?? throw new KeyNotFoundException();
+        var occurrence = Occurrences.SingleOrDefault(o => o.Id == command.OccurrenceId) ?? throw new QuestNotFoundException();
         Progression.Require(Surviving(occurrence.Id) is null && occurrence.Lifecycle?.FrozenAt is null && occurrence.Lifecycle?.AbandonedAt is null && occurrence.Lifecycle?.SeriesId is null && occurrence.Lifecycle?.LockedLoss is null && (occurrence.Deadline is null || now < occurrence.Deadline), "Only active occurrences can be planned.");
         ValidatePlannedTime(command.DueDate, command.PlannedTime);
         DateTimeOffset? deadline = null;
@@ -127,8 +127,8 @@ public sealed partial class QuestAggregate
 
     private void Link(QuestCommand command)
     {
-        var step = Occurrences.SingleOrDefault(o => o.Id == command.OccurrenceId) ?? throw new KeyNotFoundException();
-        var parent = Occurrences.SingleOrDefault(o => o.Id == command.ParentId) ?? throw new KeyNotFoundException();
+        var step = Occurrences.SingleOrDefault(o => o.Id == command.OccurrenceId) ?? throw new QuestNotFoundException();
+        var parent = Occurrences.SingleOrDefault(o => o.Id == command.ParentId) ?? throw new QuestNotFoundException();
         Progression.Require((step.Quest.Effort is Effort.Small or Effort.Medium) && parent.Quest.Effort == Effort.Large, "Link a Small or Medium step to a Large goal.");
         Progression.Require(step.ParentId is null || step.ParentId == parent.Id, "A step can have only one parent.");
         Occurrences[Occurrences.IndexOf(step)] = step with { ParentId = parent.Id };

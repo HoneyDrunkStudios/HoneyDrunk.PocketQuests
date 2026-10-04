@@ -1,6 +1,6 @@
 using HoneyDrunk.Identity.Abstractions.AccountLifecycle;
 using HoneyDrunk.Transport.Abstractions;
-using PocketQuests.Data.AccountLifecycle;
+using PocketQuests.Domain.Services.Lifecycle;
 
 namespace PocketQuests.Api.AccountLifecycle;
 

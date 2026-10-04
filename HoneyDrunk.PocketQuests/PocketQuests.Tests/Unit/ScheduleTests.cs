@@ -1,8 +1,8 @@
-using PocketQuests.Domain.Progress;
+using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Quests.Aggregates;
-using PocketQuests.Domain.Quests.Definitions;
-using PocketQuests.Domain.Quests.Occurrences;
-using PocketQuests.Domain.Schedules;
 
 namespace PocketQuests.Tests.Unit;
 
@@ -59,7 +59,7 @@ public sealed class ScheduleTests
         var aggregate = new QuestAggregate("UTC");
         var quest = new Quest(Guid.NewGuid().ToString(), "Commitment", "Achieved outcome", "c07", Rank.F, Effort.Medium, [], [], true, PenaltyPercent: 50);
         aggregate.Apply(new(Guid.NewGuid(), "save-definition", Definition: quest, ExpectedRevision: 0), now);
-        Assert.Throws<ArgumentException>(() => aggregate.Apply(new(Guid.NewGuid(), "accept", QuestId: quest.Id, DueDate: "2026-09-28"), now));
+        Assert.Throws<QuestValidationException>(() => aggregate.Apply(new(Guid.NewGuid(), "accept", QuestId: quest.Id, DueDate: "2026-09-28"), now));
         aggregate.Apply(new(Guid.NewGuid(), "accept", QuestId: quest.Id, DueDate: "2026-09-28", ConfirmPenalty: true, AcceptedLoss: 40, AcceptedQuest: quest), now);
         var penaltyId = aggregate.Occurrences.Single().Id;
         var after = now.AddDays(1);
@@ -84,7 +84,7 @@ public sealed class ScheduleTests
         aggregate.Apply(new(Guid.NewGuid(), "save-definition", Definition: quest, ExpectedRevision: 0), now);
         aggregate.Apply(new(Guid.NewGuid(), "save-series", QuestId: quest.Id, DueDate: "2026-09-28", SeriesId: Guid.NewGuid(), Cadence: Cadence.Days, Interval: 1, ExpectedRevision: 0, ConfirmPenalty: true, AcceptedLoss: 5, AcceptedQuest: quest), now);
         var id = aggregate.Occurrences.Single().Id;
-        Assert.Throws<ArgumentException>(() => aggregate.Apply(new(Guid.NewGuid(), "save-definition", Definition: quest with { CategoryId = "c06" }, ExpectedRevision: 1), now));
+        Assert.Throws<QuestValidationException>(() => aggregate.Apply(new(Guid.NewGuid(), "save-definition", Definition: quest with { CategoryId = "c06" }, ExpectedRevision: 1), now));
         aggregate.Apply(new(Guid.NewGuid(), "save-definition", Definition: quest with { Effort = Effort.Medium }, ExpectedRevision: 1), now);
         Assert.Equal(5, aggregate.Occurrences.Single().Lifecycle!.LockedLoss);
         Assert.Equal(80, aggregate.Occurrences.Single().Quest.BaseXp);
@@ -108,7 +108,7 @@ public sealed class ScheduleTests
         var quest = new Quest(Guid.NewGuid().ToString(), "Commitment", "Original outcome", "c07", Rank.F, Effort.Small, [], [], true, PenaltyPercent: 50);
         aggregate.Apply(new(Guid.NewGuid(), "save-definition", Definition: quest, ExpectedRevision: 0), now);
         aggregate.Apply(new(Guid.NewGuid(), "save-definition", Definition: quest with { Criterion = "Different outcome" }, ExpectedRevision: 1), now);
-        Assert.Throws<ArgumentException>(() => aggregate.Apply(new(Guid.NewGuid(), "accept", QuestId: quest.Id, DueDate: "2026-09-28", ConfirmPenalty: true, AcceptedLoss: 5, AcceptedQuest: quest), now));
+        Assert.Throws<QuestValidationException>(() => aggregate.Apply(new(Guid.NewGuid(), "accept", QuestId: quest.Id, DueDate: "2026-09-28", ConfirmPenalty: true, AcceptedLoss: 5, AcceptedQuest: quest), now));
         Assert.Empty(aggregate.Occurrences);
     }
 

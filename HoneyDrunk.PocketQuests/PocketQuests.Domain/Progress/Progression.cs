@@ -1,6 +1,8 @@
 using PocketQuests.Domain.Catalogs;
-using PocketQuests.Domain.Profiles;
-using PocketQuests.Domain.Quests.Definitions;
+using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Skills;
 using System.Collections.Immutable;
 
 namespace PocketQuests.Domain.Progress;
@@ -70,7 +72,7 @@ public static class Progression
         Experience.Practiced => 405,
         Experience.Experienced => 5780,
         Experience.Expert => 12005,
-        _ => throw new ArgumentException("Invalid experience.")
+        _ => throw new QuestValidationException("Invalid experience.")
     };
 
     /// <summary>Checks every selected skill gate, or the category gate when no skills are selected.</summary>
@@ -150,7 +152,7 @@ public static class Progression
     internal static void Require(bool valid, string message)
     {
         if (!valid)
-            throw new ArgumentException(message);
+            throw new QuestValidationException(message);
     }
 
     private static long Coefficient(Track track) => track switch
@@ -159,6 +161,6 @@ public static class Progression
         Track.Category => 10,
         Track.Attribute => 25,
         Track.Skill => 5,
-        _ => throw new ArgumentException("Invalid track.")
+        _ => throw new QuestValidationException("Invalid track.")
     };
 }

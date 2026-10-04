@@ -1,15 +1,15 @@
 using HoneyDrunk.Data.Outbox;
 using HoneyDrunk.Identity.Abstractions.AccountLifecycle;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Application.Identity;
-using PocketQuests.Data.Relational.Commands;
-using PocketQuests.Data.Relational.Entities;
+using PocketQuests.Data.Entities.Accounts;
+using PocketQuests.Data.Entities.Lifecycle;
 using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Profiles;
-using PocketQuests.Domain.Progress;
-using PocketQuests.Domain.Quests.Definitions;
-using PocketQuests.Domain.Schedules;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Schedules;
+using PocketQuests.Domain.Models.Skills;
+using PocketQuests.Domain.Services.Quests;
 
 namespace PocketQuests.SchemaTests;
 
@@ -19,7 +19,7 @@ public sealed class RelationalErasureTests(SchemaFixture fixture) : IClassFixtur
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private RelationalQuestCommands Store => new(fixture.Connection);
+    private IQuestService Store => fixture.Commands();
 
     /// <summary>A renewed old erasing capability cannot restart expired marker retention; a first delayed erasure still removes real data.</summary>
     /// <returns>Completion after the exact retention boundary and a separately delayed first erasure.</returns>
@@ -32,17 +32,17 @@ public sealed class RelationalErasureTests(SchemaFixture fixture) : IClassFixtur
         await Store.Initialize(delayed, "Etc/UTC", Start);
         var erasedAt = Start.AddDays(30);
         var intent = new LifecycleIntent(owner.Subject, 2, IdentityProtocol.Erasing, erasedAt, erasedAt.AddHours(1), IdentityProtocol.ConsumerId, Capability(), Start);
-        await Store.ReceiveLifecycle(intent, "private-ack", erasedAt);
+        await fixture.Lifecycle().ReceiveLifecycle(intent, "private-ack", erasedAt);
         var afterRetention = erasedAt.AddDays(35);
-        await Store.PruneLifecycle(afterRetention);
+        await fixture.Lifecycle().PruneLifecycle(afterRetention);
         var renewed = intent with { ExpiresAt = afterRetention.AddHours(1), Acknowledgment = Capability() };
-        await Store.ReceiveLifecycle(renewed, "private-ack", afterRetention);
-        await Store.ReceiveLifecycle(renewed with { Acknowledgment = Capability() }, "private-ack", afterRetention.AddMinutes(1));
+        await fixture.Lifecycle().ReceiveLifecycle(renewed, "private-ack", afterRetention);
+        await fixture.Lifecycle().ReceiveLifecycle(renewed with { Acknowledgment = Capability() }, "private-ack", afterRetention.AddMinutes(1));
         await using var db = fixture.Context();
         Assert.False(await db.Set<ErasureMarkerEntity>().AnyAsync(m => m.Id == owner.Subject));
         Assert.False(await db.Set<AccountEntity>().AnyAsync(a => a.IdentityUserId == owner.Subject));
         Assert.Equal(2, await db.Set<LifecycleMessageEntity>().CountAsync(m => m.IdentityUserId == owner.Subject));
-        await Store.ReceiveLifecycle(renewed with { UserId = delayed.Subject, Acknowledgment = Capability() }, "private-ack", afterRetention);
+        await fixture.Lifecycle().ReceiveLifecycle(renewed with { UserId = delayed.Subject, Acknowledgment = Capability() }, "private-ack", afterRetention);
         Assert.False(await db.Set<AccountEntity>().AnyAsync(a => a.IdentityUserId == delayed.Subject));
         Assert.Equal(afterRetention, (await db.Set<ErasureMarkerEntity>().SingleAsync(m => m.Id == delayed.Subject)).CreatedAt);
     }
@@ -72,34 +72,34 @@ public sealed class RelationalErasureTests(SchemaFixture fixture) : IClassFixtur
         var backup = await fixture.Backup();
         var erasedAt = Start.AddDays(30);
         var intent = new LifecycleIntent(owner.Subject, 2, IdentityProtocol.Erasing, erasedAt, erasedAt.AddHours(1), IdentityProtocol.ConsumerId, Capability(), Start);
-        await Store.ReceiveLifecycle(intent, "private-ack", erasedAt);
+        await fixture.Lifecycle().ReceiveLifecycle(intent, "private-ack", erasedAt);
         await AssertPurged(account.Id);
         var external = await db.Set<ErasureMarkerEntity>().SingleAsync(m => m.Id == owner.Subject);
         Assert.Equal(erasedAt, external.CreatedAt);
         var pending = Assert.Single(await db.Set<LifecycleMessageEntity>().Where(m => m.IdentityUserId == owner.Subject).ToListAsync());
         Assert.Null(pending.AccountId);
-        await Store.ReceiveLifecycle(intent, "private-ack", erasedAt.AddMinutes(1));
+        await fixture.Lifecycle().ReceiveLifecycle(intent, "private-ack", erasedAt.AddMinutes(1));
         Assert.Equal(erasedAt, (await db.Set<ErasureMarkerEntity>().SingleAsync(m => m.Id == owner.Subject)).CreatedAt);
-        await Assert.ThrowsAsync<SqlException>(() => Store.Execute(owner, command, erasedAt));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Store.Execute(owner, command, erasedAt));
 
         // Product traffic is withheld while the administrator proves that the old backup restored its rows.
         await fixture.Restore(backup);
         Assert.True(await db.Set<AccountEntity>().AnyAsync(a => a.Id == account.Id));
         Assert.False(await db.Set<ErasureMarkerEntity>().AnyAsync(m => m.Id == owner.Subject));
-        await Store.ReapplyErasure(external.Id, external.CreatedAt, erasedAt.AddDays(1));
+        await fixture.Lifecycle().ReapplyErasure(external.Id, external.CreatedAt, erasedAt.AddDays(1));
         await AssertPurged(account.Id);
-        await Assert.ThrowsAsync<SqlException>(() => Store.Read(owner, erasedAt.AddDays(1)));
-        await Assert.ThrowsAsync<SqlException>(() => Store.Initialize(owner, "Etc/UTC", erasedAt.AddDays(1)));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Store.Read(owner, erasedAt.AddDays(1)));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Store.Initialize(owner, "Etc/UTC", erasedAt.AddDays(1)));
         Assert.Equal(erasedAt, (await db.Set<ErasureMarkerEntity>().SingleAsync(m => m.Id == owner.Subject)).CreatedAt);
-        await Store.ReapplyErasure(owner.Subject, erasedAt.AddHours(1), erasedAt.AddDays(2));
+        await fixture.Lifecycle().ReapplyErasure(owner.Subject, erasedAt.AddHours(1), erasedAt.AddDays(2));
         Assert.Equal(erasedAt, (await db.Set<ErasureMarkerEntity>().SingleAsync(m => m.Id == owner.Subject)).CreatedAt);
         Assert.Equal(otherAccount.RowVersion, (await db.Set<AccountEntity>().SingleAsync(a => a.Id == otherAccount.Id)).RowVersion);
         Assert.Single((await Store.Read(other, erasedAt)).Occurrences);
         var retained = await fixture.Query($"SELECT COUNT_BIG(*) AS N FROM dbo.AuditRecords WHERE Id='{unownedAudit}'; SELECT COUNT_BIG(*) AS N FROM outbox.OutboxMessages WHERE Id='{unownedOutbox:D}';");
         Assert.All(retained, table => Assert.Equal(1L, table.Rows[0][0]));
-        await Store.PruneLifecycle(erasedAt.AddDays(35).AddTicks(-1));
+        await fixture.Lifecycle().PruneLifecycle(erasedAt.AddDays(35).AddTicks(-1));
         Assert.True(await db.Set<ErasureMarkerEntity>().AnyAsync(m => m.Id == owner.Subject));
-        await Store.PruneLifecycle(erasedAt.AddDays(35));
+        await fixture.Lifecycle().PruneLifecycle(erasedAt.AddDays(35));
         Assert.False(await db.Set<ErasureMarkerEntity>().AnyAsync(m => m.Id == owner.Subject));
         Assert.Equal(1L, (await fixture.Query($"SELECT COUNT_BIG(*) AS N FROM outbox.OutboxMessages WHERE Id='{unownedOutbox:D}';"))[0].Rows[0][0]);
     }
@@ -110,24 +110,24 @@ public sealed class RelationalErasureTests(SchemaFixture fixture) : IClassFixtur
     public async Task MarkerAndEnvelopeRetentionRespectOriginalInstantsAndOwnership()
     {
         var owner = Identity();
-        await Assert.ThrowsAsync<ArgumentException>(() => Store.ReapplyErasure(owner.Subject, Start.AddTicks(1), Start));
-        await Assert.ThrowsAsync<ArgumentException>(() => Store.ReapplyErasure(owner.Subject, Start.AddDays(-35), Start));
-        await Store.ReapplyErasure(owner.Subject, Start, Start);
-        await Assert.ThrowsAsync<SqlException>(() => Store.Initialize(owner, "Etc/UTC", Start));
+        await Assert.ThrowsAsync<ArgumentException>(() => fixture.Lifecycle().ReapplyErasure(owner.Subject, Start.AddTicks(1), Start));
+        await Assert.ThrowsAsync<ArgumentException>(() => fixture.Lifecycle().ReapplyErasure(owner.Subject, Start.AddDays(-35), Start));
+        await fixture.Lifecycle().ReapplyErasure(owner.Subject, Start, Start);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Store.Initialize(owner, "Etc/UTC", Start));
         var intent = new LifecycleIntent(owner.Subject, 1, IdentityProtocol.Erasing, Start, Start.AddHours(1), IdentityProtocol.ConsumerId, Capability(), Start);
-        await Store.ReceiveLifecycle(intent, "private-ack", Start);
+        await fixture.Lifecycle().ReceiveLifecycle(intent, "private-ack", Start);
         await using var db = fixture.Context();
         var message = Assert.Single(await db.Set<LifecycleMessageEntity>().Where(m => m.IdentityUserId == owner.Subject).ToListAsync());
-        await Store.PruneLifecycle(Start.AddHours(1).AddTicks(-1));
+        await fixture.Lifecycle().PruneLifecycle(Start.AddHours(1).AddTicks(-1));
         Assert.True(await db.Set<LifecycleMessageEntity>().AnyAsync(m => m.Id == message.Id));
-        await Store.PruneLifecycle(Start.AddHours(1));
+        await fixture.Lifecycle().PruneLifecycle(Start.AddHours(1));
         Assert.False(await db.Set<LifecycleMessageEntity>().AnyAsync(m => m.Id == message.Id));
         Assert.Equal(0L, (await fixture.Query($"SELECT COUNT_BIG(*) AS N FROM outbox.OutboxMessages WHERE Id='{message.OutboxMessageId:D}';"))[0].Rows[0][0]);
         var renewed = intent with { Acknowledgment = Capability(), EffectiveAt = Start.AddHours(2), ExpiresAt = Start.AddHours(3) };
-        await Store.ReceiveLifecycle(renewed, "private-ack", Start.AddHours(2));
+        await fixture.Lifecycle().ReceiveLifecycle(renewed, "private-ack", Start.AddHours(2));
         message = Assert.Single(await db.Set<LifecycleMessageEntity>().Where(m => m.IdentityUserId == owner.Subject).ToListAsync());
         await fixture.Execute($"UPDATE outbox.OutboxMessages SET Status={(int)OutboxMessageStatus.Dispatched} WHERE Id='{message.OutboxMessageId:D}';");
-        await Store.PruneLifecycle(Start.AddHours(2));
+        await fixture.Lifecycle().PruneLifecycle(Start.AddHours(2));
         Assert.False(await db.Set<LifecycleMessageEntity>().AnyAsync(m => m.Id == message.Id));
         Assert.Equal(Start, (await db.Set<ErasureMarkerEntity>().SingleAsync(m => m.Id == owner.Subject)).CreatedAt);
     }
@@ -153,7 +153,7 @@ public sealed class RelationalErasureTests(SchemaFixture fixture) : IClassFixtur
         await Store.Execute(owner, new(Guid.NewGuid(), QuestActions.SaveSeries, QuestId: quest.Id, DueDate: "2026-01-01", SeriesId: Guid.NewGuid(), Cadence: Cadence.Days, Interval: 1, ExpectedRevision: 0), Start.AddSeconds(2));
         await Store.CreateAnchor(owner, Guid.NewGuid(), Guid.NewGuid(), Start.AddSeconds(2), Start.AddSeconds(2));
         await Store.Execute(owner, new(Guid.NewGuid(), QuestActions.Zone, NewZone: "America/New_York", ExpectedZone: "Etc/UTC", ConfirmZoneChange: true), Start.AddSeconds(3));
-        await Store.ReceiveLifecycle(new(owner.Subject, 1, IdentityProtocol.Inactive, Start.AddMinutes(1), Start.AddHours(1), IdentityProtocol.ConsumerId, Capability(), Start), "private-ack", Start.AddMinutes(1));
+        await fixture.Lifecycle().ReceiveLifecycle(new(owner.Subject, 1, IdentityProtocol.Inactive, Start.AddMinutes(1), Start.AddHours(1), IdentityProtocol.ConsumerId, Capability(), Start), "private-ack", Start.AddMinutes(1));
         return accept;
     }
 

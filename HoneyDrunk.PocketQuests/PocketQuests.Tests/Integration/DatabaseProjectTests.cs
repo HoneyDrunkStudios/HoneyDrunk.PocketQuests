@@ -1,53 +1,32 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.SqlServer.Dac;
-using Microsoft.SqlServer.Dac.Model;
-using PocketQuests.Domain.Catalogs;
-using PocketQuests.Tests.Fixtures;
-using System.Text.Json;
+using PocketQuests.Data.Entities.Accounts;
+using PocketQuests.Data.Entities.Quests;
+using PocketQuests.Data.Entities.Synchronization;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Validates DACPAC upgrade and repeat deployment against real SQL Server.</summary>
+/// <summary>Fresh schema and safe repeat publication against the same disposable product database.</summary>
 public sealed partial class SqlApiTests
 {
-    /// <summary>An original ledger upgrades without losing history, and repeat publishing is safe.</summary>
-    /// <returns>The completed regression.</returns>
+    /// <summary>The initial schema has only canonical product tables plus unchanged shared dependencies.</summary>
+    /// <returns>Completion after repeat deployment and persisted-history checks.</returns>
     [Fact]
-    public async Task DatabaseProjectBackfillsLegacyLedgerAndPreservesHistoryOnRepublish()
+    public async Task FreshCanonicalSchemaAndRepeatedPublicationPreserveCommittedHistory()
     {
-        await using var db = Context();
-        await db.Database.EnsureDeletedAsync();
-        var legacyName = "LegacyQuestLedger_" + Guid.NewGuid().ToString("N");
-        var legacyPath = Path.Combine(AppContext.BaseDirectory, legacyName + ".dacpac");
-        try
-        {
-            using var model = new TSqlModel(SqlServerVersion.Sql150, new TSqlModelOptions());
-            var script = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Fixtures", "LegacyQuestLedger.sql"));
-            model.AddObjects(script);
-            DacPackageExtensions.BuildPackage(legacyPath, model, new PackageMetadata { Name = legacyName, Version = "1.0.0.0" });
-            await DatabaseSchema.DeployAsync(db.Database, legacyName);
-        }
-        finally
-        {
-            File.Delete(legacyPath);
-        }
-
-        var account = Guid.NewGuid();
-        var occurrence = Guid.NewGuid();
-        var completion = Guid.NewGuid();
+        var identity = TestIdentity("publication-owner");
         var now = DateTimeOffset.UtcNow;
-        var snapshot = JsonSerializer.Serialize(Catalog.Quests[6]);
-        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Accounts (Id,IdentityKey,Zone,CreatedAt) VALUES ({account},{new string('A', 64)},{"UTC"},{now})");
-        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Occurrences (AccountId,Id,QuestSnapshot,AcceptedAt) VALUES ({account},{occurrence},{snapshot},{now})");
-        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Completions (AccountId,Id,OccurrenceId,RecordedAt) VALUES ({account},{completion},{occurrence},{now})");
-
-        await DatabaseSchema.DeployAsync(db.Database);
-        Assert.Equal(snapshot, (await db.Completions.SingleAsync()).QuestSnapshot);
-        Assert.Null((await db.Accounts.SingleAsync()).Profile);
-        await DatabaseSchema.DeployAsync(db.Database);
-        db.ChangeTracker.Clear();
-        Assert.Equal(snapshot, (await db.Completions.SingleAsync()).QuestSnapshot);
-        Assert.Single(await db.Accounts.ToListAsync());
-        Assert.Single(await db.Occurrences.ToListAsync());
+        await Store().Initialize(identity, "UTC", now, default);
+        var command = new PocketQuests.Domain.Models.Quests.QuestCommand(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07");
+        var original = await ExecuteAt(identity, command, now);
+        await Republish();
+        await Republish();
+        await using var db = Context();
+        Assert.Equal(1, await db.Read.Set<AccountEntity>().CountAsync());
+        Assert.Equal(1, await db.Read.Set<QuestOccurrenceEntity>().CountAsync());
+        Assert.Equal(1, await db.Read.Set<CommandReceiptEntity>().CountAsync());
+        var tables = await db.Database.SqlQueryRaw<string>("SELECT SCHEMA_NAME(schema_id)+'.'+name AS Value FROM sys.tables WHERE is_ms_shipped=0").ToListAsync();
+        Assert.Equal(new[] { "dbo.AuditRecords", "outbox.OutboxMessages" }, tables.Where(t => !t.StartsWith("pocketquests.", StringComparison.Ordinal)).Order().ToArray());
+        Assert.Equal(33, tables.Count(t => t.StartsWith("pocketquests.", StringComparison.Ordinal)));
+        Assert.Equal(System.Text.Json.JsonSerializer.Serialize(original), System.Text.Json.JsonSerializer.Serialize(await ExecuteAt(identity, command, now.AddHours(1))));
     }
 }

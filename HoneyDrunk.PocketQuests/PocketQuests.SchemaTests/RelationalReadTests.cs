@@ -1,9 +1,10 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Application.Identity;
-using PocketQuests.Data.Relational.Commands;
-using PocketQuests.Data.Relational.Entities;
+using PocketQuests.Data.Entities.Accounts;
 using PocketQuests.Domain.Commands;
+using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Services.Quests;
 using System.Data;
 using System.Diagnostics;
 using System.Text.Json;
@@ -16,7 +17,7 @@ public sealed class RelationalReadTests(SchemaFixture fixture) : IClassFixture<S
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private RelationalQuestCommands Store => new(fixture.Connection);
+    private IQuestService Store => fixture.Commands();
 
     /// <summary>Keyset traversal remains bounded and complete at empty, medium and large account sizes.</summary>
     /// <param name="count">Synthetic committed occurrence count.</param>
@@ -100,8 +101,8 @@ public sealed class RelationalReadTests(SchemaFixture fixture) : IClassFixture<S
         await using var connection = new SqlConnection(fixture.Connection);
         await connection.OpenAsync();
         await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync();
-        await using var command = new SqlCommand("pocketquests.LockAccount", connection, transaction) { CommandType = CommandType.StoredProcedure };
-        command.Parameters.Add("@IdentityUserId", SqlDbType.VarChar, 30).Value = owner.Subject;
+        await using var command = new SqlCommand("DECLARE @result int; EXEC @result=sys.sp_getapplock @Resource=@resource,@LockMode='Exclusive',@LockOwner='Transaction',@LockTimeout=10000; IF @result<0 THROW 51102,'Test account lock unavailable.',1;", connection, transaction);
+        command.Parameters.Add("@resource", SqlDbType.NVarChar, 255).Value = "pocketquests:" + owner.Subject;
         await command.ExecuteNonQueryAsync();
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var state = await Store.Read(owner, Start, timeout.Token);
@@ -110,11 +111,11 @@ public sealed class RelationalReadTests(SchemaFixture fixture) : IClassFixture<S
         Assert.Single(page.Items);
         await transaction.RollbackAsync();
         var missing = Identity();
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => Store.Read(missing, Start));
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => Store.ReadOccurrences(missing, 0, 10, Start));
+        await Assert.ThrowsAsync<QuestNotFoundException>(() => Store.Read(missing, Start));
+        await Assert.ThrowsAsync<QuestNotFoundException>(() => Store.ReadOccurrences(missing, 0, 10, Start));
         await using var db = fixture.Context();
         Assert.False(await db.Set<AccountEntity>().AnyAsync(a => a.IdentityUserId == missing.Subject));
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => Store.ReadOccurrences(owner, 0, 101, Start));
+        await Assert.ThrowsAsync<QuestValidationException>(() => Store.ReadOccurrences(owner, 0, 101, Start));
     }
 
     private static AccountIdentity Identity() => new("verified-identity", "usr_" + Guid.NewGuid().ToString("N")[..26].ToUpperInvariant());

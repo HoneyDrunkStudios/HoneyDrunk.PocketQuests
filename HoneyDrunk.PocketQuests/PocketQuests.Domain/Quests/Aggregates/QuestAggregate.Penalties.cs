@@ -1,7 +1,6 @@
-using PocketQuests.Domain.Commands;
+using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Progress;
-using PocketQuests.Domain.Quests.Definitions;
-using PocketQuests.Domain.Quests.Occurrences;
 using System.Text.Json;
 
 namespace PocketQuests.Domain.Quests.Aggregates;
@@ -43,7 +42,7 @@ public sealed partial class QuestAggregate
 
     private void AcceptOffer(QuestCommand command, DateTimeOffset now)
     {
-        var occurrence = Occurrences.SingleOrDefault(o => o.Id == command.OccurrenceId) ?? throw new KeyNotFoundException();
+        var occurrence = Occurrences.SingleOrDefault(o => o.Id == command.OccurrenceId) ?? throw new QuestNotFoundException();
         Progression.Require(occurrence.Lifecycle?.Unaccepted == true && occurrence.Deadline > now && !IsPaused(occurrence.Quest.CategoryId), "This offer is no longer available.");
         RequireEligible(occurrence.Quest, now);
         var terms = PenaltyTerms(occurrence.Quest, command, occurrence.Deadline);

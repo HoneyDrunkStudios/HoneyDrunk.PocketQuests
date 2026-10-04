@@ -1,20 +1,18 @@
-using PocketQuests.Application.Exports;
-using PocketQuests.Application.Identity;
-using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Projections;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Quests;
 
 namespace PocketQuests.Application.Persistence;
 
 /// <summary>An account-isolated transaction boundary for quest events and idempotency receipts.</summary>
 public interface IQuestStore
 {
-    /// <summary>Explicitly initializes a profile and returns current state. The retained legacy adapter keeps its existing initializer behavior.</summary>
+    /// <summary>Explicitly initializes a profile and returns current state. Ordinary reads require an existing account.</summary>
     /// <param name="identity">Verified account identity.</param>
     /// <param name="initialZone">Initial IANA calendar zone.</param>
     /// <param name="now">Authoritative host clock.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>The initialized profile's state.</returns>
-    Task<QuestState> Initialize(AccountIdentity identity, string initialZone, DateTimeOffset now, CancellationToken cancellationToken) => Read(identity, initialZone, now, cancellationToken);
+    Task<QuestState> Initialize(AccountIdentity identity, string initialZone, DateTimeOffset now, CancellationToken cancellationToken);
 
     /// <summary>Exports one consistent account snapshot; relational exports use a read-only transaction.</summary>
     /// <param name="identity">The verified account identity.</param>
@@ -25,11 +23,10 @@ public interface IQuestStore
 
     /// <summary>Loads an account projection. Relational reads never create or rewrite account state.</summary>
     /// <param name="identity">The trusted account identity established by authentication.</param>
-    /// <param name="initialZone">The initial IANA timezone for legacy read/initialization compatibility; relational reads ignore it.</param>
     /// <param name="now">Authoritative server UTC time.</param>
     /// <param name="cancellationToken">Cancellation for the database operation.</param>
     /// <returns>The current account projection.</returns>
-    Task<QuestState> Read(AccountIdentity identity, string initialZone, DateTimeOffset now, CancellationToken cancellationToken);
+    Task<QuestState> Read(AccountIdentity identity, DateTimeOffset now, CancellationToken cancellationToken);
 
     /// <summary>Atomically applies a command with its receipt under the account lock.</summary>
     /// <param name="identity">The trusted account identity established by authentication.</param>

@@ -1,15 +1,17 @@
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Application.Identity;
-using PocketQuests.Data.Relational.Commands;
-using PocketQuests.Data.Relational.Entities;
+using PocketQuests.Data.Entities.Accounts;
+using PocketQuests.Data.Entities.Quests;
+using PocketQuests.Data.Entities.Skills;
+using PocketQuests.Data.Entities.Synchronization;
 using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Profiles;
-using PocketQuests.Domain.Progress;
-using PocketQuests.Domain.Projections;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Schedules;
+using PocketQuests.Domain.Models.Skills;
+using PocketQuests.Domain.Models.Synchronization;
 using PocketQuests.Domain.Quests.Aggregates;
-using PocketQuests.Domain.Quests.Definitions;
-using PocketQuests.Domain.Schedules;
-using PocketQuests.Domain.Synchronization;
+using PocketQuests.Domain.Services.Quests;
 using System.Text.Json;
 
 namespace PocketQuests.SchemaTests;
@@ -20,7 +22,7 @@ public sealed class RelationalHistoryTests(SchemaFixture fixture) : IClassFixtur
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private RelationalQuestCommands Store => new(fixture.Connection);
+    private IQuestService Store => fixture.Commands();
 
     /// <summary>Undo clears a revoked selection durably; re-earning never silently equips it during receipt replay.</summary>
     /// <returns>Completion after comparing current and original-response profile selection.</returns>

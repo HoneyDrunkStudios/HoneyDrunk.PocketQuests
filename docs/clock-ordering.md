@@ -25,7 +25,7 @@ Old anchors have no stored floor. Their immutable snapshots already contain acce
 
 ## Regression coverage
 
-SQL tests reproduce zero/+1/+5-second completion lead followed by live read, fresh anchor, immediate Undo, lost-response replay after a fresh context and a subsequent queued command. Additional cases cover future acceptance, repeated refreshes, proof-free Undo, raw-proof/ownership/ordinal/future guards, exact deadline and 24-hour boundaries, and upgrading/redeploying the preceding schema with a pending legacy Undo. The original bug was reproduced first: zero lead passed; +1 and +5 failed at Undo.
+SQL tests reproduce zero/+1/+5-second completion lead followed by live read, fresh anchor, immediate Undo, lost-response replay after a fresh context and a subsequent queued command. Additional cases cover future acceptance, repeated refreshes, proof-free Undo, raw-proof/ownership/ordinal/future guards, exact deadline and 24-hour boundaries, and repeat-publishing the initial canonical schema with a pending Undo. The original bug was reproduced first: zero lead passed; +1 and +5 failed at Undo.
 
 The browser journey uses the actual session, API and isolated SQL databases. A temporary bounded monotonic-clock lead causes the client itself to persist the completion proof. The harness restores the physical clock before normal anchor refresh, verifies the next Undo's physical proof precedes the completion, loses the committed Undo response, checks byte-equivalent command data on replay, and issues a subsequent completion/Undo without discarding the queue. SQL context/serialized-queue restart and browser-adapter retry are covered; native encrypted-cache process-death execution remains a separate device acceptance gate.
 

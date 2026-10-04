@@ -1,8 +1,8 @@
 using PocketQuests.Domain.Catalogs;
-using PocketQuests.Domain.Profiles;
-using PocketQuests.Domain.Progress;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Schedules;
+using PocketQuests.Domain.Models.Skills;
 using PocketQuests.Domain.Quests.Aggregates;
-using PocketQuests.Domain.Schedules;
 
 namespace PocketQuests.Tests.Unit;
 

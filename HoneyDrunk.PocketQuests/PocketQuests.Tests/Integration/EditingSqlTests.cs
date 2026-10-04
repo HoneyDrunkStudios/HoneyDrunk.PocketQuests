@@ -1,12 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Profiles;
-using PocketQuests.Domain.Progress;
-using PocketQuests.Domain.Quests.Definitions;
-using PocketQuests.Domain.Quests.Occurrences;
+using PocketQuests.Data.Entities.Quests;
+using PocketQuests.Data.Entities.Synchronization;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Skills;
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
 
 namespace PocketQuests.Tests.Integration;
 
@@ -117,8 +116,9 @@ public sealed partial class SqlApiTests
         await Command(client, new(Guid.NewGuid(), "undo", firstId, CompletionId: completionId));
         await Command(client, edit with { OperationId = Guid.NewGuid(), ExpectedRevision = 2 });
         await using var db = Context();
-        var snapshot = JsonSerializer.Deserialize<Quest>((await db.Completions.SingleAsync()).QuestSnapshot!);
-        Assert.Equal("Original", snapshot!.Title);
+        var completion = await db.Read.Set<QuestCompletionEntity>().SingleAsync();
+        var terms = await db.Read.Set<QuestOccurrenceRevisionEntity>().SingleAsync(r => r.Id == completion.QuestOccurrenceRevisionId);
+        Assert.Equal("Original", (await db.Read.Set<QuestDefinitionRevisionEntity>().SingleAsync(r => r.Id == terms.QuestDefinitionRevisionId)).Title);
         var archived = await Command(client, new(Guid.NewGuid(), "archive-definition", QuestId: quest.Id, ExpectedRevision: 3));
         Assert.True(archived.Definitions.Single().Archived);
         Assert.Equal(2, archived.Occurrences.Length);
@@ -170,6 +170,6 @@ public sealed partial class SqlApiTests
             Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/commands", new QuestCommand(Guid.NewGuid(), "save-definition", Definition: value, ExpectedRevision: 0))).StatusCode);
         Assert.Empty((await Read(client)).Definitions);
         await using var db = Context();
-        Assert.Equal(1, await db.Operations.CountAsync());
+        Assert.Equal(1, await db.Read.Set<CommandReceiptEntity>().CountAsync());
     }
 }

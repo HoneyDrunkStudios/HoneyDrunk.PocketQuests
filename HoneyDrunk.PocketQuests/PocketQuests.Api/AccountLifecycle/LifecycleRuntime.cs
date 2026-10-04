@@ -5,7 +5,7 @@ using HoneyDrunk.Transport.Abstractions;
 using HoneyDrunk.Transport.AzureServiceBus.Configuration;
 using HoneyDrunk.Transport.AzureServiceBus.DependencyInjection;
 using HoneyDrunk.Transport.DependencyInjection;
-using PocketQuests.Data.Context;
+using PocketQuests.Data;
 
 namespace PocketQuests.Api.AccountLifecycle;
 

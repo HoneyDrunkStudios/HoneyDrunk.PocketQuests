@@ -29,6 +29,9 @@ jobs:
         run: dotnet restore product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --locked-mode
       - name: Build solution and DACPACs
         run: dotnet build product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore
+      - name: Verify endpoint OpenAPI and wire compatibility
+        shell: pwsh
+        run: ./product/scripts/Test-ApiContract.ps1 -NoBuild -Configuration Release
       - name: Start isolated development SQL instance
         shell: pwsh
         run: |

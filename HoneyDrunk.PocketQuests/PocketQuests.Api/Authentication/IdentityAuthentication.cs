@@ -1,8 +1,8 @@
 using HoneyDrunk.Identity.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
-using PocketQuests.Application.Identity;
-using PocketQuests.Data.AccountLifecycle;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Services.Lifecycle;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 

@@ -10,4 +10,13 @@
     <PackageReference Include="NodaTime" Version="3.3.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../PocketQuests.Data/PocketQuests.Data.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseIdentitySource)' != 'true'">
+    <PackageReference Include="HoneyDrunk.Identity.Abstractions" Version="[$(IdentityClientVersion)]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseIdentitySource)' == 'true'">
+    <ProjectReference Include="$(IdentitySourceRoot)/HoneyDrunk.Identity/HoneyDrunk.Identity.Abstractions/HoneyDrunk.Identity.Abstractions.csproj" />
+  </ItemGroup>
 </Project>

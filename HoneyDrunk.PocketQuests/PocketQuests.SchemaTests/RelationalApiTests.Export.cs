@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Application.Exports;
-using PocketQuests.Data.Relational.Entities;
+using PocketQuests.Data.Entities.Accounts;
 using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Progress;
-using PocketQuests.Domain.Quests.Definitions;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
 using System.IO.Compression;
 using System.Net;
 using System.Text.Json;

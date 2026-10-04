@@ -1,4 +1,5 @@
-using PocketQuests.Application.Identity;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Synchronization;
 
 namespace PocketQuests.Application.Synchronization;
 

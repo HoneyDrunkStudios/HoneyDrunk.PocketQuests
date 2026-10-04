@@ -1,6 +1,8 @@
 using PocketQuests.Domain.Catalogs;
-using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Profiles;
+using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Catalogs;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Skills;
 using PocketQuests.Domain.Progress;
 using System.Collections.Immutable;
 
@@ -29,7 +31,7 @@ public sealed partial class QuestAggregate
         var skills = Profile.CustomSkills ?? [];
         var prior = skills.SingleOrDefault(s => s.Id == command.SkillId);
         if (command.ExpectedRevision != (prior?.Revision ?? 0))
-            throw new InvalidOperationException("Skill changed. Reload before saving.");
+            throw new QuestConflictException("Skill changed. Reload before saving.");
         Progression.Require(prior?.Archived != true, "Archived skills retain their history and cannot be edited.");
         var skill = new CustomSkill(command.SkillId!, name!, (prior?.Revision ?? 0) + 1);
         Profile = Profile with { CustomSkills = prior is null ? skills.Add(skill) : skills.Replace(prior, skill) };
@@ -38,9 +40,9 @@ public sealed partial class QuestAggregate
     private void ArchiveSkill(QuestCommand command)
     {
         var skills = Profile.CustomSkills ?? [];
-        var prior = skills.SingleOrDefault(s => s.Id == command.SkillId) ?? throw new KeyNotFoundException("Custom skill not found.");
+        var prior = skills.SingleOrDefault(s => s.Id == command.SkillId) ?? throw new QuestNotFoundException("Custom skill not found.");
         if (command.ExpectedRevision != prior.Revision)
-            throw new InvalidOperationException("Skill changed. Reload before archiving.");
+            throw new QuestConflictException("Skill changed. Reload before archiving.");
         Progression.Require(
             !Definitions.Any(d => !d.Archived && d.Quest.Skills.Any(s => s.Id == prior.Id))
             && !Schedule.Series.Any(s => !s.Stopped && s.Quest.Skills.Any(a => a.Id == prior.Id)),

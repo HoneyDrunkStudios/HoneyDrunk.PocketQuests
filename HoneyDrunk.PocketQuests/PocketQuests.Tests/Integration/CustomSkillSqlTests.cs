@@ -1,7 +1,6 @@
-using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Profiles;
-using PocketQuests.Domain.Progress;
-using PocketQuests.Domain.Quests.Definitions;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Skills;
 using System.Net;
 using System.Net.Http.Json;
 

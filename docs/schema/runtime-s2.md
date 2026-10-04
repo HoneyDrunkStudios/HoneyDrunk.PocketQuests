@@ -1,8 +1,10 @@
+> Historical record: the EF correction supersedes all custom stored-procedure, TVP, read-context and mutation-generator design below. Current structure and permissions are in [runtime-cutover.md](runtime-cutover.md). The old framework is removed from source.
+
 # Relational runtime S2
 
 **Historical S2 record.** See [runtime-cutover.md](runtime-cutover.md) for the completed local API adapter, all-command history, lifecycle and explicit deployment selection. The limitations below describe the preserved S2 review snapshot.
 
-This is an executable, locally staged persistence slice. `RelationalQuestCommands` initializes canonical Identity accounts and runs system-quest acceptance, completion, Undo, durable anchor issuance and source-derived reads against `pocketquests`. The API still registers the legacy store. Unsupported commands and accounts with unsupported profile/recurrence/history features fail explicitly; this class is deliberately not presented as a complete `IQuestStore` implementation.
+This is an executable, locally staged persistence slice. `RelationalQuestCommands` initializes canonical Identity accounts and runs system-quest acceptance, completion, Undo, durable anchor issuance and source-derived reads against `pocketquests`. At this historical S2 snapshot the API still registered the previous store; current behavior is documented in [runtime-cutover.md](runtime-cutover.md). Unsupported commands and accounts with unsupported profile/recurrence/history features fail explicitly; this class is deliberately not presented as a complete `IQuestStore` implementation.
 
 ## Source and integration boundary
 

@@ -17,11 +17,7 @@ try {
     & python (Join-Path $PSScriptRoot 'schema/validate_contract.py') *> (Join-Path $EvidenceDirectory 'contract.log')
     if ($LASTEXITCODE -ne 0) { throw 'Contract structure failed.' }
     & python (Join-Path $PSScriptRoot 'schema/generate_schema.py') --check *> (Join-Path $EvidenceDirectory 'generation.log')
-    if ($LASTEXITCODE -ne 0) { throw 'Generated DDL/mapping/seed drift.' }
-    & python (Join-Path $PSScriptRoot 'schema/generate_mutation.py') --check *> (Join-Path $EvidenceDirectory 'mutation-generation.log')
-    if ($LASTEXITCODE -ne 0) { throw 'Generated mutation boundary drift.' }
-    & python (Join-Path $PSScriptRoot 'schema/generate_erasure.py') --check *> (Join-Path $EvidenceDirectory 'erasure-generation.log')
-    if ($LASTEXITCODE -ne 0) { throw 'Generated erasure ownership/order drift.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Generated DDL/seed drift.' }
     & python (Join-Path $PSScriptRoot 'schema/test_contract.py') *> (Join-Path $EvidenceDirectory 'contract-mutation-tests.log')
     if ($LASTEXITCODE -ne 0) { throw 'Contract mutation probes failed.' }
     Get-Content -LiteralPath (Join-Path $EvidenceDirectory 'contract-mutation-tests.log')
@@ -47,10 +43,10 @@ try {
     $summary.testPassed = [int]$counters.passed
     $summary.testFailed = [int]$counters.failed
     $summary.testNotExecuted = [int]$counters.notExecuted
-    if ($testExitCode -ne 0) { throw 'Schema tests failed; inspect tests.log and TRX.' }
     & sqlcmd -S "(localdb)\$instance" -E -I -b -d master -Q "SET NOCOUNT ON; IF EXISTS(SELECT 1 FROM sys.databases WHERE name LIKE N'PocketQuests[_]SchemaTests[_]%') THROW 51010,'A schema fixture did not remove its database.',1; PRINT 'All generated schema fixture databases were removed.';" -o (Join-Path $EvidenceDirectory 'database-cleanup.log')
     if ($LASTEXITCODE -ne 0) { throw 'Scratch database cleanup verification failed.' }
     $summary.databaseCleanupVerified = $true
+    if ($testExitCode -ne 0) { throw 'Schema tests failed; inspect tests.log and TRX.' }
     $summary.result = 'passed'
 }
 catch {

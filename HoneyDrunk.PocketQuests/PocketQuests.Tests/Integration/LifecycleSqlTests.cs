@@ -5,12 +5,15 @@ using HoneyDrunk.Identity.AccountLifecycle;
 using HoneyDrunk.Identity.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using PocketQuests.Application.Identity;
-using PocketQuests.Data.AccountLifecycle;
-using PocketQuests.Data.Repositories;
+using PocketQuests.Data.Entities.Accounts;
+using PocketQuests.Data.Entities.Lifecycle;
+using PocketQuests.Data.Entities.Quests;
+using PocketQuests.Data.Entities.Synchronization;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Progress;
 using PocketQuests.Domain.Quests.Definitions;
-using PocketQuests.Domain.Quests.Occurrences;
 using System.Net;
 using System.Text.Json;
 
@@ -49,7 +52,7 @@ public sealed partial class SqlApiTests
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await alice.GetAsync(new Uri("/api/state", UriKind.Relative))).StatusCode);
         await using (var db = Context())
-            await new SqlQuestLifecycle(db, clock).Receive(inactive, "identity-acks");
+            await Lifecycle().ReceiveLifecycle(inactive, "identity-acks", clock.Now);
         await using (var db = IdentityContext())
             await Coordinator(db).Cancel(login, true);
 
@@ -58,7 +61,7 @@ public sealed partial class SqlApiTests
         Assert.True(recovered.Schedule.AccountPaused);
         Assert.Equal(QuestStatus.Frozen, recovered.Occurrences.Single().Status);
         await using (var db = Context())
-            await new SqlQuestLifecycle(db, clock).Receive(inactive, "identity-acks");
+            await Lifecycle().ReceiveLifecycle(inactive, "identity-acks", clock.Now);
         Assert.True((await Read(alice)).Schedule.AccountPaused);
         await Command(alice, new(Guid.NewGuid(), "resume"));
         Assert.Equal(10, (await Command(alice, new(Guid.NewGuid(), "complete", occurrence))).OverallXp);
@@ -74,21 +77,21 @@ public sealed partial class SqlApiTests
         Assert.Equal("Erasing", erase.State);
         await using (var db = Context())
         {
-            var consumer = new SqlQuestLifecycle(db, clock);
-            await consumer.Receive(erase, "identity-acks");
-            await consumer.Receive(erase, "identity-acks");
-            Assert.Single(await db.Erasures.ToListAsync());
-            Assert.Single(await db.Set<OutboxMessage>().ToListAsync());
-            Assert.Single(await db.Accounts.ToListAsync());
-            Assert.Empty(await db.Occurrences.ToListAsync());
-            Assert.Empty(await db.Completions.ToListAsync());
-            Assert.Empty(await db.Undos.ToListAsync());
-            Assert.Empty(await db.Definitions.ToListAsync());
-            Assert.Empty(await db.DefinitionRevisions.ToListAsync());
-            Assert.Empty(await db.Operations.ToListAsync());
-            Assert.Empty(await db.SyncAnchors.ToListAsync());
+            var consumer = Lifecycle();
+            await consumer.ReceiveLifecycle(erase, "identity-acks", clock.Now);
+            await consumer.ReceiveLifecycle(erase, "identity-acks", clock.Now);
+            Assert.Single(await db.Read.Set<ErasureMarkerEntity>().ToListAsync());
+            Assert.Single(await db.Infrastructure.Set<OutboxMessage>().ToListAsync());
+            Assert.Single(await db.Read.Set<AccountEntity>().ToListAsync());
+            Assert.Empty(await db.Read.Set<QuestOccurrenceEntity>().ToListAsync());
+            Assert.Empty(await db.Read.Set<QuestCompletionEntity>().ToListAsync());
+            Assert.Empty(await db.Read.Set<QuestOccurrenceEventEntity>().Where(e => e.EventCode == "Undone").ToListAsync());
+            Assert.Empty(await db.Read.Set<QuestDefinitionEntity>().ToListAsync());
+            Assert.Empty(await db.Read.Set<QuestDefinitionRevisionEntity>().ToListAsync());
+            Assert.Empty(await db.Read.Set<CommandReceiptEntity>().ToListAsync());
+            Assert.Empty(await db.Read.Set<SyncAnchorEntity>().ToListAsync());
             Assert.DoesNotContain(await db.Audit.ToListAsync(), a => a.Actor == userId);
-            var ack = JsonSerializer.Deserialize<LifecycleAck>((await db.Set<OutboxMessage>().SingleAsync()).Payload)!;
+            var ack = JsonSerializer.Deserialize<LifecycleAck>((await db.Infrastructure.Set<OutboxMessage>().SingleAsync()).Payload)!;
             await using var identity = IdentityContext();
             await Coordinator(identity).Acknowledge(ack);
         }
@@ -126,23 +129,23 @@ public sealed partial class SqlApiTests
         await using (var db = Context())
             await db.Database.ExecuteSqlRawAsync("CREATE TRIGGER RejectLifecycleAck ON outbox.OutboxMessages AFTER INSERT AS BEGIN THROW 51001, 'Injected acknowledgment failure', 1; END;");
         await using (var db = Context())
-            await Assert.ThrowsAsync<DbUpdateException>(() => new SqlQuestLifecycle(db, clock).Receive(intent, "identity-acks"));
+            await Assert.ThrowsAsync<DbUpdateException>(() => Lifecycle().ReceiveLifecycle(intent, "identity-acks", clock.Now));
         await using (var db = Context())
         {
-            Assert.Single(await db.Accounts.ToListAsync());
-            Assert.Single(await db.Occurrences.ToListAsync());
-            Assert.Empty(await db.Erasures.ToListAsync());
+            Assert.Single(await db.Read.Set<AccountEntity>().ToListAsync());
+            Assert.Single(await db.Read.Set<QuestOccurrenceEntity>().ToListAsync());
+            Assert.Empty(await db.Read.Set<ErasureMarkerEntity>().ToListAsync());
             await db.Database.ExecuteSqlRawAsync("DROP TRIGGER outbox.RejectLifecycleAck;");
-            await new SqlQuestLifecycle(db, clock).ReapplyErasure(new() { UserId = userId, ErasedAt = clock.Now });
-            Assert.Empty(await db.Accounts.ToListAsync());
+            await Lifecycle().ReapplyErasure(userId, clock.Now, clock.Now);
+            Assert.Empty(await db.Read.Set<AccountEntity>().ToListAsync());
             Assert.Empty(await db.Audit.ToListAsync());
-            Assert.Single(await db.Erasures.ToListAsync());
+            Assert.Single(await db.Read.Set<ErasureMarkerEntity>().ToListAsync());
         }
 
         // Even a still-active stale Identity response cannot recreate product data behind a marker.
         Assert.Equal(HttpStatusCode.Unauthorized, (await alice.GetAsync(new Uri("/api/state", UriKind.Relative))).StatusCode);
         await using (var db = Context())
-            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => new SqlQuestStore(db).Read(new AccountIdentity("honeydrunk-identity", userId), "UTC", clock.Now, default));
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Store().Read(new AccountIdentity("honeydrunk-identity", userId), clock.Now, default));
     }
 
     private static async Task<LifecycleIntent> LatestIntent(IdentityDbContext db, string userId) =>

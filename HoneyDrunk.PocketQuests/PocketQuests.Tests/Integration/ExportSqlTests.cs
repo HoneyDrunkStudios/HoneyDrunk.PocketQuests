@@ -1,7 +1,7 @@
 using PocketQuests.Api.Exports;
-using PocketQuests.Application.Exports;
-using PocketQuests.Domain.Progress;
-using PocketQuests.Domain.Quests.Definitions;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http.Json;

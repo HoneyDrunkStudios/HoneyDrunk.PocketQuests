@@ -1,0 +1,4 @@
+
+# EF SQL binary/rowversion properties must expose byte arrays for provider mapping.
+[HoneyDrunk.PocketQuests/PocketQuests.Data/Entities/**/*.cs]
+dotnet_diagnostic.CA1819.severity = none

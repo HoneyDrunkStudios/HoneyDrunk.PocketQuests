@@ -1,0 +1,32 @@
+namespace PocketQuests.Data.Entities.Progress;
+
+/// <summary>One row is one account current eligibility for a public achievement, badge or frame. Classification: Restricted. History: projection; Current projection only; no historical full copies. Erase with account.</summary>
+public sealed class AccountEntitlementEntity
+{
+    /// <summary>Gets or sets application-generated stable row UUID; never reused.</summary>
+    public Guid Id { get; set; }
+
+    /// <summary>Gets or sets pocket Quests account that exclusively owns this row; supplied by trusted server context.</summary>
+    public Guid AccountId { get; set; }
+
+    /// <summary>Gets or sets reward definition whose eligibility is projected.</summary>
+    public string ProfileRewardId { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets nonnegative current count of surviving qualifying contributions.</summary>
+    public int QualifyingCount { get; set; }
+
+    /// <summary>Gets or sets a value indicating whether current derived eligibility; may become false after Undo or rank change.</summary>
+    public bool IsEarned { get; set; }
+
+    /// <summary>Gets or sets account projection generation for this reward.</summary>
+    public long ProjectionVersion { get; set; }
+
+    /// <summary>Gets or sets reviewed trigger version used for this eligibility.</summary>
+    public string RulesetVersion { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets server UTC insertion time; not the effective time of a delayed offline action.</summary>
+    public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>Gets or sets server UTC time of the most recent persisted change; writer must set on each update.</summary>
+    public DateTimeOffset ModifiedAt { get; set; }
+}
