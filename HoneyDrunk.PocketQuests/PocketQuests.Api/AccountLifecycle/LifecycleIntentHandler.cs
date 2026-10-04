@@ -5,7 +5,7 @@ using PocketQuests.Data.AccountLifecycle;
 namespace PocketQuests.Api.AccountLifecycle;
 
 /// <summary>Receives Identity instructions only through the private, Identity-sender-authorized endpoint.</summary>
-public sealed class LifecycleIntentHandler(SqlQuestLifecycle lifecycle, IConfiguration configuration) : IMessageHandler<LifecycleIntent>
+public sealed class LifecycleIntentHandler(IQuestLifecycle lifecycle, IConfiguration configuration) : IMessageHandler<LifecycleIntent>
 {
     /// <inheritdoc />
     public Task HandleAsync(LifecycleIntent message, MessageContext context, CancellationToken cancellationToken = default) =>

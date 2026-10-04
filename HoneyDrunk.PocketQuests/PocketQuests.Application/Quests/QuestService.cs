@@ -8,7 +8,14 @@ namespace PocketQuests.Application.Quests;
 /// <summary>Applies server time at the application boundary before invoking durable storage.</summary>
 public sealed class QuestService(IQuestStore store, TimeProvider clock)
 {
-    /// <summary>Reads current progress and initializes a first account with its local timezone.</summary>
+    /// <summary>Explicitly initializes a profile using the existing profile route's selected timezone.</summary>
+    /// <param name="identity">Verified account identity.</param>
+    /// <param name="initialZone">Initial IANA calendar zone.</param>
+    /// <param name="token">Cancellation.</param>
+    /// <returns>Initialized profile state.</returns>
+    public Task<QuestState> Initialize(AccountIdentity identity, string initialZone, CancellationToken token) => store.Initialize(identity, initialZone, clock.GetUtcNow(), token);
+
+    /// <summary>Reads current progress at the host clock.</summary>
     /// <param name="identity">The trusted account identity established by authentication.</param>
     /// <param name="initialZone">The IANA timezone used only when creating the account.</param>
     /// <param name="token">Cancellation for the database operation.</param>

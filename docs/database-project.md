@@ -4,13 +4,16 @@
 
 The same project conditionally imports Microsoft.Build.Sql only under `dotnet` MSBuild, preserving cross-platform command-line and CI builds. Visual Studio uses its installed SSDT targets. Both paths share the explicit SQL file list and output a DACPAC; intermediate outputs are separated to avoid conflicting caches. Add new SQL files through Visual Studio or explicitly include them in the project. SDK-style SQL project support is not required in Visual Studio.
 
-- `Tables/dbo` contains a SQL file per application table, including its keys and indexes.
+- `Tables/dbo` contains retained Legacy-mode application tables and the unchanged shared Audit table.
+- `Tables/pocketquests.Table.sql` contains the Relational-mode model, with metadata on every table and column. See [explicit mode and clean-database selection](schema/runtime-cutover.md).
 - `Tables/outbox` and `Schemas` contain the shared outbox schema and table.
 - `Data/Seed` contains repeatable data updates explicitly included by `Data/PostDeployment.sql`.
 - `Data/AdHoc` holds manually executed SQL, excluded from automatic publish.
 - `PublishProfiles/Local.publish.xml` targets only `(localdb)\PocketQuests`, database `PocketQuests`.
 
-EF in `PocketQuests.Data` continues to handle queries and saves. Its `Entities` and Fluent API `Configurations` must match the SQL project. Domain types remain separate. EF migrations and design-time factories have been removed; do not generate a second schema history.
+Legacy-mode EF in `PocketQuests.Data` handles its existing queries and saves. Relational-mode EF reads explicit tables and named procedures perform controlled writes. Both mappings must match the SQL project. Domain types remain separate. EF migrations and design-time factories have been removed; do not generate a second schema history.
+
+`Persistence:Mode=Relational` selects the relational store, anchors and lifecycle adapter together; an absent setting retains Legacy mode. Startup never publishes a DACPAC or migrates accounts. The clean-database path and validation boundaries are documented in [runtime-cutover.md](schema/runtime-cutover.md). Publishing this combined DACPAC alone does not select the runtime mode.
 
 ## Deploy locally
 

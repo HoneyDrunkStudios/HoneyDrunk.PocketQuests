@@ -4,6 +4,7 @@
 **/.expo/
 **/dist/
 **/TestResults/
+**/__pycache__/
 apps/mobile/reports/
 .vs/
 .env

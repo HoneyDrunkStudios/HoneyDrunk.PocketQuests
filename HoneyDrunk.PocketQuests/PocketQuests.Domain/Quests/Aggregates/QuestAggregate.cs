@@ -20,6 +20,10 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
     IEnumerable<Completion>? completions = null, IEnumerable<UndoEvent>? undos = null,
     IEnumerable<QuestDefinition>? definitions = null, PlayerProfile? profile = null, ScheduleState? schedule = null)
 {
+    private int? _actionDeliveryBudget;
+    private int _actionDeliveries;
+    private bool _actionHasMoreDeliveries;
+
     /// <summary>Gets the account's validated IANA timezone.</summary>
     public string Zone { get; private set; } = Scheduling.Zone(zone).Id;
 
@@ -35,35 +39,28 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
     /// <summary>Validates and applies one command using authoritative server time.</summary>
     /// <param name="command">The command to validate and apply.</param>
     /// <param name="now">Authoritative server UTC time.</param>
-    public void Apply(QuestCommand command, DateTimeOffset now)
+    public void Apply(QuestCommand command, DateTimeOffset now) => _ = Apply(command, now, int.MaxValue);
+
+    /// <summary>Applies the same command with a bounded budget for recurrence triggered by the action itself.</summary>
+    /// <param name="command">The existing command contract.</param>
+    /// <param name="now">Verified effective command time.</param>
+    /// <param name="maximumDeliveries">Nonnegative delivery budget; zero defers all newly due deliveries.</param>
+    /// <returns>Action-triggered cursor work and whether due deliveries remain.</returns>
+    public ReconciliationProgress Apply(QuestCommand command, DateTimeOffset now, int maximumDeliveries)
     {
-        Progression.Require(command.OperationId != Guid.Empty, "An operation ID is required.");
-        switch (command.Action)
+        if (maximumDeliveries < 0)
+            throw new ArgumentOutOfRangeException(nameof(maximumDeliveries));
+        _actionDeliveryBudget = maximumDeliveries;
+        _actionDeliveries = 0;
+        _actionHasMoreDeliveries = false;
+        try
         {
-            case QuestActions.Accept: Accept(command, now); break;
-            case QuestActions.Complete: Complete(command, now); break;
-            case QuestActions.Undo: Undo(command, now); break;
-            case QuestActions.SaveDefinition: SaveDefinition(command, now); break;
-            case QuestActions.ArchiveDefinition: ArchiveDefinition(command, now); break;
-            case QuestActions.AssessSkill: AssessSkill(command, now); break;
-            case QuestActions.SaveSkill: SaveSkill(command); break;
-            case QuestActions.ArchiveSkill: ArchiveSkill(command); break;
-            case QuestActions.Interests: SetInterests(command); break;
-            case QuestActions.FinishOnboarding: Profile = Profile with { OnboardingComplete = true }; break;
-            case QuestActions.Plan: Plan(command, now); break;
-            case QuestActions.Zone: ChangeZone(command, now); break;
-            case QuestActions.ExpiryWarnings: Profile = Profile with { ExpiryWarnings = command.ExpiryWarnings ?? throw new ArgumentException("Choose whether to enable expiry warnings.") }; break;
-            case QuestActions.Link: Link(command); break;
-            case QuestActions.SelectBadge: SelectReward(command, "Badge", now); break;
-            case QuestActions.SelectFrame: SelectReward(command, "Frame", now); break;
-            case QuestActions.SaveSeries: SaveSeries(command, now); break;
-            case QuestActions.StopSeries: StopSeries(command, now); break;
-            case QuestActions.Pause: Pause(command, now, true); break;
-            case QuestActions.Resume: Pause(command, now, false); break;
-            case QuestActions.ResumeOccurrence: ResumeOccurrence(command, now); break;
-            case QuestActions.Abandon: Abandon(command, now); break;
-            case QuestActions.AcceptOffer: AcceptOffer(command, now); break;
-            default: throw new ArgumentException("Unknown quest action.");
+            ApplyCore(command, now);
+            return new(_actionDeliveries, _actionHasMoreDeliveries);
+        }
+        finally
+        {
+            _actionDeliveryBudget = null;
         }
     }
 
@@ -115,13 +112,16 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
             ledger.Add(new(completion.Id, completion.OccurrenceId, completion.RecordedAt, "Category", quest.CategoryId, quest.BaseXp + Progression.StreakBonus(quest.BaseXp, count)));
             overall += quest.BaseXp;
             categoryXp[quest.CategoryId] += quest.BaseXp + Progression.StreakBonus(quest.BaseXp, count);
-            foreach (var award in Progression.Allocate(quest.BaseXp, quest.Attributes))
+
+            // Stable target order makes history-derived responses reproducible across processes.
+            // ImmutableDictionary enumeration uses process-specific string hashing; reward values stay unchanged.
+            foreach (var award in Progression.Allocate(quest.BaseXp, quest.Attributes).OrderBy(a => a.Key, StringComparer.Ordinal))
             {
                 attributeXp[award.Key] += award.Value;
                 ledger.Add(new(completion.Id, completion.OccurrenceId, completion.RecordedAt, "Attribute", award.Key, award.Value));
             }
 
-            foreach (var award in Progression.Allocate(quest.BaseXp, quest.Skills))
+            foreach (var award in Progression.Allocate(quest.BaseXp, quest.Skills).OrderBy(a => a.Key, StringComparer.Ordinal))
             {
                 skillXp[award.Key] += award.Value;
                 ledger.Add(new(completion.Id, completion.OccurrenceId, completion.RecordedAt, "Skill", award.Key, award.Value));
@@ -172,6 +172,38 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
 
     private static ImmutableArray<Balance> Balances(ImmutableArray<NamedItem> items, Dictionary<string, long> xp, Track track) =>
         items.Select(x => new Balance(x.Id, x.Name, xp[x.Id], Progression.Level(xp[x.Id], track))).ToImmutableArray();
+
+    private void ApplyCore(QuestCommand command, DateTimeOffset now)
+    {
+        Progression.Require(command.OperationId != Guid.Empty, "An operation ID is required.");
+        switch (command.Action)
+        {
+            case QuestActions.Accept: Accept(command, now); break;
+            case QuestActions.Complete: Complete(command, now); break;
+            case QuestActions.Undo: Undo(command, now); break;
+            case QuestActions.SaveDefinition: SaveDefinition(command, now); break;
+            case QuestActions.ArchiveDefinition: ArchiveDefinition(command, now); break;
+            case QuestActions.AssessSkill: AssessSkill(command, now); break;
+            case QuestActions.SaveSkill: SaveSkill(command); break;
+            case QuestActions.ArchiveSkill: ArchiveSkill(command); break;
+            case QuestActions.Interests: SetInterests(command); break;
+            case QuestActions.FinishOnboarding: Profile = Profile with { OnboardingComplete = true }; break;
+            case QuestActions.Plan: Plan(command, now); break;
+            case QuestActions.Zone: ChangeZone(command, now); break;
+            case QuestActions.ExpiryWarnings: Profile = Profile with { ExpiryWarnings = command.ExpiryWarnings ?? throw new ArgumentException("Choose whether to enable expiry warnings.") }; break;
+            case QuestActions.Link: Link(command); break;
+            case QuestActions.SelectBadge: SelectReward(command, "Badge", now); break;
+            case QuestActions.SelectFrame: SelectReward(command, "Frame", now); break;
+            case QuestActions.SaveSeries: SaveSeries(command, now); break;
+            case QuestActions.StopSeries: StopSeries(command, now); break;
+            case QuestActions.Pause: Pause(command, now, true); break;
+            case QuestActions.Resume: Pause(command, now, false); break;
+            case QuestActions.ResumeOccurrence: ResumeOccurrence(command, now); break;
+            case QuestActions.Abandon: Abandon(command, now); break;
+            case QuestActions.AcceptOffer: AcceptOffer(command, now); break;
+            default: throw new ArgumentException("Unknown quest action.");
+        }
+    }
 
     private void Accept(QuestCommand command, DateTimeOffset now)
     {

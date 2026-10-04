@@ -1,0 +1,354 @@
+{
+  "Category": [
+    {
+      "Id": "c01",
+      "Name": "Health & Fitness",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 1
+    },
+    {
+      "Id": "c02",
+      "Name": "Learning",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 2
+    },
+    {
+      "Id": "c03",
+      "Name": "Creativity",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 3
+    },
+    {
+      "Id": "c04",
+      "Name": "Work & Purpose",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 4
+    },
+    {
+      "Id": "c05",
+      "Name": "Relationships & Community",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 5
+    },
+    {
+      "Id": "c06",
+      "Name": "Everyday Life",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 6
+    },
+    {
+      "Id": "c07",
+      "Name": "Rest & Recreation",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 7
+    },
+    {
+      "Id": "c08",
+      "Name": "Reflection & Spirituality",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 8
+    },
+    {
+      "Id": "c09",
+      "Name": "Finances",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 9
+    },
+    {
+      "Id": "c10",
+      "Name": "Exploration & Adventure",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 10
+    }
+  ],
+  "Attribute": [
+    {
+      "Id": "a01",
+      "Name": "Strength",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 1
+    },
+    {
+      "Id": "a02",
+      "Name": "Endurance",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 2
+    },
+    {
+      "Id": "a03",
+      "Name": "Flexibility",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 3
+    },
+    {
+      "Id": "a04",
+      "Name": "Dexterity",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 4
+    },
+    {
+      "Id": "a05",
+      "Name": "Intelligence",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 5
+    },
+    {
+      "Id": "a06",
+      "Name": "Wisdom",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 6
+    },
+    {
+      "Id": "a07",
+      "Name": "Creativity",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 7
+    },
+    {
+      "Id": "a08",
+      "Name": "Charisma",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 8
+    }
+  ],
+  "Skill": [
+    {
+      "Id": "s01",
+      "Name": "Strength Training",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 1,
+      "NormalizedName": "STRENGTH TRAINING"
+    },
+    {
+      "Id": "s02",
+      "Name": "Running",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 2,
+      "NormalizedName": "RUNNING"
+    },
+    {
+      "Id": "s03",
+      "Name": "Language Learning",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 3,
+      "NormalizedName": "LANGUAGE LEARNING"
+    },
+    {
+      "Id": "s04",
+      "Name": "Research",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 4,
+      "NormalizedName": "RESEARCH"
+    },
+    {
+      "Id": "s05",
+      "Name": "Drawing",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 5,
+      "NormalizedName": "DRAWING"
+    },
+    {
+      "Id": "s06",
+      "Name": "Creative Writing",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 6,
+      "NormalizedName": "CREATIVE WRITING"
+    },
+    {
+      "Id": "s07",
+      "Name": "Programming",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 7,
+      "NormalizedName": "PROGRAMMING"
+    },
+    {
+      "Id": "s08",
+      "Name": "Project Planning",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 8,
+      "NormalizedName": "PROJECT PLANNING"
+    },
+    {
+      "Id": "s09",
+      "Name": "Communication",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 9,
+      "NormalizedName": "COMMUNICATION"
+    },
+    {
+      "Id": "s10",
+      "Name": "Conflict Resolution",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 10,
+      "NormalizedName": "CONFLICT RESOLUTION"
+    },
+    {
+      "Id": "s11",
+      "Name": "Cooking",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 11,
+      "NormalizedName": "COOKING"
+    },
+    {
+      "Id": "s12",
+      "Name": "Home Maintenance",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 12,
+      "NormalizedName": "HOME MAINTENANCE"
+    },
+    {
+      "Id": "s13",
+      "Name": "Meditation",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 13,
+      "NormalizedName": "MEDITATION"
+    },
+    {
+      "Id": "s14",
+      "Name": "Journaling",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 14,
+      "NormalizedName": "JOURNALING"
+    },
+    {
+      "Id": "s15",
+      "Name": "Budgeting",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 15,
+      "NormalizedName": "BUDGETING"
+    },
+    {
+      "Id": "s16",
+      "Name": "Financial Planning",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 16,
+      "NormalizedName": "FINANCIAL PLANNING"
+    },
+    {
+      "Id": "s17",
+      "Name": "Navigation",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 17,
+      "NormalizedName": "NAVIGATION"
+    },
+    {
+      "Id": "s18",
+      "Name": "Trip Planning",
+      "CatalogVersion": "PQ-CAT-0.5",
+      "SortOrder": 18,
+      "NormalizedName": "TRIP PLANNING"
+    }
+  ],
+  "ProfileReward": [
+    {
+      "Id": "PQ-CAT-A01",
+      "KindCode": "Achievement",
+      "Name": "A Quest of My Own",
+      "RequiredCount": 1,
+      "RequiredRank": "F",
+      "RulesetVersion": "PQ-MVP-0.5"
+    },
+    {
+      "Id": "PQ-CAT-A02",
+      "KindCode": "Achievement",
+      "Name": "Room to Recharge",
+      "RequiredCount": 5,
+      "RequiredRank": "F",
+      "RulesetVersion": "PQ-MVP-0.5"
+    },
+    {
+      "Id": "PQ-CAT-B01",
+      "KindCode": "Badge",
+      "Name": "Curious Explorer",
+      "RequiredCount": 3,
+      "RequiredRank": "F",
+      "RulesetVersion": "PQ-MVP-0.5"
+    },
+    {
+      "Id": "PQ-CAT-B02",
+      "KindCode": "Badge",
+      "Name": "Everyday Care",
+      "RequiredCount": 10,
+      "RequiredRank": "F",
+      "RulesetVersion": "PQ-MVP-0.5"
+    },
+    {
+      "Id": "PQ-CAT-F01",
+      "KindCode": "Frame",
+      "Name": "Open Notebook",
+      "RequiredCount": 10,
+      "RequiredRank": "E",
+      "RulesetVersion": "PQ-MVP-0.5"
+    },
+    {
+      "Id": "PQ-CAT-F02",
+      "KindCode": "Frame",
+      "Name": "Quiet Horizon",
+      "RequiredCount": 10,
+      "RequiredRank": "D",
+      "RulesetVersion": "PQ-MVP-0.5"
+    }
+  ],
+  "SystemQuest": [
+    {
+      "Id": "PQ-CAT-Q01",
+      "CategoryId": "c01",
+      "Title": "Practice a familiar strength routine",
+      "CatalogVersion": "PQ-CAT-0.5"
+    },
+    {
+      "Id": "PQ-CAT-Q02",
+      "CategoryId": "c02",
+      "Title": "Return to a language",
+      "CatalogVersion": "PQ-CAT-0.5"
+    },
+    {
+      "Id": "PQ-CAT-Q03",
+      "CategoryId": "c03",
+      "Title": "Make a sketch",
+      "CatalogVersion": "PQ-CAT-0.5"
+    },
+    {
+      "Id": "PQ-CAT-Q04",
+      "CategoryId": "c04",
+      "Title": "Plan the next step",
+      "CatalogVersion": "PQ-CAT-0.5"
+    },
+    {
+      "Id": "PQ-CAT-Q05",
+      "CategoryId": "c05",
+      "Title": "Make time to listen",
+      "CatalogVersion": "PQ-CAT-0.5"
+    },
+    {
+      "Id": "PQ-CAT-Q06",
+      "CategoryId": "c06",
+      "Title": "Reset a household space",
+      "CatalogVersion": "PQ-CAT-0.5"
+    },
+    {
+      "Id": "PQ-CAT-Q07",
+      "CategoryId": "c07",
+      "Title": "Enjoy some downtime",
+      "CatalogVersion": "PQ-CAT-0.5"
+    },
+    {
+      "Id": "PQ-CAT-Q08",
+      "CategoryId": "c08",
+      "Title": "Make space for reflection",
+      "CatalogVersion": "PQ-CAT-0.5"
+    },
+    {
+      "Id": "PQ-CAT-Q09",
+      "CategoryId": "c09",
+      "Title": "Review your spending record",
+      "CatalogVersion": "PQ-CAT-0.5"
+    },
+    {
+      "Id": "PQ-CAT-Q10",
+      "CategoryId": "c10",
+      "Title": "Discover somewhere local",
+      "CatalogVersion": "PQ-CAT-0.5"
+    }
+  ]
+}

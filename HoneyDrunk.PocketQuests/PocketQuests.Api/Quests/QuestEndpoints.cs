@@ -36,7 +36,7 @@ public static class QuestEndpoints
         });
         api.MapGet("/catalog", () => Results.Ok(new { Catalog.Categories, Catalog.Attributes, Catalog.Skills, Catalog.Quests, Progression.Rules }));
         api.MapPost("/profile", (InitializeProfile request, ClaimsPrincipal principal, QuestService service, CancellationToken token) =>
-            service.Read(Identity(principal), request.Zone, token));
+            service.Initialize(Identity(principal), request.Zone, token));
         api.MapGet("/state", (ClaimsPrincipal principal, QuestService service, CancellationToken token) =>
             service.Read(Identity(principal), "UTC", token));
         api.MapPost("/commands", (QuestCommand command, ClaimsPrincipal principal, QuestService service, CancellationToken token) =>

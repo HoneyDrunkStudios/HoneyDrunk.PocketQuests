@@ -35,13 +35,70 @@
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">18.0</VisualStudioVersion>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Resolve system procedure signatures; never deploy master objects into the product. -->
+    <PackageReference Include="Microsoft.SqlServer.Dacpacs.Master" Version="150.1.2" Condition="'$(MSBuildRuntimeType)' == 'Core'">
+      <DatabaseVariableLiteralValue>master</DatabaseVariableLiteralValue>
+      <SuppressMissingDependenciesErrors>False</SuppressMissingDependenciesErrors>
+    </PackageReference>
+    <ArtifactReference Include="$(SQLDBExtensionsRefPath)\Extensions\SqlServer\150\SQLSchemas\master.dacpac" Condition="'$(MSBuildRuntimeType)' != 'Core'">
+      <DatabaseVariableLiteralValue>master</DatabaseVariableLiteralValue>
+      <SuppressMissingDependenciesErrors>False</SuppressMissingDependenciesErrors>
+    </ArtifactReference>
     <Folder Include="Tables" />
     <Folder Include="Schemas" />
     <Folder Include="Data" />
     <Folder Include="Data\Seed" />
     <Folder Include="Data\AdHoc" />
     <Folder Include="PublishProfiles" />
+    <Build Include="Types\pocketquests.CommandInputs.sql" />
+    <Build Include="Types\pocketquests.MutationInputs.sql" />
+    <Build Include="Procedures\pocketquests.CommitAccountMutation.sql" />
+    <Build Include="Security\pocketquests.MutationRuntime.sql" />
+    <Build Include="Procedures\pocketquests.LockAccount.sql" />
+    <Build Include="Procedures\pocketquests.AcquireAccountLock.sql" />
+    <Build Include="Procedures\pocketquests.Lifecycle.sql" />
+    <Build Include="Procedures\pocketquests.PurgeAccount.sql" />
+    <Build Include="Security\pocketquests.LifecycleRuntime.sql" />
+    <Build Include="Procedures\pocketquests.CheckAccountAccess.sql" />
+    <Build Include="Procedures\pocketquests.InitializeAccount.sql" />
+    <Build Include="Procedures\pocketquests.IssueSyncAnchor.sql" />
+    <Build Include="Procedures\pocketquests.CommitQuestCommand.sql" />
+    <Build Include="Security\pocketquests.CommandRuntime.sql" />
     <Build Include="Schemas\outbox.sql" />
+    <Build Include="Schemas\pocketquests.sql" />
+    <Build Include="Tables\pocketquests.Category.sql" />
+    <Build Include="Tables\pocketquests.Attribute.sql" />
+    <Build Include="Tables\pocketquests.Skill.sql" />
+    <Build Include="Tables\pocketquests.ProfileReward.sql" />
+    <Build Include="Tables\pocketquests.SystemQuest.sql" />
+    <Build Include="Tables\pocketquests.QuestCommandHistory.sql" />
+    <Build Include="Tables\pocketquests.QuestCommandInterest.sql" />
+    <Build Include="Tables\pocketquests.Account.sql" />
+    <Build Include="Tables\pocketquests.CommandReceipt.sql" />
+    <Build Include="Tables\pocketquests.AccountInterest.sql" />
+    <Build Include="Tables\pocketquests.AccountPause.sql" />
+    <Build Include="Tables\pocketquests.TimeZoneChange.sql" />
+    <Build Include="Tables\pocketquests.CustomSkill.sql" />
+    <Build Include="Tables\pocketquests.SkillAssessment.sql" />
+    <Build Include="Tables\pocketquests.QuestDefinition.sql" />
+    <Build Include="Tables\pocketquests.QuestDefinitionRevision.sql" />
+    <Build Include="Tables\pocketquests.QuestDefinitionAttributeAllocation.sql" />
+    <Build Include="Tables\pocketquests.QuestDefinitionSkillAllocation.sql" />
+    <Build Include="Tables\pocketquests.QuestSeries.sql" />
+    <Build Include="Tables\pocketquests.QuestSeriesRevision.sql" />
+    <Build Include="Tables\pocketquests.SyncAnchor.sql" />
+    <Build Include="Tables\pocketquests.QuestOccurrence.sql" />
+    <Build Include="Tables\pocketquests.QuestOccurrenceRevision.sql" />
+    <Build Include="Tables\pocketquests.QuestOccurrenceEvent.sql" />
+    <Build Include="Tables\pocketquests.QuestCompletion.sql" />
+    <Build Include="Tables\pocketquests.XpLedgerEntry.sql" />
+    <Build Include="Tables\pocketquests.XpBalance.sql" />
+    <Build Include="Tables\pocketquests.CategoryProgress.sql" />
+    <Build Include="Tables\pocketquests.AccountEntitlement.sql" />
+    <Build Include="Tables\pocketquests.AccountLifecycleState.sql" />
+    <Build Include="Tables\pocketquests.ErasureMarker.sql" />
+    <Build Include="Tables\pocketquests.LifecycleMessage.sql" />
+    <Build Include="Tables\pocketquests.AccountAuditRecord.sql" />
     <Build Include="Tables\dbo\Accounts.sql" />
     <Build Include="Tables\dbo\AuditRecords.sql" />
     <Build Include="Tables\dbo\Completions.sql" />
@@ -58,6 +115,7 @@
     <PostDeploy Include="Data\PostDeployment.sql" />
     <None Include="Data\Seed\BackfillQuestHistory.sql" />
     <None Include="Data\Seed\README.md" />
+    <None Include="Data\Seed\PocketQuestsCatalog.sql" />
     <None Include="PublishProfiles\Local.publish.xml" />
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.Build.Sql" Version="2.3.0" Condition="'$(MSBuildRuntimeType)' == 'Core'" />

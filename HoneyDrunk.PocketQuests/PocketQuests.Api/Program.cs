@@ -9,9 +9,7 @@ using PocketQuests.Api.Quests;
 using PocketQuests.Application.Persistence;
 using PocketQuests.Application.Quests;
 using PocketQuests.Application.Synchronization;
-using PocketQuests.Data.AccountLifecycle;
 using PocketQuests.Data.Context;
-using PocketQuests.Data.Repositories;
 using PocketQuests.ServiceDefaults;
 using System.Text.Json.Serialization;
 
@@ -22,10 +20,8 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddDbContext<QuestDbContext>(options => options.UseSqlServer(
     builder.Configuration.GetConnectionString("quests") ?? throw new InvalidOperationException("SQL Server connection 'quests' is required.")));
 builder.Services.AddHealthChecks().AddDbContextCheck<QuestDbContext>();
-builder.Services.AddScoped<IQuestStore, SqlQuestStore>();
-builder.Services.AddScoped<ISyncAnchors, SqlQuestStore>();
+builder.AddQuestPersistence();
 builder.Services.AddScoped<QuestService>();
-builder.Services.AddScoped<SqlQuestLifecycle>();
 builder.AddLifecycleRuntime();
 builder.Services.AddHttpClient<IdentityClient>(client =>
 {
@@ -65,6 +61,11 @@ app.Use(async (context, next) =>
     catch (UnauthorizedAccessException)
     {
         await Results.Unauthorized().ExecuteAsync(context);
+    }
+    catch (ReconciliationPendingException)
+    {
+        context.Response.Headers.RetryAfter = "1";
+        await Results.Problem("Recurring deliveries are being reconciled. Retry the exact pending request.", statusCode: 503).ExecuteAsync(context);
     }
     catch (SyncClockNotReadyException error)
     {
