@@ -137,6 +137,7 @@ public sealed partial class SqlApiTests
             await using var db = Context();
             await db.Database.ExecuteSqlRawAsync("ALTER TABLE outbox.OutboxMessages DROP CONSTRAINT CK_SchemaTestRejectAck;");
         }
+
         await using (var db = Context())
         {
             Assert.Single(await db.Read.Set<AccountEntity>().ToListAsync());
