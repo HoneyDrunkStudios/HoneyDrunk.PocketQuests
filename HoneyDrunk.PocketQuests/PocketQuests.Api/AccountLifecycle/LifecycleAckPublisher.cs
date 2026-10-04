@@ -21,7 +21,9 @@ public sealed class LifecycleAckPublisher : ITransportPublisher, IAsyncDisposabl
     {
         this.clock = clock;
         queue = configuration["Lifecycle:AcknowledgmentQueue"] ?? throw new InvalidOperationException("Acknowledgment queue is missing.");
-        publisher = new(client, Options.Create(new AzureServiceBusOptions { Address = queue }), logger);
+
+        // A failed broker send must remain retryable in SQL; Blob persistence is not delivery.
+        publisher = new(client, Options.Create(new AzureServiceBusOptions { Address = queue, BlobFallback = new() { Enabled = false } }), logger);
     }
 
     /// <inheritdoc />

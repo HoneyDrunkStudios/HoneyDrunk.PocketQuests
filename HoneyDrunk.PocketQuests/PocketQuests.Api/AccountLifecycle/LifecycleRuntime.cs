@@ -2,6 +2,7 @@ using HoneyDrunk.Data.Outbox.Dispatcher.Registration;
 using HoneyDrunk.Data.Outbox.Registration;
 using HoneyDrunk.Identity.Abstractions.AccountLifecycle;
 using HoneyDrunk.Transport.Abstractions;
+using HoneyDrunk.Transport.AzureServiceBus.Configuration;
 using HoneyDrunk.Transport.AzureServiceBus.DependencyInjection;
 using HoneyDrunk.Transport.DependencyInjection;
 using PocketQuests.Data.Context;
@@ -23,7 +24,17 @@ public static class LifecycleRuntime
             throw new InvalidOperationException("Private acknowledgment queue is required.");
         builder.Services.AddSingleton<Azure.Core.TokenCredential>(new Azure.Identity.ManagedIdentityCredential(Azure.Identity.ManagedIdentityId.SystemAssigned));
         builder.Services.AddHoneyDrunkDataOutbox<QuestDbContext>();
-        builder.Services.AddHoneyDrunkServiceBusTransportWithManagedIdentity(bus, queue);
+        builder.Services.AddHoneyDrunkServiceBusTransportWithManagedIdentity(bus, queue, options =>
+        {
+            // Complete only after the lifecycle handler commits its state and acknowledgment.
+            options.AutoComplete = false;
+            options.BlobFallback.Enabled = false;
+        });
+        builder.Services.AddOptions<AzureServiceBusOptions>()
+            .Validate(
+                options => !options.AutoComplete && !options.BlobFallback.Enabled,
+                "Lifecycle delivery requires manual settlement and broker-confirmed publishing.")
+            .ValidateOnStart();
         builder.Services.AddSingleton<ITransportPublisher, LifecycleAckPublisher>();
         builder.Services.AddMessageHandler<LifecycleIntent, LifecycleIntentHandler>();
         builder.Services.AddOutboxDispatcher();
