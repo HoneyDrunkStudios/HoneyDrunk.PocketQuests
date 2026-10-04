@@ -27,7 +27,7 @@ public sealed partial class SqlQuestStore
         if (command.RecordedTime is not { } proof)
         {
             if (logicalNow > receivedAt.AddSeconds(5))
-                throw new ArgumentException("Server time is behind committed account history. Reconnect when its clock is reconciled.");
+                throw new SyncClockNotReadyException("Server time is behind committed account history. Keep this action and retry when its clock is reconciled.");
             return logicalNow;
         }
 
@@ -47,8 +47,10 @@ public sealed partial class SqlQuestStore
         }
 
         var wallElapsed = (proof.DeviceUtc - anchor.DeviceUtc).TotalMilliseconds;
-        if (Math.Abs(wallElapsed - proof.ElapsedMilliseconds) > TimeSpan.FromMinutes(2).TotalMilliseconds || recorded > receivedAt.AddSeconds(5))
+        if (Math.Abs(wallElapsed - proof.ElapsedMilliseconds) > TimeSpan.FromMinutes(2).TotalMilliseconds)
             throw new ArgumentException("Your device clock changed or moved ahead of server time. This action needs reconciliation; no final reward was granted.");
+        if (recorded > receivedAt.AddSeconds(5))
+            throw new SyncClockNotReadyException("Recorded time is ahead of server time. Keep this action and retry after clock reconciliation.");
 
         // The issuance floor orders actions after history the device has already seen.
         // It is fixed on this anchor, never recomputed from later commands or added to elapsed time.
@@ -61,7 +63,7 @@ public sealed partial class SqlQuestStore
         if (recorded < floor)
             recorded = floor;
         if (recorded > receivedAt.AddSeconds(5))
-            throw new ArgumentException("The anchored account clock is ahead of server time. Preserve the action and reconnect after clock reconciliation.");
+            throw new SyncClockNotReadyException("The anchored account clock is ahead of server time. Keep this action and retry after clock reconciliation.");
         if (command.Action == QuestActions.Complete)
         {
             var current = aggregate.Occurrences.SingleOrDefault(o => o.Id == command.OccurrenceId) ?? throw new KeyNotFoundException();

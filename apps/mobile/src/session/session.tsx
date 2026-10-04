@@ -1,4 +1,7 @@
-import { questActions, offlineQuestActions } from "../features/quests/commands/quest-actions";
+import {
+  questActions,
+  offlineQuestActions,
+} from "../features/quests/commands/quest-actions";
 import React, {
   createContext,
   use,
@@ -28,7 +31,13 @@ import {
 import { pendingProjection } from "./offline-projection";
 import { saveExport } from "../features/profile/export-download";
 import { syncWarnings } from "../features/quests/notifications";
-import { RequestError } from "./request-error";
+import { RequestError, isDefinitiveRejection } from "./request-error";
+import {
+  isolateRejection,
+  rejectionBlockers,
+  rejectedActionLabel,
+  type RejectedCommand,
+} from "./sync-recovery";
 import {
   completionFeedback,
   survivingFeedback,
@@ -90,6 +99,8 @@ type SessionContext = {
   pending: boolean;
   offline: boolean;
   queuedCount: number;
+  rejected: (RejectedCommand & { label: string })[];
+  discardRejected(operationId: string): Promise<void>;
   recentCompletion: (CompletionFeedback & { until: number }) | null;
   dismissCompletion(): void;
   connect(token: string): Promise<void>;
@@ -170,7 +181,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (
       localRef.current &&
       localRef.current.userId !== status.userId &&
-      localRef.current.queue.length
+      (localRef.current.queue.length || localRef.current.rejected?.length)
     )
       throw new RequestError(
         409,
@@ -242,12 +253,25 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const current = localRef.current;
       if (current.userId !== active.userId)
         throw new Error("Pending actions belong to another account.");
-      const result = await request<State>(
-        "/api/commands",
-        active.token,
-        current.queue[0],
-      );
       const action = current.queue[0];
+      let result: State;
+      try {
+        result = await request<State>("/api/commands", active.token, action);
+      } catch (value) {
+        if (!isDefinitiveRejection(value)) throw value;
+        const rejection = value as RequestError;
+        await publish({
+          ...current,
+          ...isolateRejection(
+            current.queue.slice(1),
+            current.rejected ?? [],
+            action,
+            rejection.status,
+            rejection.message,
+          ),
+        });
+        continue;
+      }
       const feedback = completionFeedback(current.state, result, action);
       await publish({
         ...current,
@@ -358,7 +382,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           );
         }
         if (
-          localRef.current?.queue.length &&
+          (localRef.current?.queue.length ||
+            localRef.current?.rejected?.length) &&
           localRef.current.userId !== user.userId
         )
           throw new RequestError(
@@ -391,6 +416,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           state,
           catalog,
           queue,
+          rejected: previous?.rejected ?? [],
           anchor: previous?.anchor ?? null,
         });
         await sessionStorage.savePending(user.userId, null);
@@ -467,16 +493,25 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
   async function command(input: Omit<Command, "operationId">) {
     const current = localRef.current;
-    if (
-      !sessionRef.current ||
-      !current ||
-      inFlight.current ||
-      (!offline && current.queue.length)
-    )
+    if (!sessionRef.current || !current || inFlight.current) return;
+    if (!offline && current.queue.length) {
+      setError(
+        "Synchronize or review the recorded actions before adding another change.",
+      );
       return;
+    }
+    if (
+      rejectionBlockers({ ...input, operationId: "" }, current.rejected ?? [])
+        .length
+    ) {
+      setError(
+        "Review the rejected actions for this quest before recording another related change. Each retained action can be discarded individually.",
+      );
+      return;
+    }
     if (offline && !offlineQuestActions.has(input.action)) {
       setError(
-        "Reconnect to change schedules, profile settings or existing plans. Offline creation and completion remain available.",
+        "Reconnect to change schedules, profile settings or existing plans.",
       );
       return;
     }
@@ -533,11 +568,37 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setBusy(false);
     }
   }
+  async function discardRejected(operationId: string) {
+    if (inFlight.current || !localRef.current) return;
+    inFlight.current = true;
+    setBusy(true);
+    try {
+      await publish({
+        ...localRef.current,
+        rejected: (localRef.current.rejected ?? []).filter(
+          (entry) => entry.command.operationId !== operationId,
+        ),
+      });
+      setError(
+        "Selected action discarded. Other recorded and blocked actions remain on this device.",
+      );
+    } catch (value) {
+      failure(value);
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
+  }
   async function discardPending() {
     if (inFlight.current || !localRef.current) return;
     inFlight.current = true;
     try {
-      await publish({ ...localRef.current, queue: [], anchor: null });
+      await publish({
+        ...localRef.current,
+        queue: [],
+        rejected: [],
+        anchor: null,
+      });
       setError(
         "Pending changes discarded. Refresh to establish a new clock baseline.",
       );
@@ -547,7 +608,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }
   async function signOut(discard = false) {
     if (inFlight.current) return;
-    if (localRef.current?.queue.length && !discard) {
+    if (
+      (localRef.current?.queue.length || localRef.current?.rejected?.length) &&
+      !discard
+    ) {
       setError(
         "There are unsynced changes. Synchronize them, or choose Discard pending changes and sign out. Signing out clears this device's private cache.",
       );
@@ -596,7 +660,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   ) {
     if (inFlight.current)
       throw new Error("Wait for the current action to finish.");
-    if (localRef.current?.queue.length)
+    if (localRef.current?.queue.length || localRef.current?.rejected?.length)
       throw new Error(
         "Synchronize or explicitly discard pending changes before changing this account.",
       );
@@ -658,19 +722,26 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         pending: !!local?.queue.length && !offline,
         offline,
         queuedCount: local?.queue.length ?? 0,
+        rejected: (local?.rejected ?? []).map((entry) => ({
+          ...entry,
+          label: rejectedActionLabel(
+            entry.command,
+            local!.state,
+            local!.catalog,
+          ),
+        })),
+        discardRejected,
         recentCompletion: completionNotices[0] ?? null,
         dismissCompletion: () =>
           setCompletionNotices((notices) =>
-            notices
-              .slice(1)
-              .map((notice, index) =>
-                index === 0
-                  ? {
-                      ...notice,
-                      until: Date.now() + completionNoticeDurationMs,
-                    }
-                  : notice,
-              ),
+            notices.slice(1).map((notice, index) =>
+              index === 0
+                ? {
+                    ...notice,
+                    until: Date.now() + completionNoticeDurationMs,
+                  }
+                : notice,
+            ),
           ),
         connect,
         refresh,

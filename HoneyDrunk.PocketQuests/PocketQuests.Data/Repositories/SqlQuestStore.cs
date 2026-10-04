@@ -121,7 +121,7 @@ public sealed partial class SqlQuestStore(QuestDbContext db) : IQuestStore, ISyn
         if (issuingAnchor is not null)
         {
             if (logicalNow > now.AddSeconds(5))
-                throw new ArgumentException("Server time is behind committed account history. Reconnect when its clock is reconciled.");
+                throw new SyncClockNotReadyException("Server time is behind committed account history. Keep recorded actions and retry when its clock is reconciled.");
             issuingAnchor.AccountId = account.Id;
             issuingAnchor.RecordedTimeFloor = logicalNow;
             issuingAnchor.Snapshot = JsonSerializer.Serialize(state.Occurrences);

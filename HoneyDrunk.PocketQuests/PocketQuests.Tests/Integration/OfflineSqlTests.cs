@@ -187,7 +187,7 @@ public sealed partial class SqlApiTests
         var command = new QuestCommand(Guid.NewGuid(), "complete", accepted.Occurrences.Single().Occurrence.Id, RecordedTime: proof);
         await Assert.ThrowsAsync<InvalidOperationException>(() => ExecuteAt(account, command, now));
         var excessive = command with { RecordedTime = proof with { ElapsedMilliseconds = 5001, DeviceUtc = now.AddMilliseconds(5001) } };
-        await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(account, excessive, now));
+        await Assert.ThrowsAsync<SyncClockNotReadyException>(() => ExecuteAt(account, excessive, now));
         await using var final = Context();
         Assert.Equal(0, await final.Completions.CountAsync());
         Assert.Equal(1, await final.Operations.CountAsync());

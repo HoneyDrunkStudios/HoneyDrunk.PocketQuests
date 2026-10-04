@@ -11,6 +11,7 @@ const load = Module._load;
 let state;
 let signedIn = true;
 let pending = false;
+let rejected = [];
 Module._load = function (name, ...rest) {
   if (name === "react-native") return nativeWeb;
   if (name === "expo-crypto") return { randomUUID: () => "fixture-id" };
@@ -22,6 +23,8 @@ Module._load = function (name, ...rest) {
         busy: false,
         pending,
         signedIn,
+        rejected,
+        queuedCount: 0,
       }),
     };
   if (name === "expo-router")
@@ -62,9 +65,12 @@ const { ThemeProvider } = require("@honeydrunk/ui-native");
 const { pocketQuestsTheme } = require("../../src/shared/theme.ts");
 const Home = require("../../src/app/(tabs)/index.tsx").default;
 const Quests = require("../../src/app/(tabs)/board.tsx").default;
-const { CompletionCelebration } = require("../../src/features/progression/completion-celebration.tsx");
+const {
+  CompletionCelebration,
+} = require("../../src/features/progression/completion-celebration.tsx");
 const { FocusTimer } = require("../../src/features/quests/focus-timer.tsx");
 const QuestDetails = require("../../src/app/quest/[id].tsx").default;
+const { Page } = require("../../src/shared/ui.tsx");
 const render = (component, props = {}) =>
   renderToStaticMarkup(
     React.createElement(
@@ -73,6 +79,32 @@ const render = (component, props = {}) =>
       React.createElement(component, props),
     ),
   );
+
+test("sync recovery shows each retained action and reason with individual discard", () => {
+  rejected = [
+    {
+      command: { operationId: "bad-id" },
+      kind: "rejected",
+      label: "complete: Practice",
+      reason: "Deadline passed",
+    },
+    {
+      command: { operationId: "undo-id" },
+      kind: "blocked",
+      label: "undo: Practice",
+      reason: "Earlier completion rejected",
+      blockedBy: ["bad-id"],
+    },
+  ];
+  const html = render(Page);
+  assert.match(html, /Rejected: complete: Practice/);
+  assert.match(html, /Deadline passed/);
+  assert.match(html, /Blocked: undo: Practice/);
+  assert.match(html, /Discard this action: complete: Practice/);
+  assert.match(html, /Discard this action: undo: Practice/);
+  assert.match(html, /Related action IDs: bad-id/);
+  rejected = [];
+});
 
 test("Home exposes the full character sheet with an accessible portrait and no Today quest actions", () => {
   state = {

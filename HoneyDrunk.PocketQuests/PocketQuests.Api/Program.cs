@@ -66,6 +66,10 @@ app.Use(async (context, next) =>
     {
         await Results.Unauthorized().ExecuteAsync(context);
     }
+    catch (SyncClockNotReadyException error)
+    {
+        await Results.Problem(error.Message, statusCode: 503).ExecuteAsync(context);
+    }
     catch (ArgumentException error)
     {
         await Results.Problem(error.Message, statusCode: 400).ExecuteAsync(context);

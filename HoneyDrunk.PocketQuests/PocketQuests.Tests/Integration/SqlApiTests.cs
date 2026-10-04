@@ -217,7 +217,7 @@ public sealed partial class SqlApiTests : IAsyncLifetime
 
     private IdentityDbContext IdentityContext() => new(new DbContextOptionsBuilder<IdentityDbContext>().UseSqlServer(Connection.Replace(database, database + "_Identity")).Options);
 
-    private sealed class Host(string connection, bool networkIdentity = false) : WebApplicationFactory<PocketQuestsApiProgram>
+    private sealed class Host(string connection, bool networkIdentity = false, TimeProvider? clock = null) : WebApplicationFactory<PocketQuestsApiProgram>
     {
         private static readonly SymmetricSecurityKey Key = new(Encoding.UTF8.GetBytes("test-only-signing-key-for-actual-jwt-validation-0123456789"));
         private readonly IdentityHost identityHost = new(connection.Replace(";Integrated Security", "_Identity;Integrated Security"), networkIdentity);
@@ -237,6 +237,8 @@ public sealed partial class SqlApiTests : IAsyncLifetime
         {
             builder.UseEnvironment("Testing");
             builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:quests"] = connection }));
+            if (clock is not null)
+                builder.ConfigureServices(services => services.AddSingleton(clock));
             if (networkIdentity)
             {
                 identityHost.UseKestrel(5218);

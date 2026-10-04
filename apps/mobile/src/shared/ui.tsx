@@ -33,6 +33,8 @@ export function Page({ children }: { children: React.ReactNode }) {
     retry,
     offline,
     queuedCount,
+    rejected = [],
+    discardRejected,
     discardPending,
     signOut,
   } = useSession();
@@ -50,12 +52,14 @@ export function Page({ children }: { children: React.ReactNode }) {
         alignSelf: "center",
       }}
     >
-      {(offline || queuedCount > 0) && (
+      {(offline || queuedCount > 0 || rejected.length > 0) && (
         <View style={styles.card} accessibilityLiveRegion="polite">
           <Label>
             {offline
-              ? "Offline — showing your private device cache."
-              : "Recorded changes awaiting confirmation."}{" "}
+              ? "Offline - showing your private device cache."
+              : rejected.length > 0
+                ? "Recorded changes need review."
+                : "Recorded changes awaiting confirmation."}{" "}
             {queuedCount} pending. Displayed XP remains server-confirmed.
           </Label>
           <Button
@@ -63,8 +67,35 @@ export function Page({ children }: { children: React.ReactNode }) {
             disabled={busy}
             onPress={() => void retry()}
           />
-          {queuedCount > 0 && (
+          {rejected.map((entry) => (
+            <View key={entry.command.operationId} style={{ gap: 8 }}>
+              <Label>
+                {entry.kind === "blocked" ? "Blocked" : "Rejected"}:{" "}
+                {entry.label}
+              </Label>
+              <Notice>{entry.reason}</Notice>
+              <Text selectable style={styles.muted}>
+                Action ID: {entry.command.operationId}
+              </Text>
+              {entry.blockedBy?.length ? (
+                <Text selectable style={styles.muted}>
+                  Related action IDs: {entry.blockedBy.join(", ")}
+                </Text>
+              ) : null}
+              <Button
+                title={`Discard this action: ${entry.label}`}
+                secondary
+                disabled={busy}
+                onPress={() => void discardRejected(entry.command.operationId)}
+              />
+            </View>
+          ))}
+          {(queuedCount > 0 || rejected.length > 0) && (
             <>
+              <Label>
+                Discard pending changes removes all pending, rejected and
+                blocked actions on this device.
+              </Label>
               <Button
                 title="Discard pending changes"
                 secondary
