@@ -37,6 +37,9 @@ jobs:
           sqllocaldb start PocketQuests
       - name: Test SQL and domain boundaries
         run: dotnet test product/HoneyDrunk.PocketQuests/PocketQuests.Tests --configuration Release --no-build --logger trx
+      - name: Validate relational schema and EF parity in disposable SQL
+        shell: pwsh
+        run: ./product/scripts/Test-RelationalSchema.ps1 -NoBuild
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 15

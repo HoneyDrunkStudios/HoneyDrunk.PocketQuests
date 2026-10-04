@@ -1,0 +1,79 @@
+{
+  "Account": [
+    "TimeZoneId",
+    "IsOnboardingComplete",
+    "HasExpiryWarnings",
+    "IsAccountPaused",
+    "SelectedBadgeId",
+    "SelectedFrameId",
+    "LastRecordedAt",
+    "MutationVersion",
+    "ProjectionVersion",
+    "ProjectionAsOfAt",
+    "ModifiedAt",
+    "HasPendingReconciliation"
+  ],
+  "CustomSkill": [
+    "Name",
+    "NormalizedName",
+    "Revision",
+    "ArchivedAt",
+    "ModifiedAt"
+  ],
+  "QuestDefinition": [
+    "Revision",
+    "ArchivedAt",
+    "ModifiedAt"
+  ],
+  "QuestDefinitionRevision": [],
+  "QuestDefinitionAttributeAllocation": [],
+  "QuestDefinitionSkillAllocation": [],
+  "QuestSeries": [
+    "QuestDefinitionId",
+    "Revision",
+    "NextSequence",
+    "PauseDays",
+    "NextDeliveryOn",
+    "StoppedAt",
+    "ModifiedAt"
+  ],
+  "QuestSeriesRevision": [],
+  "QuestOccurrence": [
+    "QuestDefinitionRevisionId",
+    "CategoryId",
+    "DueOn",
+    "PlannedTime",
+    "DeadlineAt",
+    "DeadlineTimeZoneId",
+    "StateCode",
+    "AcceptedAt",
+    "FrozenAt",
+    "IsIndividuallyFrozen",
+    "AbandonedAt",
+    "LockedLoss",
+    "LossCategoryId",
+    "Revision",
+    "ParentQuestOccurrenceId",
+    "ModifiedAt"
+  ],
+  "QuestOccurrenceRevision": [],
+  "QuestOccurrenceEvent": [],
+  "QuestCompletion": [
+    "UndoneAt",
+    "UndoQuestOccurrenceEventId",
+    "ModifiedAt"
+  ],
+  "AccountPause": [
+    "EndedAt",
+    "ModifiedAt"
+  ],
+  "TimeZoneChange": [],
+  "SkillAssessment": [],
+  "QuestCommandHistory": [],
+  "QuestCommandInterest": [],
+  "AccountInterest": "replace",
+  "XpLedgerEntry": "replace",
+  "XpBalance": "replace",
+  "CategoryProgress": "replace",
+  "AccountEntitlement": "replace"
+}

@@ -13,7 +13,7 @@ public sealed class LifecycleMaintenance(IServiceScopeFactory scopes, ILogger<Li
             try
             {
                 await using var scope = scopes.CreateAsyncScope();
-                await scope.ServiceProvider.GetRequiredService<SqlQuestLifecycle>().Prune(stoppingToken);
+                await scope.ServiceProvider.GetRequiredService<IQuestLifecycle>().Prune(stoppingToken);
             }
             catch (Exception error) when (error is System.Data.Common.DbException or InvalidOperationException or TimeoutException)
             {

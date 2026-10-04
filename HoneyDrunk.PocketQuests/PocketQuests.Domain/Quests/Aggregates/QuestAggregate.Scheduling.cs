@@ -19,12 +19,31 @@ public sealed partial class QuestAggregate
     /// <param name="now">Authoritative reconciliation time.</param>
     public void Reconcile(DateTimeOffset now)
     {
+        var progress = Reconcile(now, _actionDeliveryBudget ?? int.MaxValue);
+        if (_actionDeliveryBudget is not null)
+        {
+            _actionDeliveryBudget -= progress.Processed;
+            _actionDeliveries += progress.Processed;
+            _actionHasMoreDeliveries |= progress.HasMore;
+        }
+    }
+
+    /// <summary>Processes at most the requested number of due deliveries; repeated steps produce the original unbounded result.</summary>
+    /// <param name="now">Authoritative reconciliation time.</param>
+    /// <param name="maximumDeliveries">Nonnegative work budget for this step, without discarding older due deliveries; zero only inspects whether work is pending.</param>
+    /// <returns>The processed cursor count and whether another step is needed.</returns>
+    public ReconciliationProgress Reconcile(DateTimeOffset now, int maximumDeliveries)
+    {
+        if (maximumDeliveries < 0)
+            throw new ArgumentOutOfRangeException(nameof(maximumDeliveries));
+        var processed = 0;
         var today = Scheduling.LocalDay(now, Zone);
         var pending = new PriorityQueue<(QuestSeries series, LocalDate date, DateTimeOffset at), (DateTimeOffset at, Guid id)>();
-        foreach (var series in Schedule.Series.Where(s => !s.Stopped && !IsPaused(s.Quest.CategoryId)))
+        foreach (var series in Schedule.Series.Where(s => !s.Stopped))
             QueueNext(series);
-        while (pending.TryDequeue(out var item, out _))
+        while (processed < maximumDeliveries && pending.TryDequeue(out var item, out _))
         {
+            processed++;
             var (series, date, deliveredAt) = item;
             var id = new Guid(SHA256.HashData(Encoding.UTF8.GetBytes($"{series.Id:N}/{series.Version}/{series.NextSequence}")).AsSpan(0, 16));
             if (Occurrences.All(o => o.Id != id))
@@ -34,13 +53,18 @@ public sealed partial class QuestAggregate
                 var progress = Project(deliveredAt);
                 var eligible = Progression.Eligible(series.Quest, progress.Categories.ToDictionary(c => c.Id, c => c.Xp), progress.Skills.ToDictionary(c => c.Id, c => c.Xp));
                 var accepted = eligible && (!hasPenalty || series.AutoAcceptPenalty);
-                Occurrences.Add(new(id, series.Quest, due, Scheduling.Deadline(date, Zone), deliveredAt, series.PlannedTime, Lifecycle: new(series.Id, series.NextSequence, series.Version, LockedLoss: accepted && hasPenalty ? Loss(series.Quest) : null, LossCategoryId: accepted && hasPenalty ? series.Quest.CategoryId : null, Unaccepted: !accepted, DeadlineZone: Zone)));
+                var deadline = Scheduling.Deadline(date, Zone);
+                var pausedAt = OpenPause(series.Quest.CategoryId);
+                var lifecycle = new OccurrenceLifecycle(series.Id, series.NextSequence, series.Version, FrozenAt: accepted && pausedAt is { } pause && deadline > pause ? pause : null, LockedLoss: accepted && hasPenalty ? Loss(series.Quest) : null, LossCategoryId: accepted && hasPenalty ? series.Quest.CategoryId : null, Unaccepted: !accepted, DeadlineZone: Zone);
+                Occurrences.Add(new(id, series.Quest, due, deadline, deliveredAt, series.PlannedTime, Lifecycle: lifecycle));
             }
 
             series = series with { NextSequence = series.NextSequence + 1 };
             ReplaceSeries(series);
             QueueNext(series);
         }
+
+        return new(processed, pending.Count != 0);
 
         void QueueNext(QuestSeries series)
         {
@@ -59,11 +83,16 @@ public sealed partial class QuestAggregate
             var at = Scheduling.Zone(Zone).AtLeniently(date.AtMidnight()).ToDateTimeOffset();
             if (series.EffectiveAt > at)
                 at = series.EffectiveAt.Value;
+            if (OpenPause(series.Quest.CategoryId) is { } pausedAt && (date > Scheduling.LocalDay(pausedAt, Zone) || at > pausedAt))
+                return;
             pending.Enqueue((series, date, at), (at: at, id: series.Id));
         }
     }
 
     private bool IsPaused(string categoryId) => Schedule.AccountPaused || Schedule.PausedCategories.Contains(categoryId);
+
+    private DateTimeOffset? OpenPause(string categoryId) => IsPaused(categoryId)
+        ? Schedule.Pauses.Single(p => p.CategoryId == categoryId && p.EndedAt is null).StartedAt : null;
 
     private int ActiveDaysBetween(string categoryId, LocalDate first, LocalDate last)
     {
@@ -129,6 +158,15 @@ public sealed partial class QuestAggregate
     private void Pause(QuestCommand command, DateTimeOffset now, bool paused)
     {
         Progression.Require(command.CategoryId is null || Catalog.Categories.Any(c => c.Id == command.CategoryId), "Choose a core category or all categories.");
+        if (!paused)
+        {
+            // Drain only the retained pre-pause segment before moving future cursor dates.
+            // Relational commands perform and commit bounded continuation before this action.
+            Reconcile(now);
+            if (_actionHasMoreDeliveries)
+                throw new InvalidOperationException("Retained pre-pause deliveries must finish reconciliation before resume.");
+        }
+
         var previously = Catalog.Categories.ToDictionary(c => c.Id, c => IsPaused(c.Id));
         Schedule = command.CategoryId is null
             ? Schedule with { AccountPaused = paused }

@@ -8,6 +8,8 @@ builder.Configuration.AddJsonFile(Path.GetFullPath("../../.local/development.jso
 builder.Configuration.AddEnvironmentVariables();
 var api = builder.AddProject<Projects.PocketQuests_Api>("api")
     .WithReference(builder.AddConnectionString("quests"))
+    .WithEnvironment("Persistence__Mode", builder.Configuration["Persistence:Mode"] ?? "Legacy")
+    .WithEnvironment("Persistence__ReconciliationEnabled", builder.Configuration["Persistence:ReconciliationEnabled"] ?? "true")
     .WithHttpHealthCheck("/health");
 var deviceHost = builder.Configuration["Mobile:DeviceHost"] ?? "localhost";
 if (Uri.CheckHostName(deviceHost) is not (UriHostNameType.Dns or UriHostNameType.IPv4))

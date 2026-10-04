@@ -17,6 +17,8 @@
   <Project Path="PocketQuests.Data/PocketQuests.Data.csproj" />
   <Project Path="PocketQuests.Database/PocketQuests.Database.sqlproj" Type="42ea0dbd-9cf1-443e-919e-be9c484e4577" />
   <Project Path="PocketQuests.Domain/PocketQuests.Domain.csproj" />
+  <Project Path="PocketQuests.ReplayProbe/PocketQuests.ReplayProbe.csproj" />
+  <Project Path="PocketQuests.SchemaTests/PocketQuests.SchemaTests.csproj" />
   <Project Path="PocketQuests.ServiceDefaults/PocketQuests.ServiceDefaults.csproj" />
   <Project Path="PocketQuests.Tests/PocketQuests.Tests.csproj" />
 </Solution>

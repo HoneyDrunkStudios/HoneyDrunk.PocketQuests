@@ -1,0 +1,2 @@
+# Keep the reviewed upstream checker byte-identical for its SHA-256 gate.
+scripts/schema/schema-checks.sql text eol=lf

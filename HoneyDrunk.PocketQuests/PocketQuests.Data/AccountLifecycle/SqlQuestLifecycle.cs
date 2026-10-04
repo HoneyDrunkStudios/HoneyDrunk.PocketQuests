@@ -19,7 +19,7 @@ using System.Text.Json;
 namespace PocketQuests.Data.AccountLifecycle;
 
 /// <summary>Private Identity lifecycle consumer with account-locked mutations and atomic acknowledgment outbox.</summary>
-public sealed class SqlQuestLifecycle(QuestDbContext db, TimeProvider clock)
+public sealed class SqlQuestLifecycle(QuestDbContext db, TimeProvider clock) : IQuestLifecycle
 {
     /// <summary>Fences delayed cancellation delivery using the current authoritative Identity response.</summary>
     /// <param name="user">Identity's validated active account; never a public request body.</param>

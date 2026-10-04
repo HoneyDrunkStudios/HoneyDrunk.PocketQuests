@@ -27,6 +27,7 @@
     <PackageReference Include="Microsoft.SqlServer.DacFx" Version="170.5.96" />
     <ProjectReference Include="../PocketQuests.Database/PocketQuests.Database.sqlproj" ReferenceOutputAssembly="false" />
     <None Include="../PocketQuests.Database/bin/$(Configuration)/PocketQuests.Database.dacpac" Link="PocketQuests.Database.dacpac" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../PocketQuests.Database/bin/$(Configuration)/master.dacpac" Link="master.dacpac" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(IdentitySourceRoot)/HoneyDrunk.Identity/HoneyDrunk.Identity.Database/HoneyDrunk.Identity.Database.sqlproj" ReferenceOutputAssembly="false" />

@@ -9,7 +9,7 @@ using System.Text.Encodings.Web;
 namespace PocketQuests.Api.Authentication;
 
 /// <summary>Resolves bearer credentials exclusively through the shared Identity boundary.</summary>
-public sealed class IdentityAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, IdentityClient identity, SqlQuestLifecycle lifecycle)
+public sealed class IdentityAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, IdentityClient identity, IQuestLifecycle lifecycle)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     /// <inheritdoc />
