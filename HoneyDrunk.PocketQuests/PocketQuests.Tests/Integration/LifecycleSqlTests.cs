@@ -3,6 +3,7 @@ using HoneyDrunk.Identity.Abstractions.AccountLifecycle;
 using HoneyDrunk.Identity.Abstractions.Authentication;
 using HoneyDrunk.Identity.AccountLifecycle;
 using HoneyDrunk.Identity.Persistence.Context;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using PocketQuests.Data.Entities.Accounts;
@@ -12,8 +13,6 @@ using PocketQuests.Data.Entities.Synchronization;
 using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Models.Progress;
 using PocketQuests.Domain.Models.Quests;
-using PocketQuests.Domain.Progress;
-using PocketQuests.Domain.Quests.Definitions;
 using System.Net;
 using System.Text.Json;
 
@@ -127,15 +126,22 @@ public sealed partial class SqlApiTests
         var clock = new LifecycleClock { Now = DateTimeOffset.UtcNow };
         var intent = new LifecycleIntent(userId, 1, "Erasing", clock.Now, clock.Now.AddHours(1), "pocketquests", new string('a', 64), clock.Now.AddDays(-30));
         await using (var db = Context())
-            await db.Database.ExecuteSqlRawAsync("CREATE TRIGGER RejectLifecycleAck ON outbox.OutboxMessages AFTER INSERT AS BEGIN THROW 51001, 'Injected acknowledgment failure', 1; END;");
-        await using (var db = Context())
-            await Assert.ThrowsAsync<DbUpdateException>(() => Lifecycle().ReceiveLifecycle(intent, "identity-acks", clock.Now));
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE outbox.OutboxMessages WITH NOCHECK ADD CONSTRAINT CK_SchemaTestRejectAck CHECK (Id IS NULL);");
+        try
+        {
+            var failure = await Assert.ThrowsAsync<DbUpdateException>(() => Lifecycle().ReceiveLifecycle(intent, "identity-acks", clock.Now));
+            Assert.Equal(547, Assert.IsType<SqlException>(failure.InnerException).Number);
+        }
+        finally
+        {
+            await using var db = Context();
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE outbox.OutboxMessages DROP CONSTRAINT CK_SchemaTestRejectAck;");
+        }
         await using (var db = Context())
         {
             Assert.Single(await db.Read.Set<AccountEntity>().ToListAsync());
             Assert.Single(await db.Read.Set<QuestOccurrenceEntity>().ToListAsync());
             Assert.Empty(await db.Read.Set<ErasureMarkerEntity>().ToListAsync());
-            await db.Database.ExecuteSqlRawAsync("DROP TRIGGER outbox.RejectLifecycleAck;");
             await Lifecycle().ReapplyErasure(userId, clock.Now, clock.Now);
             Assert.Empty(await db.Read.Set<AccountEntity>().ToListAsync());
             Assert.Empty(await db.Audit.ToListAsync());
