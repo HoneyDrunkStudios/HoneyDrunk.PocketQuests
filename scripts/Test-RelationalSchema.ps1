@@ -24,6 +24,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Generated erasure ownership/order drift.' }
     & python (Join-Path $PSScriptRoot 'schema/test_contract.py') *> (Join-Path $EvidenceDirectory 'contract-mutation-tests.log')
     if ($LASTEXITCODE -ne 0) { throw 'Contract mutation probes failed.' }
+    Get-Content -LiteralPath (Join-Path $EvidenceDirectory 'contract-mutation-tests.log')
     $project = Join-Path $root 'HoneyDrunk.PocketQuests/PocketQuests.SchemaTests/PocketQuests.SchemaTests.csproj'
     if (!$NoBuild) {
         & dotnet build $project --configuration Release --nologo -m:1 -nr:false *> (Join-Path $EvidenceDirectory 'build.log')
@@ -38,7 +39,15 @@ try {
     $filterArguments = @()
     if ($TestFilter) { $filterArguments = @('--filter', $TestFilter); $summary.testFilter = $TestFilter }
     & dotnet test $project --configuration Release --no-build --no-restore --logger 'trx;LogFileName=schema-tests.trx' --results-directory $EvidenceDirectory @filterArguments *> (Join-Path $EvidenceDirectory 'tests.log')
-    if ($LASTEXITCODE -ne 0) { throw 'Schema tests failed; inspect tests.log and TRX.' }
+    $testExitCode = $LASTEXITCODE
+    [xml]$testResults = Get-Content -LiteralPath (Join-Path $EvidenceDirectory 'schema-tests.trx') -Raw
+    $counters = $testResults.TestRun.ResultSummary.Counters
+    $summary.testProject = 'PocketQuests.SchemaTests'
+    $summary.testTotal = [int]$counters.total
+    $summary.testPassed = [int]$counters.passed
+    $summary.testFailed = [int]$counters.failed
+    $summary.testNotExecuted = [int]$counters.notExecuted
+    if ($testExitCode -ne 0) { throw 'Schema tests failed; inspect tests.log and TRX.' }
     & sqlcmd -S "(localdb)\$instance" -E -I -b -d master -Q "SET NOCOUNT ON; IF EXISTS(SELECT 1 FROM sys.databases WHERE name LIKE N'PocketQuests[_]SchemaTests[_]%') THROW 51010,'A schema fixture did not remove its database.',1; PRINT 'All generated schema fixture databases were removed.';" -o (Join-Path $EvidenceDirectory 'database-cleanup.log')
     if ($LASTEXITCODE -ne 0) { throw 'Scratch database cleanup verification failed.' }
     $summary.databaseCleanupVerified = $true
