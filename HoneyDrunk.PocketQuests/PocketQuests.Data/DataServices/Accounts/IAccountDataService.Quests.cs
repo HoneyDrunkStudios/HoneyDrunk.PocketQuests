@@ -1,11 +1,10 @@
-using PocketQuests.Data.DataServices.Quests;
 using PocketQuests.Data.Entities.Lifecycle;
 using PocketQuests.Data.Entities.Synchronization;
 using PocketQuests.Data.Queries.Quests;
 
 namespace PocketQuests.Data.DataServices.Accounts;
 
-/// <summary>Operation-specific account reads and staging within the shared unit of work.</summary>
+/// <summary>Operation-specific account and retained-history queries within the shared unit of work.</summary>
 public partial interface IAccountDataService
 {
     /// <summary>The current private lifecycle barrier.</summary>
@@ -71,8 +70,4 @@ public partial interface IAccountDataService
     /// <param name="token">Cancellation.</param>
     /// <returns>Retained terms with archive provenance.</returns>
     Task<QuestDefinitionHistoryRows> ReadDefinitionHistory(Guid accountId, CancellationToken token);
-
-    /// <summary>Stages an explicit entity batch in the current operation transaction.</summary>
-    /// <param name="changes">New and removed entities selected by Services.</param>
-    void Apply(QuestChanges changes);
 }

@@ -6,7 +6,6 @@ using PocketQuests.Contracts.Requests.Commands;
 using PocketQuests.Data;
 using PocketQuests.Data.DataServices.Accounts;
 using PocketQuests.Domain.Commands;
-using PocketQuests.Services.Accounts;
 using PocketQuests.Services.Quests;
 using System.Data.Common;
 using DomainIdentity = PocketQuests.Domain.Models.Accounts.AccountIdentity;
@@ -18,6 +17,44 @@ namespace PocketQuests.SchemaTests.Quests;
 public sealed class CompletionServiceTests(SchemaFixture fixture) : IClassFixture<SchemaFixture>
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
+
+    /// <summary>Typed writes use the captured host instant and retain original insertion and monotonic update clocks.</summary>
+    /// <returns>Completion after completion, a regressed host clock, Undo and exact replay.</returns>
+    [Fact]
+    public async Task CompletionAndUndoRetainServiceOwnedAuditClocks()
+    {
+        var (owner, occurrence) = await Setup();
+        var completedAt = Start.AddHours(1);
+        var command = new QuestCommand(Guid.NewGuid(), QuestActions.Complete, occurrence);
+        var original = await fixture.Complete(owner, command, completedAt);
+        await using var db = fixture.Context();
+        var account = await db.Account.SingleAsync(row => row.IdentityUserId == owner.Subject);
+        var completed = await db.QuestCompletion.SingleAsync(row => row.Id == command.OperationId);
+        Assert.Equal(completedAt, completed.CreatedAt);
+        Assert.Equal(completedAt, completed.ModifiedAt);
+        Assert.Equal(Start, account.CreatedAt);
+        Assert.Equal(completedAt, account.ModifiedAt);
+        Assert.Equal(Start, (await db.QuestOccurrence.SingleAsync(row => row.Id == occurrence)).CreatedAt);
+        Assert.Equal(completedAt, (await db.QuestOccurrenceEvent.SingleAsync(row => row.Id == command.OperationId)).CreatedAt);
+        Assert.Equal(completedAt, (await db.QuestCommandHistory.SingleAsync(row => row.Id == command.OperationId)).CreatedAt);
+        Assert.Equal(completedAt, (await db.CommandReceipt.SingleAsync(row => row.Id == command.OperationId)).CreatedAt);
+        Assert.Equal(completedAt, await db.AccountAuditRecord.Where(row => row.AccountId == account.Id).MaxAsync(row => row.CreatedAt));
+
+        var undo = new QuestCommand(Guid.NewGuid(), QuestActions.Undo, occurrence, CompletionId: command.OperationId);
+        await Assert.ThrowsAsync<PocketQuests.Domain.Models.Synchronization.SyncClockNotReadyException>(() => fixture.Complete(owner, undo, Start.AddMinutes(30)));
+        Assert.False(await db.CommandReceipt.AnyAsync(row => row.Id == undo.OperationId));
+        var undoAt = completedAt.AddSeconds(-1);
+        await fixture.Complete(owner, undo, undoAt);
+        var undone = await db.QuestCompletion.SingleAsync(row => row.Id == command.OperationId);
+        Assert.Equal(completedAt, undone.CreatedAt);
+        Assert.Equal(completedAt, undone.ModifiedAt);
+        Assert.Equal(undo.OperationId, undone.UndoQuestOccurrenceEventId);
+        Assert.Equal(undoAt, (await db.QuestOccurrenceEvent.SingleAsync(row => row.Id == undo.OperationId)).CreatedAt);
+        Assert.Equal(undoAt, (await db.CommandReceipt.SingleAsync(row => row.Id == undo.OperationId)).CreatedAt);
+        Assert.Equal(completedAt, (await db.Account.SingleAsync(row => row.Id == account.Id)).ModifiedAt);
+        Assert.Equal(System.Text.Json.JsonSerializer.Serialize(original), System.Text.Json.JsonSerializer.Serialize(await fixture.Complete(owner, command, Start.AddYears(1))));
+        Assert.Equal(completedAt, (await db.CommandReceipt.SingleAsync(row => row.Id == command.OperationId)).CreatedAt);
+    }
 
     /// <summary>Nullable client keys use CLR GUID formatting while explicit client key spelling is preserved.</summary>
     /// <returns>Completion after profile, terms and assessment identity assertions.</returns>
@@ -56,7 +93,9 @@ public sealed class CompletionServiceTests(SchemaFixture fixture) : IClassFixtur
         var command = new QuestCommand(Guid.NewGuid(), QuestActions.Complete, occurrence);
         var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(fixture.Connection).AddInterceptors(new LostCommitAcknowledgment()).Options;
         await using var db = new AppDbContext(options);
-        var service = new QuestService(new AccountDataService(db), new CurrentAccount(owner), new Clock(Start));
+        await using var provider = CompletionFixture.Provider(db, fixture.Connection);
+        await using var scope = provider.CreateAsyncScope();
+        var service = CompletionFixture.Create(scope.ServiceProvider, owner, Start);
         await Assert.ThrowsAsync<TimeoutException>(() => service.Execute(command));
         Assert.Empty(db.ChangeTracker.Entries());
         var committed = await db.Account.SingleAsync(row => row.IdentityUserId == owner.Subject);
@@ -113,7 +152,9 @@ public sealed class CompletionServiceTests(SchemaFixture fixture) : IClassFixtur
         await using var db = new AppDbContext(options);
         var before = await db.Account.AsNoTracking().SingleAsync(row => row.IdentityUserId == owner.Subject);
         var command = new QuestCommand(Guid.NewGuid(), QuestActions.Complete, occurrence);
-        var service = new QuestService(new AccountDataService(db), new CurrentAccount(owner), new Clock(Start));
+        await using var provider = CompletionFixture.Provider(db, fixture.Connection);
+        await using var scope = provider.CreateAsyncScope();
+        var service = CompletionFixture.Create(scope.ServiceProvider, owner, Start);
         var result = await service.Execute(command);
         Assert.Equal(10, result.OverallXp);
         Assert.Equal(2, fault.Accounts.Count);
@@ -315,10 +356,8 @@ public sealed class CompletionServiceTests(SchemaFixture fixture) : IClassFixtur
         Assert.Equal(before.MutationVersion, await db.Account.Where(row => row.Id == before.Id).Select(row => row.MutationVersion).SingleAsync());
     }
 
-    private static QuestService Service(IServiceProvider services, DomainIdentity owner, DateTimeOffset? at = null) => new(
-        services.GetRequiredService<IAccountDataService>(),
-        new CurrentAccount(owner),
-        new Clock(at ?? Start));
+    private static QuestService Service(IServiceProvider services, DomainIdentity owner, DateTimeOffset? at = null) =>
+        CompletionFixture.Create(services, owner, at ?? Start);
 
     private async Task<(DomainIdentity owner, Guid occurrence)> Setup()
     {
@@ -328,16 +367,6 @@ public sealed class CompletionServiceTests(SchemaFixture fixture) : IClassFixtur
         var occurrence = Guid.NewGuid();
         await store.Execute(owner, new(Guid.NewGuid(), QuestActions.Accept, occurrence, QuestId: "PQ-CAT-Q01"), Start);
         return (owner, occurrence);
-    }
-
-    private sealed class CurrentAccount(DomainIdentity identity) : ICurrentAccount
-    {
-        public PocketQuests.Contracts.Models.Accounts.AccountIdentity Identity { get; } = new(identity.Issuer, identity.Subject);
-    }
-
-    private sealed class Clock(DateTimeOffset at) : TimeProvider
-    {
-        public override DateTimeOffset GetUtcNow() => at;
     }
 
     private sealed class FailAfterFirstSave : SaveChangesInterceptor

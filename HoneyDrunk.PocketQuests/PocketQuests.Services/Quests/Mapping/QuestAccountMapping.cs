@@ -19,13 +19,11 @@ internal static class QuestAccountMapping
         account.ProjectionAsOfAt = projectionAsOf;
         account.HasPendingReconciliation = change.HasPending;
         account.LastRecordedAt = change.ProjectionAt;
-        account.ModifiedAt = account.ModifiedAt > change.Now ? account.ModifiedAt : change.Now;
     }
 
-    internal static void ApplyProof(SyncAnchorEntity anchor, RecordedActionTime proof, DateTimeOffset now)
+    internal static void ApplyProof(SyncAnchorEntity anchor, RecordedActionTime proof)
     {
         anchor.LastOrdinal = proof.Ordinal;
         anchor.LastElapsedMilliseconds = proof.ElapsedMilliseconds;
-        anchor.ModifiedAt = QuestClock.Max(anchor.ModifiedAt, now);
     }
 }

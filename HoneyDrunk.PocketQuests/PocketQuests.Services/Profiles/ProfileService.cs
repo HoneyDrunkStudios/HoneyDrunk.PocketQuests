@@ -37,7 +37,8 @@ public sealed class ProfileService(IAccountDataService data, QuestService quests
             await quests.RequireAccess(identity, true, cancellationToken);
             if (await data.GetByIdentityUserId(identity.Subject, cancellationToken) is not null)
                 return false;
-            var account = AccountMapping.Create(identity, canonicalZone, now.ToUniversalTime());
+            var account = AccountMapping.Create(Guid.NewGuid(), identity, canonicalZone, now.ToUniversalTime());
+            account.CreatedAt = account.ModifiedAt = now.ToUniversalTime();
             await data.AddAsync(account, cancellationToken);
             var barrier = await data.GetLifecycle(identity.Subject, cancellationToken);
             if (barrier is not null)

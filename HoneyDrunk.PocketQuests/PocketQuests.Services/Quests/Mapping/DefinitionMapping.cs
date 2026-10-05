@@ -19,15 +19,11 @@ internal static class DefinitionMapping
         ClientKey = quest.IsCustom ? quest.Id : null,
         Revision = revision,
         CreationOrdinal = ordinal,
-        CreatedAt = change.Now,
-        ModifiedAt = change.Now,
     };
 
-    internal static void ApplyTo(this QuestDefinition definition, QuestDefinitionEntity target, QuestMutation change)
+    internal static void ApplyTo(this QuestDefinition definition, QuestDefinitionEntity target)
     {
         target.Revision = definition.Revision;
-        target.ArchivedAt = definition.Archived ? target.ArchivedAt ?? change.RecordedAt : null;
-        target.ModifiedAt = QuestClock.Max(target.ModifiedAt, change.Now);
     }
 
     internal static QuestDefinitionRevisionEntity ToRevision(this Quest quest, QuestMutation change, Guid definitionId, int revision) => new()
@@ -49,7 +45,6 @@ internal static class DefinitionMapping
         DisplaySnapshotJson = JsonSerializer.Serialize(new { CategoryName = Catalog.Categories.Single(row => row.Id == quest.CategoryId).Name }),
         EffectiveAt = change.RecordedAt,
         CommandReceiptId = change.ReceiptId,
-        CreatedAt = change.Now,
     };
 
     internal static IEnumerable<QuestDefinitionAttributeAllocationEntity> ToAttributes(this Quest quest, QuestMutation change, Guid revisionId) =>
@@ -60,7 +55,6 @@ internal static class DefinitionMapping
             AttributeId = allocation.Id,
             BasisPoints = allocation.BasisPoints,
             Position = index,
-            CreatedAt = change.Now,
         });
 
     internal static IEnumerable<QuestDefinitionSkillAllocationEntity> ToSkills(this Quest quest, QuestMutation change, Guid revisionId) =>
@@ -76,7 +70,6 @@ internal static class DefinitionMapping
                 CustomSkillId = custom,
                 BasisPoints = allocation.BasisPoints,
                 Position = index,
-                CreatedAt = change.Now,
             };
         });
 }

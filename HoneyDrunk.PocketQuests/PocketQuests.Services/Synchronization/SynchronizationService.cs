@@ -1,7 +1,6 @@
 using PocketQuests.Contracts.Requests.Synchronization;
 using PocketQuests.Data.DataServices.Accounts;
 using PocketQuests.Data.DataServices.Synchronization;
-using PocketQuests.Domain.Errors;
 using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Models.Synchronization;
@@ -9,6 +8,7 @@ using PocketQuests.Services.Accounts;
 using PocketQuests.Services.Quests;
 using PocketQuests.Services.Quests.Mapping;
 using PocketQuests.Services.Synchronization.Mapping;
+using PocketQuests.Services.Synchronization.Validators;
 using AnchorResponse = PocketQuests.Contracts.Models.Synchronization.SyncAnchor;
 
 namespace PocketQuests.Services.Synchronization;
@@ -27,8 +27,7 @@ public sealed class SynchronizationService(IAccountDataService data, ISyncAnchor
 
     internal async Task<SyncAnchor> CreateAnchor(AccountIdentity identity, Guid deviceId, Guid bootId, DateTimeOffset deviceUtc, DateTimeOffset now, CancellationToken token = default)
     {
-        if (deviceId == Guid.Empty || bootId == Guid.Empty)
-            throw new QuestValidationException("Device and process identifiers are required.");
+        SynchronizationValidator.RequireIdentifiers(deviceId, bootId);
         var result = await data.ExecuteInTransaction(Create, token);
         return result ?? throw new ReconciliationPendingException("Recurring deliveries must finish their bounded reconciliation before issuing the next anchor.");
 
@@ -37,8 +36,7 @@ public sealed class SynchronizationService(IAccountDataService data, ISyncAnchor
             await quests.RequireAccess(identity, true, cancellationToken);
             var account = await quests.Account(identity, cancellationToken);
             var floor = QuestClock.Max(now, account.LastRecordedAt);
-            if (floor > now.AddSeconds(5))
-                throw new SyncClockNotReadyException("Server time is behind committed account history.");
+            SynchronizationValidator.RequireClock(floor, now);
             var rows = await data.ReadCurrentState(account.Id, cancellationToken);
             var aggregate = QuestService.Current(account, rows);
             var progress = aggregate.Reconcile(floor, QuestService.ReconciliationLimit);
@@ -49,9 +47,10 @@ public sealed class SynchronizationService(IAccountDataService data, ISyncAnchor
                     return null;
             }
 
-            var anchor = AnchorPersistenceMapping.Create(account, deviceId, bootId, deviceUtc, now, floor);
+            var anchor = AnchorPersistenceMapping.Create(Guid.NewGuid(), account, deviceId, bootId, deviceUtc, now, floor);
+            anchor.CreatedAt = anchor.ModifiedAt = now.ToUniversalTime();
             await anchors.AddAsync(anchor, cancellationToken);
-            return new(anchor.Id, deviceId, bootId, now.ToUniversalTime(), deviceUtc, floor);
+            return anchor.ToModel(deviceUtc);
         }
     }
 }

@@ -19,12 +19,12 @@ public sealed class AccountInterestMapping : IEntityTypeConfiguration<AccountInt
             table.HasCheckConstraint("CK_AccountInterest_Position", "[Position]>=0 AND [Position]<10");
         });
         entity.HasKey(row => new { row.AccountId, row.CategoryId }).HasName("PK_AccountInterest").IsClustered();
-        entity.Property(row => row.AccountId).HasColumnType("uniqueidentifier").HasComment("Pocket Quests account that exclusively owns this row; supplied by trusted server context.").IsRequired(true).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.CategoryId).HasColumnType("varchar(40)").HasComment("Selected category; never enables recurrence implicitly.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(40).IsUnicode(false).IsRequired(true).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.CreatedAt).HasColumnType("datetimeoffset(7)").HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).IsRequired(true).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.Position).HasColumnType("int").HasComment("Current selected category array position, zero-based and at most nine.").IsRequired(true).HasDefaultValueSql("0");
-        entity.HasIndex(row => row.CategoryId, "IX_AccountInterest_FK_Category").IsUnique(false).HasFilter(null);
-        entity.HasOne<AccountEntity>().WithMany().HasForeignKey(row => row.AccountId).HasPrincipalKey(row => row.Id).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountInterest_Account");
-        entity.HasOne<CategoryEntity>().WithMany().HasForeignKey(row => row.CategoryId).HasPrincipalKey(row => row.Id).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountInterest_Category");
+        entity.Property(row => row.AccountId).HasComment("Pocket Quests account that exclusively owns this row; supplied by trusted server context.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.CategoryId).HasComment("Selected category; never enables recurrence implicitly.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(40).IsUnicode(false).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.CreatedAt).HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.Position).HasComment("Current selected category array position, zero-based and at most nine.").HasDefaultValueSql("0");
+        entity.HasIndex(row => row.CategoryId, "IX_AccountInterest_FK_Category");
+        entity.HasOne<AccountEntity>().WithMany().HasForeignKey(row => row.AccountId).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountInterest_Account");
+        entity.HasOne<CategoryEntity>().WithMany().HasForeignKey(row => row.CategoryId).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountInterest_Category");
     }
 }

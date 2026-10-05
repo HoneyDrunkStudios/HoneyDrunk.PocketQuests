@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Data.DataServices.Quests;
 using PocketQuests.Data.Entities.Lifecycle;
 using PocketQuests.Data.Entities.Synchronization;
 using PocketQuests.Data.Queries.Quests;
@@ -44,42 +43,5 @@ public sealed partial class AccountDataService
         var archived = await Context.QuestCommandHistory.AsNoTracking().Where(row => row.AccountId == accountId && row.ActionCode == "archive-definition" && row.QuestDefinitionRevisionId != null)
             .Select(row => row.QuestDefinitionRevisionId!.Value).ToListAsync(token);
         return new(terms, archived);
-    }
-
-    /// <inheritdoc />
-    public void Apply(QuestChanges changes)
-    {
-        if (Context.Database.CurrentTransaction is null)
-            throw new InvalidOperationException("Quest changes require an active operation transaction.");
-        Context.QuestDefinition.AddRange(changes.Definitions);
-        Context.QuestDefinitionRevision.AddRange(changes.DefinitionRevisions);
-        Context.QuestDefinitionAttributeAllocation.AddRange(changes.DefinitionAttributes);
-        Context.QuestDefinitionSkillAllocation.AddRange(changes.DefinitionSkills);
-        Context.QuestSeries.AddRange(changes.Series);
-        Context.QuestSeriesRevision.AddRange(changes.SeriesRevisions);
-        Context.CustomSkill.AddRange(changes.Skills);
-        Context.AccountInterest.AddRange(changes.Interests);
-        Context.AccountInterest.RemoveRange(changes.RemovedInterests);
-        Context.AccountPause.AddRange(changes.Pauses);
-        Context.SkillAssessment.AddRange(changes.Assessments);
-        Context.TimeZoneChange.AddRange(changes.Zones);
-        Context.QuestCommandInterest.AddRange(changes.CommandInterests);
-        Context.QuestOccurrence.AddRange(changes.Occurrences);
-        Context.QuestOccurrenceRevision.AddRange(changes.Revisions);
-        Context.QuestOccurrenceEvent.AddRange(changes.Events);
-        Context.QuestCompletion.AddRange(changes.Completions);
-        Context.XpLedgerEntry.AddRange(changes.Ledger);
-        Context.XpLedgerEntry.RemoveRange(changes.RemovedLedger);
-        Context.XpBalance.AddRange(changes.Balances);
-        Context.XpBalance.RemoveRange(changes.RemovedBalances);
-        Context.CategoryProgress.AddRange(changes.Categories);
-        Context.CategoryProgress.RemoveRange(changes.RemovedCategories);
-        Context.AccountEntitlement.AddRange(changes.Entitlements);
-        Context.AccountEntitlement.RemoveRange(changes.RemovedEntitlements);
-        Context.QuestCommandHistory.Add(changes.History);
-        if (changes.Receipt is not null)
-            Context.CommandReceipt.Add(changes.Receipt);
-        Context.Add(changes.Audit);
-        Context.AccountAuditRecord.Add(changes.AuditOwnership);
     }
 }

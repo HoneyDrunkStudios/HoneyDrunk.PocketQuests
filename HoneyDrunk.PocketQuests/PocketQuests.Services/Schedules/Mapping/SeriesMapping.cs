@@ -22,7 +22,6 @@ internal static class SeriesMapping
         EffectiveAt = series.EffectiveAt ?? change.RecordedAt,
         ScheduleVersion = series.Version,
         CommandReceiptId = receiptId,
-        CreatedAt = change.Now,
     };
 
     internal static QuestSeriesEntity ToHead(this QuestSeries series, QuestMutation change, Guid definitionId, int revision, int ordinal, DateOnly? next) => new()
@@ -35,19 +34,14 @@ internal static class SeriesMapping
         CreationOrdinal = ordinal,
         PauseDays = series.PauseDays,
         NextDeliveryOn = next,
-        StoppedAt = series.Stopped ? change.RecordedAt : null,
-        CreatedAt = change.Now,
-        ModifiedAt = change.Now,
     };
 
-    internal static void ApplyTo(this QuestSeries series, QuestSeriesEntity target, QuestMutation change, Guid definitionId, int revision, DateOnly? next)
+    internal static void ApplyTo(this QuestSeries series, QuestSeriesEntity target, Guid definitionId, int revision, DateOnly? next)
     {
         target.QuestDefinitionId = definitionId;
         target.Revision = revision;
         target.NextSequence = series.NextSequence;
         target.PauseDays = series.PauseDays;
         target.NextDeliveryOn = next;
-        target.StoppedAt = series.Stopped ? target.StoppedAt ?? change.RecordedAt : null;
-        target.ModifiedAt = QuestClock.Max(target.ModifiedAt, change.Now);
     }
 }

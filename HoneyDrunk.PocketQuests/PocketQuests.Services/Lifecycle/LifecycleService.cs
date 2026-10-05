@@ -75,7 +75,7 @@ public sealed class LifecycleService(IAccountDataService data, IAccountLifecycle
             {
                 if (intent.State == IdentityProtocol.Erasing)
                 {
-                    var oldAbsentRetry = intent.EffectiveAt <= now.AddDays(-35) && barrier is null
+                    var oldAbsentRetry = intent.EffectiveAt <= now.AddDays(-LifecycleValidator.ErasureRetentionDays) && barrier is null
                         && await data.GetByIdentityUserId(identity.Subject, cancellationToken) is null;
                     if (!oldAbsentRetry)
                         await Purge(identity.Subject, now, cancellationToken);
@@ -112,7 +112,7 @@ public sealed class LifecycleService(IAccountDataService data, IAccountLifecycle
         async Task<bool> PruneOwned(CancellationToken cancellationToken)
         {
             await messages.DeleteDeliveredOrExpired(now.ToUniversalTime(), cancellationToken);
-            await markers.DeleteExpired(now.ToUniversalTime().AddDays(-35), cancellationToken);
+            await markers.DeleteExpired(now.ToUniversalTime().AddDays(-LifecycleValidator.ErasureRetentionDays), cancellationToken);
             return true;
         }
     }
@@ -131,17 +131,22 @@ public sealed class LifecycleService(IAccountDataService data, IAccountLifecycle
             await quests.StageLifecyclePause(identity, account, pausedAt, now, token);
         if (barrier is null)
         {
-            barrier = LifecycleMapping.Create(identity.Subject, now);
+            barrier = LifecycleMapping.Create(Guid.NewGuid(), identity.Subject);
+            barrier.CreatedAt = now;
             await barriers.AddAsync(barrier, token);
         }
 
-        barrier.ApplyTo(account?.Id, version, state, effectiveAt, pausedAt, now);
+        barrier.ApplyTo(account?.Id, version, state, effectiveAt, pausedAt);
+        barrier.ModifiedAt = barrier.ModifiedAt > now ? barrier.ModifiedAt : now;
         if (account is not null)
         {
             foreach (var anchor in await anchors.GetByAccountId(account.Id, token))
             {
                 if (anchor.InvalidatedAt is null)
+                {
                     anchor.Invalidate(now);
+                    anchor.ModifiedAt = anchor.ModifiedAt > now ? anchor.ModifiedAt : now;
+                }
             }
         }
     }

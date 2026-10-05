@@ -18,15 +18,12 @@ internal static class CompletionMapping
             QuestOccurrenceId = completion.OccurrenceId,
             QuestOccurrenceRevisionId = QuestValues.Derived(change.Account.Id, $"occurrence/{occurrence.Id:D}/revision/{occurrence.Revision}"),
             RecordedAt = completion.RecordedAt,
-            CreatedAt = change.Now,
-            ModifiedAt = change.Now,
         };
     }
 
-    internal static void ApplyUndo(QuestCompletionEntity row, Guid eventId, DateTimeOffset recordedAt, DateTimeOffset modifiedAt)
+    internal static void ApplyUndo(QuestCompletionEntity row, Guid eventId, DateTimeOffset recordedAt)
     {
         row.UndoneAt = recordedAt;
         row.UndoQuestOccurrenceEventId = eventId;
-        row.ModifiedAt = modifiedAt;
     }
 }

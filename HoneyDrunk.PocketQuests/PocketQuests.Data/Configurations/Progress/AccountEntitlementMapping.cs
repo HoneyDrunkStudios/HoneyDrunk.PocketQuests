@@ -24,17 +24,17 @@ public sealed class AccountEntitlementMapping : IEntityTypeConfiguration<Account
         entity.HasKey(row => row.Id).HasName("PK_AccountEntitlement").IsClustered();
         entity.HasIndex(row => new { row.AccountId, row.Id }, "UQ_AccountEntitlement_AccountId_Id").IsUnique().HasFilter(null);
         entity.HasIndex(row => new { row.AccountId, row.ProfileRewardId }, "UQ_AccountEntitlement_AccountId_ProfileRewardId").IsUnique().HasFilter(null);
-        entity.Property(row => row.Id).HasColumnType("uniqueidentifier").HasComment("Application-generated stable row UUID; never reused.").IsRequired(true).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.AccountId).HasColumnType("uniqueidentifier").HasComment("Pocket Quests account that exclusively owns this row; supplied by trusted server context.").IsRequired(true).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.ProfileRewardId).HasColumnType("varchar(40)").HasComment("Reward definition whose eligibility is projected.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(40).IsUnicode(false).IsRequired(true).ValueGeneratedNever();
-        entity.Property(row => row.QualifyingCount).HasColumnType("int").HasComment("Nonnegative current count of surviving qualifying contributions.").IsRequired(true).ValueGeneratedNever();
-        entity.Property(row => row.IsEarned).HasColumnType("bit").HasComment("Current derived eligibility; may become false after Undo or rank change.").IsRequired(true).ValueGeneratedNever();
-        entity.Property(row => row.ProjectionVersion).HasColumnType("bigint").HasComment("Account projection generation for this reward.").IsRequired(true).ValueGeneratedNever();
-        entity.Property(row => row.RulesetVersion).HasColumnType("varchar(32)").HasComment("Reviewed trigger version used for this eligibility.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(32).IsUnicode(false).IsRequired(true).ValueGeneratedNever();
-        entity.Property(row => row.CreatedAt).HasColumnType("datetimeoffset(7)").HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).IsRequired(true).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.ModifiedAt).HasColumnType("datetimeoffset(7)").HasComment("Server UTC time of the most recent persisted change; writer must set on each update.").HasPrecision(7).IsRequired(true).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')");
-        entity.HasIndex(row => row.ProfileRewardId, "IX_AccountEntitlement_FK_ProfileReward").IsUnique(false).HasFilter(null);
-        entity.HasOne<AccountEntity>().WithMany().HasForeignKey(row => row.AccountId).HasPrincipalKey(row => row.Id).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountEntitlement_Account");
-        entity.HasOne<ProfileRewardEntity>().WithMany().HasForeignKey(row => row.ProfileRewardId).HasPrincipalKey(row => row.Id).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountEntitlement_ProfileReward");
+        entity.Property(row => row.Id).HasComment("Application-generated stable row UUID; never reused.").ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.AccountId).HasComment("Pocket Quests account that exclusively owns this row; supplied by trusted server context.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.ProfileRewardId).HasComment("Reward definition whose eligibility is projected.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(40).IsUnicode(false);
+        entity.Property(row => row.QualifyingCount).HasComment("Nonnegative current count of surviving qualifying contributions.");
+        entity.Property(row => row.IsEarned).HasComment("Current derived eligibility; may become false after Undo or rank change.");
+        entity.Property(row => row.ProjectionVersion).HasComment("Account projection generation for this reward.");
+        entity.Property(row => row.RulesetVersion).HasComment("Reviewed trigger version used for this eligibility.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(32).IsUnicode(false);
+        entity.Property(row => row.CreatedAt).HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.ModifiedAt).HasComment("Server UTC time of the most recent persisted change; writer must set on each update.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')");
+        entity.HasIndex(row => row.ProfileRewardId, "IX_AccountEntitlement_FK_ProfileReward");
+        entity.HasOne<AccountEntity>().WithMany().HasForeignKey(row => row.AccountId).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountEntitlement_Account");
+        entity.HasOne<ProfileRewardEntity>().WithMany().HasForeignKey(row => row.ProfileRewardId).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountEntitlement_ProfileReward");
     }
 }

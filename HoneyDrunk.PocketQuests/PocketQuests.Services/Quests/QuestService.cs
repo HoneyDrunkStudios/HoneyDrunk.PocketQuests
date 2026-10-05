@@ -12,6 +12,7 @@ using PocketQuests.Services.Accounts;
 using PocketQuests.Services.Accounts.Validators;
 using PocketQuests.Services.Commands.Mapping;
 using PocketQuests.Services.Profiles;
+using PocketQuests.Services.Progress;
 using PocketQuests.Services.Projections.Mapping;
 using PocketQuests.Services.Quests.Mapping;
 using PocketQuests.Services.Quests.Validators;
@@ -24,12 +25,40 @@ using StateResponse = PocketQuests.Contracts.Responses.Projections.QuestState;
 namespace PocketQuests.Services.Quests;
 
 /// <summary>Coordinates authenticated quest operations over pure rules and explicit relational queries.</summary>
-/// <param name="data">Scoped account persistence and transaction ownership.</param>
-/// <param name="currentAccount">Trusted host identity.</param>
-/// <param name="clock">Authoritative host time.</param>
-public sealed class QuestService(IAccountDataService data, ICurrentAccount currentAccount, TimeProvider clock) : IQuestService
+public sealed class QuestService : IQuestService
 {
     internal const int ReconciliationLimit = 100;
+    private readonly IAccountDataService data;
+    private readonly ICurrentAccount currentAccount;
+    private readonly TimeProvider clock;
+    private readonly ProfileHistoryService profiles;
+    private readonly QuestDefinitionService definitions;
+    private readonly QuestSeriesService series;
+    private readonly QuestOccurrenceService occurrences;
+    private readonly ProgressService progress;
+    private readonly QuestCommandHistoryService history;
+
+    internal QuestService(
+        IAccountDataService data,
+        ICurrentAccount currentAccount,
+        TimeProvider clock,
+        ProfileHistoryService profiles,
+        QuestDefinitionService definitions,
+        QuestSeriesService series,
+        QuestOccurrenceService occurrences,
+        ProgressService progress,
+        QuestCommandHistoryService history)
+    {
+        this.data = data;
+        this.currentAccount = currentAccount;
+        this.clock = clock;
+        this.profiles = profiles;
+        this.definitions = definitions;
+        this.series = series;
+        this.occurrences = occurrences;
+        this.progress = progress;
+        this.history = history;
+    }
 
     /// <inheritdoc />
     public async Task<StateResponse> Execute(CommandRequest request, CancellationToken token = default)
@@ -92,31 +121,37 @@ public sealed class QuestService(IAccountDataService data, ICurrentAccount curre
     internal async Task<AccountEntity> Account(AccountIdentity identity, CancellationToken token) =>
         await data.GetByIdentityUserId(identity.Subject, token) ?? throw new QuestNotFoundException("Initialize a profile before using its quest state.");
 
-    internal async Task Stage(AccountIdentity identity, QuestMutation change, QuestStateRows rows, byte[] digest, SyncAnchorEntity? anchor, CancellationToken token)
+    internal async Task Persist(AccountIdentity identity, QuestMutation change, QuestStateRows rows, byte[] digest, SyncAnchorEntity? anchor, CancellationToken token)
     {
         var involved = change.Aggregate.Definitions.Select(row => row.Quest)
             .Concat(change.Aggregate.Occurrences.Select(row => row.Quest)).Concat(change.Aggregate.Schedule.Series.Select(row => row.Quest));
         var definitionIds = involved.Select(quest => QuestTermHistory.DefinitionId(change.Account.Id, quest)).Distinct().ToArray();
         var retainedTerms = await data.ReadTerms(change.Account.Id, definitionIds, token);
         var projections = await data.ReadProjections(change.Account.Id, token);
-        var changes = CommandHistoryChanges.Create(change, identity, digest, AuditEntryId.New(), Activity.Current?.TraceId.ToString());
-        var terms = new QuestTermHistory(change, retainedTerms, changes);
-        ProfileChanges.Apply(change, rows, changes);
-        terms.ApplyDefinitions();
-        QuestSeriesChanges.Apply(change, rows, terms, changes);
-        OccurrenceChanges.Apply(change, rows, terms, changes);
-        CompletionChanges.Apply(change, rows, changes);
-        ProgressChanges.Apply(change, rows, projections, changes);
-        QuestHistory.RecordCommand(change, rows, terms, changes);
-        AccountChanges.Apply(change, anchor);
-        data.Apply(changes);
+        await profiles.Record(change, rows, token);
+        var terms = await definitions.Record(change, retainedTerms, token);
+        var configurations = await series.Record(change, rows, terms, token);
+        var recorded = await occurrences.Record(change, rows, terms, configurations, token);
+        await progress.Recalculate(change, rows, projections, recorded.occurrences, recorded.eventIds, token);
+        await history.Record(change, identity, digest, AuditEntryId.New(), Activity.Current?.TraceId.ToString(), terms, recorded.occurrences, token);
+
+        var projectionAsOf = change.HasPending
+            ? (change.Account.ProjectionAsOfAt < change.RecordedAt ? change.Account.ProjectionAsOfAt : change.RecordedAt)
+            : change.ProjectionAt;
+        change.ApplyTo(projectionAsOf);
+        change.Account.ModifiedAt = QuestClock.Max(change.Account.ModifiedAt, change.Now);
+        if (change.Command.RecordedTime is { } proof && anchor is not null)
+        {
+            QuestAccountMapping.ApplyProof(anchor, proof);
+            anchor.ModifiedAt = QuestClock.Max(anchor.ModifiedAt, change.Now);
+        }
     }
 
     internal Task StageReconciliation(AccountIdentity identity, AccountEntity account, QuestStateRows rows, QuestAggregate aggregate, DateTimeOffset at, DateTimeOffset now, int limit, bool hasMore, CancellationToken token)
     {
         var command = new QuestCommand(Guid.NewGuid(), "$reconcile");
         var change = new QuestMutation(account, command, aggregate, aggregate.Project(at), at, at, at, now, limit, int.MaxValue, IsInternal: true, HasPending: hasMore);
-        return Stage(identity, change, rows, CommandDigest.Compute(command), null, token);
+        return Persist(identity, change, rows, CommandDigest.Compute(command), null, token);
     }
 
     internal async Task StageLifecyclePause(AccountIdentity identity, AccountEntity account, DateTimeOffset pausedAt, DateTimeOffset now, CancellationToken token)
@@ -127,7 +162,7 @@ public sealed class QuestService(IAccountDataService data, ICurrentAccount curre
         var pending = aggregate.Apply(new(command.OperationId, QuestActions.Pause), pausedAt, 0);
         var at = QuestClock.Max(QuestClock.Max(now, account.LastRecordedAt), pausedAt);
         var change = new QuestMutation(account, command, aggregate, aggregate.Project(at), pausedAt, at, at, now, 0, 0, IsInternal: true, HasPending: pending.HasMore);
-        await Stage(identity, change, rows, CommandDigest.Compute(command), null, token);
+        await Persist(identity, change, rows, CommandDigest.Compute(command), null, token);
     }
 
     private static void RequireMatchingReceipt(CommandReceiptEntity? receipt, AccountEntity account, QuestCommand command, byte[] digest)
@@ -163,7 +198,7 @@ public sealed class QuestService(IAccountDataService data, ICurrentAccount curre
         {
             var internalCommand = new QuestCommand(Guid.NewGuid(), "$reconcile");
             var continuation = new QuestMutation(account, internalCommand, aggregate, aggregate.Project(logicalNow), logicalNow, logicalNow, logicalNow, now, ReconciliationLimit, int.MaxValue, IsInternal: true, HasPending: true);
-            await Stage(identity, continuation, rows, CommandDigest.Compute(internalCommand), null, token);
+            await Persist(identity, continuation, rows, CommandDigest.Compute(internalCommand), null, token);
             return null;
         }
 
@@ -184,7 +219,7 @@ public sealed class QuestService(IAccountDataService data, ICurrentAccount curre
         if (before is not null)
             result = result with { CompletionOutcome = CompletionOutcome.Between(before, result, command.OperationId, command.OccurrenceId!.Value) };
         var change = new QuestMutation(account, command, aggregate, result, recordedAt, logicalNow, projectionAt, now, ReconciliationLimit, actionBudget, HasPending: action.HasMore || aggregate.Reconcile(projectionAt, 0).HasMore);
-        await Stage(identity, change, rows, digest, anchor, token);
+        await Persist(identity, change, rows, digest, anchor, token);
         return result;
     }
 }

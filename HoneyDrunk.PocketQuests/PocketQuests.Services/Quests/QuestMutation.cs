@@ -4,7 +4,7 @@ using PocketQuests.Domain.Quests.Aggregates;
 
 namespace PocketQuests.Services.Quests;
 
-/// <summary>Validated command state shared by operation staging helpers inside one transaction; never serialized or stored as a snapshot.</summary>
+/// <summary>Validated operation inputs and original account version shared by feature services in one transaction; never serialized or stored as a snapshot.</summary>
 internal sealed record QuestMutation(AccountEntity Account, QuestCommand Command, QuestAggregate Aggregate, QuestState State,
     DateTimeOffset RecordedAt, DateTimeOffset ReconciledAt, DateTimeOffset ProjectionAt, DateTimeOffset Now,
     int ReconciliationLimit, int ActionReconciliationLimit, bool IsInternal = false, bool HasPending = false)

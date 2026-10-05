@@ -21,7 +21,6 @@ internal static class CommandHistoryMapping
         OutcomeVersion = 2,
         OutcomeJson = JsonSerializer.Serialize(new CompactOutcome(change.ProjectionAt, null)),
         AppliedMutationVersion = change.Version,
-        CreatedAt = change.Now,
     };
 
     internal static QuestCommandHistoryEntity ToHistory(QuestMutation change) => new QuestCommandHistoryEntity
@@ -42,17 +41,15 @@ internal static class CommandHistoryMapping
         ConfirmPenalty = change.Command.ConfirmPenalty,
         AcceptedLoss = change.Command.AcceptedLoss,
         SourceSyncAnchorId = change.Command.RecordedTime?.AnchorId,
-        CreatedAt = change.Now,
     };
 
     internal static AccountAuditRecordEntity ToOwnership(QuestMutation change, string auditId) =>
-        new() { AccountId = change.Account.Id, AuditRecordId = auditId, CreatedAt = change.Now };
+        new() { AccountId = change.Account.Id, AuditRecordId = auditId };
 
     internal static void ApplyToHistory(this QuestMutation change, QuestCommandHistoryEntity target, Occurrence? targetOccurrence, Quest? quest, Guid? termId, Guid? completionRevision, string? skillName)
     {
         var command = change.Command;
         var action = command.Action;
-        var now = change.Now;
         var (system, custom) = action is QuestActions.SaveSkill or QuestActions.ArchiveSkill or QuestActions.AssessSkill ? QuestValues.Skill(command.SkillId!) : default;
         target.QuestOccurrenceId = action is QuestActions.Accept or QuestActions.Complete or QuestActions.Undo or QuestActions.Plan or QuestActions.Link
         or QuestActions.ResumeOccurrence or QuestActions.Abandon or QuestActions.AcceptOffer ? targetOccurrence?.Id : null;
@@ -80,6 +77,5 @@ internal static class CommandHistoryMapping
         target.ConfirmZoneChange = command.ConfirmZoneChange;
         target.HasExpiryWarnings = action == QuestActions.ExpiryWarnings ? command.ExpiryWarnings : null;
         target.SourceSyncAnchorId = command.RecordedTime?.AnchorId;
-        target.CreatedAt = now;
     }
 }

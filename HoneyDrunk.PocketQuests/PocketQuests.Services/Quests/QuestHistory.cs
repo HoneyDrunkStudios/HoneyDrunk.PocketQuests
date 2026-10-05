@@ -1,10 +1,6 @@
-using PocketQuests.Data.DataServices.Quests;
 using PocketQuests.Data.Entities.Quests;
-using PocketQuests.Data.Queries.Quests;
 using PocketQuests.Domain.Commands;
 using PocketQuests.Domain.Models.Quests;
-using PocketQuests.Services.Quests.Mapping;
-using QuestValues = PocketQuests.Domain.Quests.QuestValues;
 
 namespace PocketQuests.Services.Quests;
 
@@ -13,7 +9,7 @@ internal static class QuestHistory
     internal static Dictionary<(Guid series, int version), QuestSeriesRevisionEntity> Series(IEnumerable<QuestSeriesRevisionEntity> rows) =>
         rows.GroupBy(row => (series: row.QuestSeriesId, version: row.ScheduleVersion)).ToDictionary(group => group.Key, group => group.MaxBy(row => row.Revision)!);
 
-    internal static void RecordCommand(QuestMutation change, QuestStateRows rows, QuestTermHistory terms, QuestChanges changes)
+    internal static (Occurrence? occurrence, Quest? quest) CommandTargets(QuestMutation change)
     {
         var command = change.Command;
         var action = command.Action;
@@ -27,11 +23,6 @@ internal static class QuestHistory
             QuestActions.Accept or QuestActions.AcceptOffer or QuestActions.Abandon => target?.Quest,
             _ => null,
         };
-        var termId = quest is null ? (Guid?)null : terms.Ensure(quest).Id;
-        var occurrence = action == QuestActions.Complete && command.RecordedTime is not null
-            ? rows.Occurrences.Concat(changes.Occurrences).Single(row => row.Id == target!.Id) : null;
-        var completionRevision = occurrence is null ? (Guid?)null : QuestValues.Derived(change.Account.Id, $"occurrence/{occurrence.Id:D}/revision/{occurrence.Revision}");
-        var skillName = action == QuestActions.SaveSkill ? change.Aggregate.Profile.CustomSkills!.Single(row => row.Id == command.SkillId).Name : null;
-        change.ApplyToHistory(changes.History, target, quest, termId, completionRevision, skillName);
+        return (target, quest);
     }
 }

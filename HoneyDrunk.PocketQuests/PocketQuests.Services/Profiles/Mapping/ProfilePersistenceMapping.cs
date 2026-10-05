@@ -15,7 +15,6 @@ internal static class ProfilePersistenceMapping
         AccountId = change.Account.Id,
         CategoryId = category,
         Position = position,
-        CreatedAt = change.Now,
     };
 
     internal static void ApplyPosition(AccountInterestEntity target, int position) => target.Position = position;
@@ -26,7 +25,6 @@ internal static class ProfilePersistenceMapping
         QuestCommandHistoryId = change.Command.OperationId,
         CategoryId = category,
         Position = position,
-        CreatedAt = change.Now,
     };
 
     internal static CustomSkillEntity ToEntity(this CustomSkill skill, QuestMutation change, int ordinal) => new()
@@ -39,18 +37,13 @@ internal static class ProfilePersistenceMapping
         NormalizedName = skill.Name.ToUpperInvariant(),
         NameNormalizationVersion = 1,
         Revision = skill.Revision,
-        ArchivedAt = skill.Archived ? change.RecordedAt : null,
-        CreatedAt = change.Now,
-        ModifiedAt = change.Now,
     };
 
-    internal static void ApplyTo(this CustomSkill skill, CustomSkillEntity target, QuestMutation change)
+    internal static void ApplyTo(this CustomSkill skill, CustomSkillEntity target)
     {
         target.Name = skill.Name;
         target.NormalizedName = skill.Name.ToUpperInvariant();
         target.Revision = skill.Revision;
-        target.ArchivedAt = skill.Archived ? target.ArchivedAt ?? change.RecordedAt : null;
-        target.ModifiedAt = QuestClock.Max(target.ModifiedAt, change.Now);
     }
 
     internal static SkillAssessmentEntity ToAssessment(QuestMutation change, long seed)
@@ -67,7 +60,6 @@ internal static class ProfilePersistenceMapping
             RulesetVersion = "1.0",
             EffectiveAt = change.RecordedAt,
             CommandReceiptId = change.Command.OperationId,
-            CreatedAt = change.Now,
         };
     }
 
@@ -79,7 +71,6 @@ internal static class ProfilePersistenceMapping
         ToTimeZoneId = change.Aggregate.Zone,
         EffectiveAt = change.RecordedAt,
         CommandReceiptId = change.Command.OperationId,
-        CreatedAt = change.Now,
     };
 
     internal static AccountPauseEntity ToEntity(this PauseWindow pause, QuestMutation change, Guid id, int ordinal) => new()
@@ -92,13 +83,10 @@ internal static class ProfilePersistenceMapping
         StartedAt = pause.StartedAt,
         EndedAt = pause.EndedAt,
         CommandReceiptId = change.ReceiptId,
-        CreatedAt = change.Now,
-        ModifiedAt = change.Now,
     };
 
-    internal static void ApplyTo(this PauseWindow pause, AccountPauseEntity target, QuestMutation change)
+    internal static void ApplyTo(this PauseWindow pause, AccountPauseEntity target)
     {
         target.EndedAt = pause.EndedAt;
-        target.ModifiedAt = QuestClock.Max(target.ModifiedAt, change.Now);
     }
 }

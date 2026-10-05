@@ -27,18 +27,18 @@ public sealed class AccountLifecycleStateMapping : IEntityTypeConfiguration<Acco
         });
         entity.HasKey(row => row.Id).HasName("PK_AccountLifecycleState").IsClustered();
         entity.HasIndex(row => row.IdentityUserId, "UQ_AccountLifecycleState_IdentityUserId").IsUnique().HasFilter(null);
-        entity.Property(row => row.Id).HasColumnType("uniqueidentifier").HasComment("Application-generated stable row UUID; never reused.").IsRequired(true).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.IdentityUserId).HasColumnType("varchar(30)").HasComment("Canonical external Identity user being fenced; never a provider identity.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(30).IsUnicode(false).IsRequired(true).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.AccountId).HasColumnType("uniqueidentifier").HasComment("Local product profile if one exists; null before onboarding or after purge.").IsRequired(false).ValueGeneratedNever();
-        entity.Property(row => row.Version).HasColumnType("bigint").HasComment("Highest accepted monotonic Identity lifecycle version; old deliveries cannot reduce it.").IsRequired(true).ValueGeneratedNever();
-        entity.Property(row => row.StateCode).HasColumnType("varchar(8)").HasComment("Active, Inactive or Erasing, as defined by the reviewed Identity lifecycle contract.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(8).IsUnicode(false).IsRequired(true).ValueGeneratedNever();
-        entity.Property(row => row.EffectiveAt).HasColumnType("datetimeoffset(7)").HasComment("Authoritative Identity transition instant. UTC instant.").HasPrecision(7).IsRequired(true).ValueGeneratedNever();
-        entity.Property(row => row.PausedAt).HasColumnType("datetimeoffset(7)").HasComment("Original deletion-request pause origin, retained across cancellation. UTC instant. Null means this event has not happened.").HasPrecision(7).IsRequired(false).ValueGeneratedNever();
-        entity.Property(row => row.CreatedAt).HasColumnType("datetimeoffset(7)").HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).IsRequired(true).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.ModifiedAt).HasColumnType("datetimeoffset(7)").HasComment("Server UTC time of the most recent persisted change; writer must set on each update.").HasPrecision(7).IsRequired(true).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')");
-        entity.Property(row => row.RowVersion).HasColumnType("rowversion").HasComment("SQL-generated opaque concurrency token; compare as bytes, not as a clock.").IsRequired(true).IsRowVersion();
-        entity.HasIndex(row => row.AccountId, "UQ_AccountLifecycleState_Account").IsUnique(true).HasFilter("[AccountId] IS NOT NULL");
-        entity.HasIndex(row => new { row.AccountId, row.IdentityUserId }, "IX_AccountLifecycleState_FK_Account").IsUnique(false).HasFilter(null);
+        entity.Property(row => row.Id).HasComment("Application-generated stable row UUID; never reused.").ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.IdentityUserId).HasComment("Canonical external Identity user being fenced; never a provider identity.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(30).IsUnicode(false).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.AccountId).HasComment("Local product profile if one exists; null before onboarding or after purge.");
+        entity.Property(row => row.Version).HasComment("Highest accepted monotonic Identity lifecycle version; old deliveries cannot reduce it.");
+        entity.Property(row => row.StateCode).HasComment("Active, Inactive or Erasing, as defined by the reviewed Identity lifecycle contract.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(8).IsUnicode(false);
+        entity.Property(row => row.EffectiveAt).HasComment("Authoritative Identity transition instant. UTC instant.").HasPrecision(7);
+        entity.Property(row => row.PausedAt).HasComment("Original deletion-request pause origin, retained across cancellation. UTC instant. Null means this event has not happened.").HasPrecision(7);
+        entity.Property(row => row.CreatedAt).HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.ModifiedAt).HasComment("Server UTC time of the most recent persisted change; writer must set on each update.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')");
+        entity.Property(row => row.RowVersion).HasColumnType("rowversion").HasComment("SQL-generated opaque concurrency token; compare as bytes, not as a clock.").IsRowVersion();
+        entity.HasIndex(row => row.AccountId, "UQ_AccountLifecycleState_Account").IsUnique().HasFilter("[AccountId] IS NOT NULL");
+        entity.HasIndex(row => new { row.AccountId, row.IdentityUserId }, "IX_AccountLifecycleState_FK_Account");
         entity.HasOne<AccountEntity>().WithMany().HasForeignKey(row => new { row.AccountId, row.IdentityUserId }).HasPrincipalKey(row => new { row.Id, row.IdentityUserId }).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountLifecycleState_Account");
     }
 }

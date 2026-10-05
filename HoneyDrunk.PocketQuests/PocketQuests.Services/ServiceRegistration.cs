@@ -1,9 +1,12 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using PocketQuests.Data.DataServices.Accounts;
+using PocketQuests.Services.Accounts;
 using PocketQuests.Services.Catalogs;
 using PocketQuests.Services.Exports;
 using PocketQuests.Services.Lifecycle;
 using PocketQuests.Services.Profiles;
+using PocketQuests.Services.Progress;
 using PocketQuests.Services.Quests;
 using PocketQuests.Services.Reconciliation;
 using PocketQuests.Services.Schedules;
@@ -20,7 +23,22 @@ public static class ServiceRegistration
     public static IServiceCollection AddQuestServices(this IServiceCollection services)
     {
         services.TryAddSingleton(TimeProvider.System);
-        services.AddScoped<QuestService>();
+        services.AddScoped<ProfileHistoryService>();
+        services.AddScoped<QuestDefinitionService>();
+        services.AddScoped<QuestSeriesService>();
+        services.AddScoped<QuestOccurrenceService>();
+        services.AddScoped<ProgressService>();
+        services.AddScoped<QuestCommandHistoryService>();
+        services.AddScoped(provider => new QuestService(
+            provider.GetRequiredService<IAccountDataService>(),
+            provider.GetRequiredService<ICurrentAccount>(),
+            provider.GetRequiredService<TimeProvider>(),
+            provider.GetRequiredService<ProfileHistoryService>(),
+            provider.GetRequiredService<QuestDefinitionService>(),
+            provider.GetRequiredService<QuestSeriesService>(),
+            provider.GetRequiredService<QuestOccurrenceService>(),
+            provider.GetRequiredService<ProgressService>(),
+            provider.GetRequiredService<QuestCommandHistoryService>()));
         services.AddScoped<IQuestService>(provider => provider.GetRequiredService<QuestService>());
         services.AddScoped<ProfileService>();
         services.AddScoped<IProfileService>(provider => provider.GetRequiredService<ProfileService>());

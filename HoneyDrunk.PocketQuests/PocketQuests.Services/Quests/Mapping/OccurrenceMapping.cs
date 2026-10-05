@@ -13,7 +13,6 @@ internal static class OccurrenceMapping
         var occurrence = view.Occurrence;
         var life = occurrence.Lifecycle ?? new();
         var termId = term.Id;
-        var now = change.Now;
         return new QuestOccurrenceEntity
         {
             Id = occurrence.Id,
@@ -41,8 +40,6 @@ internal static class OccurrenceMapping
             SeriesSequence = life.Sequence,
             ParentQuestOccurrenceId = occurrence.ParentId,
             SourceSyncAnchorId = life.SourceAnchorId,
-            CreatedAt = prior?.CreatedAt ?? now,
-            ModifiedAt = now
         };
     }
 
@@ -50,7 +47,6 @@ internal static class OccurrenceMapping
     {
         var account = change.Account;
         var recordedAt = change.RecordedAt;
-        var now = change.Now;
         return new QuestOccurrenceRevisionEntity
         {
             Id = revisionId,
@@ -76,7 +72,6 @@ internal static class OccurrenceMapping
             AccountMutationVersion = change.Version,
             EffectiveAt = recordedAt,
             CommandReceiptId = change.ReceiptId,
-            CreatedAt = now
         };
     }
 
@@ -90,7 +85,6 @@ internal static class OccurrenceMapping
         EffectiveAt = at,
         AccountMutationVersion = change.Version,
         CommandReceiptId = change.ReceiptId,
-        CreatedAt = change.Now,
     };
 
     internal static void ApplyTo(this QuestOccurrenceEntity source, QuestOccurrenceEntity target)
@@ -110,6 +104,5 @@ internal static class OccurrenceMapping
         target.LossCategoryId = source.LossCategoryId;
         target.Revision = source.Revision;
         target.ParentQuestOccurrenceId = source.ParentQuestOccurrenceId;
-        target.ModifiedAt = source.ModifiedAt > target.ModifiedAt ? source.ModifiedAt : target.ModifiedAt;
     }
 }

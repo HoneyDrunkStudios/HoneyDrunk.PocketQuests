@@ -18,8 +18,8 @@ public sealed class ErasureMarkerMapping : IEntityTypeConfiguration<ErasureMarke
             table.HasCheckConstraint("CK_ErasureMarker_IdentityUserId", "DATALENGTH([Id])=30 AND LEFT([Id],4)='usr_' AND SUBSTRING([Id],5,26) NOT LIKE '%[^0123456789ABCDEFGHJKMNPQRSTVWXYZ]%' COLLATE Latin1_General_100_BIN2");
         });
         entity.HasKey(row => row.Id).HasName("PK_ErasureMarker").IsClustered();
-        entity.Property(row => row.Id).HasColumnType("varchar(30)").HasComment("Canonical never-recycled Identity user ID used for restore fencing; intentionally no FK to deleted personal data.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(30).IsUnicode(false).IsRequired(true).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.CreatedAt).HasColumnType("datetimeoffset(7)").HasComment("Original verified live-erasure and marker-creation instant, written atomically with successful purge. The writer supplies this canonical value; restore/import must preserve it and duplicate delivery must not update it. Retention expires exactly 35 elapsed days after this instant, never after restore or retry. UTC instant.").HasPrecision(7).IsRequired(true).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.HasIndex(row => new { row.CreatedAt, row.Id }, "IX_ErasureMarker_Retention").IsUnique(false).HasFilter(null);
+        entity.Property(row => row.Id).HasComment("Canonical never-recycled Identity user ID used for restore fencing; intentionally no FK to deleted personal data.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(30).IsUnicode(false).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.CreatedAt).HasComment("Original verified live-erasure and marker-creation instant, written atomically with successful purge. The writer supplies this canonical value; restore/import must preserve it and duplicate delivery must not update it. Retention expires exactly 35 elapsed days after this instant, never after restore or retry. UTC instant.").HasPrecision(7).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.HasIndex(row => new { row.CreatedAt, row.Id }, "IX_ErasureMarker_Retention");
     }
 }

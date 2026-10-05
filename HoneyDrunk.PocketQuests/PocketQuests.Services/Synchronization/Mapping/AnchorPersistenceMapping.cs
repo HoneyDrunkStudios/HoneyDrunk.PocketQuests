@@ -1,13 +1,18 @@
 using PocketQuests.Data.Entities.Accounts;
 using PocketQuests.Data.Entities.Synchronization;
+using PocketQuests.Domain.Models.Synchronization;
 
 namespace PocketQuests.Services.Synchronization.Mapping;
 
 internal static class AnchorPersistenceMapping
 {
-    internal static SyncAnchorEntity Create(AccountEntity account, Guid deviceId, Guid bootId, DateTimeOffset deviceUtc, DateTimeOffset now, DateTimeOffset floor) => new()
+    // The response preserves the submitted device offset; SQL stores its equivalent UTC instant.
+    internal static SyncAnchor ToModel(this SyncAnchorEntity anchor, DateTimeOffset originalDeviceUtc) =>
+        new(anchor.Id, anchor.DeviceId, anchor.BootId, anchor.ServerAt, originalDeviceUtc, anchor.RecordedTimeFloorAt);
+
+    internal static SyncAnchorEntity Create(Guid id, AccountEntity account, Guid deviceId, Guid bootId, DateTimeOffset deviceUtc, DateTimeOffset now, DateTimeOffset floor) => new()
     {
-        Id = Guid.NewGuid(),
+        Id = id,
         AccountId = account.Id,
         DeviceId = deviceId,
         BootId = bootId,
@@ -15,7 +20,5 @@ internal static class AnchorPersistenceMapping
         DeviceAt = deviceUtc.ToUniversalTime(),
         RecordedTimeFloorAt = floor,
         IssuedMutationVersion = account.MutationVersion,
-        CreatedAt = now.ToUniversalTime(),
-        ModifiedAt = now.ToUniversalTime(),
     };
 }

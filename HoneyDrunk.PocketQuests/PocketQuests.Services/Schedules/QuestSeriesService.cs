@@ -6,15 +6,17 @@ using PocketQuests.Services.Schedules.Mapping;
 
 namespace PocketQuests.Services.Schedules;
 
-internal static class QuestSeriesChanges
+internal sealed class QuestSeriesService(IQuestSeriesDataService seriesData, IQuestSeriesRevisionDataService revisionData)
 {
-    internal static void Apply(QuestMutation change, QuestStateRows rows, QuestTermHistory terms, QuestChanges changes)
+    internal async Task<IReadOnlyList<QuestSeriesRevisionEntity>> Record(QuestMutation change, QuestStateRows rows, QuestTermHistory terms, CancellationToken token)
     {
+        List<QuestSeriesEntity> newSeries = [];
+        List<QuestSeriesRevisionEntity> newRevisions = [];
         var heads = rows.Series.ToDictionary(row => row.Id);
         var revisions = rows.CurrentSeries.ToDictionary(row => row.Head.Id, row => row.Revision!);
         foreach (var series in change.Aggregate.Schedule.Series)
         {
-            var term = terms.Ensure(series.Quest);
+            var term = terms.Find(series.Quest);
             var prior = heads.GetValueOrDefault(series.Id);
             var original = revisions.GetValueOrDefault(series.Id);
             var receiptId = change.ReceiptId ?? original?.CommandReceiptId
@@ -23,7 +25,7 @@ internal static class QuestSeriesChanges
             if (original is null || !SameConfiguration(original, revision))
             {
                 revision = series.ToRevision(change, term.Id, checked((prior?.Revision ?? 0) + 1), receiptId);
-                changes.SeriesRevisions.Add(revision);
+                newRevisions.Add(revision);
             }
             else
             {
@@ -34,15 +36,28 @@ internal static class QuestSeriesChanges
             var ordinal = change.Aggregate.Schedule.Series.IndexOf(series) + 1;
             if (prior is null)
             {
-                changes.Series.Add(series.ToHead(change, term.QuestDefinitionId, revision.Revision, ordinal, next));
+                var head = series.ToHead(change, term.QuestDefinitionId, revision.Revision, ordinal, next);
+                head.StoppedAt = series.Stopped ? change.RecordedAt : null;
+                newSeries.Add(head);
             }
             else if (prior.QuestDefinitionId != term.QuestDefinitionId || prior.Revision != revision.Revision
                 || prior.NextSequence != series.NextSequence || prior.PauseDays != series.PauseDays
                 || prior.NextDeliveryOn != next || (prior.StoppedAt is not null) != series.Stopped)
             {
-                series.ApplyTo(prior, change, term.QuestDefinitionId, revision.Revision, next);
+                series.ApplyTo(prior, term.QuestDefinitionId, revision.Revision, next);
+                prior.StoppedAt = series.Stopped ? prior.StoppedAt ?? change.RecordedAt : null;
+                prior.ModifiedAt = QuestClock.Max(prior.ModifiedAt, change.Now);
             }
         }
+
+        foreach (var row in newSeries)
+            row.CreatedAt = row.ModifiedAt = change.Now;
+        foreach (var row in newRevisions)
+            row.CreatedAt = change.Now;
+
+        await seriesData.AddRangeAsync(newSeries, token);
+        await revisionData.AddRangeAsync(newRevisions, token);
+        return [.. rows.SeriesRevisions, .. newRevisions];
     }
 
     private static bool SameConfiguration(QuestSeriesRevisionEntity first, QuestSeriesRevisionEntity second) =>

@@ -19,10 +19,10 @@ public sealed class AccountAuditRecordMapping : IEntityTypeConfiguration<Account
         });
         entity.HasKey(row => new { row.AccountId, row.AuditRecordId }).HasName("PK_AccountAuditRecord").IsClustered();
         entity.HasIndex(row => row.AuditRecordId, "UQ_AccountAuditRecord_AuditRecordId").IsUnique().HasFilter(null);
-        entity.Property(row => row.AccountId).HasColumnType("uniqueidentifier").HasComment("Pocket Quests account that exclusively owns this row; supplied by trusted server context.").IsRequired(true).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.AuditRecordId).HasColumnType("varchar(32)").HasComment("Canonical shared AuditRecord ID; envelope content and shape remain Audit-owned. Uses DATABASE_DEFAULT collation to match the unchanged shared AuditRecords.Id.").HasMaxLength(32).IsUnicode(false).IsRequired(true).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.CreatedAt).HasColumnType("datetimeoffset(7)").HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).IsRequired(true).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.HasOne<AccountEntity>().WithMany().HasForeignKey(row => row.AccountId).HasPrincipalKey(row => row.Id).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountAuditRecord_Account");
-        entity.HasOne<AuditRecord>().WithMany().HasForeignKey(row => row.AuditRecordId).HasPrincipalKey(row => row.Id).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountAuditRecord_AuditRecords");
+        entity.Property(row => row.AccountId).HasComment("Pocket Quests account that exclusively owns this row; supplied by trusted server context.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.AuditRecordId).HasComment("Canonical shared AuditRecord ID; envelope content and shape remain Audit-owned. Uses DATABASE_DEFAULT collation to match the unchanged shared AuditRecords.Id.").HasMaxLength(32).IsUnicode(false).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.CreatedAt).HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.HasOne<AccountEntity>().WithMany().HasForeignKey(row => row.AccountId).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountAuditRecord_Account");
+        entity.HasOne<AuditRecord>().WithMany().HasForeignKey(row => row.AuditRecordId).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountAuditRecord_AuditRecords");
     }
 }

@@ -24,17 +24,17 @@ public sealed class LifecycleMessageMapping : IEntityTypeConfiguration<Lifecycle
         });
         entity.HasKey(row => row.Id).HasName("PK_LifecycleMessage").IsClustered();
         entity.HasIndex(row => row.OutboxMessageId, "UQ_LifecycleMessage_OutboxMessageId").IsUnique().HasFilter(null);
-        entity.Property(row => row.Id).HasColumnType("uniqueidentifier").HasComment("Application-generated stable row UUID; never reused.").IsRequired(true).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.IdentityUserId).HasColumnType("varchar(30)").HasComment("Canonical external user whose lifecycle acknowledgment this is.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(30).IsUnicode(false).IsRequired(true).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.AccountId).HasColumnType("uniqueidentifier").HasComment("Product account if still present; null before onboarding or after purge.").IsRequired(false).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.LifecycleVersion).HasColumnType("bigint").HasComment("Identity transition version being acknowledged.").IsRequired(true).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.OutboxMessageId).HasColumnType("uniqueidentifier").HasComment("Shared Data.Outbox row containing the acknowledgment capability and payload.").IsRequired(true).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.ExpiresAt).HasColumnType("datetimeoffset(7)").HasComment("Hard delivery-envelope expiration; maximum one hour after creation, matching current protocol. UTC instant.").HasPrecision(7).IsRequired(true).ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.CreatedAt).HasColumnType("datetimeoffset(7)").HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).IsRequired(true).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.HasIndex(row => new { row.IdentityUserId, row.LifecycleVersion }, "IX_LifecycleMessage_OwnerVersion").IsUnique(false).HasFilter(null);
-        entity.HasIndex(row => new { row.ExpiresAt, row.Id }, "IX_LifecycleMessage_Retention").IsUnique(false).HasFilter(null);
-        entity.HasIndex(row => new { row.AccountId, row.IdentityUserId }, "IX_LifecycleMessage_FK_Account").IsUnique(false).HasFilter(null);
+        entity.Property(row => row.Id).HasComment("Application-generated stable row UUID; never reused.").ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.IdentityUserId).HasComment("Canonical external user whose lifecycle acknowledgment this is.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(30).IsUnicode(false).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.AccountId).HasComment("Product account if still present; null before onboarding or after purge.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.LifecycleVersion).HasComment("Identity transition version being acknowledged.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.OutboxMessageId).HasComment("Shared Data.Outbox row containing the acknowledgment capability and payload.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.ExpiresAt).HasComment("Hard delivery-envelope expiration; maximum one hour after creation, matching current protocol. UTC instant.").HasPrecision(7).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.CreatedAt).HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.HasIndex(row => new { row.IdentityUserId, row.LifecycleVersion }, "IX_LifecycleMessage_OwnerVersion");
+        entity.HasIndex(row => new { row.ExpiresAt, row.Id }, "IX_LifecycleMessage_Retention");
+        entity.HasIndex(row => new { row.AccountId, row.IdentityUserId }, "IX_LifecycleMessage_FK_Account");
         entity.HasOne<AccountEntity>().WithMany().HasForeignKey(row => new { row.AccountId, row.IdentityUserId }).HasPrincipalKey(row => new { row.Id, row.IdentityUserId }).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_LifecycleMessage_Account");
-        entity.HasOne<OutboxMessage>().WithMany().HasForeignKey(row => row.OutboxMessageId).HasPrincipalKey(row => row.Id).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_LifecycleMessage_OutboxMessages");
+        entity.HasOne<OutboxMessage>().WithMany().HasForeignKey(row => row.OutboxMessageId).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_LifecycleMessage_OutboxMessages");
     }
 }
