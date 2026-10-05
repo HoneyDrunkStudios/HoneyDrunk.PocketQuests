@@ -4,18 +4,13 @@ import { syncWarnings } from "../features/quests/notifications";
 import { signInRequired } from "./auth-request";
 import { type Credentials } from "./auth-session";
 import { identityRequest } from "./identity-client";
-import {
-  cacheRecoveryNotice,
-  clearAccount,
-  discardCacheRecovery,
-  loadAccount,
-} from "./offline-store";
+import { cacheRecoveryNotice } from "./offline-store";
 import { RequestError } from "./request-error";
 import type { SessionInternals } from "./session-runtime";
 import type { AccountStatus } from "./session-types";
-import { sessionStorage } from "./storage";
 type Dependencies = Pick<
   SessionInternals,
+  | "storage"
   | "auth"
   | "assertOwnerChange"
   | "privateOwner"
@@ -44,6 +39,7 @@ type Dependencies = Pick<
   | "idleWaiters"
 >;
 export function createAccountLifecycle({
+  storage,
   auth,
   assertOwnerChange,
   privateOwner,
@@ -77,9 +73,9 @@ export function createAccountLifecycle({
     const owner = privateOwner();
     await syncWarnings(null);
     if (auth.epoch !== epoch) throw signInRequired();
-    if (owner && owner !== status.userId) await clearAccount(owner);
-    await clearAccount(status.userId);
-    await sessionStorage.savePending(status.userId, null);
+    if (owner && owner !== status.userId) await storage.clearAccount(owner);
+    await storage.clearAccount(status.userId);
+    await storage.session.savePending(status.userId, null);
     if (auth.epoch !== epoch) throw signInRequired();
     await auth.install(null);
     await releaseCleanupOwner(epoch + 1);
@@ -139,7 +135,7 @@ export function createAccountLifecycle({
       if (user.state !== "Active") {
         await syncWarnings(null);
         if (auth.epoch !== epoch) throw signInRequired();
-        await clearAccount(user.userId);
+        await storage.clearAccount(user.userId);
         if (auth.epoch !== epoch) throw signInRequired();
         await auth.install(null);
         await releaseCleanupOwner(epoch + 1);
@@ -153,7 +149,7 @@ export function createAccountLifecycle({
           "This account is inactive; private cached data was cleared.",
         );
       }
-      const previous = await loadAccount(user.userId);
+      const previous = await storage.loadAccount(user.userId);
       const signingIn = createQuestClient(async (send) => send(token));
       const [state, catalog] = await Promise.all([
         signingIn(
@@ -171,7 +167,7 @@ export function createAccountLifecycle({
       if (oldOwner && oldOwner !== user.userId) {
         await syncWarnings(null);
         if (auth.epoch !== epoch) throw signInRequired();
-        await clearAccount(oldOwner);
+        await storage.clearAccount(oldOwner);
         setCompletionNotices([]);
         awaitingConfirmation.current = [];
       }
@@ -181,7 +177,7 @@ export function createAccountLifecycle({
       const next = { ...credentials, userId: user.userId };
       await auth.install(next);
       const installedEpoch = epoch + 1;
-      const legacy = await sessionStorage.loadPending(user.userId);
+      const legacy = await storage.session.loadPending(user.userId);
       if (auth.epoch !== installedEpoch) throw signInRequired();
       const queue = previous?.queue ?? (legacy ? [legacy.command] : []);
       await publish({
@@ -193,7 +189,7 @@ export function createAccountLifecycle({
         unverified: previous?.unverified ?? [],
         anchor: previous?.anchor ?? null,
       });
-      await sessionStorage.savePending(user.userId, null);
+      await storage.session.savePending(user.userId, null);
       await releaseCleanupOwner(installedEpoch);
       setNeedsSignIn(false);
       setOffline(false);
@@ -213,7 +209,7 @@ export function createAccountLifecycle({
     inFlight.current = true;
     setBusy(true);
     try {
-      await discardCacheRecovery(owner);
+      await storage.discardCacheRecovery(owner);
       if (localRef.current)
         await publish({
           ...localRef.current,
@@ -262,7 +258,7 @@ export function createAccountLifecycle({
     try {
       await auth.install(
         null,
-        owner ? () => sessionStorage.saveCleanupOwner(owner) : undefined,
+        owner ? () => storage.session.saveCleanupOwner(owner) : undefined,
       );
       await idle;
       inFlight.current = true;
@@ -282,8 +278,8 @@ export function createAccountLifecycle({
       }
       await syncWarnings(null);
       if (owner) {
-        await clearAccount(owner);
-        await sessionStorage.savePending(owner, null);
+        await storage.clearAccount(owner);
+        await storage.session.savePending(owner, null);
       }
       localRef.current = null;
       setSession(null);

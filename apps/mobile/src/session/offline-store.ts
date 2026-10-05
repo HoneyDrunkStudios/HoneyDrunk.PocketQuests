@@ -41,6 +41,8 @@ async function pointerKey(userId: string) {
 }
 export async function loadAccount(
   userId: string,
+  withRecovery: <T>(write: () => Promise<T>) => Promise<T> = async (write) =>
+    write(),
 ): Promise<LocalAccount | null> {
   if (Platform.OS === "web") return decodeAccount(memory.get(userId), userId);
   const name = await pointerKey(userId);
@@ -52,34 +54,39 @@ export async function loadAccount(
     );
   if (!pointer) return null;
   async function recover() {
-    // Retain the pointer/key and ciphertext, rather than destroying potentially
-    // recoverable pending work. Only explicit sign-out/discard erases them.
-    const quarantine = `${name}.recovery`;
-    const raw = await SecureStore.getItemAsync(quarantine);
-    let saved: string[] = [];
-    if (raw) {
-      try {
-        const parsed: unknown = JSON.parse(raw);
-        saved =
-          Array.isArray(parsed) &&
-          parsed.every((item) => typeof item === "string")
-            ? parsed
-            : [raw];
-      } catch {
-        // Preserve damaged recovery metadata as well as the current pointer.
-        saved = [raw];
+    return withRecovery(async () => {
+      // An obsolete read must not quarantine or delete a newer committed pointer.
+      // Runtime recovery writes share the same owner/write barrier as saves/logout.
+      if ((await SecureStore.getItemAsync(name)) !== pointer) return null;
+      // Retain the pointer/key and ciphertext, rather than destroying potentially
+      // recoverable pending work. Only explicit sign-out/discard erases them.
+      const quarantine = `${name}.recovery`;
+      const raw = await SecureStore.getItemAsync(quarantine);
+      let saved: string[] = [];
+      if (raw) {
+        try {
+          const parsed: unknown = JSON.parse(raw);
+          saved =
+            Array.isArray(parsed) &&
+            parsed.every((item) => typeof item === "string")
+              ? parsed
+              : [raw];
+        } catch {
+          // Preserve damaged recovery metadata as well as the current pointer.
+          saved = [raw];
+        }
       }
-    }
-    if (!saved.includes(pointer!)) saved.push(pointer!);
-    await SecureStore.setItemAsync(quarantine, JSON.stringify(saved), {
-      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      if (!saved.includes(pointer!)) saved.push(pointer!);
+      await SecureStore.setItemAsync(quarantine, JSON.stringify(saved), {
+        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
+      await SecureStore.deleteItemAsync(name);
+      recoveryNotices.set(
+        userId,
+        "The saved copy could not be opened. Reconnect to reload online history. Unreadable local actions were retained privately for recovery and have not been synchronized.",
+      );
+      return null;
     });
-    await SecureStore.deleteItemAsync(name);
-    recoveryNotices.set(
-      userId,
-      "The saved copy could not be opened. Reconnect to reload online history. Unreadable local actions were retained privately for recovery and have not been synchronized.",
-    );
-    return null;
   }
   let value: Pointer;
   try {

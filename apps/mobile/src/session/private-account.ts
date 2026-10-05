@@ -1,15 +1,10 @@
 import { signInRequired } from "./auth-request";
-import {
-  cacheRecoveryNotice,
-  loadAccount,
-  saveAccount,
-  type LocalAccount,
-} from "./offline-store";
+import { cacheRecoveryNotice, type LocalAccount } from "./offline-store";
 import { RequestError } from "./request-error";
 import type { SessionInternals } from "./session-runtime";
-import { sessionStorage } from "./storage";
 type Dependencies = Pick<
   SessionInternals,
+  | "storage"
   | "cleanupOwnerRef"
   | "setCleanupOwner"
   | "auth"
@@ -19,6 +14,7 @@ type Dependencies = Pick<
   | "setLocal"
 >;
 export function createPrivateAccount({
+  storage,
   cleanupOwnerRef,
   setCleanupOwner,
   auth,
@@ -38,7 +34,7 @@ export function createPrivateAccount({
     null;
   const releaseCleanupOwner = async (epoch: number) => {
     if (auth.epoch !== epoch) throw signInRequired();
-    await sessionStorage.saveCleanupOwner(null);
+    await storage.session.saveCleanupOwner(null);
     if (auth.epoch !== epoch) throw signInRequired();
     rememberCleanupOwner(null);
   };
@@ -72,12 +68,12 @@ export function createPrivateAccount({
         "Private storage must be reopened. Restart the app before changing recorded actions.",
       );
     try {
-      await saveAccount(value);
+      await storage.saveAccount(value);
     } catch (error) {
       // A write may have committed before its response failed. Reload the actual
       // generation before allocating another ordinal or advancing the queue.
       try {
-        const committed = await loadAccount(value.userId);
+        const committed = await storage.loadAccount(value.userId);
         if (!committed || committed.requiresReload)
           throw new Error("Committed cache unavailable");
         localRef.current = committed;

@@ -119,6 +119,12 @@ export function createAuthSession(options: {
     get epoch() {
       return generation;
     },
+    // Effect cleanup cancels this coordinator without signing out or deleting
+    // durable credentials/pending work. A replacement provider restores them.
+    cancel() {
+      invalidate();
+      current = null;
+    },
     restore(value: Session) {
       invalidate();
       current = value;

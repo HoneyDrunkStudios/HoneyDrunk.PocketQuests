@@ -155,3 +155,75 @@ test("logout waits behind a pending credential write and finishes with cleared s
   await clearing;
   assert.equal(saved, null);
 });
+
+test("provider cleanup preserves an unresolved rotation marker and a replacement cannot replay its consumed refresh token", async () => {
+  const gate = deferred(),
+    entered = deferred();
+  const host = fixture(async () => {
+    entered.resolve();
+    await gate.promise;
+    return { token: "late", refreshToken: "rotated" };
+  });
+  const call = host.auth.run(async (token) => token);
+  const rejected = assert.rejects(call, /Sign in again/);
+  await entered.promise;
+  host.auth.cancel();
+  assert.deepEqual(host.saved.renewal, {});
+  gate.resolve();
+  await rejected;
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(host.saved.renewal, {});
+  const replacement = fixture();
+  replacement.auth.restore(host.saved);
+  await assert.rejects(
+    replacement.auth.run(async (token) => token),
+    /Sign in again/,
+  );
+  assert.equal(replacement.refreshes, 0);
+});
+
+test("provider cleanup retains an already-started rotated candidate write for same-owner verification on replacement", async () => {
+  const gate = deferred(),
+    entered = deferred();
+  let saved = old,
+    renewals = 0;
+  const options = {
+    now: () => 5000,
+    changed() {},
+    verify: async () => {},
+    renew: async () => {
+      renewals++;
+      return { token: "new", refreshToken: "rotated", expiresAt: 100000 };
+    },
+    save: async (value) => {
+      if (value?.renewal?.credentials) {
+        entered.resolve();
+        await gate.promise;
+      }
+      saved = value;
+    },
+  };
+  const auth = createAuthSession(options);
+  auth.restore(old);
+  const call = auth.run(async (token) => token);
+  const rejected = assert.rejects(call, /Sign in again/);
+  await entered.promise;
+  auth.cancel();
+  gate.resolve();
+  await rejected;
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(saved.renewal.credentials.refreshToken, "rotated");
+  const verified = [];
+  const replacement = createAuthSession({
+    ...options,
+    verify: async (value) => {
+      verified.push(value);
+    },
+  });
+  replacement.restore(saved);
+  assert.equal(await replacement.run(async (token) => token), "new");
+  assert.equal(renewals, 1);
+  assert.equal(verified[0].userId, "owner");
+  assert.equal(saved.refreshToken, "rotated");
+  assert.equal(saved.renewal, undefined);
+});

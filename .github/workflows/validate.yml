@@ -8,7 +8,9 @@ permissions:
 jobs:
   backend:
     runs-on: windows-latest
-    timeout-minutes: 25
+    # Both disposable-SQL passes take about 20 minutes before restore/build.
+    # Allow hosted-runner variance without skipping either verification lane.
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v5
         with:

@@ -75,8 +75,10 @@ Module._load = function (name, ...rest) {
       sessionStorage: {
         load: async () => active.savedSession,
         save: async (value) => {
-          active.savedSession = value;
-          active.storageEvents?.push({ kind: "session", value });
+          const host = active;
+          await host.beforeSessionSave?.(value);
+          host.savedSession = value;
+          host.storageEvents?.push({ kind: "session", value });
         },
         loadCleanupOwner: async () => {
           if (active.failCleanupRead)
@@ -124,12 +126,13 @@ Module._load = function (name, ...rest) {
         );
       },
       saveAccount: async (value) => {
-        if (active.failSave) throw new Error("Private storage write failed");
-        if (active.beforeSave) await active.beforeSave();
-        active.disk = JSON.parse(JSON.stringify(value));
-        if (active.accounts)
-          active.accounts[value.userId] = structuredClone(active.disk);
-        if (active.failSaveAfterCommit)
+        const host = active;
+        if (host.failSave) throw new Error("Private storage write failed");
+        if (host.beforeSave) await host.beforeSave(value);
+        host.disk = JSON.parse(JSON.stringify(value));
+        if (host.accounts)
+          host.accounts[value.userId] = structuredClone(host.disk);
+        if (host.failSaveAfterCommit)
           throw new Error("Private storage response lost after commit");
       },
       clearAccount: async (owner) => {

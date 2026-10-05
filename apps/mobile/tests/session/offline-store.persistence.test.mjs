@@ -17,6 +17,7 @@ let sequence = 0;
 let writeFailure = null;
 let platform = "android";
 let readFailure = false;
+let beforeDecrypt;
 class File {
   constructor(_root, name) {
     this.name = name;
@@ -81,7 +82,10 @@ Module._load = function (name, ...rest) {
       },
       aesEncryptAsync: async (bytes) => ({ combined: async () => bytes }),
       AESSealedData: { fromCombined: (bytes) => bytes },
-      aesDecryptAsync: async (sealed) => sealed,
+      aesDecryptAsync: async (sealed) => {
+        await beforeDecrypt?.();
+        return sealed;
+      },
     };
   return originalLoad.call(this, name, ...rest);
 };
@@ -356,4 +360,43 @@ test("cache envelopes are versioned, legacy flat data remains readable and futur
   assert.ok(
     JSON.parse(pointers.get("pq.cache.owner.recovery")).includes(pointer),
   );
+});
+
+test("a stale corrupt-cache read cannot quarantine a replacement pointer or recreate recovery keys after logout", async () => {
+  for (const replace of [true, false]) {
+    await clearAccount("owner");
+    await saveAccount(account(50));
+    const pointer = pointers.get("pq.cache.owner");
+    files.set(JSON.parse(pointer).filename, new TextEncoder().encode("{bad"));
+    let release, entered;
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    const started = new Promise((resolve) => {
+      entered = resolve;
+    });
+    beforeDecrypt = async () => {
+      entered();
+      await gate;
+    };
+    const loading = loadAccount("owner");
+    try {
+      await started;
+      if (replace) await saveAccount(account(51));
+      else await clearAccount("owner");
+      beforeDecrypt = undefined;
+      release();
+      assert.equal(await loading, null);
+      assert.equal(pointers.has("pq.cache.owner.recovery"), false);
+      assert.equal(cacheRecoveryNotice("owner"), null);
+      assert.deepEqual(
+        await loadAccount("owner"),
+        replace ? account(51) : null,
+      );
+    } finally {
+      beforeDecrypt = undefined;
+      release();
+      await loading;
+    }
+  }
 });

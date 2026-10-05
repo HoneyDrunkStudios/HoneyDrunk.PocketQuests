@@ -10,13 +10,13 @@ import {
 } from "../features/quests/commands/quest-actions";
 import type { Anchor, Command, State } from "../shared/contracts";
 import { recordedProof } from "./clock-proof";
-import { deviceId } from "./offline-store";
 import { RequestError, isDefinitiveRejection } from "./request-error";
 import type { SessionInternals } from "./session-runtime";
 import { isolateRejection, rejectionBlockers } from "./sync-recovery";
 import { unverifiedBlockers } from "./unverified-actions";
 type Dependencies = Pick<
   SessionInternals,
+  | "storage"
   | "clockSource"
   | "client"
   | "storageReady"
@@ -36,6 +36,7 @@ type Dependencies = Pick<
   | "getOffline"
 >;
 export function createQuestSync({
+  storage,
   clockSource,
   client,
   storageReady,
@@ -55,7 +56,7 @@ export function createQuestSync({
   getOffline,
 }: Dependencies) {
   const anchorFor = async (): Promise<Anchor> => {
-    const device = await deviceId();
+    const device = await storage.deviceId();
     const reading = clockSource.read();
     const anchor = await client(
       "POST /api/sync-anchor",
@@ -218,7 +219,7 @@ export function createQuestSync({
     setError(null);
     try {
       const anchor = current.anchor;
-      const device = await deviceId();
+      const device = await storage.deviceId();
       const reading = clockSource.read();
       const timing = recordedProof(anchor, reading, device);
       const item: Omit<Command, "recordedTime"> = {

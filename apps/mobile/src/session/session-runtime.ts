@@ -16,7 +16,8 @@ import { RequestError } from "./request-error";
 import { restoreSession } from "./restore-session";
 import { createSessionRequests } from "./session-requests";
 import type { AccountStatus, SessionContext } from "./session-types";
-import { sessionStorage, type Session } from "./storage";
+import { type Session } from "./storage";
+import { createSessionStorageScope } from "./session-storage-scope";
 type Notice = CompletionFeedback & { until: number };
 type Cell<T> = { current: T };
 type Setter<T> = (value: T | ((previous: T) => T)) => void;
@@ -32,6 +33,7 @@ export type SessionSnapshot = {
   completionNotices: Notice[];
 };
 export type SessionInternals = {
+  storage: ReturnType<typeof createSessionStorageScope>;
   auth: ReturnType<typeof createAuthSession>;
   client: ReturnType<typeof createQuestClient>;
   clockSource: ClockSource;
@@ -83,6 +85,7 @@ export type SessionInternals = {
 // A session-local external store for React's useSyncExternalStore. Workflows are
 // ordinary functions; durable cache publication is the only queue commit path.
 export function createSessionRuntime(clockSource: ClockSource) {
+  const storage = createSessionStorageScope();
   let snapshot: SessionSnapshot = {
     inactiveAccount: null,
     session: null,
@@ -117,6 +120,7 @@ export function createSessionRuntime(clockSource: ClockSource) {
     signingOut = { current: false },
     idleWaiters: Cell<(() => void)[]> = { current: [] };
   const base = {
+    storage,
     clockSource,
     setSession,
     setBusy,
@@ -155,7 +159,7 @@ export function createSessionRuntime(clockSource: ClockSource) {
     },
   };
   const auth = createAuthSession({
-    save: sessionStorage.save,
+    save: storage.session.save,
     changed: setSession,
     renew: renewProviderSession,
     verify: verifyProviderSession,
@@ -217,8 +221,13 @@ export function createSessionRuntime(clockSource: ClockSource) {
     },
     restore: (isCurrent: () => boolean) =>
       restoreSession(dependencies, isCurrent),
-    setMounted: (value: boolean) => {
-      base.mounted.current = value;
+    mount: () => {
+      base.mounted.current = true;
+      setBusy(true);
+      return storage.activate(() => {
+        base.mounted.current = false;
+        auth.cancel();
+      });
     },
   };
 }

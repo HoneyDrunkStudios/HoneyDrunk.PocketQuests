@@ -1,10 +1,9 @@
 import { identityUrl, requestTimeoutMs } from "../config/client";
-import { loadAccount } from "./offline-store";
 import { RequestError } from "./request-error";
 import type { SessionInternals } from "./session-runtime";
-import { sessionStorage } from "./storage";
 export async function restoreSession(
   {
+    storage,
     auth,
     rememberCleanupOwner,
     localRef,
@@ -18,6 +17,7 @@ export async function restoreSession(
     setBusy,
   }: Pick<
     SessionInternals,
+    | "storage"
     | "auth"
     | "rememberCleanupOwner"
     | "localRef"
@@ -36,8 +36,8 @@ export async function restoreSession(
   let openingEpoch = auth.epoch;
   try {
     const epoch = auth.epoch;
-    const retained = await sessionStorage.loadCleanupOwner();
-    const saved = await sessionStorage.load();
+    const retained = await storage.session.loadCleanupOwner();
+    const saved = await storage.session.load();
     if (!isCurrent() || auth.epoch !== epoch) return;
     rememberCleanupOwner(retained);
     const owner = retained ?? saved?.userId;
@@ -45,7 +45,7 @@ export async function restoreSession(
     openingOwner = owner;
     if (saved && (!retained || saved.userId === retained)) auth.restore(saved);
     openingEpoch = auth.epoch;
-    const cached = await loadAccount(owner);
+    const cached = await storage.loadAccount(owner);
     if (!isCurrent() || auth.epoch !== openingEpoch) return;
     if (cached) {
       localRef.current = cached;

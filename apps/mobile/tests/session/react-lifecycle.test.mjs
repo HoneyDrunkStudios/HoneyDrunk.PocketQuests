@@ -286,3 +286,146 @@ test("notification reconciliation ignores a stale completion after logout", asyn
     await view.unmount();
   }
 });
+
+test(
+  "a disposed provider's boot response cannot restore credentials or cache after replacement logout",
+  { timeout: 10000 },
+  async () => {
+    const host = createHarness();
+    const gate = deferred(),
+      entered = deferred();
+    let profiles = 0;
+    host.respond = async (url) => {
+      if (url.endsWith("/api/profile") && ++profiles === 1) {
+        entered.resolve();
+        await gate.promise;
+      }
+      return null;
+    };
+    const first = await mount(host);
+    let replacement;
+    try {
+      await entered.promise;
+      await first.unmount();
+      replacement = await mount(host);
+      assert.equal(replacement.current.signedIn, true);
+      await act(async () => {
+        await replacement.current.signOut(true);
+      });
+      assert.equal(host.savedSession, null);
+      assert.equal(host.disk, null);
+      await act(async () => {
+        gate.resolve();
+        await tick();
+        await tick();
+      });
+      assert.equal(replacement.current.signedIn, false);
+      assert.equal(replacement.current.state, null);
+      assert.equal(host.savedSession, null);
+      assert.equal(host.disk, null);
+    } finally {
+      gate.resolve();
+      if (replacement) await replacement.unmount();
+      else await first.unmount();
+    }
+  },
+);
+
+test(
+  "replacement boot waits for an already-started cache commit and preserves pending intent before explicit logout",
+  { timeout: 10000 },
+  async () => {
+    const host = createHarness();
+    host.online = false;
+    const first = await mount(host);
+    const gate = deferred(),
+      entered = deferred();
+    host.beforeSave = async () => {
+      entered.resolve();
+      await gate.promise;
+    };
+    let operation, replacement;
+    try {
+      await act(async () => {
+        operation = first.current.command({
+          action: "complete",
+          occurrenceId: "quest",
+        });
+        await entered.promise;
+      });
+      await first.unmount();
+      replacement = await mount(host);
+      assert.equal(replacement.current.busy, true);
+      assert.equal(replacement.current.state, null);
+      await act(async () => {
+        gate.resolve();
+        await operation;
+        await tick();
+        await tick();
+      });
+      assert.equal(host.disk.unverified.length, 1);
+      assert.equal(host.disk.unverified[0].command.occurrenceId, "quest");
+      assert.equal(replacement.current.unverified.length, 1);
+      assert.equal(host.savedSession.token, "test-token");
+      await act(async () => {
+        await replacement.current.signOut(true);
+      });
+      assert.equal(host.disk, null);
+      assert.equal(host.savedSession, null);
+    } finally {
+      gate.resolve();
+      await operation;
+      if (replacement) await replacement.unmount();
+      else await first.unmount();
+    }
+  },
+);
+
+test(
+  "replacement boot retains an already-started secure credential commit and later logout remains final",
+  { timeout: 10000 },
+  async () => {
+    const host = createHarness();
+    const first = await mount(host);
+    const gate = deferred(),
+      entered = deferred();
+    host.beforeSessionSave = async (value) => {
+      if (value?.token === "replacement-token") {
+        entered.resolve();
+        await gate.promise;
+      }
+    };
+    let connecting, replacement;
+    try {
+      await act(async () => {
+        connecting = first.current
+          .connect("replacement-token")
+          .catch((error) => error);
+        await entered.promise;
+      });
+      await first.unmount();
+      host.online = false;
+      replacement = await mount(host);
+      assert.equal(replacement.current.busy, true);
+      await act(async () => {
+        gate.resolve();
+        await connecting;
+        await tick();
+        await tick();
+      });
+      assert.equal(host.savedSession.token, "replacement-token");
+      assert.equal(replacement.current.signedIn, true);
+      assert.ok(replacement.current.state);
+      await act(async () => {
+        await replacement.current.signOut(true);
+      });
+      assert.equal(host.savedSession, null);
+      assert.equal(host.disk, null);
+    } finally {
+      gate.resolve();
+      await connecting;
+      if (replacement) await replacement.unmount();
+      else await first.unmount();
+    }
+  },
+);

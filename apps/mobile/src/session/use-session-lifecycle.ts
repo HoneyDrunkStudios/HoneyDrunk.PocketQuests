@@ -6,11 +6,11 @@ export function useSessionLifecycle(
 ) {
   useEffect(() => {
     let current = true;
-    runtime.setMounted(true);
+    const release = runtime.mount();
     void runtime.restore(() => current);
     return () => {
       current = false;
-      runtime.setMounted(false);
+      release();
     };
   }, [runtime]);
   useEffect(() => {
