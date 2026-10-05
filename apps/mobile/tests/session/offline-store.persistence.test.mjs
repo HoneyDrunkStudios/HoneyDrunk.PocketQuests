@@ -314,6 +314,29 @@ test("malformed recovery metadata retains its ciphertext and journal privately i
   );
 });
 
+test("malformed pending quest terms cannot bypass display validation through optimistic projection", async () => {
+  const saved = account(46);
+  saved.queue.push({
+    operationId: "bad-definition",
+    action: "save-definition",
+    definition: structuredClone(wire.catalog.quests[0]),
+  });
+  await saveAccount(saved);
+  assert.deepEqual((await loadAccount("owner")).queue, saved.queue);
+  saved.queue.at(-1).definition.attributes = null;
+  await saveAccount(saved);
+  const pointer = pointers.get("pq.cache.owner"),
+    filename = JSON.parse(pointer).filename;
+  assert.equal(await loadAccount("owner"), null);
+  assert.deepEqual(
+    JSON.parse(new TextDecoder().decode(files.get(filename))).account.queue,
+    saved.queue,
+  );
+  assert.ok(
+    JSON.parse(pointers.get("pq.cache.owner.recovery")).includes(pointer),
+  );
+});
+
 test("cache envelopes are versioned, legacy flat data remains readable and future versions are retained privately", async () => {
   const saved = account(44);
   await saveAccount(saved);

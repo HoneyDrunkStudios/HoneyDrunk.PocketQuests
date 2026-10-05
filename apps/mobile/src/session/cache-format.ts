@@ -1,4 +1,9 @@
-import { isCatalog, isQuestState, isRecord } from "../api/decode";
+import {
+  isCatalog,
+  isQuestState,
+  isRecord,
+  isStoredCommand,
+} from "../api/decode";
 import type { LocalAccount } from "./offline-store";
 
 export const cacheVersion = 1;
@@ -59,15 +64,7 @@ export function decodeAccount(
       isRecord(entry) ? entry.command : null,
     ),
   ];
-  if (
-    commands.some(
-      (command) =>
-        !isRecord(command) ||
-        typeof command.operationId !== "string" ||
-        typeof command.action !== "string",
-    )
-  )
-    return null;
+  if (!commands.every(isStoredCommand)) return null;
   // Journal records are retained byte-for-byte. Their existing recovery flow
   // handles rejection/uncertain timing; decoding never promotes them to proof.
   const journal = value as unknown as LocalAccount;

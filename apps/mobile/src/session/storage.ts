@@ -1,7 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import type { Command } from "../shared/contracts";
-import { isRecord } from "../api/decode";
+import { isRecord, isStoredCommand } from "../api/decode";
 import type { Credentials } from "./auth-session";
 export type Session = Credentials & {
   userId: string;
@@ -84,9 +84,7 @@ export const sessionStorage = {
     if (
       !isRecord(value) ||
       value.userId !== userId ||
-      !isRecord(value.command) ||
-      typeof value.command.operationId !== "string" ||
-      typeof value.command.action !== "string"
+      !isStoredCommand(value.command)
     )
       throw new Error(
         "Saved pending work could not be read. It remains on this device.",

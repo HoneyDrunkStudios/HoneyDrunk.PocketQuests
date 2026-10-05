@@ -1,5 +1,6 @@
 import contract from "./runtime-schemas.json";
 import type { ApiOperations, CatalogResponse, QuestState } from "./generated";
+import type { Command } from "../shared/contracts";
 
 type Schema =
   | boolean
@@ -70,6 +71,32 @@ export const isQuestState = (value: unknown): value is QuestState =>
   matches(value, schemas.QuestState);
 export const isCatalog = (value: unknown): value is CatalogResponse =>
   matches(value, schemas.CatalogResponse);
+// Cached commands feed pendingProjection before server validation. The local
+// queue retains full preview terms and numeric clock evidence, unlike the wider
+// request DTO accepted from other clients. Do not project malformed terms.
+export function isStoredCommand(value: unknown): value is Command {
+  if (!isRecord(value) || !matches(value, schemas.QuestCommand)) return false;
+  if (value.definition != null && !matches(value.definition, schemas.Quest))
+    return false;
+  if (
+    value.acceptedQuest != null &&
+    !matches(value.acceptedQuest, schemas.Quest)
+  )
+    return false;
+  if (
+    value.expectedRevision != null &&
+    typeof value.expectedRevision !== "number"
+  )
+    return false;
+  if (
+    value.recordedTime != null &&
+    (!isRecord(value.recordedTime) ||
+      typeof value.recordedTime.ordinal !== "number" ||
+      typeof value.recordedTime.elapsedMilliseconds !== "number")
+  )
+    return false;
+  return true;
+}
 export function decodeResponse<K extends keyof ApiOperations>(
   operation: K,
   value: unknown,
