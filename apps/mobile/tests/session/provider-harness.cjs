@@ -7,6 +7,9 @@ const ts = require("typescript");
 const localRequire = createRequire(__filename);
 const originalLoad = Module._load;
 let active;
+const realReact = process.env.PQ_REAL_REACT === "1" ? require("react") : null;
+const realJsx = realReact ? require("react/jsx-runtime") : null;
+const wire = require("../../../../contracts/wire-fixtures.json");
 const hooks = {
   createContext: () => ({}),
   use: (context) => context,
@@ -23,6 +26,12 @@ const hooks = {
       },
     ];
   },
+  useMemo(factory) {
+    return factory();
+  },
+  useSyncExternalStore(_subscribe, getSnapshot) {
+    return getSnapshot();
+  },
   useRef(initial) {
     return hooks.useState({ current: initial })[0];
   },
@@ -34,9 +43,9 @@ const hooks = {
   },
 };
 Module._load = function (name, ...rest) {
-  if (name === "react") return { ...hooks, default: hooks };
+  if (name === "react") return realReact ?? { ...hooks, default: hooks };
   if (name === "react/jsx-runtime")
-    return { jsx: (type, props) => ({ type, props }) };
+    return realJsx ?? { jsx: (type, props) => ({ type, props }) };
   if (name === "react-native")
     return {
       Platform: {
@@ -44,7 +53,18 @@ Module._load = function (name, ...rest) {
           return active?.platform ?? "android";
         },
       },
-      AppState: { addEventListener: () => ({ remove() {} }) },
+      AppState: {
+        addEventListener: (_event, listener) => {
+          const host = active;
+          host.appListeners ??= new Set();
+          host.appListeners.add(listener);
+          return {
+            remove() {
+              host.appListeners.delete(listener);
+            },
+          };
+        },
+      },
     };
   if (name === "expo-crypto")
     return { randomUUID: () => `${active.boot}-${++active.sequence}` };
@@ -128,7 +148,14 @@ Module._load = function (name, ...rest) {
     };
   if (name.endsWith("/export-download")) return { saveExport: async () => {} };
   if (name.endsWith("/notifications"))
-    return { syncWarnings: async () => "off" };
+    return {
+      syncWarnings: async (state) => {
+        const host = active;
+        host.warningCalls ??= [];
+        host.warningCalls.push(state);
+        return host.syncWarnings ? host.syncWarnings(state) : "off";
+      },
+    };
   return originalLoad.call(this, name, ...rest);
 };
 for (const extension of [".ts", ".tsx"])
@@ -143,15 +170,23 @@ for (const extension of [".ts", ".tsx"])
       }).outputText,
       file,
     );
-const { SessionProvider } = localRequire("../../src/session/session.tsx");
+const { SessionProvider, useSession, useAccountSnapshot, useSessionActions } =
+  localRequire("../../src/session/session.tsx");
 const { RequestError } = localRequire("../../src/session/request-error.ts");
 const { createClockSource } = localRequire("../../src/session/clock-source.ts");
 
 function account(queue = []) {
   return {
     userId: "owner",
-    catalog: { quests: [], categories: [], attributes: [], skills: [] },
+    catalog: {
+      quests: [],
+      categories: [],
+      attributes: [],
+      skills: [],
+      rules: [],
+    },
     state: {
+      ...structuredClone(wire.state),
       definitions: [],
       occurrences: [],
       overallXp: 0,
@@ -234,6 +269,7 @@ function createHarness(
         id: `anchor-${host.sequence}`,
         ...body,
         serverUtc: body.deviceUtc,
+        recordedTimeFloor: null,
       };
     else if (url.endsWith("/api/commands")) {
       host.sent.push(structuredClone(body));
@@ -257,8 +293,16 @@ function createHarness(
     active = host;
     host.cursor = 0;
     host.effects = [];
-    return SessionProvider({ children: null, clockSource: host.clockSource })
-      .props.value;
+    let element = SessionProvider({
+      children: null,
+      clockSource: host.clockSource,
+    });
+    const value = {};
+    while (element?.props?.value) {
+      Object.assign(value, element.props.value);
+      element = element.props.children;
+    }
+    return value;
   };
   host.mount = async () => {
     host.render();
@@ -269,4 +313,16 @@ function createHarness(
   };
   return host;
 }
-module.exports = { account, createHarness, RequestError, createClockSource };
+module.exports = {
+  account,
+  createHarness,
+  RequestError,
+  createClockSource,
+  SessionProvider,
+  useSession,
+  useAccountSnapshot,
+  useSessionActions,
+  activate: (host) => {
+    active = host;
+  },
+};

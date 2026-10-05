@@ -1,6 +1,7 @@
 import type { ApiOperations } from "./generated";
 import { apiUrl, requestTimeoutMs } from "../config/client";
 import { RequestError } from "../session/request-error";
+import { decodeResponse } from "./decode";
 
 export function createQuestClient(
   authenticate: <T>(request: (token: string) => Promise<T>) => Promise<T>,
@@ -37,7 +38,8 @@ export function createQuestClient(
               : `The request could not be completed (${response.status}). Try again when connected.`,
         );
       }
-      return response.json() as Promise<ApiOperations[K]["response"]>;
+      const value: unknown = await response.json();
+      return decodeResponse(operation, value);
     });
   };
 }

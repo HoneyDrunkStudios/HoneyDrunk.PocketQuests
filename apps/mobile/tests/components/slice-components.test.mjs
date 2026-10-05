@@ -18,20 +18,25 @@ let busy = false;
 Module._load = function (name, ...rest) {
   if (name === "react-native") return nativeWeb;
   if (name === "expo-crypto") return { randomUUID: () => "fixture-id" };
-  if (name.endsWith("/session"))
+  if (name.endsWith("/session")) {
+    const read = () => ({
+      state,
+      catalog: null,
+      busy,
+      recoveryRequired,
+      pending,
+      signedIn,
+      rejected,
+      unverified,
+      queuedCount: 0,
+    });
     return {
-      useSession: () => ({
-        state,
-        catalog: null,
-        busy,
-        recoveryRequired,
-        pending,
-        signedIn,
-        rejected,
-        unverified,
-        queuedCount: 0,
-      }),
+      useSession: read,
+      useAccountSnapshot: read,
+      useSessionStatus: read,
+      useSessionActions: read,
     };
+  }
   if (name === "expo-router")
     return {
       Redirect: ({ href }) =>
@@ -75,7 +80,8 @@ const {
 } = require("../../src/features/progression/completion-celebration.tsx");
 const { FocusTimer } = require("../../src/features/quests/focus-timer.tsx");
 const QuestDetails = require("../../src/app/quest/[id].tsx").default;
-const { Page } = require("../../src/shared/ui.tsx");
+const { Page } = require("../../src/session/session-page.tsx");
+const { QuestHistory } = require("../../src/features/quests/quest-history.tsx");
 const { AppErrorBoundary } = require("../../src/shared/error-boundary.tsx");
 const render = (component, props = {}) =>
   renderToStaticMarkup(
@@ -85,6 +91,23 @@ const render = (component, props = {}) =>
       React.createElement(component, props),
     ),
   );
+
+test("large history initially mounts a bounded SectionList window with accessible quest links", () => {
+  const wire = require("../../../../contracts/wire-fixtures.json");
+  const data = Array.from({ length: 1000 }, (_, index) => {
+    const item = structuredClone(wire.state.occurrences[0]);
+    item.occurrence.id = `history-${index}`;
+    item.occurrence.quest.title = `History item ${index}`;
+    return item;
+  });
+  const html = render(QuestHistory, {
+    sections: [{ key: "history", title: "Unscheduled history", data }],
+  });
+  assert.match(html, /Unscheduled history/);
+  assert.match(html, /History item 0/);
+  assert.doesNotMatch(html, /History item 999/);
+  assert.ok((html.match(/Open quest/g) ?? []).length <= 20);
+});
 
 test("quarantine-only recovery displays labeled discard controls even with zero readable actions", () => {
   recoveryRequired = true;

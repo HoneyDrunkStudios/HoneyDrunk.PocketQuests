@@ -1,7 +1,8 @@
+import { Page } from "../../session/session-page";
 import { questActions } from "../../features/quests/commands/quest-actions";
 import { Text, View } from "react-native";
 import { useSession } from "../../session/session";
-import { Page, Button, Label, Card, colors, styles } from "../../shared/ui";
+import { Button, Label, Card, colors, styles } from "../../shared/ui";
 import { SettingsEditor } from "../../features/profile/settings-editor";
 import { AccountSettings } from "../../features/profile/account-settings";
 import { ProfileEditor } from "../../features/profile/profile-editor";

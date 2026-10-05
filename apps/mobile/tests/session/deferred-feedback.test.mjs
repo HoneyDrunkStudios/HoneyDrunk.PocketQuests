@@ -1,15 +1,26 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import harness from "./provider-harness.cjs";
+import { createRequire } from "node:module";
+const wire = createRequire(import.meta.url)(
+  "../../../../contracts/wire-fixtures.json",
+);
 const { account, createHarness } = harness;
 
 async function acknowledgedCompletionWithFailedAnchorRefresh() {
   const cached = account();
   cached.state.occurrences = [
     {
+      ...structuredClone(wire.state.occurrences[0]),
       occurrence: {
+        ...structuredClone(wire.state.occurrences[0].occurrence),
         id: "o",
-        quest: { id: "q", title: "Practice", baseXp: 10 },
+        quest: {
+          ...wire.catalog.quests[0],
+          id: "q",
+          title: "Practice",
+          baseXp: 10,
+        },
       },
       status: "Active",
       completion: null,
@@ -33,13 +44,19 @@ async function acknowledgedCompletionWithFailedAnchorRefresh() {
         {
           ...host.state.occurrences[0],
           status: "Completed",
-          completion: { id: c.operationId },
+          completion: {
+            id: c.operationId,
+            occurrenceId: "o",
+            recordedAt: "2026-10-04T12:00:00Z",
+            snapshot: null,
+          },
           canUndo: true,
         },
       ],
       ledger: [
         {
           eventId: c.operationId,
+          at: "2026-10-04T12:00:00Z",
           occurrenceId: "o",
           track: "Overall",
           trackId: "overall",
@@ -109,13 +126,11 @@ test("an Undo persisted before a lost storage response still suppresses deferred
     await acknowledgedCompletionWithFailedAnchorRefresh();
   host.wallMs += 121000;
   host.failSaveAfterCommit = true;
-  await host
-    .render()
-    .command({
-      action: "undo",
-      occurrenceId: "o",
-      completionId: host.sent[0].operationId,
-    });
+  await host.render().command({
+    action: "undo",
+    occurrenceId: "o",
+    completionId: host.sent[0].operationId,
+  });
   assert.equal(host.disk.unverified.length, 1);
   host.failSaveAfterCommit = false;
   reconnect();
@@ -130,13 +145,11 @@ test("an Undo that was never persisted does not erase confirmed deferred feedbac
     await acknowledgedCompletionWithFailedAnchorRefresh();
   host.wallMs += 121000;
   host.failSave = true;
-  await host
-    .render()
-    .command({
-      action: "undo",
-      occurrenceId: "o",
-      completionId: host.sent[0].operationId,
-    });
+  await host.render().command({
+    action: "undo",
+    occurrenceId: "o",
+    completionId: host.sent[0].operationId,
+  });
   assert.equal(host.disk.unverified.length, 0);
   host.failSave = false;
   reconnect();

@@ -75,7 +75,23 @@ function generate(document) {
   generated += "};\n";
   return generated;
 }
-module.exports = { type, generate };
+function generateRuntime(document) {
+  const responses = {};
+  for (const [route, methods] of Object.entries(document.paths))
+    for (const [method, operation] of Object.entries(methods)) {
+      const schema = content(operation.responses?.["200"]);
+      if (schema) responses[`${method.toUpperCase()} ${route}`] = schema;
+    }
+  // Preserve property names such as Quest.description as well as metadata.
+  return (
+    JSON.stringify(
+      { schemas: document.components.schemas, responses },
+      null,
+      2,
+    ) + "\n"
+  );
+}
+module.exports = { type, generate, generateRuntime };
 if (require.main === module) {
   const document = JSON.parse(
     fs.readFileSync(
@@ -83,19 +99,23 @@ if (require.main === module) {
       "utf8",
     ),
   );
-  const generated = generate(document);
-  const target = path.join(root, "apps/mobile/src/api/generated.ts");
-  if (process.argv.includes("--check")) {
-    if (
-      !fs.existsSync(target) ||
-      fs.readFileSync(target, "utf8").replace(/\r\n/g, "\n") !== generated
-    )
-      throw new Error(
-        "Generated API types drifted. Run scripts/Test-ApiContract.ps1 -Update to regenerate from actual endpoints.",
-      );
-    console.log("Generated API types match the committed OpenAPI contract.");
-  } else {
-    fs.mkdirSync(path.dirname(target), { recursive: true });
-    fs.writeFileSync(target, generated);
+  for (const [name, generated] of [
+    ["generated.ts", generate(document)],
+    ["runtime-schemas.json", generateRuntime(document)],
+  ]) {
+    const target = path.join(root, "apps/mobile/src/api", name);
+    if (process.argv.includes("--check")) {
+      if (
+        !fs.existsSync(target) ||
+        fs.readFileSync(target, "utf8").replace(/\r\n/g, "\n") !== generated
+      )
+        throw new Error(
+          "Generated API types drifted. Run scripts/Test-ApiContract.ps1 -Update to regenerate from actual endpoints.",
+        );
+      console.log("Generated API types match the committed OpenAPI contract.");
+    } else {
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, generated);
+    }
   }
 }

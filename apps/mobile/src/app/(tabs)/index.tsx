@@ -1,7 +1,8 @@
+import { Page } from "../../session/session-page";
 import { Text, View } from "react-native";
 import { Redirect } from "expo-router";
 import { useSession } from "../../session/session";
-import { Page, Label, Card, colors, styles } from "../../shared/ui";
+import { Label, Card, colors, styles } from "../../shared/ui";
 import type { Balance, State } from "../../shared/contracts";
 
 function ProgressRow({ item }: { item: Balance }) {

@@ -214,6 +214,7 @@ test("generated client drift fails when OpenAPI changes without regeneration", (
     for (const file of [
       "apps/mobile/scripts/generate-api.cjs",
       "apps/mobile/src/api/generated.ts",
+      "apps/mobile/src/api/runtime-schemas.json",
       "contracts/pocketquests-v1.openapi.json",
     ])
       fs.copyFileSync(path.join(root, file), path.join(temp, file));

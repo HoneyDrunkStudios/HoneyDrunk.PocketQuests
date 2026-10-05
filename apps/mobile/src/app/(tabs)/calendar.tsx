@@ -1,9 +1,10 @@
+import { QuestHistory } from "../../features/quests/quest-history";
 import { useState } from "react";
 import { Text, TextInput, View } from "react-native";
-import { useSession } from "../../session/session";
-import { Page, Button, Label, QuestCard, styles } from "../../shared/ui";
+import { useAccountSnapshot } from "../../session/session";
+import { Button, Label, styles } from "../../shared/ui";
 export default function Calendar() {
-  const { state } = useSession();
+  const { state } = useAccountSnapshot();
   const [date, setDate] = useState("");
   const [week, setWeek] = useState(false);
   const selected = date || state?.today || "";
@@ -21,7 +22,7 @@ export default function Calendar() {
         (a.occurrence.dueDate ?? "").localeCompare(b.occurrence.dueDate ?? ""),
       ) ?? [];
   return (
-    <Page>
+    <QuestHistory sections={[{key:"dated",data:items},{key:"unscheduled",title:"Unscheduled history",data:state?.occurrences.filter(o=>!o.occurrence.dueDate)??[]}]}>
       <Text selectable style={styles.title}>
         Make space for what matters
       </Text>
@@ -43,19 +44,7 @@ export default function Calendar() {
       <Label>
         {selected} · {state?.zone}
       </Label>
-      {items.length ? (
-        items.map((o) => <QuestCard key={o.occurrence.id} item={o} />)
-      ) : (
-        <Label>No quests on these dates. Choose a quest from the board.</Label>
-      )}
-      <Text selectable style={styles.subtitle}>
-        Unscheduled history
-      </Text>
-      {state?.occurrences
-        .filter((o) => !o.occurrence.dueDate)
-        .map((o) => (
-          <QuestCard key={o.occurrence.id} item={o} />
-        ))}
-    </Page>
+      {!items.length && <Label>No quests on these dates. Choose a quest from the board.</Label>}
+    </QuestHistory>
   );
 }

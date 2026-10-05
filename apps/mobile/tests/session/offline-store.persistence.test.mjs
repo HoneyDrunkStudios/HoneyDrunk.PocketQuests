@@ -5,6 +5,12 @@ import Module, { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 const require = createRequire(import.meta.url);
 const ts = require("typescript");
+const wire = JSON.parse(
+  fs.readFileSync(
+    new URL("../../../../contracts/wire-fixtures.json", import.meta.url),
+    "utf8",
+  ),
+);
 const pointers = new Map();
 const files = new Map();
 let sequence = 0;
@@ -79,6 +85,17 @@ Module._load = function (name, ...rest) {
     };
   return originalLoad.call(this, name, ...rest);
 };
+require.extensions[".ts"] = (module, filename) =>
+  module._compile(
+    ts.transpileModule(fs.readFileSync(filename, "utf8"), {
+      compilerOptions: {
+        module: ts.ModuleKind.CommonJS,
+        target: ts.ScriptTarget.ES2022,
+        esModuleInterop: true,
+      },
+    }).outputText,
+    filename,
+  );
 const source = fileURLToPath(
   new URL("../../src/session/offline-store.ts", import.meta.url),
 );
@@ -103,11 +120,18 @@ const {
 } = compiled.exports;
 const account = (ordinal) => ({
   userId: "owner",
-  state: { occurrences: [], definitions: [], profile: {}, schedule: {} },
-  catalog: { quests: [] },
+  requiresReload: false,
+  state: structuredClone(wire.state),
+  catalog: structuredClone(wire.catalog),
   queue: [{ operationId: `op-${ordinal}`, action: "complete" }],
   unverified: [
-    { command: { operationId: `pending-${ordinal}`, action: "undo" } },
+    {
+      command: { operationId: `pending-${ordinal}`, action: "undo" },
+      reason: "Timing unavailable",
+      observedUtc: "2026-10-05T12:00:00Z",
+      clock: null,
+      blockedBy: [],
+    },
   ],
   anchor: { ordinal },
 });
@@ -237,4 +261,76 @@ test("damaged recovery metadata is retained alongside a newly quarantined pointe
     "{damaged-recovery-metadata",
     pointer,
   ]);
+});
+
+test("incomplete cached display is withheld without losing a readable pending journal", async () => {
+  const saved = {
+    ...account(42),
+    state: structuredClone(wire.state),
+    catalog: structuredClone(wire.catalog),
+  };
+  delete saved.state.categories;
+  await saveAccount(saved);
+  const loaded = await loadAccount(saved.userId);
+  assert.equal(loaded.requiresReload, true);
+  assert.deepEqual(loaded.queue, saved.queue);
+  assert.deepEqual(loaded.unverified, saved.unverified);
+});
+
+test("nested cache shape failures withhold display and preserve every readable action", async () => {
+  for (const corrupt of [
+    (saved) => delete saved.state.profile.interests,
+    (saved) => delete saved.state.schedule.series,
+    (saved) => {
+      saved.state.categories[0].xp = "invalid";
+    },
+    (saved) => delete saved.catalog.quests[0].attributes,
+  ]) {
+    const saved = account(43);
+    corrupt(saved);
+    await saveAccount(saved);
+    const loaded = await loadAccount("owner");
+    assert.equal(loaded.requiresReload, true);
+    assert.equal(loaded.state, null);
+    assert.equal(loaded.catalog, null);
+    assert.deepEqual(loaded.queue, saved.queue);
+    assert.deepEqual(loaded.unverified, saved.unverified);
+  }
+});
+
+test("malformed recovery metadata retains its ciphertext and journal privately instead of crashing recovery UI", async () => {
+  const saved = account(45);
+  saved.unverified[0].blockedBy = { invalid: true };
+  await saveAccount(saved);
+  const pointer = pointers.get("pq.cache.owner"),
+    filename = JSON.parse(pointer).filename;
+  assert.equal(await loadAccount("owner"), null);
+  assert.deepEqual(
+    JSON.parse(new TextDecoder().decode(files.get(filename))).account.queue,
+    saved.queue,
+  );
+  assert.ok(
+    JSON.parse(pointers.get("pq.cache.owner.recovery")).includes(pointer),
+  );
+});
+
+test("cache envelopes are versioned, legacy flat data remains readable and future versions are retained privately", async () => {
+  const saved = account(44);
+  await saveAccount(saved);
+  const pointer = pointers.get("pq.cache.owner"),
+    filename = JSON.parse(pointer).filename;
+  const envelope = JSON.parse(new TextDecoder().decode(files.get(filename)));
+  assert.equal(envelope.version, 1);
+  assert.deepEqual(envelope.account, saved);
+  files.set(filename, new TextEncoder().encode(JSON.stringify(saved)));
+  assert.deepEqual(await loadAccount("owner"), saved);
+  files.set(
+    filename,
+    new TextEncoder().encode(JSON.stringify({ ...envelope, version: 999 })),
+  );
+  assert.equal(await loadAccount("owner"), null);
+  assert.ok(files.has(filename));
+  assert.ok(
+    JSON.parse(pointers.get("pq.cache.owner.recovery")).includes(pointer),
+  );
 });

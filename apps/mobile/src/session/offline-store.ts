@@ -1,21 +1,22 @@
-import { Platform } from "react-native";
-import * as SecureStore from "expo-secure-store";
 import * as Crypto from "expo-crypto";
+import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 import type { Anchor, Catalog, Command, State } from "../shared/contracts";
+import { decodeAccount, encodeAccount } from "./cache-format";
 import type { RejectedCommand } from "./sync-recovery";
 import type { UnverifiedAction } from "./unverified-actions";
 export type LocalAccount = {
   userId: string;
-  state: State;
-  catalog: Catalog;
   queue: Command[];
   // Optional when reading caches written before individual sync recovery existed.
   rejected?: RejectedCommand[];
   unverified?: UnverifiedAction[];
   anchor: Anchor | null;
   // A readable pending journal can survive a damaged display snapshot.
-  requiresReload?: boolean;
-};
+} & (
+  | { requiresReload?: false; state: State; catalog: Catalog }
+  | { requiresReload: true; state: null; catalog: null }
+);
 const memory = new Map<string, LocalAccount>();
 const recoveryNotices = new Map<string, string>();
 export const cacheRecoveryNotice = (userId: string) =>
@@ -41,7 +42,7 @@ async function pointerKey(userId: string) {
 export async function loadAccount(
   userId: string,
 ): Promise<LocalAccount | null> {
-  if (Platform.OS === "web") return memory.get(userId) ?? null;
+  if (Platform.OS === "web") return decodeAccount(memory.get(userId), userId);
   const name = await pointerKey(userId);
   const pointer = await SecureStore.getItemAsync(name);
   if (await SecureStore.getItemAsync(`${name}.recovery`))
@@ -103,40 +104,9 @@ export async function loadAccount(
     const bytes = await Crypto.aesDecryptAsync(sealed, key, {
       additionalData: new TextEncoder().encode(userId),
     });
-    const account = JSON.parse(new TextDecoder().decode(bytes)) as LocalAccount;
-    if (
-      !account ||
-      account.userId !== userId ||
-      !Array.isArray(account.queue) ||
-      (account.rejected !== undefined && !Array.isArray(account.rejected)) ||
-      (account.unverified !== undefined && !Array.isArray(account.unverified))
-    )
-      return recover();
-    const commands = [
-      ...account.queue,
-      ...(account.rejected ?? []).map((entry) => entry?.command),
-      ...(account.unverified ?? []).map((entry) => entry?.command),
-    ];
-    if (
-      commands.some(
-        (command) =>
-          !command ||
-          typeof command.operationId !== "string" ||
-          typeof command.action !== "string",
-      )
-    )
-      return recover();
-    if (
-      !account.state ||
-      !Array.isArray(account.state.occurrences) ||
-      !Array.isArray(account.state.definitions) ||
-      !account.state.profile ||
-      !account.state.schedule ||
-      !account.catalog ||
-      !Array.isArray(account.catalog.quests)
-    )
-      return { ...account, requiresReload: true };
-    return account;
+    const decoded: unknown = JSON.parse(new TextDecoder().decode(bytes));
+    const account = decodeAccount(decoded, userId);
+    return account ?? recover();
   } catch {
     return recover();
   }
@@ -156,7 +126,7 @@ export async function saveAccount(account: LocalAccount) {
   const file = new File(Paths.document, filename);
   const key = await Crypto.AESEncryptionKey.generate();
   const sealed = await Crypto.aesEncryptAsync(
-    new TextEncoder().encode(JSON.stringify(account)),
+    new TextEncoder().encode(JSON.stringify(encodeAccount(account))),
     key,
     { additionalData: new TextEncoder().encode(account.userId) },
   );

@@ -63,3 +63,42 @@ test("malformed persisted cleanup ownership is rejected instead of silently forg
   }
   await sessionStorage.saveCleanupOwner(null);
 });
+
+test("malformed stored credentials fail closed without deleting private pending work", async () => {
+  const pending = JSON.stringify({
+    userId: "owner",
+    command: { operationId: "retained", action: "complete" },
+  });
+  values.set("pocketquests.pending.owner", pending);
+  for (const session of [
+    { userId: "owner", token: 123 },
+    { userId: 42, token: "token" },
+    {
+      userId: "owner",
+      token: "token",
+      renewal: { credentials: { token: null } },
+    },
+  ]) {
+    const serialized = JSON.stringify(session);
+    values.set("pocketquests.session", serialized);
+    await assert.rejects(
+      sessionStorage.load(),
+      /Saved sign-in could not be read/,
+    );
+    assert.equal(values.get("pocketquests.session"), serialized);
+    assert.equal(values.get("pocketquests.pending.owner"), pending);
+  }
+  const valid = {
+    userId: "owner",
+    token: "old",
+    renewal: {
+      credentials: {
+        token: "replacement",
+        refreshToken: "rotated",
+        expiresAt: 12345,
+      },
+    },
+  };
+  await sessionStorage.save(valid);
+  assert.deepEqual(await sessionStorage.load(), valid);
+});

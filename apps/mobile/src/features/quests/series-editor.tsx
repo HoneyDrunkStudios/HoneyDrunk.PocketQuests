@@ -19,7 +19,13 @@ export function SeriesEditor({
 }) {
   const { state, command, busy, pending } = useSession();
   const [id] = useState(initial?.id ?? Crypto.randomUUID());
-  const [anchor, setAnchor] = useState(state?.today ?? "");
+  const [anchor, setAnchor] = useState(
+    initial
+      ? initial.anchor >= (state?.today ?? "")
+        ? initial.anchor
+        : ""
+      : (state?.today ?? ""),
+  );
   const [cadence, setCadence] = useState<Cadence>(initial?.cadence ?? "Days");
   const [interval, setInterval] = useState(String(initial?.interval ?? 1));
   const [time, setTime] = useState(initial?.plannedTime ?? "");
@@ -29,6 +35,12 @@ export function SeriesEditor({
     (quest.baseXp * (quest.penaltyPercent ?? 0) + 50) / 100,
   );
   const stale = !!saved && saved.version !== (initial?.version ?? 0);
+  const validAnchor =
+    /^\d{4}-\d{2}-\d{2}$/.test(anchor) &&
+    Number.isFinite(Date.parse(anchor)) &&
+    new Date(anchor).toISOString().slice(0, 10) === anchor &&
+    !!state?.today &&
+    anchor >= state.today;
   return (
     <View style={{ gap: 12 }}>
       <Text style={styles.subtitle}>Repeat: {quest.title}</Text>
@@ -38,6 +50,11 @@ export function SeriesEditor({
         schedule when you edit future deliveries.
       </Label>
       <Label>First delivery date</Label>
+      {!validAnchor && (
+        <Label>
+          Choose a delivery date today or later to save this schedule.
+        </Label>
+      )}
       <Input
         accessibilityLabel="First delivery YYYY-MM-DD"
         value={anchor}
@@ -97,10 +114,12 @@ export function SeriesEditor({
           busy ||
           pending ||
           stale ||
+          !validAnchor ||
           !/^\d{1,3}$/.test(interval) ||
           Number(interval) < 1
         }
         onPress={() =>
+          validAnchor &&
           void command({
             action: questActions.saveSeries,
             seriesId: id,
