@@ -5,7 +5,7 @@ namespace PocketQuests.Data.DataServices.Lifecycle;
 
 /// <summary>EF persistence and queries for ErasureMarker.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class ErasureMarkerDataService(QuestDbContext context) : BaseDataService<ErasureMarkerEntity>(context), IErasureMarkerDataService
+public sealed class ErasureMarkerDataService(AppDbContext context) : BaseDataService<ErasureMarkerEntity>(context), IErasureMarkerDataService
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<ErasureMarkerEntity>> GetByIdentityUserIdAsync(string identityUserId, CancellationToken cancellationToken = default) =>

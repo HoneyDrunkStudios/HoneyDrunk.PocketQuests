@@ -34,7 +34,7 @@ public sealed class RelationalReviewRegressionTests(SchemaFixture fixture) : ICl
         foreach (var quest in new[] { "PQ-CAT-Q01", "PQ-CAT-Q02" })
             await Store.Execute(owner, new(Guid.NewGuid(), QuestActions.SaveSeries, QuestId: quest, DueDate: "2026-01-01", SeriesId: Guid.NewGuid(), Cadence: Cadence.Days, Interval: 1, ExpectedRevision: 0), Start);
         await using var scope = fixture.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<QuestDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var account = await db.Account.SingleAsync(row => row.IdentityUserId == owner.Subject);
         var series = await db.QuestSeries.OrderBy(row => row.CreationOrdinal).Where(row => row.AccountId == account.Id).ToArrayAsync();
         var service = scope.ServiceProvider.GetRequiredService<IQuestSeriesService>();

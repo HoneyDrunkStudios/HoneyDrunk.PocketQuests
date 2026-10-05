@@ -5,7 +5,7 @@ namespace PocketQuests.Data.DataServices.Quests;
 
 /// <summary>EF persistence and queries for QuestSeriesRevision.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class QuestSeriesRevisionDataService(QuestDbContext context) : BaseDataService<QuestSeriesRevisionEntity>(context), IQuestSeriesRevisionDataService
+public sealed class QuestSeriesRevisionDataService(AppDbContext context) : BaseDataService<QuestSeriesRevisionEntity>(context), IQuestSeriesRevisionDataService
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestSeriesRevisionEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)

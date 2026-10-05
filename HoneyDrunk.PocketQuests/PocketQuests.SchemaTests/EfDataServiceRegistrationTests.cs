@@ -33,8 +33,8 @@ public sealed class EfDataServiceRegistrationTests
             Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService(contract));
         }
 
-        Assert.Same(first.ServiceProvider.GetRequiredService<QuestDbContext>(), first.ServiceProvider.GetRequiredService<BaseDbContext>());
-        Assert.NotSame(first.ServiceProvider.GetRequiredService<QuestDbContext>(), second.ServiceProvider.GetRequiredService<QuestDbContext>());
+        Assert.Same(first.ServiceProvider.GetRequiredService<AppDbContext>(), first.ServiceProvider.GetRequiredService<BaseDbContext>());
+        Assert.NotSame(first.ServiceProvider.GetRequiredService<AppDbContext>(), second.ServiceProvider.GetRequiredService<AppDbContext>());
     }
 
     /// <summary>Actual Domain registrations and Application aliases resolve only inside scopes.</summary>

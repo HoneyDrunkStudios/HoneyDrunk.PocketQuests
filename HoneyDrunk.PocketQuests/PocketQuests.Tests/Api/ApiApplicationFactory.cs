@@ -25,6 +25,7 @@ internal sealed class ApiApplicationFactory : WebApplicationFactory<PocketQuests
         builder.ConfigureServices(services =>
         {
             services.AddSingleton<IQuestStore>(Store);
+            services.AddSingleton<PocketQuests.Services.Quests.IQuestService>(Store);
             services.AddSingleton<ISyncAnchors>(Store);
             services.AddTransient(provider => new ApiTestAuthentication(
                 provider.GetRequiredService<IOptionsMonitor<AuthenticationSchemeOptions>>(),

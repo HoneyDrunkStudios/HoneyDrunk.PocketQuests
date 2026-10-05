@@ -31,7 +31,7 @@ public sealed class SharedInfrastructureTests(SchemaFixture fixture) : IClassFix
         builder.AddLifecycleRuntime();
         await using var services = builder.Services.BuildServiceProvider();
         await using var scope = services.CreateAsyncScope();
-        var context = scope.ServiceProvider.GetRequiredService<QuestDbContext>();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         Assert.Equal(new[] { "dbo.AuditRecords", "outbox.OutboxMessages" }, context.Model.GetEntityTypes()
             .Where(e => e.GetSchema() != "pocketquests")
             .Select(e => (e.GetSchema() ?? "dbo") + "." + e.GetTableName()).Order().ToArray());

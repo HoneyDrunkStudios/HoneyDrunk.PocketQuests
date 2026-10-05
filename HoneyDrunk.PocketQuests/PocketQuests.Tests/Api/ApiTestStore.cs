@@ -8,11 +8,14 @@ using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Models.Skills;
 using PocketQuests.Domain.Models.Synchronization;
 using PocketQuests.Domain.Quests.Aggregates;
+using PocketQuests.Services.Commands.Mapping;
+using PocketQuests.Services.Projections.Mapping;
+using PocketQuests.Services.Quests.Validators;
 using System.Collections.Immutable;
 
 namespace PocketQuests.Tests.Api;
 
-internal sealed class ApiTestStore : IQuestStore, ISyncAnchors
+internal sealed class ApiTestStore : IQuestStore, ISyncAnchors, PocketQuests.Services.Quests.IQuestService
 {
     internal static readonly DateTimeOffset At = new(2026, 10, 4, 12, 0, 0, TimeSpan.Zero);
 
@@ -43,6 +46,14 @@ internal sealed class ApiTestStore : IQuestStore, ISyncAnchors
 
     public Task<SyncAnchor> CreateAnchor(AccountIdentity identity, Guid deviceId, Guid bootId, DateTimeOffset deviceUtc, DateTimeOffset now, CancellationToken token) =>
         Failure is { } failure ? Task.FromException<SyncAnchor>(failure) : Task.FromResult(new SyncAnchor(Guid.Empty, deviceId, bootId, now, deviceUtc));
+
+    async Task<PocketQuests.Contracts.Responses.Projections.QuestState> PocketQuests.Services.Quests.IQuestService.Execute(PocketQuests.Contracts.Requests.Commands.QuestCommand request, CancellationToken token)
+    {
+        var errors = QuestValidator.ValidateInput(request);
+        if (errors.Count > 0)
+            throw new PocketQuests.Domain.Errors.QuestValidationException(string.Join(" ", errors));
+        return (await Execute(new("honeydrunk-identity", "usr_00000000000000000000000000"), request.ToModel(), At, token)).ToModel();
+    }
 
     internal QuestExport Snapshot() => new(1, At, At, Guid.Empty, State, [], [State.Occurrences[0].Completion!], []);
 

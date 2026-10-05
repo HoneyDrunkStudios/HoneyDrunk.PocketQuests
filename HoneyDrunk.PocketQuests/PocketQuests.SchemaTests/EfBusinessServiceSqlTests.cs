@@ -57,7 +57,7 @@ public sealed class EfBusinessServiceSqlTests(SchemaFixture fixture) : IClassFix
         var original = await workflow.Execute(owner, accepted, Start);
         await using (var scope = fixture.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<QuestDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             await using var transaction = await db.Database.BeginTransactionAsync();
             var account = await db.Account.SingleAsync(row => row.IdentityUserId == owner.Subject);
             if (mutateDigest)
@@ -90,7 +90,7 @@ public sealed class EfBusinessServiceSqlTests(SchemaFixture fixture) : IClassFix
         var owner = Identity();
         await using (var scope = fixture.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<QuestDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var service = scope.ServiceProvider.GetRequiredService<IErasureMarkerService>();
             var marker = await service.SaveAsync(new ErasureMarkerEntity { Id = owner.Subject, CreatedAt = Start.ToOffset(TimeSpan.FromHours(5.5)) });
             await db.SaveChangesAsync();

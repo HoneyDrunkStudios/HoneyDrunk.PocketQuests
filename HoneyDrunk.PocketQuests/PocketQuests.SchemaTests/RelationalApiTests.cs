@@ -29,6 +29,21 @@ public sealed partial class RelationalApiTests(SchemaFixture fixture) : IClassFi
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
 
+    /// <summary>Extracted completion validation preserves the established missing-occurrence response.</summary>
+    /// <returns>Completion after null, empty and unknown IDs all return 404.</returns>
+    [Fact]
+    public async Task MissingCompletionOccurrenceRetainsNotFoundResponse()
+    {
+        using var host = new Host(fixture.Connection);
+        using var client = host.Client();
+        await Setup(client);
+        foreach (var occurrence in new Guid?[] { null, Guid.Empty, Guid.NewGuid() })
+        {
+            using var response = await client.PostAsJsonAsync("/api/commands", new QuestCommand(Guid.NewGuid(), QuestActions.Complete, occurrence), Json);
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
+    }
+
     /// <summary>Default startup composes the canonical store, anchors and lifecycle together.</summary>
     [Fact]
     public void DefaultHostSelectsCanonicalStoreAnchorsAndLifecycleTogether()

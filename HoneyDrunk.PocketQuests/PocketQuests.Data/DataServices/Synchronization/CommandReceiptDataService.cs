@@ -4,7 +4,7 @@ namespace PocketQuests.Data.DataServices.Synchronization;
 
 /// <summary>EF persistence and queries for CommandReceipt.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class CommandReceiptDataService(QuestDbContext context) : BaseDataService<CommandReceiptEntity>(context), ICommandReceiptDataService
+public sealed class CommandReceiptDataService(AppDbContext context) : BaseDataService<CommandReceiptEntity>(context), ICommandReceiptDataService
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<CommandReceiptEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)

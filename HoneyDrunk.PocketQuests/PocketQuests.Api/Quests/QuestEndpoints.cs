@@ -1,16 +1,19 @@
-using PocketQuests.Api.Contracts.Catalogs;
-using PocketQuests.Api.Contracts.Commands;
-using PocketQuests.Api.Contracts.Profiles;
-using PocketQuests.Api.Contracts.Progress;
-using PocketQuests.Api.Contracts.Projections;
-using PocketQuests.Api.Contracts.Quests;
-using PocketQuests.Api.Contracts.Schedules;
-using PocketQuests.Api.Contracts.Synchronization;
-using PocketQuests.Api.Hosting;
 using PocketQuests.Application.Quests;
 using PocketQuests.Application.Synchronization;
+using PocketQuests.Contracts.Models.Schedules;
+using PocketQuests.Contracts.Requests.Profiles;
+using PocketQuests.Contracts.Requests.Synchronization;
+using PocketQuests.Contracts.Responses.Catalogs;
 using PocketQuests.Domain.Catalogs;
 using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Services.Catalogs.Mapping;
+using PocketQuests.Services.Commands.Mapping;
+using PocketQuests.Services.Profiles.Mapping;
+using PocketQuests.Services.Progress.Mapping;
+using PocketQuests.Services.Projections.Mapping;
+using PocketQuests.Services.Quests.Mapping;
+using PocketQuests.Services.Schedules.Mapping;
+using PocketQuests.Services.Synchronization.Mapping;
 using System.Security.Claims;
 using Progression = PocketQuests.Domain.Progress.Progression;
 using QuestStatus = PocketQuests.Domain.Models.Quests.QuestStatus;
@@ -27,9 +30,9 @@ public static class QuestEndpoints
     {
         var api = app.MapGroup("/api").RequireAuthorization().ProducesProblem(400).ProducesProblem(500);
         api.MapPost("/sync-anchor", async (AnchorRequest request, ClaimsPrincipal principal, ISyncAnchors anchors, TimeProvider clock, CancellationToken token) =>
-            (await anchors.CreateAnchor(Identity(principal), request.DeviceId, request.BootId, request.DeviceUtc, clock.GetUtcNow(), token)).ToContract())
+            (await anchors.CreateAnchor(Identity(principal), request.DeviceId, request.BootId, request.DeviceUtc, clock.GetUtcNow(), token)).ToModel())
             .WithName("CreateSyncAnchor").ProducesProblem(503).Produces(404);
-        api.MapGet("/planning/clock", (string date, string time, string zone) => Scheduling.Planned(date, time, zone).ToContract()).WithName("PlanClock");
+        api.MapGet("/planning/clock", (string date, string time, string zone) => Scheduling.Planned(date, time, zone).ToModel()).WithName("PlanClock");
         api.MapGet("/planning/zone", async (string zone, ClaimsPrincipal principal, QuestService service, TimeProvider clock, CancellationToken token) =>
         {
             var selected = Scheduling.Zone(zone).Id;
@@ -42,18 +45,15 @@ public static class QuestEndpoints
             })]);
         }).WithName("PreviewZone").Produces(404).ProducesProblem(503);
         api.MapGet("/catalog", () => new CatalogResponse(
-            [.. Catalog.Categories.Select(item => item.ToContract())],
-            [.. Catalog.Attributes.Select(item => item.ToContract())],
-            [.. Catalog.Skills.Select(item => item.ToContract())],
-            [.. Catalog.Quests.Select(item => item.ToContract())],
-            [.. Progression.Rules.Select(item => item.ToContract())])).WithName("GetCatalog");
+            [.. Catalog.Categories.Select(item => item.ToModel())],
+            [.. Catalog.Attributes.Select(item => item.ToModel())],
+            [.. Catalog.Skills.Select(item => item.ToModel())],
+            [.. Catalog.Quests.Select(item => item.ToModel())],
+            [.. Progression.Rules.Select(item => item.ToModel())])).WithName("GetCatalog");
         api.MapPost("/profile", async (InitializeProfile request, ClaimsPrincipal principal, QuestService service, CancellationToken token) =>
-            (await service.Initialize(Identity(principal), request.Zone, token)).ToContract()).WithName("InitializeProfile").ProducesProblem(409).ProducesProblem(503);
+            (await service.Initialize(Identity(principal), request.Zone, token)).ToModel()).WithName("InitializeProfile").ProducesProblem(409).ProducesProblem(503);
         api.MapGet("/state", async (ClaimsPrincipal principal, QuestService service, CancellationToken token) =>
-            (await service.Read(Identity(principal), token)).ToContract()).WithName("GetState").Produces(404).ProducesProblem(503);
-        api.MapPost("/commands", async (QuestCommand command, ClaimsPrincipal principal, QuestService service, CancellationToken token) =>
-            (await service.Execute(Identity(principal), command.ToDomain(), token)).ToContract())
-            .WithName("ExecuteCommand").RequireRateLimiting(ApiHttpPolicy.Commands).Produces(404).ProducesProblem(409).ProducesProblem(429).ProducesProblem(503);
+            (await service.Read(Identity(principal), token)).ToModel()).WithName("GetState").Produces(404).ProducesProblem(503);
     }
 
     private static AccountIdentity Identity(ClaimsPrincipal principal) => new(

@@ -4,7 +4,7 @@ namespace PocketQuests.Data.DataServices.Progress;
 
 /// <summary>EF persistence and queries for XpLedgerEntry.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class XpLedgerEntryDataService(QuestDbContext context) : BaseDataService<XpLedgerEntryEntity>(context), IXpLedgerEntryDataService
+public sealed class XpLedgerEntryDataService(AppDbContext context) : BaseDataService<XpLedgerEntryEntity>(context), IXpLedgerEntryDataService
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<XpLedgerEntryEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)

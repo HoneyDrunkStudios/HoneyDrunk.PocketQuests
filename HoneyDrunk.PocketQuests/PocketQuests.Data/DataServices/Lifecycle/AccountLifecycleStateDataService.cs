@@ -5,7 +5,7 @@ namespace PocketQuests.Data.DataServices.Lifecycle;
 
 /// <summary>EF persistence and queries for AccountLifecycleState.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class AccountLifecycleStateDataService(QuestDbContext context) : BaseDataService<AccountLifecycleStateEntity>(context), IAccountLifecycleStateDataService
+public sealed class AccountLifecycleStateDataService(AppDbContext context) : BaseDataService<AccountLifecycleStateEntity>(context), IAccountLifecycleStateDataService
 {
     /// <inheritdoc />
     public Task<AccountLifecycleStateEntity?> GetByIdentityUserIdAsync(string identityUserId, CancellationToken token = default) =>

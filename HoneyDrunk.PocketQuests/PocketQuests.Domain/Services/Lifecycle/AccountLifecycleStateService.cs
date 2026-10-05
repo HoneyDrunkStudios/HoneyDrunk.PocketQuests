@@ -13,7 +13,7 @@ namespace PocketQuests.Domain.Services.Lifecycle;
 
 /// <summary>Retains AccountLifecycleState ownership and history while staging ordinary EF changes.</summary>
 /// <param name="data">Scoped entity persistence.</param>
-/// <param name="db">Scoped QuestDbContext dependency.</param>
+/// <param name="db">Scoped AppDbContext dependency.</param>
 /// <param name="accountData">Scoped IAccountDataService dependency.</param>
 /// <param name="markerData">Scoped IErasureMarkerDataService dependency.</param>
 /// <param name="erasureService">Scoped IErasureMarkerService dependency.</param>
@@ -21,7 +21,7 @@ namespace PocketQuests.Domain.Services.Lifecycle;
 /// <param name="anchorService">Scoped ISyncAnchorService dependency.</param>
 /// <param name="quests">Scoped IQuestService dependency.</param>
 /// <param name="clock">Scoped TimeProvider dependency.</param>
-public sealed class AccountLifecycleStateService(IAccountLifecycleStateDataService data, QuestDbContext db, IAccountDataService accountData, IErasureMarkerDataService markerData, IErasureMarkerService erasureService, ILifecycleMessageService messageService, ISyncAnchorService anchorService, IQuestService quests, TimeProvider clock) : IAccountLifecycleStateService
+public sealed class AccountLifecycleStateService(IAccountLifecycleStateDataService data, AppDbContext db, IAccountDataService accountData, IErasureMarkerDataService markerData, IErasureMarkerService erasureService, ILifecycleMessageService messageService, ISyncAnchorService anchorService, IQuestService quests, TimeProvider clock) : IAccountLifecycleStateService
 {
     /// <inheritdoc />
     public Task<IReadOnlyList<AccountLifecycleStateEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default) =>

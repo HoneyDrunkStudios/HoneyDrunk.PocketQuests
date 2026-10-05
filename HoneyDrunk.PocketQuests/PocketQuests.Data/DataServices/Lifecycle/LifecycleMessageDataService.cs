@@ -5,7 +5,7 @@ namespace PocketQuests.Data.DataServices.Lifecycle;
 
 /// <summary>EF persistence and queries for LifecycleMessage.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class LifecycleMessageDataService(QuestDbContext context) : BaseDataService<LifecycleMessageEntity>(context), ILifecycleMessageDataService
+public sealed class LifecycleMessageDataService(AppDbContext context) : BaseDataService<LifecycleMessageEntity>(context), ILifecycleMessageDataService
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<LifecycleMessageEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)

@@ -43,7 +43,7 @@ public sealed partial class SchemaFixture : IAsyncLifetime
 
     /// <summary>Creates the staged mapping context.</summary>
     /// <returns>A no-tracking read context.</returns>
-    public QuestDbContext Context() => new(new DbContextOptionsBuilder<QuestDbContext>().UseSqlServer(Connection).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options);
+    public AppDbContext Context() => new(new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(Connection).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options);
 
     /// <summary>Resolves a real workflow service in its own scope.</summary>
     /// <returns>The scoped domain workflow.</returns>

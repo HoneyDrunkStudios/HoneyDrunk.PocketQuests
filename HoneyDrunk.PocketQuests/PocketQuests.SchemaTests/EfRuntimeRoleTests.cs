@@ -24,7 +24,7 @@ public sealed class EfRuntimeRoleTests(SchemaFixture fixture) : IClassFixture<Sc
         try
         {
             await using var scope = fixture.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<QuestDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var workflow = scope.ServiceProvider.GetRequiredService<IQuestService>();
             await db.Database.OpenConnectionAsync();
             await db.Database.ExecuteSqlRawAsync("EXECUTE AS USER='pq_ef_runtime_probe';");

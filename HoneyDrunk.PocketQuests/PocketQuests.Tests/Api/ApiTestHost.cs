@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using PocketQuests.Api.Contracts;
 using PocketQuests.Api.Errors;
 using PocketQuests.Api.Exports;
 using PocketQuests.Api.Hosting;
@@ -50,6 +49,7 @@ internal sealed class ApiTestHost(WebApplication app, HttpClient client, ApiTest
         builder.Services.AddSingleton(TimeProvider.System);
         var store = new ApiTestStore();
         builder.Services.AddSingleton<IQuestStore>(store);
+        builder.Services.AddSingleton<PocketQuests.Services.Quests.IQuestService>(store);
         builder.Services.AddSingleton<ISyncAnchors>(store);
         builder.Services.AddScoped<QuestService>();
         builder.Services.AddTransient(services => new ApiTestAuthentication(
@@ -75,6 +75,7 @@ internal sealed class ApiTestHost(WebApplication app, HttpClient client, ApiTest
         app.UseAuthorization();
         app.UseRateLimiter();
         app.MapQuestEndpoints();
+        PocketQuests.Api.Endpoints.Quests.QuestEndpoints.MapQuestCommands(app);
         app.MapExportEndpoints();
         app.MapOpenApi();
         await app.StartAsync();

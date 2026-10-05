@@ -5,7 +5,7 @@ namespace PocketQuests.Data.DataServices.Quests;
 
 /// <summary>EF persistence and queries for QuestDefinitionSkillAllocation.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class QuestDefinitionSkillAllocationDataService(QuestDbContext context) : BaseDataService<QuestDefinitionSkillAllocationEntity>(context), IQuestDefinitionSkillAllocationDataService
+public sealed class QuestDefinitionSkillAllocationDataService(AppDbContext context) : BaseDataService<QuestDefinitionSkillAllocationEntity>(context), IQuestDefinitionSkillAllocationDataService
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestDefinitionSkillAllocationEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)

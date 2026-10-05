@@ -23,7 +23,7 @@ using System.Text.Json;
 namespace PocketQuests.Domain.Services.Quests;
 
 /// <summary>Applies existing quest rules through entity business services in explicit EF transactions.</summary>
-/// <param name="db">Scoped QuestDbContext dependency.</param>
+/// <param name="db">Scoped AppDbContext dependency.</param>
 /// <param name="accountData">Scoped IAccountDataService dependency.</param>
 /// <param name="lifecycleData">Scoped IAccountLifecycleStateDataService dependency.</param>
 /// <param name="markerData">Scoped IErasureMarkerDataService dependency.</param>
@@ -42,7 +42,7 @@ namespace PocketQuests.Domain.Services.Quests;
 /// <param name="entitlementService">Scoped IAccountEntitlementService dependency.</param>
 /// <param name="historyService">Scoped IQuestCommandHistoryService dependency.</param>
 /// <param name="auditService">Scoped IAccountAuditRecordService dependency.</param>
-public sealed partial class QuestService(QuestDbContext db, IAccountDataService accountData, IAccountLifecycleStateDataService lifecycleData, IErasureMarkerDataService markerData, ICommandReceiptDataService receiptData, ISyncAnchorDataService anchorData, IAccountService accountService, ICommandReceiptService receiptService, ISyncAnchorService anchorService, IQuestDefinitionService definitionService, IQuestSeriesService seriesService, IQuestOccurrenceService occurrenceService, IQuestCompletionService completionService, IXpLedgerEntryService ledgerService, IXpBalanceService balanceService, ICategoryProgressService categoryService, IAccountEntitlementService entitlementService, IQuestCommandHistoryService historyService, IAccountAuditRecordService auditService) : IQuestService
+public sealed partial class QuestService(AppDbContext db, IAccountDataService accountData, IAccountLifecycleStateDataService lifecycleData, IErasureMarkerDataService markerData, ICommandReceiptDataService receiptData, ISyncAnchorDataService anchorData, IAccountService accountService, ICommandReceiptService receiptService, ISyncAnchorService anchorService, IQuestDefinitionService definitionService, IQuestSeriesService seriesService, IQuestOccurrenceService occurrenceService, IQuestCompletionService completionService, IXpLedgerEntryService ledgerService, IXpBalanceService balanceService, ICategoryProgressService categoryService, IAccountEntitlementService entitlementService, IQuestCommandHistoryService historyService, IAccountAuditRecordService auditService) : IQuestService
 {
     private const int RequestReconciliationLimit = 100;
 

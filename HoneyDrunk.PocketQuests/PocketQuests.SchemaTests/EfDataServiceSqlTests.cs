@@ -26,7 +26,7 @@ public sealed class EfDataServiceSqlTests(SchemaFixture fixture) : IClassFixture
         var skill = NewSkill(account.Id, "Original name");
         using (var scope = provider.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<QuestDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var accounts = scope.ServiceProvider.GetRequiredService<IAccountDataService>();
             var skills = scope.ServiceProvider.GetRequiredService<ICustomSkillDataService>();
             await using var transaction = await db.Database.BeginTransactionAsync();
@@ -43,7 +43,7 @@ public sealed class EfDataServiceSqlTests(SchemaFixture fixture) : IClassFixture
         var previousVersion = skill.RowVersion.ToArray();
         using (var scope = provider.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<QuestDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var accounts = scope.ServiceProvider.GetRequiredService<IAccountDataService>();
             var skills = scope.ServiceProvider.GetRequiredService<ICustomSkillDataService>();
             Assert.Equal(account.Id, (await accounts.GetByIdentityUserIdAsync(account.IdentityUserId))!.Id);
@@ -62,7 +62,7 @@ public sealed class EfDataServiceSqlTests(SchemaFixture fixture) : IClassFixture
 
         using (var scope = provider.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<QuestDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var skills = scope.ServiceProvider.GetRequiredService<ICustomSkillDataService>();
             var persisted = await skills.FindByIdAsync(skill.Id);
             Assert.NotNull(persisted);
@@ -196,7 +196,7 @@ public sealed class EfDataServiceSqlTests(SchemaFixture fixture) : IClassFixture
         NameNormalizationVersion = 1, Revision = 1,
     };
 
-    private QuestDbContext Context() => new(new DbContextOptionsBuilder<QuestDbContext>().UseSqlServer(fixture.Connection).Options);
+    private AppDbContext Context() => new(new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(fixture.Connection).Options);
 
     private ServiceProvider Provider() => new ServiceCollection().AddQuestDataServices(fixture.Connection)
         .BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });

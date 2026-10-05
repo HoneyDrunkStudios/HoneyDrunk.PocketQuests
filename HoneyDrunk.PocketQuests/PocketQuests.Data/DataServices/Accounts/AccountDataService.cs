@@ -6,7 +6,7 @@ namespace PocketQuests.Data.DataServices.Accounts;
 
 /// <summary>EF persistence and queries for Account.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class AccountDataService(QuestDbContext context) : BaseDataService<AccountEntity>(context), IAccountDataService
+public sealed class AccountDataService(AppDbContext context) : BaseDataService<AccountEntity>(context), IAccountDataService
 {
     /// <inheritdoc />
     public Task<AccountEntity?> GetByIdentityUserIdAsync(string identityUserId, CancellationToken cancellationToken = default) =>
@@ -17,19 +17,7 @@ public sealed class AccountDataService(QuestDbContext context) : BaseDataService
         AccountQueries.ReadStateAsync(Context, accountId, token);
 
     /// <inheritdoc />
-    public async Task AcquireCommandLockAsync(string identityUserId, CancellationToken token = default)
-    {
-        if (Context.Database.CurrentTransaction is null)
-            throw new InvalidOperationException("An explicit account transaction is required.");
-        var resource = "pocketquests:" + identityUserId;
-        await Context.Database.ExecuteSqlInterpolatedAsync(
-            $"""
-            DECLARE @result int;
-            EXEC @result=sys.sp_getapplock @Resource={resource}, @LockMode='Exclusive', @LockOwner='Transaction', @LockTimeout=10000;
-            IF @result<0 THROW 51102, 'Account lock unavailable.', 1;
-            """,
-            token);
-    }
+    public Task AcquireCommandLockAsync(string identityUserId, CancellationToken token = default) => AccountQueries.AcquireLock(Context, identityUserId, token);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<AccountEntity>> GetReconciliationCandidatesAsync(DateTimeOffset now, DateTimeOffset? afterProjectionAt, Guid? afterAccountId, int maximumAccounts, string activeState, CancellationToken token = default)

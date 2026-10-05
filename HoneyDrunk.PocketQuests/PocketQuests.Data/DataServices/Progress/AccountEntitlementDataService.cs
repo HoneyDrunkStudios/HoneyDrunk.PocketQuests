@@ -4,7 +4,7 @@ namespace PocketQuests.Data.DataServices.Progress;
 
 /// <summary>EF persistence and queries for AccountEntitlement.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class AccountEntitlementDataService(QuestDbContext context) : BaseDataService<AccountEntitlementEntity>(context), IAccountEntitlementDataService
+public sealed class AccountEntitlementDataService(AppDbContext context) : BaseDataService<AccountEntitlementEntity>(context), IAccountEntitlementDataService
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<AccountEntitlementEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)

@@ -4,7 +4,7 @@ namespace PocketQuests.Data.DataServices.Accounts;
 
 /// <summary>EF persistence and queries for AccountAuditRecord.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class AccountAuditRecordDataService(QuestDbContext context) : BaseDataService<AccountAuditRecordEntity>(context), IAccountAuditRecordDataService
+public sealed class AccountAuditRecordDataService(AppDbContext context) : BaseDataService<AccountAuditRecordEntity>(context), IAccountAuditRecordDataService
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<AccountAuditRecordEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)

@@ -5,7 +5,7 @@ namespace PocketQuests.Data.DataServices.Progress;
 
 /// <summary>EF persistence and queries for ProfileReward.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class ProfileRewardDataService(QuestDbContext context) : BaseDataService<ProfileRewardEntity>(context), IProfileRewardDataService
+public sealed class ProfileRewardDataService(AppDbContext context) : BaseDataService<ProfileRewardEntity>(context), IProfileRewardDataService
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<ProfileRewardEntity>> GetCatalogAsync(CancellationToken cancellationToken = default) =>

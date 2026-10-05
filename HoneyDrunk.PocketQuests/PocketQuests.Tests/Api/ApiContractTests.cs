@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using PocketQuests.Api.Contracts.Commands;
-using PocketQuests.Api.Contracts.Exports;
-using PocketQuests.Api.Contracts.Projections;
 using PocketQuests.Domain.Catalogs;
 using PocketQuests.Domain.Commands;
 using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Models.Skills;
+using PocketQuests.Services.Commands.Mapping;
+using PocketQuests.Services.Exports.Mapping;
+using PocketQuests.Services.Projections.Mapping;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
@@ -62,8 +62,8 @@ public sealed class ApiContractTests
     public async Task StateAndExportPreserveWireValues()
     {
         await using var host = await ApiTestHost.Start();
-        AssertJsonEqual(host.Store.State, host.Store.State.ToContract());
-        AssertJsonEqual(host.Store.Snapshot(), host.Store.Snapshot().ToContract());
+        AssertJsonEqual(host.Store.State, host.Store.State.ToModel());
+        AssertJsonEqual(host.Store.Snapshot(), host.Store.Snapshot().ToModel());
         var state = await host.Client.GetFromJsonAsync<JsonNode>("/api/state");
         Assert.True(JsonNode.DeepEquals(JsonSerializer.SerializeToNode(host.Store.State, Json), state));
         var export = await host.Client.GetAsync(new Uri("/api/export/json", UriKind.Relative));
@@ -81,7 +81,7 @@ public sealed class ApiContractTests
     {
         await using var host = await ApiTestHost.Start();
         var command = new QuestCommand(Guid.NewGuid(), QuestActions.Accept, Guid.NewGuid(), "quest", "2026-10-05", Guid.NewGuid(), Catalog.Quests[0], 2, "skill", Experience.Expert, ["c01"], "12:00", Guid.NewGuid(), "reward", Guid.NewGuid(), Cadence.Weeks, 2, "c01", true, 5, new(Guid.NewGuid(), Guid.NewGuid(), 3, 1200, ApiTestStore.At), "name", Catalog.Quests[1], "UTC", "Europe/London", true, true);
-        AssertJsonEqual(command, command.ToContract().ToDomain());
+        AssertJsonEqual(command, command.ToModel().ToModel());
         using var content = new StringContent(JsonSerializer.Serialize(command, Json), Encoding.UTF8, "application/json");
         Assert.Equal(HttpStatusCode.OK, (await host.Client.PostAsync(new Uri("/api/commands", UriKind.Relative), content)).StatusCode);
         AssertJsonEqual(command, host.Store.LastCommand);

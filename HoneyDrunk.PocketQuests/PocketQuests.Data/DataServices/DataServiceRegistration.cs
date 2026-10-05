@@ -20,8 +20,8 @@ public static class DataServiceRegistration
     /// <returns>The service collection.</returns>
     public static IServiceCollection AddQuestDataServices(this IServiceCollection services, string connectionString)
     {
-        services.AddDbContext<QuestDbContext>(options => options.UseSqlServer(connectionString));
-        services.AddScoped<BaseDbContext>(provider => provider.GetRequiredService<QuestDbContext>());
+        services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
+        services.AddScoped<BaseDbContext>(provider => provider.GetRequiredService<AppDbContext>());
         services.AddScoped(typeof(IBaseDataService<>), typeof(BaseDataService<>));
         services.AddScoped<ICategoryDataService, CategoryDataService>();
         services.AddScoped<IAttributeDataService, AttributeDataService>();

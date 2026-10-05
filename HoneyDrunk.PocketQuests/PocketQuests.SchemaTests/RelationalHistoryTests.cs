@@ -12,6 +12,8 @@ using PocketQuests.Domain.Models.Skills;
 using PocketQuests.Domain.Models.Synchronization;
 using PocketQuests.Domain.Quests.Aggregates;
 using PocketQuests.Domain.Services.Quests;
+using PocketQuests.SchemaTests.Quests;
+using PocketQuests.Services.Synchronization.Mapping;
 using System.Text.Json;
 
 namespace PocketQuests.SchemaTests;
@@ -153,13 +155,14 @@ public sealed class RelationalHistoryTests(SchemaFixture fixture) : IClassFixtur
         var anchor = await Store.CreateAnchor(owner, Guid.NewGuid(), boot, Start, Start);
         await Store.Execute(owner, new(Guid.NewGuid(), QuestActions.SaveDefinition, Definition: quest with { Title = "Much larger edit", Effort = Effort.Large }, ExpectedRevision: 1), Start.AddHours(1));
         var complete = new QuestCommand(Guid.NewGuid(), QuestActions.Complete, accept.OccurrenceId, RecordedTime: new RecordedActionTime(anchor.Id, boot, 1, 60000.125, Start.AddMilliseconds(60000.125)));
-        var original = await Store.Execute(owner, complete, Start.AddYears(1));
+        var request = new PocketQuests.Contracts.Requests.Commands.QuestCommand(complete.OperationId, complete.Action, complete.OccurrenceId, RecordedTime: complete.RecordedTime!.ToModel());
+        var original = await fixture.Complete(owner, request, Start.AddYears(1));
         Assert.Equal(10, original.OverallXp);
         Assert.Equal("Original", original.Occurrences.Single().Occurrence.Quest.Title);
         Assert.Equal("Much larger edit", original.Definitions.Single().Quest.Title);
         var undo = new QuestCommand(Guid.NewGuid(), QuestActions.Undo, accept.OccurrenceId, CompletionId: complete.OperationId, RecordedTime: new RecordedActionTime(anchor.Id, boot, 2, 120000.25, Start.AddMilliseconds(120000.25)));
         await Store.Execute(owner, undo, Start.AddYears(1));
-        Equal(original, await Store.Execute(owner, complete, Start.AddYears(4)));
+        Assert.Equal(JsonSerializer.Serialize(original), JsonSerializer.Serialize(await fixture.Complete(owner, request, Start.AddYears(4))));
         await using var db = fixture.Context();
         var account = await db.Set<AccountEntity>().SingleAsync(a => a.IdentityUserId == owner.Subject);
         Assert.Equal(2, await db.Set<QuestDefinitionRevisionEntity>().CountAsync(r => r.AccountId == account.Id));

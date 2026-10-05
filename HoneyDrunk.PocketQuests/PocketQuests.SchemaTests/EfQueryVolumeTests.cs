@@ -23,7 +23,7 @@ public sealed class EfQueryVolumeTests(SchemaFixture fixture) : IClassFixture<Sc
         var services = new ServiceCollection();
         services.AddQuestDataServices(fixture.Connection);
         services.AddQuestBusinessServices();
-        services.ConfigureDbContext<QuestDbContext>((_, options) => options.LogTo(_ => count++, [RelationalEventId.CommandExecuted]));
+        services.ConfigureDbContext<AppDbContext>((_, options) => options.LogTo(_ => count++, [RelationalEventId.CommandExecuted]));
         await using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
         await using var scope = provider.CreateAsyncScope();
         var workflow = scope.ServiceProvider.GetRequiredService<IQuestService>();

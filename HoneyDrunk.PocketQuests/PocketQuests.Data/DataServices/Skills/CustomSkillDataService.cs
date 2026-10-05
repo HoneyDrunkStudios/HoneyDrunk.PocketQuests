@@ -5,7 +5,7 @@ namespace PocketQuests.Data.DataServices.Skills;
 
 /// <summary>EF persistence and queries for CustomSkill.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class CustomSkillDataService(QuestDbContext context) : BaseDataService<CustomSkillEntity>(context), ICustomSkillDataService
+public sealed class CustomSkillDataService(AppDbContext context) : BaseDataService<CustomSkillEntity>(context), ICustomSkillDataService
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<CustomSkillEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)

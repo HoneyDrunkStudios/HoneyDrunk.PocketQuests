@@ -4,7 +4,7 @@ namespace PocketQuests.Data.DataServices.Quests;
 
 /// <summary>EF persistence and queries for QuestCommandHistory.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class QuestCommandHistoryDataService(QuestDbContext context) : BaseDataService<QuestCommandHistoryEntity>(context), IQuestCommandHistoryDataService
+public sealed class QuestCommandHistoryDataService(AppDbContext context) : BaseDataService<QuestCommandHistoryEntity>(context), IQuestCommandHistoryDataService
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestCommandHistoryEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)

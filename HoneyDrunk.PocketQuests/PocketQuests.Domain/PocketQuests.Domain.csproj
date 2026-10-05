@@ -19,4 +19,7 @@
   <ItemGroup Condition="'$(UseIdentitySource)' == 'true'">
     <ProjectReference Include="$(IdentitySourceRoot)/HoneyDrunk.Identity/HoneyDrunk.Identity.Abstractions/HoneyDrunk.Identity.Abstractions.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="PocketQuests.Services" />
+  </ItemGroup>
 </Project>

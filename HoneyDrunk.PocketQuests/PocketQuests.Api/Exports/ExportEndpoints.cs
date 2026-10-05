@@ -1,10 +1,10 @@
 using NodaTime;
-using PocketQuests.Api.Contracts.Exports;
 using PocketQuests.Api.Hosting;
 using PocketQuests.Application.Persistence;
 using PocketQuests.Domain.Catalogs;
 using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Schedules;
+using PocketQuests.Services.Exports.Mapping;
 using System.Globalization;
 using System.IO.Compression;
 using System.Security.Claims;
@@ -32,10 +32,10 @@ public static class ExportEndpoints
             var snapshot = await store.Export(identity, clock.GetUtcNow(), token);
             context.Response.Headers.CacheControl = "no-store, private";
             return format == "json"
-                ? Results.File(JsonSerializer.SerializeToUtf8Bytes(snapshot.ToContract(), Json), "application/json", "pocket-quests.json")
+                ? Results.File(JsonSerializer.SerializeToUtf8Bytes(snapshot.ToModel(), Json), "application/json", "pocket-quests.json")
                 : Results.File(CsvArchive(snapshot), "application/zip", "pocket-quests-csv.zip");
         }).WithName("ExportAccount").RequireAuthorization().RequireRateLimiting(ApiHttpPolicy.Exports)
-            .Produces<PocketQuests.Api.Contracts.Exports.QuestExport>(200, "application/json", "application/zip")
+            .Produces<PocketQuests.Contracts.Responses.Exports.QuestExport>(200, "application/json", "application/zip")
             .Produces(400).Produces(404).ProducesProblem(429).ProducesProblem(500).ProducesProblem(503)
             .AddOpenApiOperationTransformer((operation, context, token) =>
             {

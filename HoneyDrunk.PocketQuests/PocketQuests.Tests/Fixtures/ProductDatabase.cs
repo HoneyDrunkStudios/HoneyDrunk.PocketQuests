@@ -8,9 +8,9 @@ namespace PocketQuests.Tests.Fixtures;
 /// <summary>Read-only product and shared-table evidence on one explicitly supplied test database.</summary>
 internal sealed class ProductDatabase(string connection) : IAsyncDisposable
 {
-    internal QuestDbContext Read { get; } = new(new DbContextOptionsBuilder<QuestDbContext>().UseSqlServer(connection).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options);
+    internal AppDbContext Read { get; } = new(new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(connection).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options);
 
-    internal QuestDbContext Infrastructure => Read;
+    internal AppDbContext Infrastructure => Read;
 
     internal DatabaseFacade Database => Read.Database;
 

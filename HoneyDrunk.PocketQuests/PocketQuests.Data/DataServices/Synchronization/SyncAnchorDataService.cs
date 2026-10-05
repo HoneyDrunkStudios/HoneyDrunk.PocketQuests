@@ -4,7 +4,7 @@ namespace PocketQuests.Data.DataServices.Synchronization;
 
 /// <summary>EF persistence and queries for SyncAnchor.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class SyncAnchorDataService(QuestDbContext context) : BaseDataService<SyncAnchorEntity>(context), ISyncAnchorDataService
+public sealed class SyncAnchorDataService(AppDbContext context) : BaseDataService<SyncAnchorEntity>(context), ISyncAnchorDataService
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<SyncAnchorEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)

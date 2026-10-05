@@ -4,7 +4,7 @@ namespace PocketQuests.Data.DataServices.Quests;
 
 /// <summary>EF persistence and queries for QuestOccurrenceEvent.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class QuestOccurrenceEventDataService(QuestDbContext context) : BaseDataService<QuestOccurrenceEventEntity>(context), IQuestOccurrenceEventDataService
+public sealed class QuestOccurrenceEventDataService(AppDbContext context) : BaseDataService<QuestOccurrenceEventEntity>(context), IQuestOccurrenceEventDataService
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestOccurrenceEventEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)

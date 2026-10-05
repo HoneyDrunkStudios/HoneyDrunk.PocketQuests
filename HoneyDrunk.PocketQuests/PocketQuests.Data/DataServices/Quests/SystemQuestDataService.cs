@@ -5,7 +5,7 @@ namespace PocketQuests.Data.DataServices.Quests;
 
 /// <summary>EF persistence and queries for SystemQuest.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class SystemQuestDataService(QuestDbContext context) : BaseDataService<SystemQuestEntity>(context), ISystemQuestDataService
+public sealed class SystemQuestDataService(AppDbContext context) : BaseDataService<SystemQuestEntity>(context), ISystemQuestDataService
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<SystemQuestEntity>> GetCatalogAsync(CancellationToken cancellationToken = default) =>

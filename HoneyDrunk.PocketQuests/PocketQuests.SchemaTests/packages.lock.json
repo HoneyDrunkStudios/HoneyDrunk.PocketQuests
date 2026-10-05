@@ -1301,7 +1301,8 @@
           "PocketQuests.Application": "[1.0.0, )",
           "PocketQuests.Data": "[1.0.0, )",
           "PocketQuests.Domain": "[1.0.0, )",
-          "PocketQuests.ServiceDefaults": "[1.0.0, )"
+          "PocketQuests.ServiceDefaults": "[1.0.0, )",
+          "PocketQuests.Services": "[1.0.0, )"
         }
       },
       "pocketquests.application": {
@@ -1309,6 +1310,9 @@
         "dependencies": {
           "PocketQuests.Domain": "[1.0.0, )"
         }
+      },
+      "pocketquests.contracts": {
+        "type": "Project"
       },
       "pocketquests.data": {
         "type": "Project",
@@ -1337,6 +1341,14 @@
           "OpenTelemetry.Instrumentation.AspNetCore": "[1.19.0, )",
           "OpenTelemetry.Instrumentation.Http": "[1.19.0, )",
           "OpenTelemetry.Instrumentation.Runtime": "[1.19.0, )"
+        }
+      },
+      "pocketquests.services": {
+        "type": "Project",
+        "dependencies": {
+          "PocketQuests.Contracts": "[1.0.0, )",
+          "PocketQuests.Data": "[1.0.0, )",
+          "PocketQuests.Domain": "[1.0.0, )"
         }
       }
     }
