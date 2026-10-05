@@ -1,0 +1,7 @@
+# Pocket Quests clock
+
+First-party local Expo module. Android uses public `elapsedRealtime` and `BOOT_COUNT` APIs (API 24+), with no app permissions, network access, or new library dependency. Expo autolinks this module from `modules/`; rebuild the native development client after adding it. The OS boot counter is local evidence only, not server attestation or a device identifier to upload.
+
+**Native continuity across offline process restarts is incomplete on iOS.** No supported, reliable iOS boot-epoch strategy has been validated. iOS, web, Expo Go, and Android without this module use an explicitly process-local monotonic clock. A server-issued anchor supports ordinary online and same-process offline actions. The process token is not a boot identity: a new runtime cannot use it to prove new offline actions against the previous runtime's anchor. Those uncertain actions remain visibly pending; reconnecting establishes timing for future actions without converting earlier pending intents. Existing proven commands replay unchanged. Web cache/identity retain their existing page-only lifetime.
+
+Android process restart must preserve the native epoch and continue the anchor's elapsed interval. Device reboot changes the epoch even after new uptime grows past the old reading. An uncertain action is never automatically promoted to an executable proof after reconnect. Physical Android deep sleep/OEM coverage and real encrypted-cache crash testing remain necessary in addition to provider tests and emulator checks.

@@ -122,6 +122,7 @@ export function QuestEditor({
         skills: [],
         baseXp: 10,
         isCustom: true,
+        penaltyPercent: 0,
       },
   );
   const [revision, setRevision] = useState(initial?.revision ?? 0);
@@ -205,7 +206,7 @@ export function QuestEditor({
         Effort describes the amount of work, not minutes. Large goals need a
         separately achieved outcome.
       </Label>
-      {["Small", "Medium", "Large"].map((effort) => (
+      {(["Small", "Medium", "Large"] as const).map((effort) => (
         <Button
           key={effort}
           title={effort}

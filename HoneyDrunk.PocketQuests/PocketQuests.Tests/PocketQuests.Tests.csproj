@@ -21,7 +21,7 @@
     <ProjectReference Include="$(IdentitySourceRoot)/HoneyDrunk.Identity/HoneyDrunk.Identity.Api/HoneyDrunk.Identity.Api.csproj" Condition="'$(IdentitySourceRoot)' != ''" />
   </ItemGroup>
   <Target Name="RequireIdentityIntegrationSource" BeforeTargets="PrepareForBuild">
-    <Error Condition="'$(IdentitySourceRoot)' == ''" Text="SQL integration tests require Identity source. Run scripts/Initialize-Local.ps1 -IdentitySourceRoot PATH first." />
+    <Error Condition="'$(IdentitySourceRoot)' == '' or '$(UseIdentitySource)' != 'true'" Text="SQL integration tests require Identity source mode. Run scripts/Initialize-Local.ps1 -IdentitySourceRoot PATH first. Use PocketQuests.SchemaTests for package-mode validation." />
   </Target>
   <ItemGroup>
     <PackageReference Include="Microsoft.SqlServer.DacFx" Version="170.5.96" />
@@ -32,6 +32,5 @@
   <ItemGroup>
     <ProjectReference Include="$(IdentitySourceRoot)/HoneyDrunk.Identity/HoneyDrunk.Identity.Database/HoneyDrunk.Identity.Database.sqlproj" ReferenceOutputAssembly="false" />
     <None Include="$(IdentitySourceRoot)/HoneyDrunk.Identity/HoneyDrunk.Identity.Database/bin/$(Configuration)/HoneyDrunk.Identity.Database.dacpac" Link="HoneyDrunk.Identity.Database.dacpac" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="Fixtures/LegacyQuestLedger.sql" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

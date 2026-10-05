@@ -4,6 +4,7 @@ import { ThemeProvider } from "@honeydrunk/ui-native";
 import { pocketQuestsTheme } from "../shared/theme";
 import { colors } from "../shared/ui";
 import { CompletionOverlay } from "../features/progression/completion-overlay";
+export { AppErrorBoundary as ErrorBoundary } from "../shared/error-boundary";
 export default function Layout() {
   return (
     <ThemeProvider theme={pocketQuestsTheme}>

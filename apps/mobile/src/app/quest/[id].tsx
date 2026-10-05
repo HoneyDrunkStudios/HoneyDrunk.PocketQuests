@@ -1,9 +1,10 @@
+import { Page } from "../../session/session-page";
 import { questActions } from "../../features/quests/commands/quest-actions";
 import { useState } from "react";
 import { Link, Redirect, useLocalSearchParams } from "expo-router";
 import { Text, TextInput, View } from "react-native";
 import { useSession } from "../../session/session";
-import { Page, Button, Label, styles } from "../../shared/ui";
+import { Button, Label, styles } from "../../shared/ui";
 import { QuestRewards } from "../../features/quests/quest-rewards";
 import { FocusTimer } from "../../features/quests/focus-timer";
 import { DefinitionManagement } from "../../features/quests/definition-management";
@@ -73,7 +74,9 @@ export default function QuestDetails() {
       )}
       {item.pendingCompletion && (
         <Label>
-          Recorded on this device. Rewards will be confirmed when synchronized.
+          {item.pendingTimingVerification
+            ? "Recorded on this device, pending timing verification. Reconnecting alone cannot confirm this completion or its rewards."
+            : "Recorded on this device. Rewards will be confirmed when synchronized."}
         </Label>
       )}
       <Label>

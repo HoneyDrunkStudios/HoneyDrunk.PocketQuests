@@ -1,0 +1,22 @@
+using Microsoft.EntityFrameworkCore;
+using PocketQuests.Data.Entities.Quests;
+
+namespace PocketQuests.Data.DataServices.Quests;
+
+/// <summary>EF persistence and queries for QuestOccurrence.</summary>
+/// <param name="context">The scoped transaction context.</param>
+public sealed class QuestOccurrenceDataService(AppDbContext context) : BaseDataService<QuestOccurrenceEntity>(context), IQuestOccurrenceDataService
+{
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<QuestOccurrenceEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
+    {
+        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<QuestOccurrenceEntity>> GetPage(Guid accountId, int after, int size, CancellationToken token = default)
+    {
+        return await DbSet.AsNoTracking().Where(row => row.AccountId == accountId && row.CreationOrdinal > after)
+            .OrderBy(row => row.CreationOrdinal).Take(size + 1).ToListAsync(token);
+    }
+}

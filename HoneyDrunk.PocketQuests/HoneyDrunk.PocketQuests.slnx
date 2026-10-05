@@ -12,8 +12,9 @@
   </Folder>
   <Project Path="PocketQuests.Api/PocketQuests.Api.csproj" />
   <Project Path="PocketQuests.AppHost/PocketQuests.AppHost.csproj" />
-  <Project Path="PocketQuests.Application/PocketQuests.Application.csproj" />
   <Project Path="PocketQuests.BrowserHost/PocketQuests.BrowserHost.csproj" />
+  <Project Path="PocketQuests.Contracts/PocketQuests.Contracts.csproj" />
+  <Project Path="PocketQuests.Services/PocketQuests.Services.csproj" />
   <Project Path="PocketQuests.Data/PocketQuests.Data.csproj" />
   <Project Path="PocketQuests.Database/PocketQuests.Database.sqlproj" Type="42ea0dbd-9cf1-443e-919e-be9c484e4577" />
   <Project Path="PocketQuests.Domain/PocketQuests.Domain.csproj" />

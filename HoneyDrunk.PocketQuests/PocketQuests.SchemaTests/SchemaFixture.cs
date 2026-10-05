@@ -1,7 +1,10 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SqlServer.Dac;
-using PocketQuests.Data.Relational;
+using PocketQuests.Data;
+using PocketQuests.Services.Lifecycle;
+using PocketQuests.Tests.Fixtures;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
@@ -10,12 +13,14 @@ using System.Text.RegularExpressions;
 namespace PocketQuests.SchemaTests;
 
 /// <summary>Uses only a caller-created, disposable SQL instance and a unique database.</summary>
+[SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "xUnit calls IAsyncLifetime.DisposeAsync, which awaits all owned scopes and the provider before database cleanup.")]
 public sealed partial class SchemaFixture : IAsyncLifetime
 {
     private static readonly SemaphoreSlim DeploymentGate = new(1);
 
     private readonly string database = "PocketQuests_SchemaTests_" + Guid.NewGuid().ToString("N");
     private bool deployed;
+    private PersistenceServices? persistence;
 
     /// <summary>Gets safe repeat-publication options.</summary>
     public static DacDeployOptions Options => new()
@@ -37,7 +42,15 @@ public sealed partial class SchemaFixture : IAsyncLifetime
 
     /// <summary>Creates the staged mapping context.</summary>
     /// <returns>A no-tracking read context.</returns>
-    public RelationalQuestReadContext Context() => new(new DbContextOptionsBuilder<RelationalQuestReadContext>().UseSqlServer(Connection).Options);
+    public AppDbContext Context() => new(new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(Connection).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options);
+
+    /// <summary>Resolves a real private lifecycle service in its own scope.</summary>
+    /// <returns>The scoped lifecycle service.</returns>
+    public LifecycleService Lifecycle() => (persistence ??= new(Connection)).Resolve<LifecycleService>();
+
+    /// <summary>Creates an explicitly owned scope for services that must share one context.</summary>
+    /// <returns>A scope the caller must dispose.</returns>
+    public AsyncServiceScope CreateScope() => (persistence ??= new(Connection)).CreateScope();
 
     /// <summary>Creates a DacFx connection for deployment and semantic schema comparison.</summary>
     /// <returns>The schema service.</returns>
@@ -59,6 +72,7 @@ public sealed partial class SchemaFixture : IAsyncLifetime
             using var package = DacPackage.Load(Path.Combine(AppContext.BaseDirectory, "PocketQuests.Database.dacpac"));
             Services().Deploy(package, database, upgradeExisting: false, options: Options);
             deployed = true;
+            persistence = new(Connection);
         }
         finally
         {
@@ -71,6 +85,8 @@ public sealed partial class SchemaFixture : IAsyncLifetime
     public async Task DisposeAsync()
     {
         Contract.Dispose();
+        if (persistence is not null)
+            await persistence.DisposeAsync();
         if (!deployed)
             return;
         SqlConnection.ClearAllPools();
@@ -141,6 +157,10 @@ public sealed partial class SchemaFixture : IAsyncLifetime
         while (await reader.NextResultAsync());
         return results;
     }
+
+    /// <summary>Resolves a real workflow service in its own scope.</summary>
+    /// <returns>The scoped domain workflow.</returns>
+    internal TestQuestWorkflow Commands() => (persistence ??= new(Connection)).Resolve<TestQuestWorkflow>();
 
     [GeneratedRegex("^PQSchema_[0-9a-f]{12}$", RegexOptions.CultureInvariant)]
     private static partial Regex InstanceName();

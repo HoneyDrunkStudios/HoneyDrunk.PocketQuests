@@ -1,7 +1,8 @@
+import { Page } from "../../session/session-page";
 import { Text, View } from "react-native";
 import { Redirect } from "expo-router";
-import { useSession } from "../../session/session";
-import { Page, Label, Card, colors, styles } from "../../shared/ui";
+import { useAccountSnapshot } from "../../session/session";
+import { Label, Card, colors, styles } from "../../shared/ui";
 import type { Balance, State } from "../../shared/contracts";
 
 function ProgressRow({ item }: { item: Balance }) {
@@ -47,7 +48,7 @@ function CategoryProgress({
   );
 }
 export default function Home() {
-  const { state } = useSession();
+  const { state } = useAccountSnapshot();
   if (!state)
     return (
       <Page>

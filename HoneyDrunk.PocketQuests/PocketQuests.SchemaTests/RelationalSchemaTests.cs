@@ -3,8 +3,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.SqlServer.Dac;
-using PocketQuests.Data.Relational.Entities;
+using PocketQuests.Data.Entities.Accounts;
+using PocketQuests.Data.Entities.Attributes;
+using PocketQuests.Data.Entities.Categories;
+using PocketQuests.Data.Entities.Lifecycle;
+using PocketQuests.Data.Entities.Progress;
+using PocketQuests.Data.Entities.Quests;
+using PocketQuests.Data.Entities.Skills;
 using PocketQuests.Domain.Catalogs;
+using PocketQuests.Domain.Models.Progress;
 using PocketQuests.Domain.Progress;
 using System.Data;
 using System.Text.Json;
@@ -201,8 +208,7 @@ public sealed class RelationalSchemaTests(SchemaFixture fixture) : IClassFixture
         }
 
         Assert.Equal(QueryTrackingBehavior.NoTracking, db.ChangeTracker.QueryTrackingBehavior);
-        Assert.Throws<InvalidOperationException>(() => db.SaveChanges());
-        Assert.Throws<InvalidOperationException>(() => db.SaveChanges(false));
+        Assert.Empty(db.ChangeTracker.Entries());
     }
 
     /// <summary>Seeds preserve the domain catalog, rank rules and existing public IDs; repeat publish is a no-op.</summary>
@@ -224,8 +230,6 @@ public sealed class RelationalSchemaTests(SchemaFixture fixture) : IClassFixture
         var domain = Progression.Entitlements([], Rank.F);
         Assert.Equal(domain.Select(r => (id: r.Id, kind: r.Kind, name: r.Name, requiredCount: r.RequiredCount, r.RequiredRank.ToString())), rewards.Select(r => (id: r.Id, kindCode: r.KindCode, name: r.Name, requiredCount: r.RequiredCount, requiredRank: r.RequiredRank)));
         Assert.Empty(db.ChangeTracker.Entries());
-        await Assert.ThrowsAsync<InvalidOperationException>(() => db.SaveChangesAsync());
-        await Assert.ThrowsAsync<InvalidOperationException>(() => db.SaveChangesAsync(false));
 
         using var package = DacPackage.Load(Path.Combine(AppContext.BaseDirectory, "PocketQuests.Database.dacpac"));
         var service = fixture.Services();
@@ -275,7 +279,7 @@ public sealed class RelationalSchemaTests(SchemaFixture fixture) : IClassFixture
         Assert.Contains("CK_ErasureMarker_IdentityUserId", exception.Message, StringComparison.Ordinal);
     }
 
-    /// <summary>Product failures fail the gate; each review is exact and shared/legacy debt stays visible.</summary>
+    /// <summary>Product failures fail the gate; each review is exact and shared-owner debt stays visible and unexpected objects fail.</summary>
     /// <returns>Completion after baseline findings are classified.</returns>
     [Fact]
     public async Task BaselineCheckerHasNoNewProductFailuresAndNoUnusedReviewDispositions()
@@ -285,8 +289,9 @@ public sealed class RelationalSchemaTests(SchemaFixture fixture) : IClassFixture
         var findings = results[0].Rows.Cast<DataRow>().Select(r => new Finding((string)r[0], (string)r[1], ((string)r[2]).Replace("[", string.Empty).Replace("]", string.Empty), (string)r[3])).ToArray();
         var product = findings.Where(f => f.Object.StartsWith("pocketquests.", StringComparison.Ordinal)).ToArray();
         var shared = findings.Where(f => f.Object.StartsWith("dbo.AuditRecords", StringComparison.Ordinal) || f.Object.StartsWith("outbox.OutboxMessages", StringComparison.Ordinal)).ToArray();
-        var legacy = findings.Except(product).Except(shared).ToArray();
-        Evidence("schema-checker-findings.json", JsonSerializer.Serialize(new { product, shared, legacy }, new JsonSerializerOptions { WriteIndented = true }));
+        var unexpected = findings.Except(product).Except(shared).ToArray();
+        Assert.Empty(unexpected);
+        Evidence("schema-checker-findings.json", JsonSerializer.Serialize(new { product, shared, unexpected }, new JsonSerializerOptions { WriteIndented = true }));
         Assert.DoesNotContain(product, f => f.Severity == "Fail");
         var exceptions = fixture.Contract.RootElement.GetProperty("checker_exceptions").EnumerateArray().Select(e => (Text(e, "rule"), Text(e, "object"))).Order().ToArray();
         Assert.Equal(exceptions, product.Select(f => (rule: f.Rule, objectName: f.Object)).Order().ToArray());

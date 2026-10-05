@@ -1,5 +1,6 @@
 using NodaTime;
-using PocketQuests.Domain.Commands;
+using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Progress;
 using PocketQuests.Domain.Schedules;
 
@@ -27,9 +28,9 @@ public sealed partial class QuestAggregate
 
     private void ChangeZone(QuestCommand command, DateTimeOffset now)
     {
-        var next = Scheduling.Zone(command.NewZone ?? throw new ArgumentException("Choose a timezone.")).Id;
+        var next = Scheduling.Zone(command.NewZone ?? throw new QuestValidationException("Choose a timezone.")).Id;
         if (command.ExpectedZone != Zone)
-            throw new InvalidOperationException("The selected timezone changed. Reload the preview.");
+            throw new QuestConflictException("The selected timezone changed. Reload the preview.");
         Progression.Require(command.ConfirmZoneChange, "Review the new deadlines and confirm. Active deadlines moving into the past become missed immediately; finalized history stays unchanged.");
         if (next == Zone)
             return;

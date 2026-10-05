@@ -20,6 +20,12 @@
     <None Include="../../scripts/schema/*.sql" Link="Sql/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <!-- Reuse the existing numerical/history regressions in this package-mode lane;
          these tests reference Domain only and require no Identity API source build. -->
+    <!-- Same product SQL/API cases in both hosts; source-only Identity acceptance stays separate. -->
+    <Compile Include="../PocketQuests.Tests/Integration/*.cs" Exclude="../PocketQuests.Tests/Integration/SqlApiTests.IdentityHost.cs;../PocketQuests.Tests/Integration/LifecycleSqlTests.cs;../PocketQuests.Tests/Integration/BrowserFixture.cs" Link="ProductRegression/%(Filename)%(Extension)" />
+    <Compile Include="../PocketQuests.Tests/Fixtures/TestQuestWorkflow.cs" Link="ProductRegression/TestQuestWorkflow.cs" />
+    <Compile Include="../PocketQuests.Tests/Fixtures/PersistenceServices.cs" Link="ProductRegression/PersistenceServices.cs" />
+    <Compile Include="../PocketQuests.Tests/Fixtures/ProductDatabase.cs" Link="ProductRegression/ProductDatabase.cs" />
+    <Compile Include="../PocketQuests.Tests/Api/*.cs" Link="ApiRegression/%(Filename)%(Extension)" />
     <Compile Include="../PocketQuests.Tests/Unit/*.cs" Link="DomainRegression/%(Filename)%(Extension)" />
     <Compile Include="../PocketQuests.Tests/AccountLifecycle/LifecycleMessagingTests.cs" Link="MessagingRegression/LifecycleMessagingTests.cs" />
   </ItemGroup>

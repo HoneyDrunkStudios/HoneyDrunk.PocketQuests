@@ -1,0 +1,2389 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Pocket Quests API",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/sync-anchor": {
+      "post": {
+        "tags": [
+          "PocketQuests.Api"
+        ],
+        "operationId": "CreateSyncAnchor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnchorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncAnchor"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "IdentityBearer": []
+          }
+        ]
+      }
+    },
+    "/api/catalog": {
+      "get": {
+        "tags": [
+          "PocketQuests.Api"
+        ],
+        "operationId": "GetCatalog",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "IdentityBearer": []
+          }
+        ]
+      }
+    },
+    "/api/profile": {
+      "post": {
+        "tags": [
+          "PocketQuests.Api"
+        ],
+        "operationId": "InitializeProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitializeProfile"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestState"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "IdentityBearer": []
+          }
+        ]
+      }
+    },
+    "/api/state": {
+      "get": {
+        "tags": [
+          "PocketQuests.Api"
+        ],
+        "operationId": "GetState",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestState"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "IdentityBearer": []
+          }
+        ]
+      }
+    },
+    "/api/commands": {
+      "post": {
+        "tags": [
+          "PocketQuests.Api"
+        ],
+        "operationId": "ExecuteCommand",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestState"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "IdentityBearer": []
+          }
+        ]
+      }
+    },
+    "/api/export/{format}": {
+      "get": {
+        "tags": [
+          "PocketQuests.Api"
+        ],
+        "operationId": "ExportAccount",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestExport"
+                }
+              },
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "IdentityBearer": []
+          }
+        ]
+      }
+    },
+    "/api/planning/clock": {
+      "get": {
+        "tags": [
+          "PocketQuests.Api"
+        ],
+        "operationId": "PlanClock",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "time",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "zone",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlannedMoment"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "IdentityBearer": []
+          }
+        ]
+      }
+    },
+    "/api/planning/zone": {
+      "get": {
+        "tags": [
+          "PocketQuests.Api"
+        ],
+        "operationId": "PreviewZone",
+        "parameters": [
+          {
+            "name": "zone",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZonePreview"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "IdentityBearer": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnchorRequest": {
+        "required": [
+          "deviceId",
+          "bootId",
+          "deviceUtc"
+        ],
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bootId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deviceUtc": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "The device process and wall clock requesting a trusted offline baseline."
+      },
+      "Balance": {
+        "required": [
+          "id",
+          "name",
+          "xp",
+          "level"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "xp": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "level": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "The public Balance JSON contract, independent of storage and domain behavior."
+      },
+      "Cadence": {
+        "enum": [
+          "Days",
+          "Weeks",
+          "Months",
+          "Years"
+        ],
+        "description": "Calendar recurrence units evaluated from the original anchor."
+      },
+      "CatalogResponse": {
+        "required": [
+          "categories",
+          "attributes",
+          "skills",
+          "quests",
+          "rules"
+        ],
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NamedItem"
+            }
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NamedItem"
+            }
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NamedItem"
+            }
+          },
+          "quests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Quest"
+            }
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RankRule"
+            }
+          }
+        },
+        "description": "The public quest catalog and authoritative global rank rules."
+      },
+      "Completion": {
+        "required": [
+          "id",
+          "occurrenceId",
+          "recordedAt",
+          "snapshot"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "occurrenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "snapshot": {
+            "oneOf": [
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              },
+              {
+                "$ref": "#/components/schemas/Quest"
+              }
+            ]
+          }
+        },
+        "description": "The public Completion JSON contract, independent of storage and domain behavior."
+      },
+      "CompletionLevelUp": {
+        "required": [
+          "track",
+          "trackId",
+          "name",
+          "from",
+          "to"
+        ],
+        "type": "object",
+        "properties": {
+          "track": {
+            "type": "string"
+          },
+          "trackId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "from": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "to": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "The public CompletionLevelUp JSON contract, independent of storage and domain behavior."
+      },
+      "CompletionOutcome": {
+        "required": [
+          "completionId",
+          "occurrenceId",
+          "levelUps",
+          "rankUp",
+          "unlocks"
+        ],
+        "type": "object",
+        "properties": {
+          "completionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "occurrenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "levelUps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompletionLevelUp"
+            }
+          },
+          "rankUp": {
+            "oneOf": [
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              },
+              {
+                "$ref": "#/components/schemas/Rank"
+              }
+            ]
+          },
+          "unlocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Entitlement"
+            }
+          }
+        },
+        "description": "The public CompletionOutcome JSON contract, independent of storage and domain behavior."
+      },
+      "CustomSkill": {
+        "required": [
+          "id",
+          "name",
+          "revision",
+          "archived"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "archived": {
+            "type": "boolean"
+          }
+        },
+        "description": "The public CustomSkill JSON contract, independent of storage and domain behavior."
+      },
+      "DeadlineChange": {
+        "required": [
+          "occurrenceId",
+          "title",
+          "deadline",
+          "becomesMissed"
+        ],
+        "type": "object",
+        "properties": {
+          "occurrenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "becomesMissed": {
+            "type": "boolean"
+          }
+        },
+        "description": "The public DeadlineChange JSON contract, independent of storage and domain behavior."
+      },
+      "Effort": {
+        "enum": [
+          "Small",
+          "Medium",
+          "Large"
+        ],
+        "description": "The calibrated base reward tier, independent of rank."
+      },
+      "Entitlement": {
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "count",
+          "requiredCount",
+          "requiredRank",
+          "earned"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "requiredCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "requiredRank": {
+            "$ref": "#/components/schemas/Rank"
+          },
+          "earned": {
+            "type": "boolean"
+          }
+        },
+        "description": "The public Entitlement JSON contract, independent of storage and domain behavior."
+      },
+      "Experience": {
+        "enum": [
+          "New",
+          "Practiced",
+          "Experienced",
+          "Expert"
+        ],
+        "description": "Onboarding experience tiers used only to seed skills."
+      },
+      "InitializeProfile": {
+        "required": [
+          "zone"
+        ],
+        "type": "object",
+        "properties": {
+          "zone": {
+            "type": "string"
+          }
+        },
+        "description": "Initial account timezone selected from the device, validated against TZDB."
+      },
+      "NamedItem": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "The public NamedItem JSON contract, independent of storage and domain behavior."
+      },
+      "Occurrence": {
+        "required": [
+          "id",
+          "quest",
+          "dueDate",
+          "deadline",
+          "acceptedAt",
+          "plannedTime",
+          "parentId",
+          "lifecycle"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quest": {
+            "$ref": "#/components/schemas/Quest"
+          },
+          "dueDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "plannedTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "lifecycle": {
+            "oneOf": [
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              },
+              {
+                "$ref": "#/components/schemas/OccurrenceLifecycle"
+              }
+            ]
+          }
+        },
+        "description": "The public Occurrence JSON contract, independent of storage and domain behavior."
+      },
+      "OccurrenceLifecycle": {
+        "required": [
+          "seriesId",
+          "sequence",
+          "scheduleVersion",
+          "frozenAt",
+          "individuallyFrozen",
+          "abandonedAt",
+          "lockedLoss",
+          "lossCategoryId",
+          "unaccepted",
+          "sourceAnchorId",
+          "deadlineZone"
+        ],
+        "type": "object",
+        "properties": {
+          "seriesId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "sequence": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ],
+            "format": "int32",
+            "nullable": true
+          },
+          "scheduleVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ],
+            "format": "int32",
+            "nullable": true
+          },
+          "frozenAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "individuallyFrozen": {
+            "type": "boolean"
+          },
+          "abandonedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lockedLoss": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ],
+            "format": "int32",
+            "nullable": true
+          },
+          "lossCategoryId": {
+            "type": "string",
+            "nullable": true
+          },
+          "unaccepted": {
+            "type": "boolean"
+          },
+          "sourceAnchorId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "deadlineZone": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "description": "The public OccurrenceLifecycle JSON contract, independent of storage and domain behavior."
+      },
+      "OccurrenceView": {
+        "required": [
+          "occurrence",
+          "status",
+          "completion",
+          "canUndo",
+          "planned"
+        ],
+        "type": "object",
+        "properties": {
+          "occurrence": {
+            "$ref": "#/components/schemas/Occurrence"
+          },
+          "status": {
+            "$ref": "#/components/schemas/QuestStatus"
+          },
+          "completion": {
+            "oneOf": [
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              },
+              {
+                "$ref": "#/components/schemas/Completion"
+              }
+            ]
+          },
+          "canUndo": {
+            "type": "boolean"
+          },
+          "planned": {
+            "oneOf": [
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              },
+              {
+                "$ref": "#/components/schemas/PlannedMoment"
+              }
+            ]
+          }
+        },
+        "description": "The public OccurrenceView JSON contract, independent of storage and domain behavior."
+      },
+      "PauseWindow": {
+        "required": [
+          "categoryId",
+          "startedAt",
+          "endedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "description": "The public PauseWindow JSON contract, independent of storage and domain behavior."
+      },
+      "PenaltyAssessment": {
+        "required": [
+          "occurrenceId",
+          "categoryId",
+          "lockedLoss",
+          "actualLoss",
+          "at"
+        ],
+        "type": "object",
+        "properties": {
+          "occurrenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoryId": {
+            "type": "string"
+          },
+          "lockedLoss": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "actualLoss": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "The public PenaltyAssessment JSON contract, independent of storage and domain behavior."
+      },
+      "PlannedMoment": {
+        "required": [
+          "requested",
+          "resolved",
+          "instant",
+          "adjusted",
+          "repeated"
+        ],
+        "type": "object",
+        "properties": {
+          "requested": {
+            "type": "string"
+          },
+          "resolved": {
+            "type": "string"
+          },
+          "instant": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "adjusted": {
+            "type": "boolean"
+          },
+          "repeated": {
+            "type": "boolean"
+          }
+        },
+        "description": "The public PlannedMoment JSON contract, independent of storage and domain behavior."
+      },
+      "PlayerProfile": {
+        "required": [
+          "interests",
+          "assessments",
+          "onboardingComplete",
+          "badgeId",
+          "frameId",
+          "customSkills",
+          "assessmentHistory",
+          "zoneHistory",
+          "expiryWarnings"
+        ],
+        "type": "object",
+        "properties": {
+          "interests": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "assessments": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Experience"
+            }
+          },
+          "onboardingComplete": {
+            "type": "boolean"
+          },
+          "badgeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "frameId": {
+            "type": "string",
+            "nullable": true
+          },
+          "customSkills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomSkill"
+            },
+            "nullable": true
+          },
+          "assessmentHistory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillAssessment"
+            },
+            "nullable": true
+          },
+          "zoneHistory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ZoneChange"
+            },
+            "nullable": true
+          },
+          "expiryWarnings": {
+            "type": "boolean"
+          }
+        },
+        "description": "The public PlayerProfile JSON contract, independent of storage and domain behavior."
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ],
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Quest": {
+        "required": [
+          "id",
+          "title",
+          "criterion",
+          "categoryId",
+          "rank",
+          "effort",
+          "attributes",
+          "skills",
+          "isCustom",
+          "description",
+          "penaltyPercent",
+          "baseXp"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "criterion": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "string"
+          },
+          "rank": {
+            "$ref": "#/components/schemas/Rank"
+          },
+          "effort": {
+            "$ref": "#/components/schemas/Effort"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Share"
+            }
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Share"
+            }
+          },
+          "isCustom": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "penaltyPercent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "baseXp": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "The public Quest JSON contract, independent of storage and domain behavior."
+      },
+      "QuestCommand": {
+        "required": [
+          "operationId",
+          "action"
+        ],
+        "type": "object",
+        "properties": {
+          "operationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "action": {
+            "type": "string"
+          },
+          "occurrenceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "questId": {
+            "type": "string",
+            "nullable": true
+          },
+          "dueDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "completionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "definition": {
+            "oneOf": [
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              },
+              {
+                "$ref": "#/components/schemas/QuestInput"
+              }
+            ]
+          },
+          "expectedRevision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ],
+            "format": "int32",
+            "nullable": true
+          },
+          "skillId": {
+            "type": "string",
+            "nullable": true
+          },
+          "experience": {
+            "oneOf": [
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              },
+              {
+                "$ref": "#/components/schemas/Experience"
+              }
+            ]
+          },
+          "interests": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "plannedTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "rewardId": {
+            "type": "string",
+            "nullable": true
+          },
+          "seriesId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "cadence": {
+            "oneOf": [
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              },
+              {
+                "$ref": "#/components/schemas/Cadence"
+              }
+            ]
+          },
+          "interval": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ],
+            "format": "int32",
+            "nullable": true
+          },
+          "categoryId": {
+            "type": "string",
+            "nullable": true
+          },
+          "confirmPenalty": {
+            "type": "boolean",
+            "default": false
+          },
+          "acceptedLoss": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ],
+            "format": "int32",
+            "nullable": true
+          },
+          "recordedTime": {
+            "oneOf": [
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              },
+              {
+                "$ref": "#/components/schemas/RecordedActionTime"
+              }
+            ]
+          },
+          "skillName": {
+            "type": "string",
+            "nullable": true
+          },
+          "acceptedQuest": {
+            "oneOf": [
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              },
+              {
+                "$ref": "#/components/schemas/QuestInput"
+              }
+            ]
+          },
+          "newZone": {
+            "type": "string",
+            "nullable": true
+          },
+          "expectedZone": {
+            "type": "string",
+            "nullable": true
+          },
+          "confirmZoneChange": {
+            "type": "boolean",
+            "default": false
+          },
+          "expiryWarnings": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        "description": "The public QuestCommand JSON contract, independent of storage and domain behavior."
+      },
+      "QuestDefinition": {
+        "required": [
+          "quest",
+          "revision",
+          "archived"
+        ],
+        "type": "object",
+        "properties": {
+          "quest": {
+            "$ref": "#/components/schemas/Quest"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "archived": {
+            "type": "boolean"
+          }
+        },
+        "description": "The public QuestDefinition JSON contract, independent of storage and domain behavior."
+      },
+      "QuestExport": {
+        "required": [
+          "schemaVersion",
+          "generatedAt",
+          "snapshotCutoff",
+          "accountId",
+          "state",
+          "definitionRevisions",
+          "completions",
+          "undos",
+          "notice"
+        ],
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "snapshotCutoff": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "state": {
+            "$ref": "#/components/schemas/QuestState"
+          },
+          "definitionRevisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuestDefinition"
+            }
+          },
+          "completions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Completion"
+            }
+          },
+          "undos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UndoEvent"
+            }
+          },
+          "notice": {
+            "type": "string"
+          }
+        },
+        "description": "The public QuestExport JSON contract, independent of storage and domain behavior."
+      },
+      "QuestInput": {
+        "required": [
+          "id",
+          "title",
+          "criterion",
+          "categoryId",
+          "rank",
+          "effort",
+          "attributes",
+          "skills"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "criterion": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "string"
+          },
+          "rank": {
+            "$ref": "#/components/schemas/Rank"
+          },
+          "effort": {
+            "$ref": "#/components/schemas/Effort"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShareInput"
+            }
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShareInput"
+            }
+          },
+          "isCustom": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "penaltyPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "format": "int32",
+            "default": 0
+          },
+          "baseXp": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "format": "int32",
+            "default": 0
+          }
+        },
+        "description": "Accepted quest input, retaining optional defaults and numeric-string binding."
+      },
+      "QuestSeries": {
+        "required": [
+          "id",
+          "quest",
+          "anchor",
+          "cadence",
+          "interval",
+          "version",
+          "nextSequence",
+          "pauseDays",
+          "stopped",
+          "plannedTime",
+          "autoAcceptPenalty",
+          "effectiveAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quest": {
+            "$ref": "#/components/schemas/Quest"
+          },
+          "anchor": {
+            "type": "string"
+          },
+          "cadence": {
+            "$ref": "#/components/schemas/Cadence"
+          },
+          "interval": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextSequence": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pauseDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stopped": {
+            "type": "boolean"
+          },
+          "plannedTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "autoAcceptPenalty": {
+            "type": "boolean"
+          },
+          "effectiveAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "description": "The public QuestSeries JSON contract, independent of storage and domain behavior."
+      },
+      "QuestState": {
+        "required": [
+          "zone",
+          "today",
+          "occurrences",
+          "overallXp",
+          "overallLevel",
+          "categories",
+          "attributes",
+          "skills",
+          "rank",
+          "streaks",
+          "entitlements",
+          "definitions",
+          "profile",
+          "schedule",
+          "penalties",
+          "ledger",
+          "futureWarnings",
+          "completionOutcome"
+        ],
+        "type": "object",
+        "properties": {
+          "zone": {
+            "type": "string"
+          },
+          "today": {
+            "type": "string"
+          },
+          "occurrences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OccurrenceView"
+            }
+          },
+          "overallXp": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "overallLevel": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Balance"
+            }
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Balance"
+            }
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Balance"
+            }
+          },
+          "rank": {
+            "$ref": "#/components/schemas/RankProgress"
+          },
+          "streaks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Streak"
+            }
+          },
+          "entitlements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Entitlement"
+            }
+          },
+          "definitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuestDefinition"
+            }
+          },
+          "profile": {
+            "$ref": "#/components/schemas/PlayerProfile"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ScheduleState"
+          },
+          "penalties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PenaltyAssessment"
+            }
+          },
+          "ledger": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/XpEntry"
+            }
+          },
+          "futureWarnings": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "nullable": true
+          },
+          "completionOutcome": {
+            "oneOf": [
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              },
+              {
+                "$ref": "#/components/schemas/CompletionOutcome"
+              }
+            ]
+          }
+        },
+        "description": "The public QuestState JSON contract, independent of storage and domain behavior."
+      },
+      "QuestStatus": {
+        "enum": [
+          "Active",
+          "Completed",
+          "Missed",
+          "Frozen",
+          "Abandoned",
+          "Offered"
+        ],
+        "description": "Current occurrence status derived from surviving events and deadline."
+      },
+      "Rank": {
+        "enum": [
+          "F",
+          "E",
+          "D",
+          "C",
+          "B",
+          "A",
+          "S"
+        ],
+        "description": "Quest difficulty or global breadth rank in ascending catalog order."
+      },
+      "RankProgress": {
+        "required": [
+          "current",
+          "requirement",
+          "qualifyingCategories",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "current": {
+            "$ref": "#/components/schemas/Rank"
+          },
+          "requirement": {
+            "$ref": "#/components/schemas/RankRule"
+          },
+          "qualifyingCategories": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "The public RankProgress JSON contract, independent of storage and domain behavior."
+      },
+      "RankRule": {
+        "required": [
+          "rank",
+          "count",
+          "floor",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "rank": {
+            "$ref": "#/components/schemas/Rank"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "floor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "The public RankRule JSON contract, independent of storage and domain behavior."
+      },
+      "RecordedActionTime": {
+        "required": [
+          "anchorId",
+          "bootId",
+          "ordinal",
+          "elapsedMilliseconds",
+          "deviceUtc"
+        ],
+        "type": "object",
+        "properties": {
+          "anchorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bootId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ordinal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "format": "int64"
+          },
+          "elapsedMilliseconds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?(?:[eE][\u002B-]?\\d\u002B)?$",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "format": "double"
+          },
+          "deviceUtc": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "The public RecordedActionTime JSON contract, independent of storage and domain behavior."
+      },
+      "ScheduleState": {
+        "required": [
+          "series",
+          "pauses",
+          "pausedCategories",
+          "accountPaused"
+        ],
+        "type": "object",
+        "properties": {
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuestSeries"
+            }
+          },
+          "pauses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PauseWindow"
+            }
+          },
+          "pausedCategories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accountPaused": {
+            "type": "boolean"
+          }
+        },
+        "description": "The public ScheduleState JSON contract, independent of storage and domain behavior."
+      },
+      "Share": {
+        "required": [
+          "id",
+          "basisPoints"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "basisPoints": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "The public Share JSON contract, independent of storage and domain behavior."
+      },
+      "ShareInput": {
+        "required": [
+          "id",
+          "basisPoints"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "basisPoints": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "An input allocation that retains the existing numeric-string binding."
+      },
+      "SkillAssessment": {
+        "required": [
+          "skillId",
+          "experience",
+          "at"
+        ],
+        "type": "object",
+        "properties": {
+          "skillId": {
+            "type": "string"
+          },
+          "experience": {
+            "$ref": "#/components/schemas/Experience"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "The public SkillAssessment JSON contract, independent of storage and domain behavior."
+      },
+      "Streak": {
+        "required": [
+          "categoryId",
+          "days",
+          "qualifiedToday",
+          "rate"
+        ],
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "string"
+          },
+          "days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "qualifiedToday": {
+            "type": "boolean"
+          },
+          "rate": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "The public Streak JSON contract, independent of storage and domain behavior."
+      },
+      "SyncAnchor": {
+        "required": [
+          "id",
+          "deviceId",
+          "bootId",
+          "serverUtc",
+          "deviceUtc",
+          "recordedTimeFloor"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bootId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "serverUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deviceUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "recordedTimeFloor": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "description": "The public SyncAnchor JSON contract, independent of storage and domain behavior."
+      },
+      "UndoEvent": {
+        "required": [
+          "id",
+          "completionId",
+          "recordedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "completionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "The public UndoEvent JSON contract, independent of storage and domain behavior."
+      },
+      "XpEntry": {
+        "required": [
+          "eventId",
+          "occurrenceId",
+          "at",
+          "track",
+          "trackId",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "occurrenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "track": {
+            "type": "string"
+          },
+          "trackId": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "The public XpEntry JSON contract, independent of storage and domain behavior."
+      },
+      "ZoneChange": {
+        "required": [
+          "from",
+          "to",
+          "at"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "The public ZoneChange JSON contract, independent of storage and domain behavior."
+      },
+      "ZonePreview": {
+        "required": [
+          "previousZone",
+          "zone",
+          "deadlines"
+        ],
+        "type": "object",
+        "properties": {
+          "previousZone": {
+            "type": "string"
+          },
+          "zone": {
+            "type": "string"
+          },
+          "deadlines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeadlineChange"
+            }
+          }
+        },
+        "description": "The public ZonePreview JSON contract, independent of storage and domain behavior."
+      }
+    },
+    "securitySchemes": {
+      "IdentityBearer": {
+        "type": "http",
+        "description": "Access token resolved by HoneyDrunk Identity.",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "PocketQuests.Api"
+    }
+  ]
+}

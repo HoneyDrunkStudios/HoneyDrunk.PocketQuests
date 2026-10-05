@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Application.Identity;
-using PocketQuests.Application.Synchronization;
-using PocketQuests.Data.Repositories;
-using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Quests.Occurrences;
-using PocketQuests.Tests.Fixtures;
+using PocketQuests.Data.Entities.Accounts;
+using PocketQuests.Data.Entities.Quests;
+using PocketQuests.Data.Entities.Synchronization;
+using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Synchronization;
 using System.Text.Json;
 
 namespace PocketQuests.Tests.Integration;
@@ -21,10 +21,10 @@ public sealed partial class SqlApiTests
     [InlineData(5)]
     public async Task RefreshedAnchor_ImmediateUndoSurvivesLostReceiptAndRestart(int leadSeconds)
     {
-        var account = new AccountIdentity("test", "fresh-anchor-owner");
+        var account = TestIdentity("fresh-anchor-owner");
         var now = new DateTimeOffset(2026, 10, 3, 12, 0, 0, TimeSpan.Zero);
         await using (var db = Context())
-            await new SqlQuestStore(db).Read(account, "UTC", now, default);
+            await Store().Initialize(account, "UTC", now, default);
         var accepted = await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07"), now);
         var occurrence = accepted.Occurrences.Single().Occurrence.Id;
         var initial = await AnchorAt(account, now);
@@ -35,7 +35,7 @@ public sealed partial class SqlApiTests
 
         // Production drain reads current state and replaces the anchor after acknowledging completion.
         await using (var db = Context())
-            Assert.Equal(10, (await new SqlQuestStore(db).Read(account, "UTC", now.AddMilliseconds(100), default)).OverallXp);
+            Assert.Equal(10, (await Store().Read(account, now.AddMilliseconds(100), default)).OverallXp);
         var refreshed = await AnchorAt(account, now.AddMilliseconds(200));
         Assert.Equal(now.AddMilliseconds(200), refreshed.ServerUtc);
         Assert.Equal(leadSeconds == 0 ? refreshed.ServerUtc : now.AddSeconds(leadSeconds), refreshed.RecordedTimeFloor);
@@ -56,11 +56,11 @@ public sealed partial class SqlApiTests
         Assert.Equal(0, drained.OverallXp);
         Assert.Equal(2, drained.Occurrences.Length);
         await using var final = Context();
-        Assert.Equal(1, await final.Completions.CountAsync());
-        Assert.Equal(1, await final.Undos.CountAsync());
-        Assert.Equal(leadSeconds == 0 ? now.AddMilliseconds(500) : now.AddSeconds(leadSeconds), (await final.Undos.SingleAsync()).RecordedAt);
-        Assert.Equal(4, await final.Operations.CountAsync());
-        Assert.Equal(0, (await new SqlQuestStore(final).Read(account, "UTC", now.AddSeconds(11), default)).OverallXp);
+        Assert.Equal(1, await final.Read.Set<QuestCompletionEntity>().CountAsync());
+        Assert.Equal(1, await final.Read.Set<QuestOccurrenceEventEntity>().Where(e => e.EventCode == "Undone").CountAsync());
+        Assert.Equal(leadSeconds == 0 ? now.AddMilliseconds(500) : now.AddSeconds(leadSeconds), (await final.Read.Set<QuestOccurrenceEventEntity>().Where(e => e.EventCode == "Undone").SingleAsync()).EffectiveAt);
+        Assert.Equal(4, await final.Read.Set<CommandReceiptEntity>().CountAsync());
+        Assert.Equal(0, (await Store().Read(account, now.AddSeconds(11), default)).OverallXp);
     }
 
     /// <summary>Acceptance has the same ordering requirement as completion; refreshed proofs cannot precede accepted terms.</summary>
@@ -71,10 +71,10 @@ public sealed partial class SqlApiTests
     [InlineData(5)]
     public async Task RefreshedAnchor_CompletionDoesNotPrecedeFutureAcceptance(int leadSeconds)
     {
-        var account = new AccountIdentity("test", "acceptance-clock-owner");
+        var account = TestIdentity("acceptance-clock-owner");
         var now = new DateTimeOffset(2026, 10, 3, 12, 0, 0, TimeSpan.Zero);
         await using (var db = Context())
-            await new SqlQuestStore(db).Read(account, "UTC", now, default);
+            await Store().Initialize(account, "UTC", now, default);
         var original = await AnchorAt(account, now);
         var accepted = await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07", RecordedTime: new(original.Id, original.BootId, 1, leadSeconds * 1000, now.AddSeconds(leadSeconds))), now);
         var anchor = await AnchorAt(account, now.AddMilliseconds(200));
@@ -88,10 +88,10 @@ public sealed partial class SqlApiTests
     [Fact]
     public async Task RepeatedAnchors_DoNotAccumulateLeadOrLoseOnlineCommandOrdering()
     {
-        var account = new AccountIdentity("test", "refresh-clock-owner");
+        var account = TestIdentity("refresh-clock-owner");
         var now = new DateTimeOffset(2026, 10, 3, 12, 0, 0, TimeSpan.Zero);
         await using (var db = Context())
-            await new SqlQuestStore(db).Read(account, "UTC", now, default);
+            await Store().Initialize(account, "UTC", now, default);
         var accepted = await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07"), now);
         var occurrence = accepted.Occurrences.Single().Occurrence.Id;
         var original = await AnchorAt(account, now);
@@ -126,10 +126,10 @@ public sealed partial class SqlApiTests
     [InlineData(0)]
     public async Task AnchoredFloor_DoesNotExtendUndoWindow(int boundaryOffsetMilliseconds)
     {
-        var account = new AccountIdentity("test", "undo-boundary-owner");
+        var account = TestIdentity("undo-boundary-owner");
         var now = new DateTimeOffset(2026, 10, 3, 12, 0, 0, TimeSpan.Zero);
         await using (var db = Context())
-            await new SqlQuestStore(db).Read(account, "UTC", now, default);
+            await Store().Initialize(account, "UTC", now, default);
         var accepted = await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07"), now);
         var occurrence = accepted.Occurrences.Single().Occurrence.Id;
         var original = await AnchorAt(account, now);
@@ -146,10 +146,10 @@ public sealed partial class SqlApiTests
         }
         else
         {
-            await Assert.ThrowsAsync<InvalidOperationException>(() => ExecuteAt(account, undo, now.AddDays(3)));
+            await Assert.ThrowsAsync<QuestConflictException>(() => ExecuteAt(account, undo, now.AddDays(3)));
             await using var db = Context();
-            Assert.Empty(await db.Undos.ToListAsync());
-            Assert.Equal(2, await db.Operations.CountAsync());
+            Assert.Empty(await db.Read.Set<QuestOccurrenceEventEntity>().Where(e => e.EventCode == "Undone").ToListAsync());
+            Assert.Equal(2, await db.Read.Set<CommandReceiptEntity>().CountAsync());
         }
     }
 
@@ -158,19 +158,19 @@ public sealed partial class SqlApiTests
     [Fact]
     public async Task AnchoredFloor_StillRejectsCompletionAtDeadline()
     {
-        var account = new AccountIdentity("test", "floor-deadline-owner");
+        var account = TestIdentity("floor-deadline-owner");
         var now = new DateTimeOffset(2026, 10, 3, 23, 59, 59, TimeSpan.Zero);
         await using (var db = Context())
-            await new SqlQuestStore(db).Read(account, "UTC", now, default);
+            await Store().Initialize(account, "UTC", now, default);
         var due = await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07", DueDate: "2026-10-03"), now);
         var original = await AnchorAt(account, now);
         await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07", RecordedTime: new(original.Id, original.BootId, 1, 1000, now.AddSeconds(1))), now);
         var anchor = await AnchorAt(account, now.AddMilliseconds(200));
         Assert.Equal(now.AddSeconds(1), anchor.RecordedTimeFloor);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ExecuteAt(account, new(Guid.NewGuid(), "complete", due.Occurrences.Single().Occurrence.Id, RecordedTime: new(anchor.Id, anchor.BootId, 1, 300, anchor.DeviceUtc.AddMilliseconds(300))), now.AddMilliseconds(500)));
+        await Assert.ThrowsAsync<QuestConflictException>(() => ExecuteAt(account, new(Guid.NewGuid(), "complete", due.Occurrences.Single().Occurrence.Id, RecordedTime: new(anchor.Id, anchor.BootId, 1, 300, anchor.DeviceUtc.AddMilliseconds(300))), now.AddMilliseconds(500)));
         await using var final = Context();
-        Assert.Empty(await final.Completions.ToListAsync());
-        Assert.Equal(2, await final.Operations.CountAsync());
+        Assert.Empty(await final.Read.Set<QuestCompletionEntity>().ToListAsync());
+        Assert.Equal(2, await final.Read.Set<CommandReceiptEntity>().CountAsync());
     }
 
     /// <summary>Ordering floors never bypass raw proof, ownership, ordinal or five-second future validation.</summary>
@@ -178,13 +178,13 @@ public sealed partial class SqlApiTests
     [Fact]
     public async Task AnchoredFloor_PreservesClockAndOwnershipGuards()
     {
-        var account = new AccountIdentity("test", "floor-guard-owner");
-        var other = new AccountIdentity("test", "floor-guard-other");
+        var account = TestIdentity("floor-guard-owner");
+        var other = TestIdentity("floor-guard-other");
         var now = new DateTimeOffset(2026, 10, 3, 12, 0, 0, TimeSpan.Zero);
         await using (var db = Context())
         {
-            await new SqlQuestStore(db).Read(account, "UTC", now, default);
-            await new SqlQuestStore(db).Read(other, "UTC", now, default);
+            await Store().Initialize(account, "UTC", now, default);
+            await Store().Initialize(other, "UTC", now, default);
         }
 
         var accepted = await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07"), now);
@@ -194,29 +194,29 @@ public sealed partial class SqlApiTests
         await ExecuteAt(account, new(completion, "complete", occurrence, RecordedTime: new(original.Id, original.BootId, 1, 5000, now.AddSeconds(5))), now);
         var anchor = await AnchorAt(account, now.AddMilliseconds(200));
         var undo = new QuestCommand(Guid.NewGuid(), "undo", occurrence, CompletionId: completion, RecordedTime: new(anchor.Id, anchor.BootId, 1, 300, anchor.DeviceUtc.AddMilliseconds(300)));
-        await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(other, undo, now.AddMilliseconds(500)));
-        await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(account, undo with { RecordedTime = undo.RecordedTime! with { BootId = Guid.NewGuid() } }, now.AddMilliseconds(500)));
-        await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(account, undo with { RecordedTime = undo.RecordedTime! with { DeviceUtc = now.AddMinutes(3) } }, now.AddMilliseconds(500)));
+        await Assert.ThrowsAsync<QuestValidationException>(() => ExecuteAt(other, undo, now.AddMilliseconds(500)));
+        await Assert.ThrowsAsync<QuestValidationException>(() => ExecuteAt(account, undo with { RecordedTime = undo.RecordedTime! with { BootId = Guid.NewGuid() } }, now.AddMilliseconds(500)));
+        await Assert.ThrowsAsync<QuestValidationException>(() => ExecuteAt(account, undo with { RecordedTime = undo.RecordedTime! with { DeviceUtc = now.AddMinutes(3) } }, now.AddMilliseconds(500)));
         await Assert.ThrowsAsync<SyncClockNotReadyException>(() => ExecuteAt(account, undo with { RecordedTime = undo.RecordedTime! with { ElapsedMilliseconds = 5001, DeviceUtc = anchor.DeviceUtc.AddMilliseconds(5001) } }, now.AddMilliseconds(200)));
         await Assert.ThrowsAsync<SyncClockNotReadyException>(() => ExecuteAt(account, undo, now.AddMilliseconds(-1)));
         await Assert.ThrowsAsync<SyncClockNotReadyException>(() => AnchorAt(account, now.AddMilliseconds(-1)));
         Assert.Equal(0, (await ExecuteAt(account, undo, now.AddMilliseconds(500))).OverallXp);
-        await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(account, undo with { OperationId = Guid.NewGuid() }, now.AddSeconds(1)));
-        await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(account, undo with { OperationId = Guid.NewGuid(), RecordedTime = undo.RecordedTime! with { Ordinal = 2, ElapsedMilliseconds = 299 } }, now.AddSeconds(1)));
+        await Assert.ThrowsAsync<QuestValidationException>(() => ExecuteAt(account, undo with { OperationId = Guid.NewGuid() }, now.AddSeconds(1)));
+        await Assert.ThrowsAsync<QuestValidationException>(() => ExecuteAt(account, undo with { OperationId = Guid.NewGuid(), RecordedTime = undo.RecordedTime! with { Ordinal = 2, ElapsedMilliseconds = 299 } }, now.AddSeconds(1)));
         await using var final = Context();
-        Assert.Equal(1, await final.Undos.CountAsync());
-        Assert.Equal(3, await final.Operations.CountAsync());
+        Assert.Equal(1, await final.Read.Set<QuestOccurrenceEventEntity>().Where(e => e.EventCode == "Undone").CountAsync());
+        Assert.Equal(3, await final.Read.Set<CommandReceiptEntity>().CountAsync());
     }
 
-    /// <summary>An additive DACPAC upgrade preserves old anchors and receipts while recovering new floors from committed history.</summary>
+    /// <summary>Repeat publication preserves anchor floors, receipts, immutable history and a pending Undo.</summary>
     /// <returns>The completed regression.</returns>
     [Fact]
-    public async Task ClockFloorUpgrade_PreservesLegacyAnchorsReceiptsAndHistory()
+    public async Task RepeatPublication_PreservesAnchorsReceiptsAndHistory()
     {
-        var account = new AccountIdentity("test", "clock-upgrade-owner");
+        var account = TestIdentity("clock-upgrade-owner");
         var now = new DateTimeOffset(2026, 10, 3, 12, 0, 0, TimeSpan.Zero);
         await using (var db = Context())
-            await new SqlQuestStore(db).Read(account, "UTC", now, default);
+            await Store().Initialize(account, "UTC", now, default);
         var accepted = await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07"), now);
         var original = await AnchorAt(account, now);
         var completion = new QuestCommand(Guid.NewGuid(), "complete", accepted.Occurrences.Single().Occurrence.Id, RecordedTime: new(original.Id, original.BootId, 1, 1000, now.AddSeconds(1)));
@@ -226,14 +226,10 @@ public sealed partial class SqlApiTests
         var persistedUndo = JsonSerializer.Serialize(pendingUndo);
         await using (var db = Context())
         {
-            Assert.StartsWith("PocketQuests_Tests_", db.Database.GetDbConnection().Database, StringComparison.Ordinal);
-
-            // Recreate the immediately preceding schema using only this disposable database.
-            await db.Database.ExecuteSqlRawAsync("ALTER TABLE dbo.Accounts DROP COLUMN LastRecordedAt; ALTER TABLE dbo.SyncAnchors DROP COLUMN RecordedTimeFloor;");
-            await DatabaseSchema.DeployAsync(db.Database);
-            await DatabaseSchema.DeployAsync(db.Database);
-            Assert.Null((await db.Accounts.SingleAsync()).LastRecordedAt);
-            Assert.All(await db.SyncAnchors.ToListAsync(), anchor => Assert.Null(anchor.RecordedTimeFloor));
+            await Republish();
+            await Republish();
+            Assert.Equal(now.AddSeconds(1), (await db.Read.Set<AccountEntity>().SingleAsync()).LastRecordedAt);
+            Assert.Equal(now.AddSeconds(1), (await db.Read.Set<SyncAnchorEntity>().SingleAsync(a => a.Id == legacyRefresh.Id)).RecordedTimeFloorAt);
         }
 
         Assert.Equal(JsonSerializer.Serialize(receipt), JsonSerializer.Serialize(await ExecuteAt(account, completion, now.AddMilliseconds(100))));

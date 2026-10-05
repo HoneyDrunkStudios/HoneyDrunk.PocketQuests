@@ -1,5 +1,5 @@
 using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Quests.Occurrences;
+using PocketQuests.Domain.Models.Quests;
 
 namespace PocketQuests.Tests.Integration;
 
@@ -25,7 +25,7 @@ public sealed partial class SqlApiTests
         Assert.Equal(10, rewards.Where(e => e.Track == "Attribute").Sum(e => e.Amount));
         Assert.Equal(10, Assert.Single(rewards, e => e.Track == "Skill").Amount);
         Assert.Equal(2, completed.Categories.Single(c => c.Id == "c01").Level);
-        var outcome = Assert.IsType<PocketQuests.Domain.Projections.CompletionOutcome>(completed.CompletionOutcome);
+        var outcome = Assert.IsType<PocketQuests.Domain.Models.Quests.CompletionOutcome>(completed.CompletionOutcome);
         Assert.Equal(operation.OperationId, outcome.CompletionId);
         Assert.Equal(first, outcome.OccurrenceId);
         Assert.Contains(outcome.LevelUps, l => l.Track == "Category" && l.TrackId == "c01" && l.From == 1 && l.To == 2);

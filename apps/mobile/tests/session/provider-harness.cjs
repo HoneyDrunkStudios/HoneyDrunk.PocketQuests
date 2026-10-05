@@ -7,6 +7,9 @@ const ts = require("typescript");
 const localRequire = createRequire(__filename);
 const originalLoad = Module._load;
 let active;
+const realReact = process.env.PQ_REAL_REACT === "1" ? require("react") : null;
+const realJsx = realReact ? require("react/jsx-runtime") : null;
+const wire = require("../../../../contracts/wire-fixtures.json");
 const hooks = {
   createContext: () => ({}),
   use: (context) => context,
@@ -23,6 +26,12 @@ const hooks = {
       },
     ];
   },
+  useMemo(factory) {
+    return factory();
+  },
+  useSyncExternalStore(_subscribe, getSnapshot) {
+    return getSnapshot();
+  },
   useRef(initial) {
     return hooks.useState({ current: initial })[0];
   },
@@ -34,22 +43,61 @@ const hooks = {
   },
 };
 Module._load = function (name, ...rest) {
-  if (name === "react") return { ...hooks, default: hooks };
+  if (name === "react") return realReact ?? { ...hooks, default: hooks };
   if (name === "react/jsx-runtime")
-    return { jsx: (type, props) => ({ type, props }) };
+    return realJsx ?? { jsx: (type, props) => ({ type, props }) };
   if (name === "react-native")
     return {
-      Platform: { OS: "android" },
-      AppState: { addEventListener: () => ({ remove() {} }) },
+      Platform: {
+        get OS() {
+          return active?.platform ?? "android";
+        },
+      },
+      AppState: {
+        addEventListener: (_event, listener) => {
+          const host = active;
+          host.appListeners ??= new Set();
+          host.appListeners.add(listener);
+          return {
+            remove() {
+              host.appListeners.delete(listener);
+            },
+          };
+        },
+      },
     };
   if (name === "expo-crypto")
     return { randomUUID: () => `${active.boot}-${++active.sequence}` };
+  if (name === "expo")
+    return { requireOptionalNativeModule: () => active?.nativeModule ?? null };
   if (name === "./storage")
     return {
       sessionStorage: {
         load: async () => active.savedSession,
         save: async (value) => {
-          active.savedSession = value;
+          const host = active;
+          await host.beforeSessionSave?.(value);
+          host.savedSession = value;
+          host.storageEvents?.push({ kind: "session", value });
+        },
+        loadCleanupOwner: async () => {
+          if (active.failCleanupRead)
+            throw new Error("Private cleanup read failed");
+          return active.cleanupOwner ?? null;
+        },
+        saveCleanupOwner: (value) => {
+          const host = active;
+          const next = (host.cleanupWrites ?? Promise.resolve())
+            .catch(() => {})
+            .then(async () => {
+              if (host.beforeCleanupSave) await host.beforeCleanupSave(value);
+              if (host.failCleanupSave)
+                throw new Error("Private cleanup write failed");
+              host.cleanupOwner = value;
+              host.storageEvents?.push({ kind: "cleanup-owner", value });
+            });
+          host.cleanupWrites = next;
+          return next;
         },
         loadPending: async () => null,
         savePending: async () => {},
@@ -57,19 +105,60 @@ Module._load = function (name, ...rest) {
     };
   if (name === "./offline-store")
     return {
-      loadAccount: async () => structuredClone(active.disk),
-      saveAccount: async (value) => {
-        if (active.failSave) throw new Error("Private storage write failed");
-        active.disk = structuredClone(value);
+      cacheRecoveryNotice: (owner) =>
+        active.recoveryCopies
+          ? active.hiddenNotices?.has(owner)
+            ? null
+            : (active.recoveryCopies[owner] ?? null)
+          : (active.cacheNotice ?? null),
+      discardCacheRecovery: async (owner) => {
+        if (active.failDiscardRecovery)
+          throw new Error("Recovery discard failed");
+        if (active.recoveryCopies) delete active.recoveryCopies[owner];
+        else active.cacheNotice = null;
+        active.hiddenNotices?.delete(owner);
       },
-      clearAccount: async () => {
-        active.disk = null;
+      loadAccount: async (owner) => {
+        if (active.beforeLoad) await active.beforeLoad(owner);
+        if (active.failLoad) throw new Error("Private storage read failed");
+        return structuredClone(
+          active.accounts ? (active.accounts[owner] ?? null) : active.disk,
+        );
+      },
+      saveAccount: async (value) => {
+        const host = active;
+        if (host.failSave) throw new Error("Private storage write failed");
+        if (host.beforeSave) await host.beforeSave(value);
+        host.disk = JSON.parse(JSON.stringify(value));
+        if (host.accounts)
+          host.accounts[value.userId] = structuredClone(host.disk);
+        if (host.failSaveAfterCommit)
+          throw new Error("Private storage response lost after commit");
+      },
+      clearAccount: async (owner) => {
+        if (active.failClear) {
+          if (active.hiddenNotices) active.hiddenNotices.add(owner);
+          throw new Error("Private storage cleanup failed");
+        }
+        if (active.accounts) delete active.accounts[owner];
+        if (!active.accounts || active.disk?.userId === owner)
+          active.disk = null;
+        if (active.recoveryCopies) delete active.recoveryCopies[owner];
+        else active.cacheNotice = null;
+        active.hiddenNotices?.delete(owner);
       },
       deviceId: async () => "device",
     };
   if (name.endsWith("/export-download")) return { saveExport: async () => {} };
   if (name.endsWith("/notifications"))
-    return { syncWarnings: async () => "off" };
+    return {
+      syncWarnings: async (state) => {
+        const host = active;
+        host.warningCalls ??= [];
+        host.warningCalls.push(state);
+        return host.syncWarnings ? host.syncWarnings(state) : "off";
+      },
+    };
   return originalLoad.call(this, name, ...rest);
 };
 for (const extension of [".ts", ".tsx"])
@@ -84,14 +173,23 @@ for (const extension of [".ts", ".tsx"])
       }).outputText,
       file,
     );
-const { SessionProvider } = localRequire("../../src/session/session.tsx");
+const { SessionProvider, useSession, useAccountSnapshot, useSessionActions } =
+  localRequire("../../src/session/session.tsx");
 const { RequestError } = localRequire("../../src/session/request-error.ts");
+const { createClockSource } = localRequire("../../src/session/clock-source.ts");
 
 function account(queue = []) {
   return {
     userId: "owner",
-    catalog: { quests: [], categories: [], attributes: [], skills: [] },
+    catalog: {
+      quests: [],
+      categories: [],
+      attributes: [],
+      skills: [],
+      rules: [],
+    },
     state: {
+      ...structuredClone(wire.state),
       definitions: [],
       occurrences: [],
       overallXp: 0,
@@ -103,7 +201,11 @@ function account(queue = []) {
     anchor: null,
   };
 }
-function createHarness(disk = account(), boot = "process") {
+function createHarness(
+  disk = account(),
+  boot = "process",
+  clockOverrides = {},
+) {
   const host = {
     disk: structuredClone(disk),
     boot,
@@ -113,21 +215,64 @@ function createHarness(disk = account(), boot = "process") {
     effects: [],
     savedSession: { userId: "owner", token: "test-token" },
     sent: [],
+    requests: [],
     online: true,
     state: structuredClone(disk.state),
+    clockEpoch: "7",
+    clockMs:
+      (disk.anchor?.clock?.elapsedMilliseconds ?? 1000000) +
+      (disk.anchor?.lastElapsedMilliseconds ?? 0),
+    wallMs:
+      Date.parse(disk.anchor?.deviceUtc ?? "2026-10-04T12:00:00.000Z") +
+      (disk.anchor?.lastElapsedMilliseconds ?? 0),
+    ...clockOverrides,
+  };
+  host.clockSource = {
+    read: () => ({
+      observedUtc: new Date(host.wallMs).toISOString(),
+      sample:
+        host.clockEpoch === null
+          ? null
+          : {
+              kind: "android-elapsed-realtime-v1",
+              epoch: host.clockEpoch,
+              elapsedMilliseconds: host.clockMs,
+              deviceUtc: new Date(host.wallMs).toISOString(),
+            },
+      reason:
+        host.clockEpoch === null
+          ? "Device timing is unavailable; pending timing verification."
+          : undefined,
+    }),
+  };
+  host.advance = (milliseconds) => {
+    host.clockMs += milliseconds;
+    host.wallMs += milliseconds;
   };
   active = host;
   global.fetch = async (url, options = {}) => {
     if (!host.online) throw new TypeError("Network unavailable");
     const body = options.body && JSON.parse(options.body);
+    host.requests.push({
+      url,
+      headers: options.headers,
+      body: structuredClone(body),
+    });
+    if (host.respond) {
+      const response = await host.respond(url, options, body);
+      if (response) return response;
+    }
     let value;
-    if (url.endsWith("/users/me")) value = { userId: "owner", state: "Active" };
-    else if (url.endsWith("/api/catalog")) value = host.disk.catalog;
+    if (url.endsWith("/users/me"))
+      value = { userId: host.identityUser ?? "owner", state: "Active" };
+    else if (url.endsWith("/api/catalog"))
+      value = host.disk?.catalog ?? account().catalog;
     else if (url.endsWith("/api/sync-anchor"))
       value = {
         id: `anchor-${host.sequence}`,
         ...body,
         serverUtc: body.deviceUtc,
+        recordedTimeFloor: null,
       };
     else if (url.endsWith("/api/commands")) {
       host.sent.push(structuredClone(body));
@@ -151,7 +296,16 @@ function createHarness(disk = account(), boot = "process") {
     active = host;
     host.cursor = 0;
     host.effects = [];
-    return SessionProvider({ children: null }).props.value;
+    let element = SessionProvider({
+      children: null,
+      clockSource: host.clockSource,
+    });
+    const value = {};
+    while (element?.props?.value) {
+      Object.assign(value, element.props.value);
+      element = element.props.children;
+    }
+    return value;
   };
   host.mount = async () => {
     host.render();
@@ -162,4 +316,16 @@ function createHarness(disk = account(), boot = "process") {
   };
   return host;
 }
-module.exports = { account, createHarness, RequestError };
+module.exports = {
+  account,
+  createHarness,
+  RequestError,
+  createClockSource,
+  SessionProvider,
+  useSession,
+  useAccountSnapshot,
+  useSessionActions,
+  activate: (host) => {
+    active = host;
+  },
+};

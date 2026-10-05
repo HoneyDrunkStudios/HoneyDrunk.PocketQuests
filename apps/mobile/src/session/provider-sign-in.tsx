@@ -1,3 +1,4 @@
+import { validateProviderConfiguration } from "./provider-session";
 import { requestTimeoutMs, signInRedirect } from "../config/client";
 import { useEffect, useRef, useState } from "react";
 import * as AuthSession from "expo-auth-session";
@@ -27,7 +28,7 @@ export function ProviderSignIn({
       .then(async (response) => {
         if (!response.ok)
           throw new Error("Provider sign-in is not configured yet.");
-        const value = await response.json();
+        const value = validateProviderConfiguration(await response.json());
         if (active) setConfig(value);
       })
       .catch(() => {

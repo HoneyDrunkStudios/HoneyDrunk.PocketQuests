@@ -1,12 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Application.Identity;
-using PocketQuests.Application.Synchronization;
-using PocketQuests.Data.Repositories;
-using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Progress;
-using PocketQuests.Domain.Quests.Definitions;
-using PocketQuests.Domain.Quests.Occurrences;
-using PocketQuests.Domain.Synchronization;
+using PocketQuests.Data.Entities.Quests;
+using PocketQuests.Data.Entities.Synchronization;
+using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Synchronization;
 
 namespace PocketQuests.Tests.Integration;
 
@@ -18,17 +17,17 @@ public sealed partial class SqlApiTests
     [Fact]
     public async Task ValidAnchoredOfflineCompletionWinsOverProvisionalMiss()
     {
-        var account = new AccountIdentity("test", "offline-owner");
+        var account = TestIdentity("offline-owner");
         var now = new DateTimeOffset(2026, 9, 28, 23, 58, 0, TimeSpan.Zero);
         await using (var db = Context())
-            await new SqlQuestStore(db).Read(account, "UTC", now, default);
+            await Store().Initialize(account, "UTC", now, default);
         var accepted = await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07", DueDate: "2026-09-28"), now);
         var anchor = await AnchorAt(account, now);
         var proof = new RecordedActionTime(anchor.Id, anchor.BootId, 1, 60000, anchor.DeviceUtc.AddMinutes(1));
         var command = new QuestCommand(Guid.NewGuid(), "complete", accepted.Occurrences.Single().Occurrence.Id, RecordedTime: proof);
         await using (var db = Context())
         {
-            var missed = await new SqlQuestStore(db).Read(account, "UTC", now.AddDays(10), default);
+            var missed = await Store().Read(account, now.AddDays(10), default);
             Assert.Equal(QuestStatus.Missed, missed.Occurrences.Single().Status);
         }
 
@@ -37,7 +36,7 @@ public sealed partial class SqlApiTests
         Assert.Equal(now.AddMinutes(1), complete.Occurrences.Single().Completion!.RecordedAt);
         Assert.Equal(10, (await ExecuteAt(account, command, now.AddDays(11))).OverallXp);
         await using var final = Context();
-        Assert.Equal(1, await final.Completions.CountAsync());
+        Assert.Equal(1, await final.Read.Set<QuestCompletionEntity>().CountAsync());
     }
 
     /// <summary>Clock jumps, reset processes, cross-account anchors and exact-cutoff timestamps fail safely.</summary>
@@ -45,26 +44,26 @@ public sealed partial class SqlApiTests
     [Fact]
     public async Task OfflineClockAndOwnershipConflictsDoNotWriteAwardsOrReceipts()
     {
-        var account = new AccountIdentity("test", "offline-owner");
-        var other = new AccountIdentity("test", "other-owner");
+        var account = TestIdentity("offline-owner");
+        var other = TestIdentity("other-owner");
         var now = new DateTimeOffset(2026, 9, 28, 23, 58, 0, TimeSpan.Zero);
         await using (var db = Context())
         {
-            await new SqlQuestStore(db).Read(account, "UTC", now, default);
-            await new SqlQuestStore(db).Read(other, "UTC", now, default);
+            await Store().Initialize(account, "UTC", now, default);
+            await Store().Initialize(other, "UTC", now, default);
         }
 
         var accepted = await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07", DueDate: "2026-09-28"), now);
         var anchor = await AnchorAt(account, now);
         var id = accepted.Occurrences.Single().Occurrence.Id;
         var valid = new RecordedActionTime(anchor.Id, anchor.BootId, 1, 60000, anchor.DeviceUtc.AddMinutes(1));
-        await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(account, new(Guid.NewGuid(), "complete", id, RecordedTime: valid with { DeviceUtc = now.AddHours(4) }), now.AddDays(1)));
-        await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(account, new(Guid.NewGuid(), "complete", id, RecordedTime: valid with { BootId = Guid.NewGuid() }), now.AddDays(1)));
-        await Assert.ThrowsAsync<ArgumentException>(() => ExecuteAt(other, new(Guid.NewGuid(), "complete", id, RecordedTime: valid), now.AddDays(1)));
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ExecuteAt(account, new(Guid.NewGuid(), "complete", id, RecordedTime: valid with { ElapsedMilliseconds = 120000, DeviceUtc = now.AddMinutes(2) }), now.AddDays(1)));
+        await Assert.ThrowsAsync<QuestValidationException>(() => ExecuteAt(account, new(Guid.NewGuid(), "complete", id, RecordedTime: valid with { DeviceUtc = now.AddHours(4) }), now.AddDays(1)));
+        await Assert.ThrowsAsync<QuestValidationException>(() => ExecuteAt(account, new(Guid.NewGuid(), "complete", id, RecordedTime: valid with { BootId = Guid.NewGuid() }), now.AddDays(1)));
+        await Assert.ThrowsAsync<QuestValidationException>(() => ExecuteAt(other, new(Guid.NewGuid(), "complete", id, RecordedTime: valid), now.AddDays(1)));
+        await Assert.ThrowsAsync<QuestConflictException>(() => ExecuteAt(account, new(Guid.NewGuid(), "complete", id, RecordedTime: valid with { ElapsedMilliseconds = 120000, DeviceUtc = now.AddMinutes(2) }), now.AddDays(1)));
         await using var final = Context();
-        Assert.Equal(0, await final.Completions.CountAsync());
-        Assert.Equal(1, await final.Operations.CountAsync());
+        Assert.Equal(0, await final.Read.Set<QuestCompletionEntity>().CountAsync());
+        Assert.Equal(1, await final.Read.Set<CommandReceiptEntity>().CountAsync());
     }
 
     /// <summary>Changes made after recording cannot alter the completed cached revision's reward or text.</summary>
@@ -72,10 +71,10 @@ public sealed partial class SqlApiTests
     [Fact]
     public async Task OfflineCompletionKeepsAnchoredDefinitionRevisionAfterOnlineEdit()
     {
-        var account = new AccountIdentity("test", "offline-owner");
+        var account = TestIdentity("offline-owner");
         var now = new DateTimeOffset(2026, 9, 28, 12, 0, 0, TimeSpan.Zero);
         await using (var db = Context())
-            await new SqlQuestStore(db).Read(account, "UTC", now, default);
+            await Store().Initialize(account, "UTC", now, default);
         var quest = new Quest(Guid.NewGuid().ToString(), "Recorded original", "Original criterion", "c07", Rank.F, Effort.Small, [], [], true);
         await ExecuteAt(account, new(Guid.NewGuid(), "save-definition", Definition: quest, ExpectedRevision: 0), now);
         var accepted = await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: quest.Id), now);
@@ -92,10 +91,10 @@ public sealed partial class SqlApiTests
     [Fact]
     public async Task OfflineCreateAcceptCompleteUndoConvergesWithStableIds()
     {
-        var account = new AccountIdentity("test", "offline-owner");
+        var account = TestIdentity("offline-owner");
         var now = new DateTimeOffset(2026, 9, 28, 12, 0, 0, TimeSpan.Zero);
         await using (var db = Context())
-            await new SqlQuestStore(db).Read(account, "UTC", now, default);
+            await Store().Initialize(account, "UTC", now, default);
         var anchor = await AnchorAt(account, now);
         RecordedActionTime Proof(int i) => new(anchor.Id, anchor.BootId, i, i * 1000, now.AddSeconds(i));
         var quest = new Quest(Guid.NewGuid().ToString(), "Offline quest", "Done", "c07", Rank.F, Effort.Small, [], [], true);
@@ -116,10 +115,10 @@ public sealed partial class SqlApiTests
     [InlineData(5)]
     public async Task AnchoredCompletionClockLead_PreservesReceiptLevelUpAndImmediateUndo(int leadSeconds)
     {
-        var account = new AccountIdentity("test", "clock-lead-owner");
+        var account = TestIdentity("clock-lead-owner");
         var now = new DateTimeOffset(2026, 10, 3, 12, 0, 0, TimeSpan.Zero);
         await using (var db = Context())
-            await new SqlQuestStore(db).Read(account, "UTC", now, default);
+            await Store().Initialize(account, "UTC", now, default);
         for (var count = 0; count < 9; count++)
         {
             var accepted = await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07"), now);
@@ -144,7 +143,7 @@ public sealed partial class SqlApiTests
         Assert.Equal(10, Assert.Single(receipt.Ledger, e => e.EventId == command.OperationId && e.Track == "Overall").Amount);
         await using (var db = Context())
         {
-            var current = await new SqlQuestStore(db).Read(account, "UTC", now, default);
+            var current = await Store().Read(account, now, default);
             Assert.Equal(100, current.OverallXp);
             Assert.Equal(command.OperationId, current.Occurrences.Single(o => o.Occurrence.Id == occurrence).Completion!.Id);
             Assert.Null(current.CompletionOutcome);
@@ -155,7 +154,7 @@ public sealed partial class SqlApiTests
         Assert.Null(noOp.CompletionOutcome);
         var replay = await ExecuteAt(account, command, now.AddSeconds(6));
         Assert.Equal(System.Text.Json.JsonSerializer.Serialize(receipt), System.Text.Json.JsonSerializer.Serialize(replay));
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ExecuteAt(account, command with { Action = "undo" }, now.AddSeconds(6)));
+        await Assert.ThrowsAsync<QuestConflictException>(() => ExecuteAt(account, command with { Action = "undo" }, now.AddSeconds(6)));
 
         var undoAt = recorded.AddMilliseconds(100);
         var undoProof = proof with { Ordinal = 2, ElapsedMilliseconds = (leadSeconds * 1000) + 100, DeviceUtc = undoAt };
@@ -164,9 +163,9 @@ public sealed partial class SqlApiTests
         Assert.Equal(1, undone.OverallLevel);
         Assert.DoesNotContain(undone.Ledger, e => e.EventId == command.OperationId);
         await using var final = Context();
-        Assert.Equal(90, (await new SqlQuestStore(final).Read(account, "UTC", now.AddSeconds(1), default)).OverallXp);
-        Assert.Equal(10, await final.Completions.CountAsync());
-        Assert.Equal(1, await final.Undos.CountAsync());
+        Assert.Equal(90, (await Store().Read(account, now.AddSeconds(1), default)).OverallXp);
+        Assert.Equal(10, await final.Read.Set<QuestCompletionEntity>().CountAsync());
+        Assert.Equal(1, await final.Read.Set<QuestOccurrenceEventEntity>().Where(e => e.EventCode == "Undone").CountAsync());
     }
 
     /// <summary>The projection watermark does not permit a claimed completion at or beyond its deadline.</summary>
@@ -177,26 +176,26 @@ public sealed partial class SqlApiTests
     [InlineData(5000)]
     public async Task AnchoredFutureCompletion_StillRejectsDeadlineAndExcessiveLead(int leadMilliseconds)
     {
-        var account = new AccountIdentity("test", "deadline-owner");
+        var account = TestIdentity("deadline-owner");
         var now = new DateTimeOffset(2026, 10, 3, 23, 59, 59, TimeSpan.Zero);
         await using (var db = Context())
-            await new SqlQuestStore(db).Read(account, "UTC", now, default);
+            await Store().Initialize(account, "UTC", now, default);
         var accepted = await ExecuteAt(account, new(Guid.NewGuid(), "accept", QuestId: "PQ-CAT-Q07", DueDate: "2026-10-03"), now);
         var anchor = await AnchorAt(account, now);
         var proof = new RecordedActionTime(anchor.Id, anchor.BootId, 1, leadMilliseconds, now.AddMilliseconds(leadMilliseconds));
         var command = new QuestCommand(Guid.NewGuid(), "complete", accepted.Occurrences.Single().Occurrence.Id, RecordedTime: proof);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ExecuteAt(account, command, now));
+        await Assert.ThrowsAsync<QuestConflictException>(() => ExecuteAt(account, command, now));
         var excessive = command with { RecordedTime = proof with { ElapsedMilliseconds = 5001, DeviceUtc = now.AddMilliseconds(5001) } };
         await Assert.ThrowsAsync<SyncClockNotReadyException>(() => ExecuteAt(account, excessive, now));
         await using var final = Context();
-        Assert.Equal(0, await final.Completions.CountAsync());
-        Assert.Equal(1, await final.Operations.CountAsync());
-        Assert.Equal(0, (await new SqlQuestStore(final).Read(account, "UTC", now, default)).OverallXp);
+        Assert.Equal(0, await final.Read.Set<QuestCompletionEntity>().CountAsync());
+        Assert.Equal(1, await final.Read.Set<CommandReceiptEntity>().CountAsync());
+        Assert.Equal(0, (await Store().Read(account, now, default)).OverallXp);
     }
 
     private async Task<SyncAnchor> AnchorAt(AccountIdentity identity, DateTimeOffset at)
     {
         await using var db = Context();
-        return await new SqlQuestStore(db).CreateAnchor(identity, Guid.NewGuid(), Guid.NewGuid(), at, at, default);
+        return await Store().CreateAnchor(identity, Guid.NewGuid(), Guid.NewGuid(), at, at, default);
     }
 }

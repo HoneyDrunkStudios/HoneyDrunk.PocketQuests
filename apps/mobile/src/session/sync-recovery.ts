@@ -14,7 +14,7 @@ export type RejectedCommand = {
 
 // Only the four bounded offline actions can be proven independent here. Other
 // commands can change account-wide terms and must remain an ordering barrier.
-function dependsOn(command: Command, earlier: Command): boolean {
+export function dependsOn(command: Command, earlier: Command): boolean {
   if (
     !offlineQuestActions.has(command.action) ||
     !offlineQuestActions.has(earlier.action)

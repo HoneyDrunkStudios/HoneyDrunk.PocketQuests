@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Application.Identity;
-using PocketQuests.Data.Relational.Commands;
-using PocketQuests.Data.Relational.Entities;
+using PocketQuests.Data.Entities.Accounts;
+using PocketQuests.Data.Entities.Synchronization;
 using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Progress;
-using PocketQuests.Domain.Quests.Definitions;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.SchemaTests.Quests;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Text;
@@ -23,7 +24,7 @@ public sealed class RelationalReceiptSizeTests(SchemaFixture fixture) : IClassFi
     {
         var at = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
         var owner = new AccountIdentity("verified-identity", "usr_" + Guid.NewGuid().ToString("N")[..26].ToUpperInvariant());
-        var store = new RelationalQuestCommands(fixture.Connection);
+        var store = fixture.Commands();
         await store.Initialize(owner, "Etc/UTC", at);
         var skills = Enumerable.Range(0, 64).Select(_ => Guid.NewGuid().ToString("D")).ToArray();
         for (var index = 0; index < skills.Length; index++)
@@ -34,13 +35,13 @@ public sealed class RelationalReceiptSizeTests(SchemaFixture fixture) : IClassFi
         var accept = new QuestCommand(Guid.NewGuid(), QuestActions.Accept, Guid.NewGuid(), QuestId: quest.Id);
         await store.Execute(owner, accept, at);
         var complete = new QuestCommand(Guid.NewGuid(), QuestActions.Complete, accept.OccurrenceId);
-        var original = await store.Execute(owner, complete, at);
+        var original = await fixture.Complete(owner, new(complete.OperationId, complete.Action, complete.OccurrenceId), at);
         Assert.Equal(800, original.OverallXp);
         var feedbackBytes = Encoding.Unicode.GetByteCount(JsonSerializer.Serialize(original.CompletionOutcome));
         Assert.True(feedbackBytes > 65536, $"The legal feedback stress case must cross the old bound; actual UTF-16 bytes: {feedbackBytes}.");
         await store.Execute(owner, new(Guid.NewGuid(), QuestActions.SaveSkill, SkillId: skills[0], SkillName: "Later renamed skill", ExpectedRevision: 1), at.AddMinutes(1));
         await store.Execute(owner, new(Guid.NewGuid(), QuestActions.Undo, accept.OccurrenceId, CompletionId: complete.OperationId), at.AddMinutes(2));
-        Assert.Equal(JsonSerializer.Serialize(original), JsonSerializer.Serialize(await store.Execute(owner, complete, at.AddYears(2))));
+        Assert.Equal(JsonSerializer.Serialize(original), JsonSerializer.Serialize(await fixture.Complete(owner, new(complete.OperationId, complete.Action, complete.OccurrenceId), at.AddYears(2))));
         await using var db = fixture.Context();
         var account = await db.Set<AccountEntity>().SingleAsync(a => a.IdentityUserId == owner.Subject);
         var receipts = await db.Set<CommandReceiptEntity>().Where(r => r.AccountId == account.Id).ToListAsync();

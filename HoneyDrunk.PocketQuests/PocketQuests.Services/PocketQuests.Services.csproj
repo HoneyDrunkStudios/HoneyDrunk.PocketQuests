@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../PocketQuests.Contracts/PocketQuests.Contracts.csproj" />
+    <ProjectReference Include="../PocketQuests.Domain/PocketQuests.Domain.csproj" />
+    <ProjectReference Include="../PocketQuests.Data/PocketQuests.Data.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="PocketQuests.Tests" />
+    <InternalsVisibleTo Include="PocketQuests.ReplayProbe" />
+    <InternalsVisibleTo Include="PocketQuests.SchemaTests" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseIdentitySource)' != 'true'">
+    <PackageReference Include="HoneyDrunk.Identity.Abstractions" Version="[$(IdentityClientVersion)]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseIdentitySource)' == 'true'">
+    <ProjectReference Include="$(IdentitySourceRoot)/HoneyDrunk.Identity/HoneyDrunk.Identity.Abstractions/HoneyDrunk.Identity.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

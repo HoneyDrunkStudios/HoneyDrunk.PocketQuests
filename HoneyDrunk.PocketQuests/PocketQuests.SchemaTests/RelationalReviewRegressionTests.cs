@@ -1,14 +1,16 @@
 using HoneyDrunk.Identity.Abstractions.AccountLifecycle;
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Application.Identity;
-using PocketQuests.Application.Persistence;
-using PocketQuests.Data.Relational.Commands;
-using PocketQuests.Data.Relational.Entities;
+using Microsoft.Extensions.DependencyInjection;
+using PocketQuests.Data;
+using PocketQuests.Data.Entities.Accounts;
+using PocketQuests.Data.Entities.Quests;
+using PocketQuests.Data.Entities.Synchronization;
 using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Progress;
-using PocketQuests.Domain.Projections;
-using PocketQuests.Domain.Quests.Definitions;
-using PocketQuests.Domain.Schedules;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Schedules;
+using PocketQuests.Tests.Fixtures;
 using System.Globalization;
 using System.Text.Json;
 
@@ -20,18 +22,29 @@ public sealed class RelationalReviewRegressionTests(SchemaFixture fixture) : ICl
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private RelationalQuestCommands Store => new(fixture.Connection);
+    private TestQuestWorkflow Store => fixture.Commands();
 
     /// <summary>A current series quest cannot change through another action, without a newer revision, or without owned immutable configuration.</summary>
-    /// <returns>Completion after three runtime-role negatives and a valid rolled-back control.</returns>
+    /// <returns>Completion after rejecting unversioned and missing-configuration changes through real source reads after controlled same-owner corruption.</returns>
     [Fact]
-    public async Task SeriesQuestPointerRequiresNewOwnedSaveSeriesConfiguration()
+    public async Task SeriesQuestPointerRejectsMismatchedAndMissingCommittedConfiguration()
     {
         var owner = new AccountIdentity("honeydrunk-identity", "usr_00000000000000000000000999");
         await Store.Initialize(owner, "Etc/UTC", Start);
         foreach (var quest in new[] { "PQ-CAT-Q01", "PQ-CAT-Q02" })
             await Store.Execute(owner, new(Guid.NewGuid(), QuestActions.SaveSeries, QuestId: quest, DueDate: "2026-01-01", SeriesId: Guid.NewGuid(), Cadence: Cadence.Days, Interval: 1, ExpectedRevision: 0), Start);
-        await fixture.Script("series-mutation-negatives.sql");
+        await using var scope = fixture.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var account = await db.Account.SingleAsync(row => row.IdentityUserId == owner.Subject);
+        var series = await db.QuestSeries.OrderBy(row => row.CreationOrdinal).Where(row => row.AccountId == account.Id).ToArrayAsync();
+        var originalDefinition = series[0].QuestDefinitionId;
+        await fixture.Execute($"UPDATE pocketquests.QuestSeries SET QuestDefinitionId='{series[1].QuestDefinitionId:D}' WHERE Id='{series[0].Id:D}';");
+        await Assert.ThrowsAsync<InvalidOperationException>(() => Store.Read(owner, Start));
+        await fixture.Execute($"UPDATE pocketquests.QuestSeries SET QuestDefinitionId='{originalDefinition:D}', Revision=Revision+1 WHERE Id='{series[0].Id:D}';");
+        await Assert.ThrowsAsync<InvalidOperationException>(() => Store.Read(owner, Start));
+        await fixture.Execute($"UPDATE pocketquests.QuestSeries SET Revision=Revision-1 WHERE Id='{series[0].Id:D}';");
+        var recovered = await Store.Read(owner, Start);
+        Assert.Equal(2, recovered.Schedule.Series.Length);
     }
 
     /// <summary>New deliveries link the exact terms/consent configuration; previously generated deliveries keep their original link.</summary>
@@ -82,8 +95,8 @@ public sealed class RelationalReviewRegressionTests(SchemaFixture fixture) : ICl
         var original = await Store.Execute(owner, series, Start);
         var pausedAt = Start.AddDays(days);
         var resumedAt = pausedAt.AddDays(6);
-        await Store.ReceiveLifecycle(Intent(owner, 1, IdentityProtocol.Inactive, pausedAt, pausedAt), "private-ack", pausedAt);
-        await Store.ReceiveLifecycle(Intent(owner, 2, IdentityProtocol.Active, resumedAt, pausedAt), "private-ack", resumedAt);
+        await fixture.Lifecycle().ReceiveLifecycle(Intent(owner, 1, IdentityProtocol.Inactive, pausedAt, pausedAt), "private-ack", pausedAt);
+        await fixture.Lifecycle().ReceiveLifecycle(Intent(owner, 2, IdentityProtocol.Active, resumedAt, pausedAt), "private-ack", resumedAt);
         var resume = new QuestCommand(Guid.NewGuid(), QuestActions.Resume);
         var pending = 0;
         QuestState? result = null;

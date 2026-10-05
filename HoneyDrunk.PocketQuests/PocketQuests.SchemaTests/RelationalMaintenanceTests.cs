@@ -1,11 +1,12 @@
 using HoneyDrunk.Identity.Abstractions.AccountLifecycle;
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Application.Identity;
-using PocketQuests.Application.Persistence;
-using PocketQuests.Data.Relational.Commands;
-using PocketQuests.Data.Relational.Entities;
+using PocketQuests.Data.Entities.Accounts;
+using PocketQuests.Data.Entities.Quests;
+using PocketQuests.Data.Entities.Synchronization;
 using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Schedules;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Schedules;
 
 namespace PocketQuests.SchemaTests;
 
@@ -20,7 +21,7 @@ public sealed class RelationalMaintenanceTests(SchemaFixture fixture) : IClassFi
     {
         var start = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
         var later = start.AddDays(400);
-        var store = new RelationalQuestCommands(fixture.Connection);
+        var store = fixture.Commands();
         var owners = Enumerable.Range(0, 3).Select(_ => Identity()).ToArray();
         foreach (var owner in owners)
         {
@@ -34,7 +35,7 @@ public sealed class RelationalMaintenanceTests(SchemaFixture fixture) : IClassFi
         var inactive = Identity();
         await store.Initialize(inactive, "Etc/UTC", start);
         await store.Execute(inactive, new(Guid.NewGuid(), QuestActions.Accept, Guid.NewGuid(), QuestId: "PQ-CAT-Q01"), start);
-        await store.ReceiveLifecycle(new LifecycleIntent(inactive.Subject, 1, IdentityProtocol.Inactive, start, start.AddHours(1), IdentityProtocol.ConsumerId, new string('a', 64), start), "private-ack", start);
+        await fixture.Lifecycle().ReceiveLifecycle(new LifecycleIntent(inactive.Subject, 1, IdentityProtocol.Inactive, start, start.AddHours(1), IdentityProtocol.ConsumerId, new string('a', 64), start), "private-ack", start);
         await using var db = fixture.Context();
         var fenced = await db.Set<AccountEntity>().SingleAsync(a => a.IdentityUserId == inactive.Subject);
         ReconciliationCursor? cursor = null;
@@ -60,7 +61,7 @@ public sealed class RelationalMaintenanceTests(SchemaFixture fixture) : IClassFi
         }
 
         var idleBefore = await db.Set<AccountEntity>().SingleAsync(a => a.IdentityUserId == idle.Subject);
-        var concurrent = await Task.WhenAll(new RelationalQuestCommands(fixture.Connection).ReconcileAccounts(later.AddMinutes(1), maximumAccounts: 50, maximumDeliveries: 37), new RelationalQuestCommands(fixture.Connection).ReconcileAccounts(later.AddMinutes(1), maximumAccounts: 50, maximumDeliveries: 37));
+        var concurrent = await Task.WhenAll(fixture.Commands().ReconcileAccounts(later.AddMinutes(1), maximumAccounts: 50, maximumDeliveries: 37), fixture.Commands().ReconcileAccounts(later.AddMinutes(1), maximumAccounts: 50, maximumDeliveries: 37));
         Assert.Equal(222, concurrent.Sum(b => b.Deliveries));
         foreach (var owner in owners)
         {

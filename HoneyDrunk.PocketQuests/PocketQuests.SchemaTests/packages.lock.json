@@ -379,6 +379,14 @@
         "resolved": "2.23.0",
         "contentHash": "nWArUZTdU7iqZLycLKWe0TDms48KKGE6pONH2terYNa8REXiqixrMOkf1sk5DHGMaUTqONU2YkS4SAXBhLStgw=="
       },
+      "Microsoft.AspNetCore.OpenApi": {
+        "type": "Transitive",
+        "resolved": "10.0.12",
+        "contentHash": "7RnQ/UKn+kK3JDLmTpW+vVqNErWthGPAVAy1aIiBzv4ucQ6g9NFvOJUuT0PHcpvcJxGVxctMxj6t+NESWMrgHQ==",
+        "dependencies": {
+          "Microsoft.OpenApi": "[2.12.0, 3.0.0)"
+        }
+      },
       "Microsoft.AspNetCore.TestHost": {
         "type": "Transitive",
         "resolved": "10.0.12",
@@ -1000,6 +1008,11 @@
           "Microsoft.IdentityModel.Logging": "7.7.1"
         }
       },
+      "Microsoft.OpenApi": {
+        "type": "Transitive",
+        "resolved": "2.12.0",
+        "contentHash": "0xB/be+f6qYOhvQPUrVsLrau+fkowYv6gt9RIkajMhwT7sZnqtcA797yW3bS5kgSje+AQW4xZgyLnW641YFioQ=="
+      },
       "Microsoft.SqlServer.Server": {
         "type": "Transitive",
         "resolved": "1.0.0",
@@ -1283,17 +1296,16 @@
           "HoneyDrunk.Data.Outbox.Dispatcher": "[0.7.1, )",
           "HoneyDrunk.Identity.Client": "[0.1.0-alpha.4, 0.1.0-alpha.4]",
           "HoneyDrunk.Transport.AzureServiceBus": "[0.7.2, )",
+          "Microsoft.AspNetCore.OpenApi": "[10.0.12, )",
           "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": "[10.0.12, )",
           "PocketQuests.Data": "[1.0.0, )",
           "PocketQuests.Domain": "[1.0.0, )",
-          "PocketQuests.ServiceDefaults": "[1.0.0, )"
+          "PocketQuests.ServiceDefaults": "[1.0.0, )",
+          "PocketQuests.Services": "[1.0.0, )"
         }
       },
-      "pocketquests.application": {
-        "type": "Project",
-        "dependencies": {
-          "PocketQuests.Domain": "[1.0.0, )"
-        }
+      "pocketquests.contracts": {
+        "type": "Project"
       },
       "pocketquests.data": {
         "type": "Project",
@@ -1301,9 +1313,7 @@
           "HoneyDrunk.Audit.Data": "[0.2.1, )",
           "HoneyDrunk.Data.EntityFramework": "[0.7.1, )",
           "HoneyDrunk.Data.Outbox": "[0.7.1, )",
-          "HoneyDrunk.Identity.Abstractions": "[0.1.0-alpha.4, 0.1.0-alpha.4]",
-          "Microsoft.EntityFrameworkCore.SqlServer": "[10.0.12, )",
-          "PocketQuests.Application": "[1.0.0, )"
+          "Microsoft.EntityFrameworkCore.SqlServer": "[10.0.12, )"
         }
       },
       "pocketquests.domain": {
@@ -1322,6 +1332,15 @@
           "OpenTelemetry.Instrumentation.AspNetCore": "[1.19.0, )",
           "OpenTelemetry.Instrumentation.Http": "[1.19.0, )",
           "OpenTelemetry.Instrumentation.Runtime": "[1.19.0, )"
+        }
+      },
+      "pocketquests.services": {
+        "type": "Project",
+        "dependencies": {
+          "HoneyDrunk.Identity.Abstractions": "[0.1.0-alpha.4, 0.1.0-alpha.4]",
+          "PocketQuests.Contracts": "[1.0.0, )",
+          "PocketQuests.Data": "[1.0.0, )",
+          "PocketQuests.Domain": "[1.0.0, )"
         }
       }
     }

@@ -4,13 +4,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PocketQuests.Api.AccountLifecycle;
 using PocketQuests.Api.Quests;
-using PocketQuests.Application.Identity;
-using PocketQuests.Application.Synchronization;
-using PocketQuests.Data.AccountLifecycle;
-using PocketQuests.Data.Relational.Commands;
-using PocketQuests.Data.Relational.Entities;
+using PocketQuests.Data.Entities.Accounts;
+using PocketQuests.Data.Entities.Lifecycle;
+using PocketQuests.Data.Entities.Synchronization;
 using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Schedules;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Schedules;
+using PocketQuests.Domain.Models.Synchronization;
+using PocketQuests.Services.Lifecycle;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -26,16 +28,18 @@ public sealed partial class RelationalApiTests
     {
         var owner = NewOwner();
         var identity = new AccountIdentity("honeydrunk-identity", owner);
-        var store = new RelationalQuestCommands(fixture.Connection);
+        var store = fixture.Commands();
         await store.Initialize(identity, "Etc/UTC", Start);
         await store.Execute(identity, new(Guid.NewGuid(), QuestActions.SaveSeries, QuestId: "PQ-CAT-Q01", DueDate: "2026-01-01", ExpectedRevision: 0, SeriesId: Guid.NewGuid(), Cadence: Cadence.Days, Interval: 1), Start);
         using var host = new Host(fixture.Connection, owner, reconciliationEnabled: true);
         host.Clock.Now = Start.AddDays(400);
         using var client = host.Client();
-        Assert.Single(host.Services.GetServices<IHostedService>().OfType<RelationalMaintenance>());
+        Assert.Single(host.Services.GetServices<IHostedService>().OfType<ReconciliationMaintenance>());
         Assert.Single(host.Services.GetServices<IHostedService>().OfType<LifecycleMaintenance>());
         await using var db = fixture.Context();
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+
+        // Concurrent disposable DACPAC deployments compete with this hosted worker; this is a progress test, not a latency SLA.
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(60));
         AccountEntity account;
         do
         {
@@ -111,7 +115,7 @@ public sealed partial class RelationalApiTests
         await Setup(client);
         await Command(client, new(Guid.NewGuid(), QuestActions.Accept, Guid.NewGuid(), QuestId: "PQ-CAT-Q01"));
         using var scope = host.Services.CreateScope();
-        var lifecycle = scope.ServiceProvider.GetRequiredService<IQuestLifecycle>();
+        var lifecycle = scope.ServiceProvider.GetRequiredService<ILifecycleService>();
         host.Clock.Now = Start.AddMinutes(1);
         var pause = host.Clock.Now;
         await lifecycle.Receive(new(host.Owner, 1, IdentityProtocol.Inactive, pause, pause.AddHours(1), IdentityProtocol.ConsumerId, Capability(), pause), "private-test-ack", default);

@@ -1,4 +1,4 @@
-using PocketQuests.Data.AccountLifecycle;
+using PocketQuests.Services.Lifecycle;
 
 namespace PocketQuests.Api.AccountLifecycle;
 
@@ -13,7 +13,7 @@ public sealed class LifecycleMaintenance(IServiceScopeFactory scopes, ILogger<Li
             try
             {
                 await using var scope = scopes.CreateAsyncScope();
-                await scope.ServiceProvider.GetRequiredService<IQuestLifecycle>().Prune(stoppingToken);
+                await scope.ServiceProvider.GetRequiredService<ILifecycleService>().Prune(stoppingToken);
             }
             catch (Exception error) when (error is System.Data.Common.DbException or InvalidOperationException or TimeoutException)
             {

@@ -1,7 +1,11 @@
 using Microsoft.Data.SqlClient;
-using PocketQuests.Application.Identity;
-using PocketQuests.Data.Relational.Commands;
-using PocketQuests.Domain.Commands;
+using Microsoft.Extensions.DependencyInjection;
+using PocketQuests.Data.DataServices;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Services;
+using PocketQuests.Services.Accounts;
+using PocketQuests.Services.Quests;
 using System.Globalization;
 using System.Text.Json;
 
@@ -13,5 +17,11 @@ if (!parsed.IntegratedSecurity || !parsed.DataSource.StartsWith("(localdb)\\PQSc
 if (args.Length != 3)
     throw new ArgumentException("Provide the synthetic command path, canonical test user and replay instant.");
 var command = JsonSerializer.Deserialize<QuestCommand>(await File.ReadAllTextAsync(args[0])) ?? throw new ArgumentException("Command is missing.");
-var state = await new RelationalQuestCommands(connection).Execute(new AccountIdentity("verified-identity", args[1]), command, DateTimeOffset.Parse(args[2], CultureInfo.InvariantCulture));
+var services = new ServiceCollection();
+services.AddQuestDataServices(connection);
+services.AddQuestServices();
+services.AddScoped<ICurrentAccount>(_ => new ProbeAccount());
+await using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
+await using var scope = provider.CreateAsyncScope();
+var state = await scope.ServiceProvider.GetRequiredService<QuestService>().Execute(new AccountIdentity("verified-identity", args[1]), command, DateTimeOffset.Parse(args[2], CultureInfo.InvariantCulture));
 Console.WriteLine(JsonSerializer.Serialize(state));

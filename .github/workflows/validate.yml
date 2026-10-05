@@ -1,7 +1,6 @@
 name: Validate Pocket Quests
 on:
   pull_request:
-    branches: [main]
   push:
     branches: [main]
 permissions:
@@ -9,7 +8,9 @@ permissions:
 jobs:
   backend:
     runs-on: windows-latest
-    timeout-minutes: 25
+    # Both disposable-SQL passes take about 20 minutes before restore/build.
+    # Allow hosted-runner variance without skipping either verification lane.
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v5
         with:
@@ -22,6 +23,9 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: product/global.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
       - name: Configure explicit Identity source
         shell: pwsh
         run: ./product/scripts/Initialize-Local.ps1 -IdentitySourceRoot "$env:GITHUB_WORKSPACE/identity"
@@ -29,14 +33,12 @@ jobs:
         run: dotnet restore product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --locked-mode
       - name: Build solution and DACPACs
         run: dotnet build product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore
-      - name: Start isolated development SQL instance
+      - name: Verify endpoint OpenAPI and wire compatibility
         shell: pwsh
-        run: |
-          sqllocaldb create PocketQuests
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          sqllocaldb start PocketQuests
+        run: ./product/scripts/Test-ApiContract.ps1 -NoBuild -Configuration Release
       - name: Test SQL and domain boundaries
-        run: dotnet test product/HoneyDrunk.PocketQuests/PocketQuests.Tests --configuration Release --no-build --logger trx
+        shell: pwsh
+        run: ./product/scripts/Test-RelationalSchema.ps1 -NoBuild -IdentityIntegration -EvidenceDirectory product/artifacts/identity-validation
       - name: Validate relational schema and EF parity in disposable SQL
         shell: pwsh
         run: ./product/scripts/Test-RelationalSchema.ps1 -NoBuild
@@ -58,3 +60,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:logic
       - run: npx expo export --platform web
+        env:
+          # This is a local fixture bundle. EAS preview/production profiles must
+          # supply explicit public HTTPS service URLs and pass the release guard.
+          EXPO_PUBLIC_APP_ENV: development

@@ -1,0 +1,31 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using PocketQuests.Data.Entities.Categories;
+using PocketQuests.Data.Entities.Quests;
+
+namespace PocketQuests.Data.Configurations.Quests;
+
+/// <summary>Maps SystemQuest fields, metadata and relational constraints to the DACPAC-owned table.</summary>
+public sealed class SystemQuestMapping : IEntityTypeConfiguration<SystemQuestEntity>
+{
+    /// <inheritdoc />
+    public void Configure(EntityTypeBuilder<SystemQuestEntity> entity)
+    {
+        entity.ToTable("SystemQuest", "pocketquests", table =>
+        {
+            table.HasComment("One row is one stable system quest identity whose full template is owned by the versioned catalog. Classification: Public. History: reference; Retain referenced codes; source-controlled template versions retain old terms. Not erased with accounts.");
+            table.HasCheckConstraint("CK_SystemQuest_CreatedAtUtc", "DATEPART(TZOFFSET,[CreatedAt])=0");
+            table.HasCheckConstraint("CK_SystemQuest_ModifiedAtUtc", "DATEPART(TZOFFSET,[ModifiedAt])=0");
+            table.HasCheckConstraint("CK_SystemQuest_ModificationClock", "[ModifiedAt]>=[CreatedAt]");
+        });
+        entity.HasKey(row => row.Id).HasName("PK_SystemQuest").IsClustered();
+        entity.Property(row => row.Id).HasComment("Stable system quest code, for example PQ-CAT-Q01; never reused.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(40).IsUnicode(false).ValueGeneratedNever();
+        entity.Property(row => row.CategoryId).HasComment("Canonical category of the system template.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(40).IsUnicode(false);
+        entity.Property(row => row.Title).HasComment("Current public system-quest title; accepted terms use immutable account definition revisions.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(120).IsUnicode(true);
+        entity.Property(row => row.CatalogVersion).HasComment("Reviewed template version; seeds must agree with the canonical catalog.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(32).IsUnicode(false);
+        entity.Property(row => row.CreatedAt).HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')");
+        entity.Property(row => row.ModifiedAt).HasComment("Server UTC time of the most recent persisted change; writer must set on each update.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')");
+        entity.HasIndex(row => row.CategoryId, "IX_SystemQuest_FK_Category");
+        entity.HasOne<CategoryEntity>().WithMany().HasForeignKey(row => row.CategoryId).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_SystemQuest_Category");
+    }
+}

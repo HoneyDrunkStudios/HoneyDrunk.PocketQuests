@@ -1,3 +1,5 @@
+Read [mobile engineering standards](../../docs/mobile-engineering-standards.md) for component/workflow boundaries, runtime validation, offline safety, accessibility, performance and verification.
+
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
 ## Expo has changed — do not trust your training data

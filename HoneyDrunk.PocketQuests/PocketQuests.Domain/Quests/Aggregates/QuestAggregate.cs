@@ -1,12 +1,14 @@
 using NodaTime;
 using PocketQuests.Domain.Catalogs;
 using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Profiles;
+using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Catalogs;
+using PocketQuests.Domain.Models.Progress;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Progress;
-using PocketQuests.Domain.Projections;
 using PocketQuests.Domain.Quests.Definitions;
-using PocketQuests.Domain.Quests.Events;
-using PocketQuests.Domain.Quests.Occurrences;
 using PocketQuests.Domain.Schedules;
 using System.Collections.Immutable;
 
@@ -190,7 +192,7 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
             case QuestActions.FinishOnboarding: Profile = Profile with { OnboardingComplete = true }; break;
             case QuestActions.Plan: Plan(command, now); break;
             case QuestActions.Zone: ChangeZone(command, now); break;
-            case QuestActions.ExpiryWarnings: Profile = Profile with { ExpiryWarnings = command.ExpiryWarnings ?? throw new ArgumentException("Choose whether to enable expiry warnings.") }; break;
+            case QuestActions.ExpiryWarnings: Profile = Profile with { ExpiryWarnings = command.ExpiryWarnings ?? throw new QuestValidationException("Choose whether to enable expiry warnings.") }; break;
             case QuestActions.Link: Link(command); break;
             case QuestActions.SelectBadge: SelectReward(command, "Badge", now); break;
             case QuestActions.SelectFrame: SelectReward(command, "Frame", now); break;
@@ -201,7 +203,7 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
             case QuestActions.ResumeOccurrence: ResumeOccurrence(command, now); break;
             case QuestActions.Abandon: Abandon(command, now); break;
             case QuestActions.AcceptOffer: AcceptOffer(command, now); break;
-            default: throw new ArgumentException("Unknown quest action.");
+            default: throw new QuestValidationException("Unknown quest action.");
         }
     }
 
@@ -209,7 +211,7 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
     {
         var quest = Catalog.Quests.SingleOrDefault(q => q.Id == command.QuestId)
             ?? Definitions.SingleOrDefault(d => d.Quest.Id == command.QuestId && !d.Archived)?.Quest
-            ?? throw new ArgumentException("Choose an available quest.");
+            ?? throw new QuestValidationException("Choose an available quest.");
         RequireEligible(quest, now);
         Progression.Require(!IsPaused(quest.CategoryId), "Resume this category before accepting a quest.");
         ValidatePlannedTime(command.DueDate, command.PlannedTime);
@@ -232,7 +234,7 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
     {
         Progression.Require(command.QuestId is null && command.DueDate is null, "Completion and Undo cannot change accepted terms.");
         return Occurrences.SingleOrDefault(o => o.Id == command.OccurrenceId)
-            ?? throw new KeyNotFoundException("Quest occurrence was not found.");
+            ?? throw new QuestNotFoundException("Quest occurrence was not found.");
     }
 
     private Completion? Surviving(Guid occurrenceId, DateTimeOffset? cutoff = null) => Completions.LastOrDefault(c => c.OccurrenceId == occurrenceId && (cutoff is null || c.RecordedAt <= cutoff) && Undos.All(u => u.CompletionId != c.Id || (cutoff is not null && u.RecordedAt > cutoff)));
@@ -245,7 +247,7 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
             return;
         Progression.Require(occurrence.Lifecycle?.Unaccepted != true && occurrence.Lifecycle?.FrozenAt is null && occurrence.Lifecycle?.AbandonedAt is null && !IsPaused(occurrence.Quest.CategoryId), "Resume a frozen quest before completion; abandoned quests cannot be completed.");
         if (now < occurrence.AcceptedAt || (occurrence.Deadline is { } deadline && now >= deadline))
-            throw new InvalidOperationException("This quest is past its due-day deadline. Choose a new occurrence for a new action.");
+            throw new QuestConflictException("This quest is past its due-day deadline. Choose a new occurrence for a new action.");
         Completions.Add(new(command.OperationId, occurrence.Id, now, occurrence.Quest));
     }
 
@@ -253,11 +255,11 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
     {
         var occurrence = Find(command);
         var completion = Completions.SingleOrDefault(c => c.Id == command.CompletionId && c.OccurrenceId == occurrence.Id)
-            ?? throw new KeyNotFoundException("Completion was not found.");
+            ?? throw new QuestNotFoundException("Completion was not found.");
         if (Undos.Any(u => u.CompletionId == completion.Id))
             return;
         if (now < completion.RecordedAt || now >= completion.RecordedAt.Add(QuestRules.UndoWindow))
-            throw new InvalidOperationException("Undo is available for 24 elapsed hours after completion.");
+            throw new QuestConflictException("Undo is available for 24 elapsed hours after completion.");
         Undos.Add(new(command.OperationId, completion.Id, now));
         if (IsPaused(occurrence.Quest.CategoryId))
             FreezeOccurrence(occurrence, now, false);

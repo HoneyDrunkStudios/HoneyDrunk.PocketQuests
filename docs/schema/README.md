@@ -1,8 +1,10 @@
+> Historical record: the EF correction supersedes all custom stored-procedure, TVP, read-context and mutation-generator design below. Current structure and permissions are in [runtime-cutover.md](runtime-cutover.md). The old framework is removed from source.
+
 # Relational schema implementation - S1
 
 **Historical S1 record.** The current implementation, activation rules, test coverage and remaining external dependencies are in [runtime-cutover.md](runtime-cutover.md). Counts and open implementation gates below describe the frozen S1 slice, not the current tree.
 
-This page records the reviewed S1 baseline. The separately staged executable persistence work is documented in [runtime-s2.md](runtime-s2.md). The API continues to use legacy persistence until the remaining cutover gates pass.
+This page records the reviewed S1 baseline. The separately staged executable persistence work is documented in [runtime-s2.md](runtime-s2.md). This is a historical snapshot; current canonical persistence and validation are documented in [runtime-cutover.md](runtime-cutover.md).
 
 This slice adds the approved relational model to the product DACPAC and a separately staged EF read model. **The running API still uses the existing `dbo` persistence tables.** No account conversion, new writer, API contract change or live deployment occurs here. This keeps the current app coherent while the controlled write/replay boundary is implemented in subsequent slices.
 

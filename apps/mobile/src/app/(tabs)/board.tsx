@@ -1,12 +1,14 @@
+import { Page } from "../../session/session-page";
+import { QuestHistory } from "../../features/quests/quest-history";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { useSession } from "../../session/session";
-import { Page, Label, QuestCard, colors, styles } from "../../shared/ui";
+import { useAccountSnapshot } from "../../session/session";
+import { Label, colors, styles } from "../../shared/ui";
 import { AvailableQuests } from "../../features/quests/available-quests";
 import { ProfileEditor } from "../../features/profile/profile-editor";
 
 export default function Quests() {
-  const { state } = useSession();
+  const { state } = useAccountSnapshot();
   const [section, setSection] = useState<"Available" | "Active" | "Completed">(
     "Available",
   );
@@ -33,7 +35,7 @@ export default function Quests() {
     ["Missed", "Abandoned"].includes(o.status),
   );
   return (
-    <Page>
+    <QuestHistory sections={[{key:section,data:items}, ...(section === "Active" && past.length ? [{key:"past",title:"Past commitments",data:past}] : [])]}>
       <Text accessibilityRole="header" style={styles.title}>
         Your quests
       </Text>
@@ -89,19 +91,6 @@ export default function Quests() {
             : "Your completed quests will appear here."}
         </Label>
       )}
-      {items.map((item) => (
-        <QuestCard key={item.occurrence.id} item={item} />
-      ))}
-      {section === "Active" && past.length > 0 && (
-        <>
-          <Text accessibilityRole="header" style={styles.subtitle}>
-            Past commitments
-          </Text>
-          {past.map((item) => (
-            <QuestCard key={item.occurrence.id} item={item} />
-          ))}
-        </>
-      )}
-    </Page>
+    </QuestHistory>
   );
 }

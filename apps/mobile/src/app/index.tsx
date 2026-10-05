@@ -1,3 +1,9 @@
+import { Page } from "../session/session-page";
+import {
+  providerScopes,
+  providerCredentials,
+  validateProviderConfiguration,
+} from "../session/provider-session";
 import { Loading } from "@honeydrunk/ui-native";
 import { requestTimeoutMs, signInRedirect } from "../config/client";
 import { useEffect, useRef, useState } from "react";
@@ -7,7 +13,7 @@ import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { identityUrl, useSession } from "../session/session";
 import { RecoveryPanel } from "../features/profile/account-settings";
-import { Page, Button, Label, Card, colors, styles } from "../shared/ui";
+import { Button, Label, Card, colors, styles } from "../shared/ui";
 WebBrowser.maybeCompleteAuthSession();
 type Configuration = { authority: string; clientId: string; scope: string };
 async function fetchConfiguration(): Promise<Configuration> {
@@ -15,7 +21,7 @@ async function fetchConfiguration(): Promise<Configuration> {
     signal: AbortSignal.timeout(requestTimeoutMs.signInConfiguration),
   });
   if (!response.ok) throw new Error("Sign-in configuration unavailable");
-  return response.json();
+  return validateProviderConfiguration(await response.json());
 }
 function SignIn({ config }: { config: Configuration }) {
   const { connect, busy } = useSession();
@@ -26,7 +32,7 @@ function SignIn({ config }: { config: Configuration }) {
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
       clientId: config.clientId,
-      scopes: ["openid", "profile", config.scope],
+      scopes: providerScopes(config, discovery),
       responseType: AuthSession.ResponseType.Code,
       usePKCE: true,
       redirectUri,
@@ -47,13 +53,13 @@ function SignIn({ config }: { config: Configuration }) {
       },
       discovery,
     )
-      .then((tokens) => connect(tokens.accessToken))
+      .then((tokens) => connect(providerCredentials(tokens, config)))
       .catch(() => setError("Sign-in did not finish. Please try again."));
   }, [
     response,
     discovery,
     request?.codeVerifier,
-    config.clientId,
+    config,
     redirectUri,
     connect,
   ]);

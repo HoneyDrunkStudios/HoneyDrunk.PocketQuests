@@ -1,8 +1,9 @@
 using NodaTime;
 using PocketQuests.Domain.Catalogs;
-using PocketQuests.Domain.Commands;
+using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Progress;
-using PocketQuests.Domain.Quests.Occurrences;
 using PocketQuests.Domain.Schedules;
 using System.Security.Cryptography;
 using System.Text;
@@ -115,10 +116,10 @@ public sealed partial class QuestAggregate
         Progression.Require(command.SeriesId is { } id && id != Guid.Empty, "A series ID is required.");
         var quest = Catalog.Quests.SingleOrDefault(q => q.Id == command.QuestId)
             ?? Definitions.SingleOrDefault(d => d.Quest.Id == command.QuestId && !d.Archived)?.Quest
-            ?? throw new ArgumentException("Choose an available quest.");
+            ?? throw new QuestValidationException("Choose an available quest.");
         RequireEligible(quest, now);
         Progression.Require(!IsPaused(quest.CategoryId), "Resume the category before starting or editing recurrence.");
-        var date = Scheduling.ParseDate(command.DueDate ?? throw new ArgumentException("Choose a first delivery date."));
+        var date = Scheduling.ParseDate(command.DueDate ?? throw new QuestValidationException("Choose a first delivery date."));
         Progression.Require(date >= Scheduling.LocalDay(now, Zone) && date.Year < 9999, "Delivery date must be today or later, before year 9999.");
         Progression.Require(command.Cadence is not null && Enum.IsDefined(command.Cadence.Value) && command.Interval is >= 1 and <= 999, "Cadence: choose a unit and interval from 1 to 999.");
         ValidatePlannedTime(command.DueDate, command.PlannedTime);
@@ -126,7 +127,7 @@ public sealed partial class QuestAggregate
             _ = PenaltyTerms(quest, command, Scheduling.Deadline(date, Zone));
         var prior = Schedule.Series.SingleOrDefault(s => s.Id == command.SeriesId);
         if (command.ExpectedRevision != (prior?.Version ?? 0))
-            throw new InvalidOperationException("Series changed; reopen before editing.");
+            throw new QuestConflictException("Series changed; reopen before editing.");
         Progression.Require(prior is null || !prior.Stopped, "Stopped series stay stopped; explicitly create a new series.");
         var series = new QuestSeries(command.SeriesId!.Value, quest, command.DueDate!, command.Cadence!.Value, command.Interval!.Value, (prior?.Version ?? 0) + 1, PlannedTime: command.PlannedTime, AutoAcceptPenalty: command.ConfirmPenalty, EffectiveAt: now);
         if (prior is null)
@@ -140,7 +141,7 @@ public sealed partial class QuestAggregate
 
     private void StopSeries(QuestCommand command, DateTimeOffset now)
     {
-        var series = Schedule.Series.SingleOrDefault(s => s.Id == command.SeriesId) ?? throw new KeyNotFoundException();
+        var series = Schedule.Series.SingleOrDefault(s => s.Id == command.SeriesId) ?? throw new QuestNotFoundException();
         if (series.Stopped)
             return;
         ReplaceSeries(series with { Stopped = true });
@@ -164,7 +165,7 @@ public sealed partial class QuestAggregate
             // Relational commands perform and commit bounded continuation before this action.
             Reconcile(now);
             if (_actionHasMoreDeliveries)
-                throw new InvalidOperationException("Retained pre-pause deliveries must finish reconciliation before resume.");
+                throw new QuestConflictException("Retained pre-pause deliveries must finish reconciliation before resume.");
         }
 
         var previously = Catalog.Categories.ToDictionary(c => c.Id, c => IsPaused(c.Id));
@@ -209,7 +210,7 @@ public sealed partial class QuestAggregate
 
     private void ResumeOccurrence(QuestCommand command, DateTimeOffset now)
     {
-        var occurrence = Occurrences.SingleOrDefault(o => o.Id == command.OccurrenceId) ?? throw new KeyNotFoundException();
+        var occurrence = Occurrences.SingleOrDefault(o => o.Id == command.OccurrenceId) ?? throw new QuestNotFoundException();
         Progression.Require(!IsPaused(occurrence.Quest.CategoryId), "Resume the category before this commitment.");
         if (occurrence.Lifecycle?.FrozenAt is not null)
             Thaw(occurrence, now);
@@ -217,7 +218,7 @@ public sealed partial class QuestAggregate
 
     private void Abandon(QuestCommand command, DateTimeOffset now)
     {
-        var occurrence = Occurrences.SingleOrDefault(o => o.Id == command.OccurrenceId) ?? throw new KeyNotFoundException();
+        var occurrence = Occurrences.SingleOrDefault(o => o.Id == command.OccurrenceId) ?? throw new QuestNotFoundException();
         Progression.Require(Surviving(occurrence.Id) is null, "Undo a completion before abandoning it.");
         if (occurrence.Lifecycle?.AbandonedAt is not null)
             return;

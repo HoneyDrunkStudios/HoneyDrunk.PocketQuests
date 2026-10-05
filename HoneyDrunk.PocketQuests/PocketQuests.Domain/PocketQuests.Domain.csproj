@@ -10,4 +10,7 @@
     <PackageReference Include="NodaTime" Version="3.3.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="PocketQuests.Services" />
+  </ItemGroup>
 </Project>

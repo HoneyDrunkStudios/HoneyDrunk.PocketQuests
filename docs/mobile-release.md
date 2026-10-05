@@ -1,0 +1,17 @@
+# Mobile build and recovery checks
+
+Use `npm ci`, `npm run lint`, `npm run typecheck`, `npm run test:logic`, and `npm run check:security-patch` under `apps/mobile`. The reviewed native clock module requires a development build. Expo Go does not prove restart behavior.
+
+EAS profiles are explicit: `development` permits local services; `preview` and `production` require `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_IDENTITY_URL` with public HTTPS hosts. Configure these in the corresponding EAS environment before building. They are public service locations, never credentials. `app.config.js` rejects missing, HTTP, loopback/private-host and credential-bearing URLs. Do not set `EXPO_PUBLIC_APP_ENV=development` for distribution; a production EAS profile cannot bypass validation with that value. CI's web export explicitly labels its localhost fixture as development.
+
+`npm run audit:security` is an EAS post-install release gate. It currently fails on the remaining upstream `braces` and `node-forge` high advisories. Build profiles and passing local bundles are not authorization or evidence of signing, app-store submission, OTA delivery or hosted deployment. No EAS project, signing key or distribution account was created.
+
+Sign-in requests `offline_access` only when configured or advertised by the broker. Access and optional refresh credentials remain in native SecureStore with device-only accessibility; web retains them only in page memory. Refresh uses the SDK's supported grant, coalesces concurrent requests, verifies the same active Identity account and retries a request once with its original body. A provider that does not grant a refresh token requires interactive sign-in. Recent-authentication proof for linking/deletion is always interactive; silent renewal does not replace it. Real broker/provider acceptance and credential rotation on devices remain unverified.
+
+A missing/corrupt cache pointer no longer permanently blocks connection. Corrupt encrypted generations and their keys remain in a separate SecureStore recovery entry, with a visible notice, until explicit discard/sign-out. A readable pending journal with a damaged display snapshot is retained and reloaded from the API. Transient file/SecureStore read errors do not erase the current generation. This does not claim to reconstruct missing ciphertext or cryptographically damaged actions.
+
+The Router error boundary offers retry without clearing the account. Its optional crash adapter accepts only a fixed diagnostic code and timestamp. No sink or external telemetry SDK is installed; messages, stacks, tokens and quest content are excluded. Remote crash delivery requires a separately selected backend and is not verified here.
+
+Before tester distribution, record real Apple/Google/Microsoft sign-in and refresh, Android/iOS secure-storage lifecycle, VoiceOver/TalkBack through each main journey, 200% text size, 44-point iOS/48-dp Android targets, contrast and reduced-motion checks, plus installed-device background/restart behavior. Automated components, contracts and JS exports do not close those gates. iOS offline process-restart clock continuity remains unresolved; uncertain actions stay unverified without fabricated timestamps or rewards.
+
+Implementation references: [Expo SDK 57 AuthSession](https://docs.expo.dev/versions/v57.0.0/sdk/auth-session/), [SecureStore](https://docs.expo.dev/versions/v57.0.0/sdk/securestore/), [EAS profiles](https://docs.expo.dev/build/eas-json/), [Router error boundaries](https://docs.expo.dev/router/error-handling/).

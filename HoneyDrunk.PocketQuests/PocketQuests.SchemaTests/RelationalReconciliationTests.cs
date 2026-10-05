@@ -1,12 +1,13 @@
 using Microsoft.EntityFrameworkCore;
-using PocketQuests.Application.Identity;
-using PocketQuests.Application.Persistence;
-using PocketQuests.Data.Relational.Commands;
-using PocketQuests.Data.Relational.Entities;
+using PocketQuests.Data.Entities.Accounts;
+using PocketQuests.Data.Entities.Quests;
+using PocketQuests.Data.Entities.Synchronization;
 using PocketQuests.Domain.Commands;
-using PocketQuests.Domain.Projections;
+using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Quests.Aggregates;
-using PocketQuests.Domain.Schedules;
+using PocketQuests.Tests.Fixtures;
 using System.Text.Json;
 
 namespace PocketQuests.SchemaTests;
@@ -17,7 +18,7 @@ public sealed class RelationalReconciliationTests(SchemaFixture fixture) : IClas
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private RelationalQuestCommands Store => new(fixture.Connection);
+    private TestQuestWorkflow Store => fixture.Commands();
 
     /// <summary>Splitting a globally ordered recurrence queue preserves every cursor, delivery and projection.</summary>
     [Fact]
