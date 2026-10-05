@@ -11,15 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../PocketQuests.Data/PocketQuests.Data.csproj" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(UseIdentitySource)' != 'true'">
-    <PackageReference Include="HoneyDrunk.Identity.Abstractions" Version="[$(IdentityClientVersion)]" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(UseIdentitySource)' == 'true'">
-    <ProjectReference Include="$(IdentitySourceRoot)/HoneyDrunk.Identity/HoneyDrunk.Identity.Abstractions/HoneyDrunk.Identity.Abstractions.csproj" />
-  </ItemGroup>
-  <ItemGroup>
     <InternalsVisibleTo Include="PocketQuests.Services" />
   </ItemGroup>
 </Project>

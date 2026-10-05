@@ -1,8 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
-using PocketQuests.Application.Persistence;
-using PocketQuests.Application.Synchronization;
 using PocketQuests.Data.DataServices;
-using PocketQuests.Domain.Services;
+using PocketQuests.Services;
+using PocketQuests.Services.Accounts;
 using System.Collections.Concurrent;
 
 namespace PocketQuests.Tests.Fixtures;
@@ -17,10 +16,7 @@ internal sealed class PersistenceServices : IAsyncDisposable
     {
         var services = new ServiceCollection();
         services.AddQuestDataServices(connection);
-        services.AddQuestBusinessServices();
-        services.AddScoped<QuestStore>();
-        services.AddScoped<IQuestStore>(serviceProvider => serviceProvider.GetRequiredService<QuestStore>());
-        services.AddScoped<ISyncAnchors>(serviceProvider => serviceProvider.GetRequiredService<QuestStore>());
+        Register(services);
         provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
     }
 
@@ -32,6 +28,19 @@ internal sealed class PersistenceServices : IAsyncDisposable
         await provider.DisposeAsync();
     }
 
+    internal static void Register(IServiceCollection services)
+    {
+        services.AddScoped<ICurrentAccount>(_ => new PrivateTestAccount());
+        services.AddQuestServices();
+        services.AddScoped<TestQuestWorkflow>(provider => new TestQuestWorkflow(
+            provider.GetRequiredService<PocketQuests.Services.Quests.QuestService>(),
+            provider.GetRequiredService<PocketQuests.Services.Profiles.ProfileService>(),
+            provider.GetRequiredService<PocketQuests.Services.Synchronization.SynchronizationService>(),
+            provider.GetRequiredService<PocketQuests.Services.Reconciliation.ReconciliationService>(),
+            provider.GetRequiredService<PocketQuests.Services.Exports.ExportService>(),
+            provider.GetRequiredService<PocketQuests.Services.Quests.OccurrenceReadService>()));
+    }
+
     internal AsyncServiceScope CreateScope() => provider.CreateAsyncScope();
 
     internal T Resolve<T>()
@@ -40,5 +49,10 @@ internal sealed class PersistenceServices : IAsyncDisposable
         var scope = provider.CreateAsyncScope();
         scopes.Add(scope);
         return scope.ServiceProvider.GetRequiredService<T>();
+    }
+
+    private sealed class PrivateTestAccount : ICurrentAccount
+    {
+        public PocketQuests.Contracts.Models.Accounts.AccountIdentity Identity => throw new InvalidOperationException("SQL workflows pass their verified identity explicitly.");
     }
 }

@@ -7,13 +7,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PocketQuests.Api;
-using PocketQuests.Application.Persistence;
-using PocketQuests.Application.Synchronization;
 using PocketQuests.Data.Entities.Accounts;
 using PocketQuests.Domain.Commands;
 using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Models.Quests;
-using PocketQuests.Domain.Services.Lifecycle;
+using PocketQuests.Services.Lifecycle;
 using System.Data;
 using System.Net;
 using System.Net.Http.Json;
@@ -51,9 +49,9 @@ public sealed partial class RelationalApiTests(SchemaFixture fixture) : IClassFi
         using var host = new Host(fixture.Connection);
         using var scope = host.Services.CreateScope();
         var services = scope.ServiceProvider;
-        Assert.IsType<QuestStore>(services.GetRequiredService<IQuestStore>());
-        Assert.Same(services.GetRequiredService<IQuestStore>(), services.GetRequiredService<ISyncAnchors>());
-        Assert.IsType<AccountLifecycleStateService>(services.GetRequiredService<IQuestLifecycle>());
+        Assert.Same(services.GetRequiredService<PocketQuests.Services.Quests.QuestService>(), services.GetRequiredService<PocketQuests.Services.Quests.IQuestService>());
+        Assert.Same(services.GetRequiredService<PocketQuests.Services.Synchronization.SynchronizationService>(), services.GetRequiredService<PocketQuests.Services.Synchronization.ISynchronizationService>());
+        Assert.Same(services.GetRequiredService<LifecycleService>(), services.GetRequiredService<ILifecycleService>());
     }
 
     /// <summary>GET never initializes or writes and does not wait on the account application lock.</summary>

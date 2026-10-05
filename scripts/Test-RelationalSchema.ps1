@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([switch]$NoBuild, [string]$EvidenceDirectory, [string]$TestFilter)
+param([switch]$NoBuild, [string]$EvidenceDirectory, [string]$TestFilter, [switch]$IdentityIntegration)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 if (!$EvidenceDirectory) { $EvidenceDirectory = Join-Path $root 'artifacts/schema-validation' }
@@ -21,7 +21,8 @@ try {
     & python (Join-Path $PSScriptRoot 'schema/test_contract.py') *> (Join-Path $EvidenceDirectory 'contract-mutation-tests.log')
     if ($LASTEXITCODE -ne 0) { throw 'Contract mutation probes failed.' }
     Get-Content -LiteralPath (Join-Path $EvidenceDirectory 'contract-mutation-tests.log')
-    $project = Join-Path $root 'HoneyDrunk.PocketQuests/PocketQuests.SchemaTests/PocketQuests.SchemaTests.csproj'
+    $projectName = if ($IdentityIntegration) { 'PocketQuests.Tests' } else { 'PocketQuests.SchemaTests' }
+    $project = Join-Path $root "HoneyDrunk.PocketQuests/$projectName/$projectName.csproj"
     if (!$NoBuild) {
         & dotnet build $project --configuration Release --nologo -m:1 -nr:false *> (Join-Path $EvidenceDirectory 'build.log')
         if ($LASTEXITCODE -ne 0) { throw 'Schema build failed; inspect build.log.' }
@@ -38,12 +39,12 @@ try {
     $testExitCode = $LASTEXITCODE
     [xml]$testResults = Get-Content -LiteralPath (Join-Path $EvidenceDirectory 'schema-tests.trx') -Raw
     $counters = $testResults.TestRun.ResultSummary.Counters
-    $summary.testProject = 'PocketQuests.SchemaTests'
+    $summary.testProject = $projectName
     $summary.testTotal = [int]$counters.total
     $summary.testPassed = [int]$counters.passed
     $summary.testFailed = [int]$counters.failed
     $summary.testNotExecuted = [int]$counters.notExecuted
-    & sqlcmd -S "(localdb)\$instance" -E -I -b -d master -Q "SET NOCOUNT ON; IF EXISTS(SELECT 1 FROM sys.databases WHERE name LIKE N'PocketQuests[_]SchemaTests[_]%') THROW 51010,'A schema fixture did not remove its database.',1; PRINT 'All generated schema fixture databases were removed.';" -o (Join-Path $EvidenceDirectory 'database-cleanup.log')
+    & sqlcmd -S "(localdb)\$instance" -E -I -b -d master -Q "SET NOCOUNT ON; IF EXISTS(SELECT 1 FROM sys.databases WHERE name LIKE N'PocketQuests[_]SchemaTests[_]%' OR name LIKE N'PocketQuests[_]Tests[_]%') THROW 51010,'A fixture did not remove its database.',1; PRINT 'All generated fixture databases were removed.';" -o (Join-Path $EvidenceDirectory 'database-cleanup.log')
     if ($LASTEXITCODE -ne 0) { throw 'Scratch database cleanup verification failed.' }
     $summary.databaseCleanupVerified = $true
     if ($testExitCode -ne 0) { throw 'Schema tests failed; inspect tests.log and TRX.' }

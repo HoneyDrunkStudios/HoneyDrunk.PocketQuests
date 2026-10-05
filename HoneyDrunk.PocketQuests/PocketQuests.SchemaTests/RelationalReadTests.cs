@@ -4,7 +4,7 @@ using PocketQuests.Data.Entities.Accounts;
 using PocketQuests.Domain.Commands;
 using PocketQuests.Domain.Errors;
 using PocketQuests.Domain.Models.Accounts;
-using PocketQuests.Domain.Services.Quests;
+using PocketQuests.Tests.Fixtures;
 using System.Data;
 using System.Diagnostics;
 using System.Text.Json;
@@ -17,7 +17,7 @@ public sealed class RelationalReadTests(SchemaFixture fixture) : IClassFixture<S
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private IQuestService Store => fixture.Commands();
+    private TestQuestWorkflow Store => fixture.Commands();
 
     /// <summary>Keyset traversal remains bounded and complete at empty, medium and large account sizes.</summary>
     /// <param name="count">Synthetic committed occurrence count.</param>

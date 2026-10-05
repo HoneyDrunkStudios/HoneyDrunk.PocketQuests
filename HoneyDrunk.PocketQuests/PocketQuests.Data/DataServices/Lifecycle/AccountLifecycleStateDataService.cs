@@ -8,13 +8,16 @@ namespace PocketQuests.Data.DataServices.Lifecycle;
 public sealed class AccountLifecycleStateDataService(AppDbContext context) : BaseDataService<AccountLifecycleStateEntity>(context), IAccountLifecycleStateDataService
 {
     /// <inheritdoc />
+    public Task<AccountLifecycleStateEntity?> ReadCurrent(string identityUserId, CancellationToken token = default) =>
+        DbSet.AsNoTracking().SingleOrDefaultAsync(row => row.IdentityUserId == identityUserId, token);
+
+    /// <inheritdoc />
     public Task<AccountLifecycleStateEntity?> GetByIdentityUserIdAsync(string identityUserId, CancellationToken token = default) =>
         DbSet.SingleOrDefaultAsync(row => row.IdentityUserId == identityUserId, token);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<AccountLifecycleStateEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
-        await LoadAccountCollectionAsync(accountId, DbSet.Where(row => row.AccountId == accountId), cancellationToken);
-        return DbSet.Local.Where(row => row.AccountId == accountId).ToArray();
+        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 }

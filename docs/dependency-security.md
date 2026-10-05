@@ -1,5 +1,15 @@
 # PocketQuests dependency assessment - October 3, 2026
 
+## October 4 remediation and remaining release blockers
+
+A clean install now uses **decode-uri-component 0.5.0**, the patched release for [GHSA-vcc3-ghjq-m6fr](https://github.com/advisories/GHSA-vcc3-ghjq-m6fr). Expo Router's query-string 7.1.3 consumer expects a CommonJS callable; the checked postinstall script adjusts its single import to the decoder's default export. `scripts/query-decoder-patch.json` pins the reviewed consumer hash and both the patch and its check fail on unexpected source. This is a narrow compatibility patch, not a claim that an upstream Expo update contains the fix.
+
+The full `npm audit` now reports **19 high, zero moderate affected package entries**, from the braces and node-forge advisories below. Their current registry versions remain unpatched. No alert is suppressed and the `eas-build-post-install` security audit blocks release builds while these findings remain. Functional CI and local fixture bundles do not certify a safe release.
+
+Validation: clean `npm ci`; the actual query-string consumer round-trips Unicode, repeated parameters and encoded auth/deep-link callback values; malformed long percent-encoded input completes within the bounded regression test. Android, iOS and web JavaScript exports succeed with the patched dependency graph. Installed-device links, browser-provider callbacks and signing have **not** been run by this change. Repeat those checks before a release. Use `npm run check:security-patch` and `npm run audit:security` to reproduce the compatibility and remaining security status.
+
+## Preserved October 3 baseline evidence
+
 The app's full and production-only npm audits each report **19 high and 3 moderate affected package entries**, from three underlying advisories. Both audits remain failing. The older three-moderate count in `review-and-verification.md` is historical and is superseded here. This task did not change the app lockfile or dependency versions. Every affected lock entry (including integrity, resolution and flags) exactly matches preservation baseline `ec3e2de`.
 
 | Advisory | Installed path | Actual app evidence | Status |

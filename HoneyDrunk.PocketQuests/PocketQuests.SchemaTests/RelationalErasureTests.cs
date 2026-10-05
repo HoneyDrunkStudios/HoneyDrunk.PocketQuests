@@ -9,7 +9,7 @@ using PocketQuests.Domain.Models.Progress;
 using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Models.Skills;
-using PocketQuests.Domain.Services.Quests;
+using PocketQuests.Tests.Fixtures;
 
 namespace PocketQuests.SchemaTests;
 
@@ -19,7 +19,7 @@ public sealed class RelationalErasureTests(SchemaFixture fixture) : IClassFixtur
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private IQuestService Store => fixture.Commands();
+    private TestQuestWorkflow Store => fixture.Commands();
 
     /// <summary>A renewed old erasing capability cannot restart expired marker retention; a first delayed erasure still removes real data.</summary>
     /// <returns>Completion after the exact retention boundary and a separately delayed first erasure.</returns>

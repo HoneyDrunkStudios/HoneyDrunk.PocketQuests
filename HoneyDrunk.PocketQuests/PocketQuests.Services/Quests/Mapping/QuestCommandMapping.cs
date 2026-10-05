@@ -4,7 +4,7 @@ using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Models.Skills;
 using PocketQuests.Domain.Models.Synchronization;
-using QuestValues = PocketQuests.Domain.Services.Quests.QuestValues;
+using QuestValues = PocketQuests.Domain.Quests.QuestValues;
 
 namespace PocketQuests.Services.Quests.Mapping;
 

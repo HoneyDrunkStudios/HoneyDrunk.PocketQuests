@@ -11,7 +11,7 @@ The same project conditionally imports Microsoft.Build.Sql only under `dotnet` M
 - `Data/AdHoc` holds manually executed SQL, excluded from automatic publish.
 - `PublishProfiles/Local.publish.xml` targets only `(localdb)\PocketQuests`, database `PocketQuests`.
 
-Root `AppDbContext` inherits `BaseDbContext` and maps canonical product and shared Audit/Outbox entities. Each entity has one configuration in `Configurations/{domain}`. Scoped Data services reuse HoneyDrunk.Data generic CRUD; Domain entity services enforce business rules, and workflows use explicit EF transactions/SaveChanges. Application depends on Domain, which depends on Data. Internal models live under Domain/Models. The SQL project owns metadata, indexes and constraints; no custom SQL write procedures, TVPs, mutation-policy generators or EF migration history remain.
+Root `AppDbContext` inherits `BaseDbContext` and maps canonical product and shared Audit/Outbox entities. Each entity has one configuration in `Configurations/{domain}`. Scoped Data services reuse HoneyDrunk.Data generic CRUD and own transaction execution. Services orchestrates operations using pure Domain rules and explicit Data queries/mappings. Domain has no persistence dependency. Internal models live under Domain/Models. The SQL project owns metadata, indexes and constraints; no custom SQL write procedures, TVPs, mutation-policy generators or EF migration history remain.
 
 Relational persistence is registered unconditionally. Startup never publishes a DACPAC or migrates accounts. The initial clean-database path and validation boundaries are documented in [runtime-cutover.md](schema/runtime-cutover.md).
 
@@ -37,4 +37,4 @@ SQL integration tests deploy these same DACPACs into unique test databases. They
 
 SQL projects use Microsoft's [SDK and post-deployment script support](https://learn.microsoft.com/en-us/sql/tools/sql-database-projects/concepts/pre-post-deployment-scripts).
 
-Quest completion now uses the scoped Services exemplar and Data-owned transaction executor; other workflows retain their existing implementation. See [completion service](completion-service.md) for scope, representative files and validation boundaries.
+All product workflows use Services and the Data-owned transaction executor. See [backend services](completion-service.md) for responsibilities and validation boundaries.

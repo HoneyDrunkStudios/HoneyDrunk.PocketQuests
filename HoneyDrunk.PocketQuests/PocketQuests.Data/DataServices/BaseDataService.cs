@@ -1,5 +1,6 @@
 using HoneyDrunk.Data.EntityFramework.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace PocketQuests.Data.DataServices;
 
@@ -9,62 +10,48 @@ namespace PocketQuests.Data.DataServices;
 public class BaseDataService<TEntity>(AppDbContext context) : EfRepository<TEntity, AppDbContext>(context), IBaseDataService<TEntity>
     where TEntity : class
 {
-    private readonly HashSet<Guid> loadedAccounts = [];
-    private Guid? loadedTransactionId;
-
-    /// <inheritdoc />
-    public TEntity GetOriginalValues(TEntity entity) => (TEntity)Context.Entry(entity).OriginalValues.ToObject();
-
     /// <inheritdoc />
     public override ValueTask<TEntity?> FindByIdAsync(object id, CancellationToken cancellationToken = default) =>
         id is object[] keys ? DbSet.FindAsync(keys, cancellationToken) : base.FindByIdAsync(id, cancellationToken);
 
     /// <inheritdoc />
-    public async Task<TResult> ExecuteInTransaction<TResult>(Func<CancellationToken, Task<TResult>> operation, CancellationToken token = default)
+    public async Task<TResult> ExecuteInTransaction<TResult>(Func<CancellationToken, Task<TResult>> operation, CancellationToken token = default, IsolationLevel isolation = IsolationLevel.ReadCommitted)
     {
         if (Context.Database.CurrentTransaction is not null || Context.ChangeTracker.HasChanges())
             throw new InvalidOperationException("The operation requires its own transaction and no unrelated pending changes.");
-        Context.ChangeTracker.Clear();
-        try
+        var strategy = new TransactionExecutionStrategy(Context);
+        return await strategy.ExecuteAsync(Attempt, token);
+
+        async Task<TResult> Attempt(CancellationToken cancellationToken)
         {
-            await using var transaction = await Context.Database.BeginTransactionAsync(token);
-            var result = await operation(token);
-            if (Context.ChangeTracker.HasChanges())
-                await Context.SaveChangesAsync(token);
-            await transaction.CommitAsync(token);
-            return result;
-        }
-        finally
-        {
-            // The entry guard established exclusive ownership of this scope's staged work.
-            // Never retry a possibly committed command here; its receipt resolves the next request.
             Context.ChangeTracker.Clear();
+            strategy.CommitStarted = false;
+            try
+            {
+                await using var transaction = await Context.Database.BeginTransactionAsync(isolation, cancellationToken);
+                var result = await operation(cancellationToken);
+                if (Context.ChangeTracker.HasChanges())
+                    await Context.SaveChangesAsync(cancellationToken);
+
+                // From this point even a transient failure may hide a successful commit.
+                // The next caller request must resolve the retained receipt instead of replaying here.
+                strategy.CommitStarted = true;
+                await transaction.CommitAsync(cancellationToken);
+                return result;
+            }
+            finally
+            {
+                // Each retry re-reads state after disposing the preceding transaction.
+                Context.ChangeTracker.Clear();
+            }
         }
     }
 
-    /// <summary>Loads an owned collection once in the current explicit transaction; callers then read the tracked local view.</summary>
-    /// <param name="accountId">Resolved account identity.</param>
-    /// <param name="query">The full account-filtered entity query.</param>
-    /// <param name="token">Cancellation.</param>
-    /// <returns>Completion once persisted rows are tracked.</returns>
-    protected async Task LoadAccountCollectionAsync(Guid accountId, IQueryable<TEntity> query, CancellationToken token)
+    private sealed class TransactionExecutionStrategy(DbContext context)
+        : SqlServerRetryingExecutionStrategy(context, 2, TimeSpan.FromSeconds(1), null)
     {
-        var transactionId = Context.Database.CurrentTransaction?.TransactionId;
-        if (transactionId is null)
-        {
-            await query.LoadAsync(token);
-            return;
-        }
+        internal bool CommitStarted { get; set; }
 
-        if (loadedTransactionId != transactionId)
-        {
-            loadedAccounts.Clear();
-            loadedTransactionId = transactionId;
-        }
-
-        if (loadedAccounts.Contains(accountId))
-            return;
-        await query.LoadAsync(token);
-        loadedAccounts.Add(accountId);
+        protected override bool ShouldRetryOn(Exception exception) => !CommitStarted && base.ShouldRetryOn(exception);
     }
 }

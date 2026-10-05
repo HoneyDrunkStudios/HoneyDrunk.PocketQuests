@@ -4,13 +4,12 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using PocketQuests.Api.AccountLifecycle;
 using PocketQuests.Api.Authentication;
+using PocketQuests.Api.Endpoints;
 using PocketQuests.Api.Errors;
-using PocketQuests.Api.Exports;
 using PocketQuests.Api.Filters;
 using PocketQuests.Api.Hosting;
 using PocketQuests.Api.OpenApi;
 using PocketQuests.Api.Quests;
-using PocketQuests.Application.Quests;
 using PocketQuests.Data;
 using PocketQuests.ServiceDefaults;
 using PocketQuests.Services;
@@ -25,7 +24,6 @@ builder.AddQuestPersistence();
 builder.Services.AddQuestServices();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentAccount>(services => new CurrentAccount(services.GetRequiredService<IHttpContextAccessor>()));
-builder.Services.AddScoped<QuestService>();
 builder.AddLifecycleRuntime();
 builder.Services.AddHttpClient<IdentityClient>(client =>
 {
@@ -63,7 +61,5 @@ app.UseRateLimiter();
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
     app.MapOpenApi();
 app.MapDefaultEndpoints();
-app.MapQuestEndpoints();
-PocketQuests.Api.Endpoints.Quests.QuestEndpoints.MapQuestCommands(app);
-app.MapExportEndpoints();
+app.MapProductEndpoints();
 app.Run();

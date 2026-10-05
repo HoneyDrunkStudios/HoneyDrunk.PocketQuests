@@ -10,8 +10,7 @@ public sealed class CustomSkillDataService(AppDbContext context) : BaseDataServi
     /// <inheritdoc />
     public async Task<IReadOnlyList<CustomSkillEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
-        await LoadAccountCollectionAsync(accountId, DbSet.Where(row => row.AccountId == accountId), cancellationToken);
-        return DbSet.Local.Where(row => row.AccountId == accountId).ToArray();
+        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />

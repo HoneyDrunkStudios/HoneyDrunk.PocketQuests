@@ -61,7 +61,7 @@ npm run test:logic
 Pop-Location
 ```
 
-SQL tests create isolated temporary databases and deploy the actual DACPAC, including an upgrade/backfill regression. See [review and verification](docs/review-and-verification.md).
+SQL tests create isolated temporary databases and deploy the actual DACPAC, including repeat-publication and retained-history regression checks. See [review and verification](docs/review-and-verification.md).
 
 ## Remaining release gates
 

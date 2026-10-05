@@ -6,7 +6,7 @@ namespace PocketQuests.Services.Quests.Mapping;
 
 internal static class QuestTermsMapping
 {
-    internal static Dictionary<Guid, Quest> ToTerms(this QuestCompletionRows rows)
+    internal static Dictionary<Guid, Quest> ToTerms(this QuestTermsRows rows)
     {
         var definitions = rows.Definitions.ToDictionary(row => row.Id);
         var keys = rows.Skills.ToDictionary(row => row.Id, row => row.ClientKey ?? row.Id.ToString("D"));

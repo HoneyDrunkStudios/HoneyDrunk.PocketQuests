@@ -205,7 +205,6 @@ export default function Profile() {
         title="Sign out"
         onPress={() => void signOut()}
         secondary
-        disabled={busy}
       />
     </Page>
   );

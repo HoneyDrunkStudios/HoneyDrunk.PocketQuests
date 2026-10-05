@@ -1,5 +1,5 @@
-using PocketQuests.Domain.Models.Quests;
-using PocketQuests.Domain.Services.Quests;
+using PocketQuests.Contracts.Models.Reconciliation;
+using PocketQuests.Services.Reconciliation;
 
 namespace PocketQuests.Api.Quests;
 
@@ -19,7 +19,7 @@ public sealed class ReconciliationMaintenance(IServiceScopeFactory scopes, TimeP
             try
             {
                 await using var scope = scopes.CreateAsyncScope();
-                var batch = await scope.ServiceProvider.GetRequiredService<IQuestService>().ReconcileAccounts(clock.GetUtcNow(), cursor, token: stoppingToken);
+                var batch = await scope.ServiceProvider.GetRequiredService<IReconciliationService>().ReconcileAccounts(clock.GetUtcNow(), cursor, token: stoppingToken);
                 cursor = batch.Next;
                 if (cursor is not null || batch.Deliveries > 0)
                     delay = TimeSpan.FromSeconds(1);

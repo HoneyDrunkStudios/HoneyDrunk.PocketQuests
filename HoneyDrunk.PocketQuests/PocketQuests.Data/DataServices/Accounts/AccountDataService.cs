@@ -6,15 +6,11 @@ namespace PocketQuests.Data.DataServices.Accounts;
 
 /// <summary>EF persistence and queries for Account.</summary>
 /// <param name="context">The scoped transaction context.</param>
-public sealed class AccountDataService(AppDbContext context) : BaseDataService<AccountEntity>(context), IAccountDataService
+public sealed partial class AccountDataService(AppDbContext context) : BaseDataService<AccountEntity>(context), IAccountDataService
 {
     /// <inheritdoc />
     public Task<AccountEntity?> GetByIdentityUserIdAsync(string identityUserId, CancellationToken cancellationToken = default) =>
         DbSet.SingleOrDefaultAsync(row => row.IdentityUserId == identityUserId, cancellationToken);
-
-    /// <inheritdoc />
-    public Task<AccountStateData> GetQuestStateAsync(Guid accountId, CancellationToken token = default) =>
-        AccountQueries.ReadStateAsync(Context, accountId, token);
 
     /// <inheritdoc />
     public Task AcquireCommandLockAsync(string identityUserId, CancellationToken token = default) => AccountQueries.AcquireLock(Context, identityUserId, token);

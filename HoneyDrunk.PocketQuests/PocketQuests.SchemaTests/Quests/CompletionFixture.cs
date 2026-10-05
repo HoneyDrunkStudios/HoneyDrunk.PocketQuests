@@ -1,11 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using PocketQuests.Contracts.Requests.Commands;
 using PocketQuests.Contracts.Responses.Projections;
-using PocketQuests.Data.DataServices.Quests;
+using PocketQuests.Data.DataServices.Accounts;
 using PocketQuests.Services.Accounts;
 using PocketQuests.Services.Quests;
 using DomainIdentity = PocketQuests.Domain.Models.Accounts.AccountIdentity;
-using LegacyService = PocketQuests.Domain.Services.Quests.IQuestService;
 
 namespace PocketQuests.SchemaTests.Quests;
 
@@ -15,7 +14,7 @@ internal static class CompletionFixture
     {
         await using var scope = fixture.CreateScope();
         var services = scope.ServiceProvider;
-        var service = new QuestService(services.GetRequiredService<IQuestCompletionDataService>(), new CurrentAccount(owner), new Clock(at), services.GetRequiredService<LegacyService>());
+        var service = new QuestService(services.GetRequiredService<IAccountDataService>(), new CurrentAccount(owner), new Clock(at));
         return await service.Execute(command);
     }
 

@@ -10,7 +10,7 @@ using PocketQuests.Domain.Commands;
 using PocketQuests.Domain.Errors;
 using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Models.Quests;
-using PocketQuests.Domain.Services.Quests;
+using PocketQuests.Tests.Fixtures;
 using System.Data;
 using System.Text.Json;
 
@@ -22,7 +22,7 @@ public sealed class RelationalLifecycleTests(SchemaFixture fixture) : IClassFixt
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private IQuestService Store => fixture.Commands();
+    private TestQuestWorkflow Store => fixture.Commands();
 
     /// <summary>Private lifecycle EF permissions compose with separately owned Outbox dispatcher grants.</summary>
     /// <returns>Completion after checking private lifecycle writes and composed dispatcher permissions.</returns>

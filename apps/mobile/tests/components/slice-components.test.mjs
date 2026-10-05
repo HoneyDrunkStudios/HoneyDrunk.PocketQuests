@@ -12,6 +12,9 @@ let state;
 let signedIn = true;
 let pending = false;
 let rejected = [];
+let unverified = [];
+let recoveryRequired = false;
+let busy = false;
 Module._load = function (name, ...rest) {
   if (name === "react-native") return nativeWeb;
   if (name === "expo-crypto") return { randomUUID: () => "fixture-id" };
@@ -20,10 +23,12 @@ Module._load = function (name, ...rest) {
       useSession: () => ({
         state,
         catalog: null,
-        busy: false,
+        busy,
+        recoveryRequired,
         pending,
         signedIn,
         rejected,
+        unverified,
         queuedCount: 0,
       }),
     };
@@ -71,6 +76,7 @@ const {
 const { FocusTimer } = require("../../src/features/quests/focus-timer.tsx");
 const QuestDetails = require("../../src/app/quest/[id].tsx").default;
 const { Page } = require("../../src/shared/ui.tsx");
+const { AppErrorBoundary } = require("../../src/shared/error-boundary.tsx");
 const render = (component, props = {}) =>
   renderToStaticMarkup(
     React.createElement(
@@ -79,6 +85,37 @@ const render = (component, props = {}) =>
       React.createElement(component, props),
     ),
   );
+
+test("quarantine-only recovery displays labeled discard controls even with zero readable actions", () => {
+  recoveryRequired = true;
+  busy = true;
+  const html = render(Page);
+  assert.match(html, /unreadable recovery copy/);
+  assert.match(html, /Discard pending changes and sign out/);
+  const buttons =
+    html.match(/<button\b[^>]*>[\s\S]*?<\/button>/g) ??
+    html.match(/<div[^>]*role="button"[\s\S]*?<\/div>/g);
+  assert.ok(
+    buttons?.some(
+      (button) =>
+        button.includes("Discard pending changes and sign out") &&
+        !button.includes('aria-disabled="true"'),
+    ),
+  );
+  recoveryRequired = false;
+  busy = false;
+});
+
+test("unexpected render failures expose a labeled retry and never echo private error content", () => {
+  const html = render(AppErrorBoundary, {
+    error: new Error("secret-token and private quest content"),
+    retry: async () => {},
+  });
+  assert.match(html, /Try opening the screen again/);
+  assert.match(html, /role="button"/);
+  assert.match(html, /role="alert"/);
+  assert.doesNotMatch(html, /secret-token|private quest content/);
+});
 
 test("sync recovery shows each retained action and reason with individual discard", () => {
   rejected = [
@@ -104,6 +141,23 @@ test("sync recovery shows each retained action and reason with individual discar
   assert.match(html, /Discard this action: undo: Practice/);
   assert.match(html, /Related action IDs: bad-id/);
   rejected = [];
+});
+
+test("timing-unverified actions are visible without promising reconnect will confirm rewards", () => {
+  unverified = [
+    {
+      command: { operationId: "unverified-id" },
+      label: "complete: Practice",
+      reason: "Device time could not be verified",
+      blockedBy: [],
+    },
+  ];
+  const html = render(Page);
+  assert.match(html, /Pending timing verification: complete: Practice/);
+  assert.match(html, /Device time could not be verified/);
+  assert.match(html, /Reconnecting alone cannot verify/);
+  assert.match(html, /Discard this unverified action: complete: Practice/);
+  unverified = [];
 });
 
 test("Home exposes the full character sheet with an accessible portrait and no Today quest actions", () => {

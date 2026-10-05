@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using PocketQuests.Data.Entities.Progress;
 
 namespace PocketQuests.Data.DataServices.Progress;
@@ -9,7 +10,6 @@ public sealed class XpLedgerEntryDataService(AppDbContext context) : BaseDataSer
     /// <inheritdoc />
     public async Task<IReadOnlyList<XpLedgerEntryEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
-        await LoadAccountCollectionAsync(accountId, DbSet.Where(row => row.AccountId == accountId), cancellationToken);
-        return DbSet.Local.Where(row => row.AccountId == accountId).ToArray();
+        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 }

@@ -1,4 +1,4 @@
-import type { Command, State } from "../../shared/contracts";
+import type { Balance, Command, State } from "../../shared/contracts";
 
 export type CompletionFeedback = {
   occurrenceId: string;
@@ -52,7 +52,7 @@ export function completionFeedback(
     before.occurrences.some((o) => o.completion?.id === command.operationId)
   )
     return null;
-  const groups = {
+  const groups: Record<string, Balance[]> = {
     Category: after.categories,
     Attribute: after.attributes,
     Skill: after.skills,
@@ -61,7 +61,7 @@ export function completionFeedback(
     const name =
       e.track === "Overall"
         ? "Overall"
-        : (groups[e.track].find((b) => b.id === e.trackId)?.name ?? e.trackId);
+        : (groups[e.track]?.find((b) => b.id === e.trackId)?.name ?? e.trackId);
     return { track: e.track, trackId: e.trackId, name, xp: e.amount };
   });
   return {

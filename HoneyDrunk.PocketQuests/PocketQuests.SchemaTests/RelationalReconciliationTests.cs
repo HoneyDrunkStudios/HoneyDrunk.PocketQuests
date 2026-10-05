@@ -7,7 +7,7 @@ using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Quests.Aggregates;
-using PocketQuests.Domain.Services.Quests;
+using PocketQuests.Tests.Fixtures;
 using System.Text.Json;
 
 namespace PocketQuests.SchemaTests;
@@ -18,7 +18,7 @@ public sealed class RelationalReconciliationTests(SchemaFixture fixture) : IClas
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private IQuestService Store => fixture.Commands();
+    private TestQuestWorkflow Store => fixture.Commands();
 
     /// <summary>Splitting a globally ordered recurrence queue preserves every cursor, delivery and projection.</summary>
     [Fact]

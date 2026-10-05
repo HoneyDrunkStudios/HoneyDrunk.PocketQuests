@@ -3,8 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SqlServer.Dac;
 using PocketQuests.Data;
-using PocketQuests.Domain.Services.Lifecycle;
-using PocketQuests.Domain.Services.Quests;
+using PocketQuests.Services.Lifecycle;
 using PocketQuests.Tests.Fixtures;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
@@ -45,13 +44,9 @@ public sealed partial class SchemaFixture : IAsyncLifetime
     /// <returns>A no-tracking read context.</returns>
     public AppDbContext Context() => new(new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(Connection).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options);
 
-    /// <summary>Resolves a real workflow service in its own scope.</summary>
-    /// <returns>The scoped domain workflow.</returns>
-    public IQuestService Commands() => (persistence ??= new(Connection)).Resolve<IQuestService>();
-
     /// <summary>Resolves a real private lifecycle service in its own scope.</summary>
     /// <returns>The scoped lifecycle service.</returns>
-    public IAccountLifecycleStateService Lifecycle() => (persistence ??= new(Connection)).Resolve<IAccountLifecycleStateService>();
+    public LifecycleService Lifecycle() => (persistence ??= new(Connection)).Resolve<LifecycleService>();
 
     /// <summary>Creates an explicitly owned scope for services that must share one context.</summary>
     /// <returns>A scope the caller must dispose.</returns>
@@ -162,6 +157,10 @@ public sealed partial class SchemaFixture : IAsyncLifetime
         while (await reader.NextResultAsync());
         return results;
     }
+
+    /// <summary>Resolves a real workflow service in its own scope.</summary>
+    /// <returns>The scoped domain workflow.</returns>
+    internal TestQuestWorkflow Commands() => (persistence ??= new(Connection)).Resolve<TestQuestWorkflow>();
 
     [GeneratedRegex("^PQSchema_[0-9a-f]{12}$", RegexOptions.CultureInvariant)]
     private static partial Regex InstanceName();

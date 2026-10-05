@@ -1,22 +1,15 @@
 using PocketQuests.Data.Entities.Accounts;
-using PocketQuests.Data.Queries.Accounts;
 
 namespace PocketQuests.Data.DataServices.Accounts;
 
 /// <summary>Persistence operations and entity-specific queries for Account.</summary>
-public interface IAccountDataService : IBaseDataService<AccountEntity>
+public partial interface IAccountDataService : IBaseDataService<AccountEntity>
 {
     /// <summary>Gets the account for the verified canonical Identity user.</summary>
     /// <param name="identityUserId">Verified canonical Identity user identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>The tracked account, or null when no profile exists.</returns>
     Task<AccountEntity?> GetByIdentityUserIdAsync(string identityUserId, CancellationToken cancellationToken = default);
-
-    /// <summary>Reads the owned source rows used by the business state projection.</summary>
-    /// <param name="accountId">Resolved account.</param>
-    /// <param name="token">Cancellation.</param>
-    /// <returns>Relational query results without business model dependencies.</returns>
-    Task<AccountStateData> GetQuestStateAsync(Guid accountId, CancellationToken token = default);
 
     /// <summary>Serializes commands and verified lifecycle transitions using the existing SQL transaction lock resource.</summary>
     /// <param name="identityUserId">Verified canonical Identity user.</param>

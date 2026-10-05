@@ -1298,17 +1298,10 @@
           "HoneyDrunk.Transport.AzureServiceBus": "[0.7.2, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.12, )",
           "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": "[10.0.12, )",
-          "PocketQuests.Application": "[1.0.0, )",
           "PocketQuests.Data": "[1.0.0, )",
           "PocketQuests.Domain": "[1.0.0, )",
           "PocketQuests.ServiceDefaults": "[1.0.0, )",
           "PocketQuests.Services": "[1.0.0, )"
-        }
-      },
-      "pocketquests.application": {
-        "type": "Project",
-        "dependencies": {
-          "PocketQuests.Domain": "[1.0.0, )"
         }
       },
       "pocketquests.contracts": {
@@ -1326,9 +1319,7 @@
       "pocketquests.domain": {
         "type": "Project",
         "dependencies": {
-          "HoneyDrunk.Identity.Abstractions": "[0.1.0-alpha.4, 0.1.0-alpha.4]",
-          "NodaTime": "[3.3.4, )",
-          "PocketQuests.Data": "[1.0.0, )"
+          "NodaTime": "[3.3.4, )"
         }
       },
       "pocketquests.servicedefaults": {
@@ -1346,6 +1337,7 @@
       "pocketquests.services": {
         "type": "Project",
         "dependencies": {
+          "HoneyDrunk.Identity.Abstractions": "[0.1.0-alpha.4, 0.1.0-alpha.4]",
           "PocketQuests.Contracts": "[1.0.0, )",
           "PocketQuests.Data": "[1.0.0, )",
           "PocketQuests.Domain": "[1.0.0, )"

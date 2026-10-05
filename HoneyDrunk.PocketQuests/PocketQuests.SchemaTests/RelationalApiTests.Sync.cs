@@ -12,7 +12,7 @@ using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Models.Synchronization;
-using PocketQuests.Domain.Services.Lifecycle;
+using PocketQuests.Services.Lifecycle;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -115,7 +115,7 @@ public sealed partial class RelationalApiTests
         await Setup(client);
         await Command(client, new(Guid.NewGuid(), QuestActions.Accept, Guid.NewGuid(), QuestId: "PQ-CAT-Q01"));
         using var scope = host.Services.CreateScope();
-        var lifecycle = scope.ServiceProvider.GetRequiredService<IQuestLifecycle>();
+        var lifecycle = scope.ServiceProvider.GetRequiredService<ILifecycleService>();
         host.Clock.Now = Start.AddMinutes(1);
         var pause = host.Clock.Now;
         await lifecycle.Receive(new(host.Owner, 1, IdentityProtocol.Inactive, pause, pause.AddHours(1), IdentityProtocol.ConsumerId, Capability(), pause), "private-test-ack", default);

@@ -10,8 +10,7 @@ public sealed class QuestDefinitionSkillAllocationDataService(AppDbContext conte
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestDefinitionSkillAllocationEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
-        await LoadAccountCollectionAsync(accountId, DbSet.Where(row => row.AccountId == accountId), cancellationToken);
-        return DbSet.Local.Where(row => row.AccountId == accountId).ToArray();
+        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />

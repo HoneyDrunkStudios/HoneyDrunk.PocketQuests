@@ -6,6 +6,7 @@ export const identityUrl =
 
 export const requestTimeoutMs = {
   signInConfiguration: 10_000,
+  renewal: 15_000,
   api: 15_000,
   export: 30_000,
 } as const;

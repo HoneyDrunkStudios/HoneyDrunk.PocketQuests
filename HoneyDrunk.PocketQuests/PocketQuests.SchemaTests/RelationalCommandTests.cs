@@ -11,7 +11,7 @@ using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Models.Synchronization;
 using PocketQuests.Domain.Quests.Aggregates;
-using PocketQuests.Domain.Services.Quests;
+using PocketQuests.Tests.Fixtures;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
@@ -24,7 +24,7 @@ public sealed class RelationalCommandTests(SchemaFixture fixture) : IClassFixtur
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private IQuestService Store => fixture.Commands();
+    private TestQuestWorkflow Store => fixture.Commands();
 
     /// <summary>Every catalog allocation, including presentation order and empty pools, round-trips through typed source rows.</summary>
     /// <returns>Completion after comparing actual public state with the existing Domain.</returns>

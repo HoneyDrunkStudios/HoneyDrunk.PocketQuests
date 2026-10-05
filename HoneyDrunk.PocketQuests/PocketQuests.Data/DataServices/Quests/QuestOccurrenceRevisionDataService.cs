@@ -10,8 +10,7 @@ public sealed class QuestOccurrenceRevisionDataService(AppDbContext context) : B
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestOccurrenceRevisionEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
-        await LoadAccountCollectionAsync(accountId, DbSet.Where(row => row.AccountId == accountId), cancellationToken);
-        return DbSet.Local.Where(row => row.AccountId == accountId).ToArray();
+        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />

@@ -1,6 +1,5 @@
 using PocketQuests.Data.Entities.Accounts;
 using PocketQuests.Data.Entities.Synchronization;
-using PocketQuests.Data.Queries.Quests;
 using PocketQuests.Domain.Commands;
 using PocketQuests.Domain.Errors;
 using PocketQuests.Domain.Models.Quests;
@@ -13,7 +12,7 @@ internal static class QuestClock
 {
     internal static DateTimeOffset Max(DateTimeOffset first, DateTimeOffset second) => (first > second ? first : second).ToUniversalTime();
 
-    internal static DateTimeOffset Resolve(AccountEntity account, QuestCommand command, QuestAggregate aggregate, QuestCompletionRows rows, IReadOnlyDictionary<Guid, Quest> terms, SyncAnchorEntity? anchor, DateTimeOffset receivedAt, DateTimeOffset logicalNow)
+    internal static DateTimeOffset Resolve(AccountEntity account, QuestCommand command, QuestAggregate aggregate, QuestAggregate? anchored, SyncAnchorEntity? anchor, DateTimeOffset receivedAt, DateTimeOffset logicalNow)
     {
         if (command.RecordedTime is not { } proof)
         {
@@ -49,7 +48,8 @@ internal static class QuestClock
         if (command.Action == QuestActions.Complete)
         {
             var occurrence = aggregate.Occurrences.SingleOrDefault(o => o.Id == command.OccurrenceId) ?? throw new QuestNotFoundException("Occurrence was not found.");
-            var anchored = QuestReplay.Through(rows, account, terms, anchor.IssuedMutationVersion).Aggregate;
+            if (anchored is null)
+                throw new InvalidOperationException("The validated anchor requires its retained history.");
             anchored.Reconcile(Max(anchor.ServerAt, anchor.RecordedTimeFloorAt));
             var snapshot = anchored.Occurrences.SingleOrDefault(o => o.Id == occurrence.Id);
             if (snapshot is null && occurrence.Lifecycle?.SourceAnchorId != anchor.Id)

@@ -4,10 +4,10 @@ namespace PocketQuests.Services.Quests;
 
 internal static class QuestPauseHistory
 {
-    internal static IReadOnlyList<string> Resolve(QuestCompletionRows rows)
+    internal static IReadOnlyList<string> Resolve(QuestStateRows rows)
     {
         var order = new List<string>();
-        foreach (var input in rows.History.Where(row => row.CategoryId is not null && row.ActionCode is "pause" or "resume"))
+        foreach (var input in rows.PauseHistory.Where(row => row.CategoryId is not null && row.ActionCode is "pause" or "resume"))
         {
             if (input.ActionCode == "resume")
                 order.Remove(input.CategoryId!);

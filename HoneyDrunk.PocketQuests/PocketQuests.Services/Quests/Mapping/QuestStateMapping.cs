@@ -3,13 +3,13 @@ using PocketQuests.Data.Queries.Quests;
 using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Quests.Aggregates;
-using QuestValues = PocketQuests.Domain.Services.Quests.QuestValues;
+using QuestValues = PocketQuests.Domain.Quests.QuestValues;
 
 namespace PocketQuests.Services.Quests.Mapping;
 
 internal static class QuestStateMapping
 {
-    internal static QuestAggregate ToModel(this QuestCompletionRows rows, AccountEntity account, IReadOnlyDictionary<Guid, Quest> terms, IReadOnlyList<string> pausedCategories)
+    internal static QuestAggregate ToModel(this QuestStateRows rows, AccountEntity account, IReadOnlyDictionary<Guid, Quest> terms, IReadOnlyList<string> pausedCategories)
     {
         var revisions = rows.SeriesRevisions.ToDictionary(row => row.Id);
         var occurrenceRevisions = rows.OccurrenceRevisions.ToDictionary(row => row.Id);

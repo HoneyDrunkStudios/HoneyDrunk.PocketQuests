@@ -2,6 +2,12 @@
   "version": 1,
   "dependencies": {
     "net10.0": {
+      "HoneyDrunk.Identity.Abstractions": {
+        "type": "Direct",
+        "requested": "[0.1.0-alpha.4, 0.1.0-alpha.4]",
+        "resolved": "0.1.0-alpha.4",
+        "contentHash": "gUv4Reb3RtZjq3LJNPUdS1SvCN4Jz0slE328RArv+IRJaGNsRQ++XexWLT9sjqO3Z03piXCs9bhu0mYUC09sBA=="
+      },
       "HoneyDrunk.Standards": {
         "type": "Direct",
         "requested": "[0.3.0, )",
@@ -138,11 +144,6 @@
         "type": "Transitive",
         "resolved": "0.7.1",
         "contentHash": "EPRz3F4sa16l/OOeJAUznJHkGfsdj6peM6VeBfmZW0JikTAM6iyahkZ2NubYxjIlEUq+d+O0x6mb9G31WlrhTw=="
-      },
-      "HoneyDrunk.Identity.Abstractions": {
-        "type": "Transitive",
-        "resolved": "0.1.0-alpha.4",
-        "contentHash": "gUv4Reb3RtZjq3LJNPUdS1SvCN4Jz0slE328RArv+IRJaGNsRQ++XexWLT9sjqO3Z03piXCs9bhu0mYUC09sBA=="
       },
       "HoneyDrunk.Kernel": {
         "type": "Transitive",
@@ -773,9 +774,7 @@
       "pocketquests.domain": {
         "type": "Project",
         "dependencies": {
-          "HoneyDrunk.Identity.Abstractions": "[0.1.0-alpha.4, 0.1.0-alpha.4]",
-          "NodaTime": "[3.3.4, )",
-          "PocketQuests.Data": "[1.0.0, )"
+          "NodaTime": "[3.3.4, )"
         }
       }
     }

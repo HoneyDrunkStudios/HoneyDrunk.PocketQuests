@@ -21,6 +21,9 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: product/global.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
       - name: Configure explicit Identity source
         shell: pwsh
         run: ./product/scripts/Initialize-Local.ps1 -IdentitySourceRoot "$env:GITHUB_WORKSPACE/identity"
@@ -31,14 +34,9 @@ jobs:
       - name: Verify endpoint OpenAPI and wire compatibility
         shell: pwsh
         run: ./product/scripts/Test-ApiContract.ps1 -NoBuild -Configuration Release
-      - name: Start isolated development SQL instance
-        shell: pwsh
-        run: |
-          sqllocaldb create PocketQuests
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          sqllocaldb start PocketQuests
       - name: Test SQL and domain boundaries
-        run: dotnet test product/HoneyDrunk.PocketQuests/PocketQuests.Tests --configuration Release --no-build --logger trx
+        shell: pwsh
+        run: ./product/scripts/Test-RelationalSchema.ps1 -NoBuild -IdentityIntegration -EvidenceDirectory product/artifacts/identity-validation
       - name: Validate relational schema and EF parity in disposable SQL
         shell: pwsh
         run: ./product/scripts/Test-RelationalSchema.ps1 -NoBuild
@@ -60,3 +58,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:logic
       - run: npx expo export --platform web
+        env:
+          # This is a local fixture bundle. EAS preview/production profiles must
+          # supply explicit public HTTPS service URLs and pass the release guard.
+          EXPO_PUBLIC_APP_ENV: development

@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PocketQuests.Data;
 using PocketQuests.Domain.Commands;
 using PocketQuests.Domain.Models.Accounts;
-using PocketQuests.Domain.Services.Quests;
+using PocketQuests.Tests.Fixtures;
 
 namespace PocketQuests.SchemaTests;
 
@@ -25,7 +25,7 @@ public sealed class EfRuntimeRoleTests(SchemaFixture fixture) : IClassFixture<Sc
         {
             await using var scope = fixture.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var workflow = scope.ServiceProvider.GetRequiredService<IQuestService>();
+            var workflow = scope.ServiceProvider.GetRequiredService<TestQuestWorkflow>();
             await db.Database.OpenConnectionAsync();
             await db.Database.ExecuteSqlRawAsync("EXECUTE AS USER='pq_ef_runtime_probe';");
             try

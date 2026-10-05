@@ -20,7 +20,8 @@ try {
         ([IO.File]::ReadAllText($expected) -replace "`r`n", "`n") -cne ([IO.File]::ReadAllText($output) -replace "`r`n", "`n")) {
         throw 'Endpoint OpenAPI drifted. Run scripts/Test-ApiContract.ps1 -Update and regenerate the mobile API client.'
     }
-    Write-Output 'Endpoint metadata, committed OpenAPI and HTTP wire compatibility agree.'
+    & (Join-Path $PSScriptRoot 'Test-ClientContract.ps1') -Update:$Update
+    Write-Output 'Endpoint metadata, committed OpenAPI, HTTP wire compatibility, fixtures and generated client agree.'
 }
 finally {
     $env:POCKETQUESTS_OPENAPI_OUTPUT = $previousOutput

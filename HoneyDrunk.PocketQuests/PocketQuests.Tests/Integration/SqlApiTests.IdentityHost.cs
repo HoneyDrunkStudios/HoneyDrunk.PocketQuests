@@ -25,7 +25,16 @@ public sealed partial class SqlApiTests : IAsyncLifetime
 {
     private readonly string database = "PocketQuests_Tests_" + Guid.NewGuid().ToString("N");
 
-    private string Connection => $"Server=(localdb)\\PocketQuests;Database={database};Integrated Security=true;Encrypt=true;TrustServerCertificate=true";
+    private string Connection
+    {
+        get
+        {
+            var instance = Environment.GetEnvironmentVariable("POCKETQUESTS_SCHEMA_TEST_INSTANCE") ?? "PocketQuests";
+            if (instance != "PocketQuests" && !System.Text.RegularExpressions.Regex.IsMatch(instance, "^PQSchema_[0-9a-f]{12}$", System.Text.RegularExpressions.RegexOptions.CultureInvariant))
+                throw new InvalidOperationException("Integration tests require the dedicated development instance or a generated disposable schema instance.");
+            return $"Server=(localdb)\\{instance};Database={database};Integrated Security=true;Encrypt=true;TrustServerCertificate=true";
+        }
+    }
 
     /// <inheritdoc />
     public async Task InitializeAsync()

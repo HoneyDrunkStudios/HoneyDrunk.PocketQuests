@@ -9,7 +9,7 @@ namespace PocketQuests.Services.Quests.Mapping;
 
 internal static class QuestProfileMapping
 {
-    internal static PlayerProfile ToProfile(this QuestCompletionRows rows, AccountEntity account)
+    internal static PlayerProfile ToProfile(this QuestStateRows rows, AccountEntity account)
     {
         var keys = rows.Skills.ToDictionary(row => row.Id, row => row.ClientKey ?? row.Id.ToString("D"));
         var history = rows.Assessments.Select(row => new SkillAssessment(row.SystemSkillId ?? keys[row.CustomSkillId!.Value], Enum.Parse<Experience>(row.ExperienceCode), row.EffectiveAt)).ToImmutableList();

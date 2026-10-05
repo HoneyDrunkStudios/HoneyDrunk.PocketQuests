@@ -73,7 +73,9 @@ export default function QuestDetails() {
       )}
       {item.pendingCompletion && (
         <Label>
-          Recorded on this device. Rewards will be confirmed when synchronized.
+          {item.pendingTimingVerification
+            ? "Recorded on this device, pending timing verification. Reconnecting alone cannot confirm this completion or its rewards."
+            : "Recorded on this device. Rewards will be confirmed when synchronized."}
         </Label>
       )}
       <Label>

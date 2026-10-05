@@ -11,12 +11,12 @@ namespace PocketQuests.Services.Quests;
 
 internal static class QuestReplay
 {
-    internal static ReplayResult Through(QuestCompletionRows rows, AccountEntity account, IReadOnlyDictionary<Guid, Quest> terms, long version)
+    internal static ReplayResult Through(QuestReplayRows rows, AccountEntity account, IReadOnlyDictionary<Guid, Quest> terms, long version)
     {
         var history = rows.History.Where(row => row.AccountMutationVersion <= version).ToArray();
         if (history.Length == 0)
         {
-            return version == 0 ? new(new QuestAggregate(rows.History.Count > 0 ? rows.History[0].TimeZoneBefore : account.TimeZoneId), null)
+            return version == 0 ? new(new QuestAggregate(rows.InitialTimeZone ?? account.TimeZoneId), null)
                 : throw new NotSupportedException("The requested historical version has no retained source history.");
         }
 

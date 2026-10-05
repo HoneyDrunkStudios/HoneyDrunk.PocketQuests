@@ -11,6 +11,13 @@
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="PocketQuests.Tests" />
+    <InternalsVisibleTo Include="PocketQuests.ReplayProbe" />
     <InternalsVisibleTo Include="PocketQuests.SchemaTests" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseIdentitySource)' != 'true'">
+    <PackageReference Include="HoneyDrunk.Identity.Abstractions" Version="[$(IdentityClientVersion)]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseIdentitySource)' == 'true'">
+    <ProjectReference Include="$(IdentitySourceRoot)/HoneyDrunk.Identity/HoneyDrunk.Identity.Abstractions/HoneyDrunk.Identity.Abstractions.csproj" />
   </ItemGroup>
 </Project>

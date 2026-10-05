@@ -4,7 +4,7 @@ using DomainQuest = PocketQuests.Domain.Models.Quests.Quest;
 
 namespace PocketQuests.Services.Quests.Validators;
 
-/// <summary>Input and retained-source validation for the completion operation.</summary>
+/// <summary>Input and retained-source validation for quest operations and historical replay.</summary>
 public static class QuestValidator
 {
     /// <summary>Checks completion inputs without reading storage or changing state.</summary>
@@ -30,14 +30,27 @@ public static class QuestValidator
         return errors;
     }
 
-    internal static List<string> ValidateSources(QuestCompletionRows rows, IReadOnlyDictionary<Guid, DomainQuest> terms)
+    internal static void RequireSupportedTerms(QuestTermsRows rows)
+    {
+        if (rows.DefinitionRevisions.Any(row => row.RulesetVersion != "1.0" || row.DisplaySnapshotVersion != 2))
+            throw new NotSupportedException("Historical quest terms require their retained ruleset and display version.");
+    }
+
+    internal static void RequireFrozenXp(QuestTermsRows rows, IReadOnlyDictionary<Guid, DomainQuest> terms)
+    {
+        if (rows.DefinitionRevisions.Any(row => terms[row.Id].BaseXp != row.BaseXp))
+            throw new NotSupportedException("Frozen XP rules do not match the retained domain implementation.");
+    }
+
+    internal static List<string> ValidateSources(QuestStateRows rows)
     {
         var errors = new List<string>();
         var events = rows.Events.ToDictionary(row => row.Id);
         if (rows.CurrentDefinitions.Any(row => row.Revision is null) || rows.CurrentSeries.Any(row => row.Revision is null))
             errors.Add("The current definition or series revision is missing from retained history.");
-        if (rows.DefinitionRevisions.Any(row => row.RulesetVersion != "1.0" || row.DisplaySnapshotVersion != 2 || terms[row.Id].BaseXp != row.BaseXp))
-            errors.Add("Historical quest terms require their retained ruleset and display version.");
+        var revisions = rows.DefinitionRevisions.ToDictionary(row => row.Id);
+        if (rows.CurrentSeries.Any(row => row.Revision is not null && (!revisions.TryGetValue(row.Revision.QuestDefinitionRevisionId, out var terms) || terms.QuestDefinitionId != row.Head.QuestDefinitionId)))
+            errors.Add("A current series must point to the definition in its owned immutable configuration.");
         if (rows.Completions.Any(row => !events.TryGetValue(row.Id, out var completed) || completed.EventCode != "Completed"
             || (row.UndoQuestOccurrenceEventId is { } undo && (!events.TryGetValue(undo, out var undone) || undone.EventCode != "Undone"))))
             errors.Add("Completion and Undo source events must retain their original event kind.");

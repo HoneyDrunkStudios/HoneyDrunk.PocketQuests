@@ -33,8 +33,11 @@ export function Page({ children }: { children: React.ReactNode }) {
     retry,
     offline,
     queuedCount,
+    recoveryRequired,
     rejected = [],
     discardRejected,
+    unverified = [],
+    discardUnverified,
     discardPending,
     signOut,
   } = useSession();
@@ -52,16 +55,29 @@ export function Page({ children }: { children: React.ReactNode }) {
         alignSelf: "center",
       }}
     >
-      {(offline || queuedCount > 0 || rejected.length > 0) && (
+      {(offline ||
+        recoveryRequired ||
+        queuedCount > 0 ||
+        rejected.length > 0 ||
+        unverified.length > 0) && (
         <View style={styles.card} accessibilityLiveRegion="polite">
           <Label>
-            {offline
-              ? "Offline - showing your private device cache."
-              : rejected.length > 0
-                ? "Recorded changes need review."
-                : "Recorded changes awaiting confirmation."}{" "}
+            {recoveryRequired
+              ? "Private saved work needs attention. An unreadable recovery copy or unfinished cleanup may remain on this device. Some actions cannot be counted."
+              : offline
+                ? "Offline - showing your private device cache."
+                : rejected.length > 0
+                  ? "Recorded changes need review."
+                  : "Recorded changes awaiting confirmation."}{" "}
             {queuedCount} pending. Displayed XP remains server-confirmed.
           </Label>
+          {unverified.length > 0 && (
+            <Notice>
+              {unverified.length} action(s) pending timing verification. They
+              are saved on this device. Reconnecting alone cannot verify their
+              earlier timestamps or confirm their rewards.
+            </Notice>
+          )}
           <Button
             title="Synchronize recorded changes"
             disabled={busy}
@@ -90,11 +106,38 @@ export function Page({ children }: { children: React.ReactNode }) {
               />
             </View>
           ))}
-          {(queuedCount > 0 || rejected.length > 0) && (
+          {unverified.map((entry) => (
+            <View key={entry.command.operationId} style={{ gap: 8 }}>
+              <Label>Pending timing verification: {entry.label}</Label>
+              <Notice>{entry.reason}</Notice>
+              <Text selectable style={styles.muted}>
+                Action ID: {entry.command.operationId}
+              </Text>
+              {entry.blockedBy.length > 0 && (
+                <Text selectable style={styles.muted}>
+                  Related action IDs: {entry.blockedBy.join(", ")}. Discarding a
+                  prerequisite does not release these dependent actions.
+                </Text>
+              )}
+              <Button
+                title={`Discard this unverified action: ${entry.label}`}
+                secondary
+                disabled={busy}
+                onPress={() =>
+                  void discardUnverified(entry.command.operationId)
+                }
+              />
+            </View>
+          ))}
+          {(queuedCount > 0 ||
+            recoveryRequired ||
+            rejected.length > 0 ||
+            unverified.length > 0) && (
             <>
               <Label>
-                Discard pending changes removes all pending, rejected and
-                blocked actions on this device.
+                Discard pending changes removes all pending, unverified,
+                rejected and blocked actions, including unreadable recovery
+                copies, on this device.
               </Label>
               <Button
                 title="Discard pending changes"
@@ -105,7 +148,6 @@ export function Page({ children }: { children: React.ReactNode }) {
               <Button
                 title="Discard pending changes and sign out"
                 secondary
-                disabled={busy}
                 onPress={() => void signOut(true)}
               />
             </>
@@ -158,7 +200,11 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
       </View>
       <Label>{q.criterion}</Label>
       {item.pendingCompletion && (
-        <Label>Completion awaiting sync · rewards unconfirmed</Label>
+        <Label>
+          {item.pendingTimingVerification
+            ? "Completion pending timing verification — rewards unconfirmed"
+            : "Completion awaiting sync · rewards unconfirmed"}
+        </Label>
       )}
       <Text selectable style={styles.muted}>
         {item.occurrence.dueDate

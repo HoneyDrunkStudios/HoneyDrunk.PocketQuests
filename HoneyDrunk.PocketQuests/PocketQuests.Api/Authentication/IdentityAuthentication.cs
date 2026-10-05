@@ -2,14 +2,14 @@ using HoneyDrunk.Identity.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 using PocketQuests.Domain.Models.Accounts;
-using PocketQuests.Domain.Services.Lifecycle;
+using PocketQuests.Services.Lifecycle;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 
 namespace PocketQuests.Api.Authentication;
 
 /// <summary>Resolves bearer credentials exclusively through the shared Identity boundary.</summary>
-public sealed class IdentityAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, IdentityClient identity, IQuestLifecycle lifecycle)
+public sealed class IdentityAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, IdentityClient identity, ILifecycleService lifecycle)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     /// <inheritdoc />

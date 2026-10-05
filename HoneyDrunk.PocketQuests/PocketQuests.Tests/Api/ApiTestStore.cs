@@ -1,5 +1,3 @@
-using PocketQuests.Application.Persistence;
-using PocketQuests.Application.Synchronization;
 using PocketQuests.Domain.Catalogs;
 using PocketQuests.Domain.Commands;
 using PocketQuests.Domain.Models.Accounts;
@@ -9,13 +7,15 @@ using PocketQuests.Domain.Models.Skills;
 using PocketQuests.Domain.Models.Synchronization;
 using PocketQuests.Domain.Quests.Aggregates;
 using PocketQuests.Services.Commands.Mapping;
+using PocketQuests.Services.Exports.Mapping;
 using PocketQuests.Services.Projections.Mapping;
 using PocketQuests.Services.Quests.Validators;
+using PocketQuests.Services.Synchronization.Mapping;
 using System.Collections.Immutable;
 
 namespace PocketQuests.Tests.Api;
 
-internal sealed class ApiTestStore : IQuestStore, ISyncAnchors, PocketQuests.Services.Quests.IQuestService
+internal sealed class ApiTestStore : PocketQuests.Services.Quests.IQuestService, PocketQuests.Services.Profiles.IProfileService, PocketQuests.Services.Synchronization.ISynchronizationService, PocketQuests.Services.Exports.IExportService
 {
     internal static readonly DateTimeOffset At = new(2026, 10, 4, 12, 0, 0, TimeSpan.Zero);
 
@@ -54,6 +54,18 @@ internal sealed class ApiTestStore : IQuestStore, ISyncAnchors, PocketQuests.Ser
             throw new PocketQuests.Domain.Errors.QuestValidationException(string.Join(" ", errors));
         return (await Execute(new("honeydrunk-identity", "usr_00000000000000000000000000"), request.ToModel(), At, token)).ToModel();
     }
+
+    async Task<PocketQuests.Contracts.Responses.Projections.QuestState> PocketQuests.Services.Quests.IQuestService.Read(CancellationToken token) =>
+        (await Read(new("honeydrunk-identity", "usr_00000000000000000000000000"), At, token)).ToModel();
+
+    async Task<PocketQuests.Contracts.Responses.Projections.QuestState> PocketQuests.Services.Profiles.IProfileService.Initialize(PocketQuests.Contracts.Requests.Profiles.InitializeProfile request, CancellationToken token) =>
+        (await Initialize(new("honeydrunk-identity", "usr_00000000000000000000000000"), request.Zone, At, token)).ToModel();
+
+    async Task<PocketQuests.Contracts.Models.Synchronization.SyncAnchor> PocketQuests.Services.Synchronization.ISynchronizationService.CreateAnchor(PocketQuests.Contracts.Requests.Synchronization.AnchorRequest request, CancellationToken token) =>
+        (await CreateAnchor(new("honeydrunk-identity", "usr_00000000000000000000000000"), request.DeviceId, request.BootId, request.DeviceUtc, At, token)).ToModel();
+
+    async Task<PocketQuests.Contracts.Responses.Exports.QuestExport> PocketQuests.Services.Exports.IExportService.Read(CancellationToken token) =>
+        (await Export(new("honeydrunk-identity", "usr_00000000000000000000000000"), At, token)).ToModel();
 
     internal QuestExport Snapshot() => new(1, At, At, Guid.Empty, State, [], [State.Occurrences[0].Completion!], []);
 

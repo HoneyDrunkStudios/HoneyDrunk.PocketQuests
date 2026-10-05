@@ -1,7 +1,7 @@
-using PocketQuests.Api.Exports;
 using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Models.Progress;
 using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Services.Exports;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http.Json;
@@ -56,5 +56,5 @@ public sealed partial class SqlApiTests
     [InlineData("@name")]
     [InlineData("\tformula")]
     [InlineData("\rformula")]
-    public void CsvFormulaLeadingCellsAreNeutralized(string input) => Assert.StartsWith("\"'", ExportEndpoints.CsvCell(input), StringComparison.Ordinal);
+    public void CsvFormulaLeadingCellsAreNeutralized(string input) => Assert.StartsWith("\"'", ExportFormatting.CsvCell(input), StringComparison.Ordinal);
 }

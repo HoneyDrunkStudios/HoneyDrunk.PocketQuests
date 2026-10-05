@@ -1,0 +1,927 @@
+{
+  "state": {
+    "zone": "UTC",
+    "today": "2026-01-01",
+    "occurrences": [
+      {
+        "occurrence": {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "quest": {
+            "id": "PQ-CAT-Q01",
+            "title": "Practice a familiar strength routine",
+            "criterion": "finish one strength-training session you already know and choose for yourself",
+            "categoryId": "c01",
+            "rank": "F",
+            "effort": "Small",
+            "attributes": [
+              {
+                "id": "a01",
+                "basisPoints": 7500
+              },
+              {
+                "id": "a02",
+                "basisPoints": 2500
+              }
+            ],
+            "skills": [
+              {
+                "id": "s01",
+                "basisPoints": 10000
+              }
+            ],
+            "isCustom": false,
+            "description": null,
+            "penaltyPercent": 0,
+            "baseXp": 10
+          },
+          "dueDate": null,
+          "deadline": null,
+          "acceptedAt": "2026-01-01T12:00:00+00:00",
+          "plannedTime": null,
+          "parentId": null,
+          "lifecycle": {
+            "seriesId": null,
+            "sequence": null,
+            "scheduleVersion": null,
+            "frozenAt": null,
+            "individuallyFrozen": false,
+            "abandonedAt": null,
+            "lockedLoss": null,
+            "lossCategoryId": null,
+            "unaccepted": false,
+            "sourceAnchorId": null,
+            "deadlineZone": "UTC"
+          }
+        },
+        "status": "Completed",
+        "completion": {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "occurrenceId": "00000000-0000-4000-8000-000000000001",
+          "recordedAt": "2026-01-01T12:00:00+00:00",
+          "snapshot": {
+            "id": "PQ-CAT-Q01",
+            "title": "Practice a familiar strength routine",
+            "criterion": "finish one strength-training session you already know and choose for yourself",
+            "categoryId": "c01",
+            "rank": "F",
+            "effort": "Small",
+            "attributes": [
+              {
+                "id": "a01",
+                "basisPoints": 7500
+              },
+              {
+                "id": "a02",
+                "basisPoints": 2500
+              }
+            ],
+            "skills": [
+              {
+                "id": "s01",
+                "basisPoints": 10000
+              }
+            ],
+            "isCustom": false,
+            "description": null,
+            "penaltyPercent": 0,
+            "baseXp": 10
+          }
+        },
+        "canUndo": true,
+        "planned": null
+      }
+    ],
+    "overallXp": 10,
+    "overallLevel": 1,
+    "categories": [
+      {
+        "id": "c01",
+        "name": "Health \u0026 Fitness",
+        "xp": 10,
+        "level": 2
+      },
+      {
+        "id": "c02",
+        "name": "Learning",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "c03",
+        "name": "Creativity",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "c04",
+        "name": "Work \u0026 Purpose",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "c05",
+        "name": "Relationships \u0026 Community",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "c06",
+        "name": "Everyday Life",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "c07",
+        "name": "Rest \u0026 Recreation",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "c08",
+        "name": "Reflection \u0026 Spirituality",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "c09",
+        "name": "Finances",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "c10",
+        "name": "Exploration \u0026 Adventure",
+        "xp": 0,
+        "level": 1
+      }
+    ],
+    "attributes": [
+      {
+        "id": "a01",
+        "name": "Strength",
+        "xp": 8,
+        "level": 1
+      },
+      {
+        "id": "a02",
+        "name": "Endurance",
+        "xp": 2,
+        "level": 1
+      },
+      {
+        "id": "a03",
+        "name": "Flexibility",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "a04",
+        "name": "Dexterity",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "a05",
+        "name": "Intelligence",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "a06",
+        "name": "Wisdom",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "a07",
+        "name": "Creativity",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "a08",
+        "name": "Charisma",
+        "xp": 0,
+        "level": 1
+      }
+    ],
+    "skills": [
+      {
+        "id": "s01",
+        "name": "Strength Training",
+        "xp": 10,
+        "level": 2
+      },
+      {
+        "id": "s02",
+        "name": "Running",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s03",
+        "name": "Language Learning",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s04",
+        "name": "Research",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s05",
+        "name": "Drawing",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s06",
+        "name": "Creative Writing",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s07",
+        "name": "Programming",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s08",
+        "name": "Project Planning",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s09",
+        "name": "Communication",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s10",
+        "name": "Conflict Resolution",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s11",
+        "name": "Cooking",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s12",
+        "name": "Home Maintenance",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s13",
+        "name": "Meditation",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s14",
+        "name": "Journaling",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s15",
+        "name": "Budgeting",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s16",
+        "name": "Financial Planning",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s17",
+        "name": "Navigation",
+        "xp": 0,
+        "level": 1
+      },
+      {
+        "id": "s18",
+        "name": "Trip Planning",
+        "xp": 0,
+        "level": 1
+      }
+    ],
+    "rank": {
+      "current": "F",
+      "requirement": {
+        "rank": "E",
+        "count": 2,
+        "floor": 70,
+        "total": 300
+      },
+      "qualifyingCategories": 0,
+      "total": 10
+    },
+    "streaks": [
+      {
+        "categoryId": "c01",
+        "days": 1,
+        "qualifiedToday": true,
+        "rate": 0
+      },
+      {
+        "categoryId": "c02",
+        "days": 0,
+        "qualifiedToday": false,
+        "rate": 0
+      },
+      {
+        "categoryId": "c03",
+        "days": 0,
+        "qualifiedToday": false,
+        "rate": 0
+      },
+      {
+        "categoryId": "c04",
+        "days": 0,
+        "qualifiedToday": false,
+        "rate": 0
+      },
+      {
+        "categoryId": "c05",
+        "days": 0,
+        "qualifiedToday": false,
+        "rate": 0
+      },
+      {
+        "categoryId": "c06",
+        "days": 0,
+        "qualifiedToday": false,
+        "rate": 0
+      },
+      {
+        "categoryId": "c07",
+        "days": 0,
+        "qualifiedToday": false,
+        "rate": 0
+      },
+      {
+        "categoryId": "c08",
+        "days": 0,
+        "qualifiedToday": false,
+        "rate": 0
+      },
+      {
+        "categoryId": "c09",
+        "days": 0,
+        "qualifiedToday": false,
+        "rate": 0
+      },
+      {
+        "categoryId": "c10",
+        "days": 0,
+        "qualifiedToday": false,
+        "rate": 0
+      }
+    ],
+    "entitlements": [
+      {
+        "id": "PQ-CAT-A01",
+        "kind": "Achievement",
+        "name": "A Quest of My Own",
+        "count": 0,
+        "requiredCount": 1,
+        "requiredRank": "F",
+        "earned": false
+      },
+      {
+        "id": "PQ-CAT-A02",
+        "kind": "Achievement",
+        "name": "Room to Recharge",
+        "count": 0,
+        "requiredCount": 5,
+        "requiredRank": "F",
+        "earned": false
+      },
+      {
+        "id": "PQ-CAT-B01",
+        "kind": "Badge",
+        "name": "Curious Explorer",
+        "count": 0,
+        "requiredCount": 3,
+        "requiredRank": "F",
+        "earned": false
+      },
+      {
+        "id": "PQ-CAT-B02",
+        "kind": "Badge",
+        "name": "Everyday Care",
+        "count": 0,
+        "requiredCount": 10,
+        "requiredRank": "F",
+        "earned": false
+      },
+      {
+        "id": "PQ-CAT-F01",
+        "kind": "Frame",
+        "name": "Open Notebook",
+        "count": 0,
+        "requiredCount": 10,
+        "requiredRank": "E",
+        "earned": false
+      },
+      {
+        "id": "PQ-CAT-F02",
+        "kind": "Frame",
+        "name": "Quiet Horizon",
+        "count": 0,
+        "requiredCount": 10,
+        "requiredRank": "D",
+        "earned": false
+      }
+    ],
+    "definitions": [],
+    "profile": {
+      "interests": [],
+      "assessments": {},
+      "onboardingComplete": false,
+      "badgeId": null,
+      "frameId": null,
+      "customSkills": null,
+      "assessmentHistory": null,
+      "zoneHistory": null,
+      "expiryWarnings": false
+    },
+    "schedule": {
+      "series": [],
+      "pauses": [],
+      "pausedCategories": [],
+      "accountPaused": false
+    },
+    "penalties": [],
+    "ledger": [
+      {
+        "eventId": "00000000-0000-4000-8000-000000000003",
+        "occurrenceId": "00000000-0000-4000-8000-000000000001",
+        "at": "2026-01-01T12:00:00+00:00",
+        "track": "Overall",
+        "trackId": "overall",
+        "amount": 10
+      },
+      {
+        "eventId": "00000000-0000-4000-8000-000000000003",
+        "occurrenceId": "00000000-0000-4000-8000-000000000001",
+        "at": "2026-01-01T12:00:00+00:00",
+        "track": "Category",
+        "trackId": "c01",
+        "amount": 10
+      },
+      {
+        "eventId": "00000000-0000-4000-8000-000000000003",
+        "occurrenceId": "00000000-0000-4000-8000-000000000001",
+        "at": "2026-01-01T12:00:00+00:00",
+        "track": "Attribute",
+        "trackId": "a01",
+        "amount": 8
+      },
+      {
+        "eventId": "00000000-0000-4000-8000-000000000003",
+        "occurrenceId": "00000000-0000-4000-8000-000000000001",
+        "at": "2026-01-01T12:00:00+00:00",
+        "track": "Attribute",
+        "trackId": "a02",
+        "amount": 2
+      },
+      {
+        "eventId": "00000000-0000-4000-8000-000000000003",
+        "occurrenceId": "00000000-0000-4000-8000-000000000001",
+        "at": "2026-01-01T12:00:00+00:00",
+        "track": "Skill",
+        "trackId": "s01",
+        "amount": 10
+      }
+    ],
+    "futureWarnings": [],
+    "completionOutcome": null
+  },
+  "catalog": {
+    "categories": [
+      {
+        "id": "c01",
+        "name": "Health \u0026 Fitness"
+      },
+      {
+        "id": "c02",
+        "name": "Learning"
+      },
+      {
+        "id": "c03",
+        "name": "Creativity"
+      },
+      {
+        "id": "c04",
+        "name": "Work \u0026 Purpose"
+      },
+      {
+        "id": "c05",
+        "name": "Relationships \u0026 Community"
+      },
+      {
+        "id": "c06",
+        "name": "Everyday Life"
+      },
+      {
+        "id": "c07",
+        "name": "Rest \u0026 Recreation"
+      },
+      {
+        "id": "c08",
+        "name": "Reflection \u0026 Spirituality"
+      },
+      {
+        "id": "c09",
+        "name": "Finances"
+      },
+      {
+        "id": "c10",
+        "name": "Exploration \u0026 Adventure"
+      }
+    ],
+    "attributes": [
+      {
+        "id": "a01",
+        "name": "Strength"
+      },
+      {
+        "id": "a02",
+        "name": "Endurance"
+      },
+      {
+        "id": "a03",
+        "name": "Flexibility"
+      },
+      {
+        "id": "a04",
+        "name": "Dexterity"
+      },
+      {
+        "id": "a05",
+        "name": "Intelligence"
+      },
+      {
+        "id": "a06",
+        "name": "Wisdom"
+      },
+      {
+        "id": "a07",
+        "name": "Creativity"
+      },
+      {
+        "id": "a08",
+        "name": "Charisma"
+      }
+    ],
+    "skills": [
+      {
+        "id": "s01",
+        "name": "Strength Training"
+      },
+      {
+        "id": "s02",
+        "name": "Running"
+      },
+      {
+        "id": "s03",
+        "name": "Language Learning"
+      },
+      {
+        "id": "s04",
+        "name": "Research"
+      },
+      {
+        "id": "s05",
+        "name": "Drawing"
+      },
+      {
+        "id": "s06",
+        "name": "Creative Writing"
+      },
+      {
+        "id": "s07",
+        "name": "Programming"
+      },
+      {
+        "id": "s08",
+        "name": "Project Planning"
+      },
+      {
+        "id": "s09",
+        "name": "Communication"
+      },
+      {
+        "id": "s10",
+        "name": "Conflict Resolution"
+      },
+      {
+        "id": "s11",
+        "name": "Cooking"
+      },
+      {
+        "id": "s12",
+        "name": "Home Maintenance"
+      },
+      {
+        "id": "s13",
+        "name": "Meditation"
+      },
+      {
+        "id": "s14",
+        "name": "Journaling"
+      },
+      {
+        "id": "s15",
+        "name": "Budgeting"
+      },
+      {
+        "id": "s16",
+        "name": "Financial Planning"
+      },
+      {
+        "id": "s17",
+        "name": "Navigation"
+      },
+      {
+        "id": "s18",
+        "name": "Trip Planning"
+      }
+    ],
+    "quests": [
+      {
+        "id": "PQ-CAT-Q01",
+        "title": "Practice a familiar strength routine",
+        "criterion": "finish one strength-training session you already know and choose for yourself",
+        "categoryId": "c01",
+        "rank": "F",
+        "effort": "Small",
+        "attributes": [
+          {
+            "id": "a01",
+            "basisPoints": 7500
+          },
+          {
+            "id": "a02",
+            "basisPoints": 2500
+          }
+        ],
+        "skills": [
+          {
+            "id": "s01",
+            "basisPoints": 10000
+          }
+        ],
+        "isCustom": false,
+        "description": null,
+        "penaltyPercent": 0,
+        "baseXp": 10
+      },
+      {
+        "id": "PQ-CAT-Q02",
+        "title": "Return to a language",
+        "criterion": "finish one chosen practice exercise or session in a language you are learning",
+        "categoryId": "c02",
+        "rank": "F",
+        "effort": "Small",
+        "attributes": [
+          {
+            "id": "a05",
+            "basisPoints": 10000
+          }
+        ],
+        "skills": [
+          {
+            "id": "s03",
+            "basisPoints": 10000
+          }
+        ],
+        "isCustom": false,
+        "description": null,
+        "penaltyPercent": 0,
+        "baseXp": 10
+      },
+      {
+        "id": "PQ-CAT-Q03",
+        "title": "Make a sketch",
+        "criterion": "finish one sketch of your choosing; no quality score",
+        "categoryId": "c03",
+        "rank": "F",
+        "effort": "Small",
+        "attributes": [
+          {
+            "id": "a07",
+            "basisPoints": 7500
+          },
+          {
+            "id": "a04",
+            "basisPoints": 2500
+          }
+        ],
+        "skills": [
+          {
+            "id": "s05",
+            "basisPoints": 10000
+          }
+        ],
+        "isCustom": false,
+        "description": null,
+        "penaltyPercent": 0,
+        "baseXp": 10
+      },
+      {
+        "id": "PQ-CAT-Q04",
+        "title": "Plan the next step",
+        "criterion": "identify and record for yourself one actionable next step for a project that matters to you",
+        "categoryId": "c04",
+        "rank": "F",
+        "effort": "Small",
+        "attributes": [
+          {
+            "id": "a05",
+            "basisPoints": 10000
+          }
+        ],
+        "skills": [
+          {
+            "id": "s08",
+            "basisPoints": 10000
+          }
+        ],
+        "isCustom": false,
+        "description": null,
+        "penaltyPercent": 0,
+        "baseXp": 10
+      },
+      {
+        "id": "PQ-CAT-Q05",
+        "title": "Make time to listen",
+        "criterion": "take part in one mutually welcome conversation and listen attentively; no particular response from the other person is required",
+        "categoryId": "c05",
+        "rank": "F",
+        "effort": "Small",
+        "attributes": [
+          {
+            "id": "a08",
+            "basisPoints": 10000
+          }
+        ],
+        "skills": [
+          {
+            "id": "s09",
+            "basisPoints": 10000
+          }
+        ],
+        "isCustom": false,
+        "description": null,
+        "penaltyPercent": 0,
+        "baseXp": 10
+      },
+      {
+        "id": "PQ-CAT-Q06",
+        "title": "Reset a household space",
+        "criterion": "finish cleaning or tidying one space you choose",
+        "categoryId": "c06",
+        "rank": "F",
+        "effort": "Small",
+        "attributes": [],
+        "skills": [],
+        "isCustom": false,
+        "description": null,
+        "penaltyPercent": 0,
+        "baseXp": 10
+      },
+      {
+        "id": "PQ-CAT-Q07",
+        "title": "Enjoy some downtime",
+        "criterion": "finish one chosen period of enjoying a game, TV, fiction, music or simply relaxing, for pleasure alone",
+        "categoryId": "c07",
+        "rank": "F",
+        "effort": "Small",
+        "attributes": [],
+        "skills": [],
+        "isCustom": false,
+        "description": null,
+        "penaltyPercent": 0,
+        "baseXp": 10
+      },
+      {
+        "id": "PQ-CAT-Q08",
+        "title": "Make space for reflection",
+        "criterion": "write one private reflection in a secular, spiritual or religious frame of your choice; never submit its contents",
+        "categoryId": "c08",
+        "rank": "F",
+        "effort": "Small",
+        "attributes": [
+          {
+            "id": "a06",
+            "basisPoints": 10000
+          }
+        ],
+        "skills": [
+          {
+            "id": "s14",
+            "basisPoints": 10000
+          }
+        ],
+        "isCustom": false,
+        "description": null,
+        "penaltyPercent": 0,
+        "baseXp": 10
+      },
+      {
+        "id": "PQ-CAT-Q09",
+        "title": "Review your spending record",
+        "criterion": "finish reviewing and organizing one chosen set of your recent spending entries; no financial outcome or connected account required",
+        "categoryId": "c09",
+        "rank": "F",
+        "effort": "Small",
+        "attributes": [
+          {
+            "id": "a05",
+            "basisPoints": 10000
+          }
+        ],
+        "skills": [
+          {
+            "id": "s15",
+            "basisPoints": 10000
+          }
+        ],
+        "isCustom": false,
+        "description": null,
+        "penaltyPercent": 0,
+        "baseXp": 10
+      },
+      {
+        "id": "PQ-CAT-Q10",
+        "title": "Discover somewhere local",
+        "criterion": "visit one unfamiliar local place you choose; no purchase, location tracking or proof upload",
+        "categoryId": "c10",
+        "rank": "F",
+        "effort": "Small",
+        "attributes": [],
+        "skills": [],
+        "isCustom": false,
+        "description": null,
+        "penaltyPercent": 0,
+        "baseXp": 10
+      }
+    ],
+    "rules": [
+      {
+        "rank": "F",
+        "count": 0,
+        "floor": 0,
+        "total": 0
+      },
+      {
+        "rank": "E",
+        "count": 2,
+        "floor": 70,
+        "total": 300
+      },
+      {
+        "rank": "D",
+        "count": 3,
+        "floor": 250,
+        "total": 1800
+      },
+      {
+        "rank": "C",
+        "count": 4,
+        "floor": 600,
+        "total": 6000
+      },
+      {
+        "rank": "B",
+        "count": 5,
+        "floor": 1300,
+        "total": 16000
+      },
+      {
+        "rank": "A",
+        "count": 7,
+        "floor": 3000,
+        "total": 45000
+      },
+      {
+        "rank": "S",
+        "count": 10,
+        "floor": 9000,
+        "total": 150000
+      }
+    ]
+  }
+}

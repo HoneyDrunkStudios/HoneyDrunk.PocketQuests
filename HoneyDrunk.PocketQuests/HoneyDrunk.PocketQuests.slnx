@@ -12,7 +12,6 @@
   </Folder>
   <Project Path="PocketQuests.Api/PocketQuests.Api.csproj" />
   <Project Path="PocketQuests.AppHost/PocketQuests.AppHost.csproj" />
-  <Project Path="PocketQuests.Application/PocketQuests.Application.csproj" />
   <Project Path="PocketQuests.BrowserHost/PocketQuests.BrowserHost.csproj" />
   <Project Path="PocketQuests.Contracts/PocketQuests.Contracts.csproj" />
   <Project Path="PocketQuests.Services/PocketQuests.Services.csproj" />

@@ -5,8 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PocketQuests.Api;
-using PocketQuests.Application.Persistence;
-using PocketQuests.Application.Synchronization;
 using System.Text.Encodings.Web;
 
 namespace PocketQuests.Tests.Api;
@@ -24,9 +22,10 @@ internal sealed class ApiApplicationFactory : WebApplicationFactory<PocketQuests
         builder.ConfigureLogging(logging => logging.ClearProviders());
         builder.ConfigureServices(services =>
         {
-            services.AddSingleton<IQuestStore>(Store);
             services.AddSingleton<PocketQuests.Services.Quests.IQuestService>(Store);
-            services.AddSingleton<ISyncAnchors>(Store);
+            services.AddSingleton<PocketQuests.Services.Profiles.IProfileService>(Store);
+            services.AddSingleton<PocketQuests.Services.Synchronization.ISynchronizationService>(Store);
+            services.AddSingleton<PocketQuests.Services.Exports.IExportService>(Store);
             services.AddTransient(provider => new ApiTestAuthentication(
                 provider.GetRequiredService<IOptionsMonitor<AuthenticationSchemeOptions>>(),
                 provider.GetRequiredService<ILoggerFactory>(),

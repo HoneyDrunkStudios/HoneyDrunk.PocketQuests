@@ -6,9 +6,6 @@ using PocketQuests.Domain.Commands;
 using PocketQuests.Domain.Errors;
 using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Models.Quests;
-using PocketQuests.Domain.Services.Lifecycle;
-using PocketQuests.Domain.Services.Quests;
-using PocketQuests.Domain.Services.Synchronization;
 
 namespace PocketQuests.SchemaTests;
 
@@ -64,13 +61,13 @@ public sealed class EfBusinessServiceSqlTests(SchemaFixture fixture) : IClassFix
             {
                 var receipt = await db.CommandReceipt.SingleAsync(row => row.Id == accepted.OperationId);
                 receipt.PayloadDigest[0] ^= 0xff;
-                await Assert.ThrowsAsync<InvalidOperationException>(() => scope.ServiceProvider.GetRequiredService<ICommandReceiptService>().SaveAsync(account.Id, receipt));
+                await Assert.ThrowsAsync<InvalidOperationException>(() => db.SaveChangesAsync());
             }
             else
             {
                 var terms = await db.QuestDefinitionRevision.SingleAsync(row => row.AccountId == account.Id);
                 terms.Title = "Forged historical terms";
-                await Assert.ThrowsAsync<InvalidOperationException>(() => scope.ServiceProvider.GetRequiredService<IQuestDefinitionRevisionService>().SaveAsync(account.Id, terms));
+                await Assert.ThrowsAsync<InvalidOperationException>(() => db.SaveChangesAsync());
             }
 
             await transaction.RollbackAsync();
@@ -91,11 +88,11 @@ public sealed class EfBusinessServiceSqlTests(SchemaFixture fixture) : IClassFix
         await using (var scope = fixture.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var service = scope.ServiceProvider.GetRequiredService<IErasureMarkerService>();
-            var marker = await service.SaveAsync(new ErasureMarkerEntity { Id = owner.Subject, CreatedAt = Start.ToOffset(TimeSpan.FromHours(5.5)) });
+            var marker = new ErasureMarkerEntity { Id = owner.Subject, CreatedAt = Start.ToOffset(TimeSpan.FromHours(5.5)) };
+            db.ErasureMarker.Add(marker);
             await db.SaveChangesAsync();
             marker.CreatedAt = marker.CreatedAt.AddTicks(1);
-            await Assert.ThrowsAsync<InvalidOperationException>(() => service.SaveAsync(marker));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => db.SaveChangesAsync());
         }
 
         await using var evidence = fixture.Context();

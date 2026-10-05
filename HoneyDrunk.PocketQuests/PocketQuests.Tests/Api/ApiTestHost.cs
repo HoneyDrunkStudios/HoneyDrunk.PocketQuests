@@ -4,14 +4,10 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using PocketQuests.Api.Endpoints;
 using PocketQuests.Api.Errors;
-using PocketQuests.Api.Exports;
 using PocketQuests.Api.Hosting;
 using PocketQuests.Api.OpenApi;
-using PocketQuests.Api.Quests;
-using PocketQuests.Application.Persistence;
-using PocketQuests.Application.Quests;
-using PocketQuests.Application.Synchronization;
 using System.Net;
 using System.Net.Http.Headers;
 
@@ -38,7 +34,7 @@ internal sealed class ApiTestHost(WebApplication app, HttpClient client, ApiTest
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
             EnvironmentName = environment,
-            ApplicationName = typeof(QuestEndpoints).Assembly.GetName().Name,
+            ApplicationName = typeof(ApiEndpoints).Assembly.GetName().Name,
         });
         builder.Configuration.AddInMemoryCollection(configuration ?? []);
         builder.WebHost.UseTestServer();
@@ -48,10 +44,12 @@ internal sealed class ApiTestHost(WebApplication app, HttpClient client, ApiTest
         builder.Services.AddApiJson();
         builder.Services.AddSingleton(TimeProvider.System);
         var store = new ApiTestStore();
-        builder.Services.AddSingleton<IQuestStore>(store);
         builder.Services.AddSingleton<PocketQuests.Services.Quests.IQuestService>(store);
-        builder.Services.AddSingleton<ISyncAnchors>(store);
-        builder.Services.AddScoped<QuestService>();
+        builder.Services.AddSingleton<PocketQuests.Services.Profiles.IProfileService>(store);
+        builder.Services.AddSingleton<PocketQuests.Services.Synchronization.ISynchronizationService>(store);
+        builder.Services.AddSingleton<PocketQuests.Services.Exports.IExportService>(store);
+        builder.Services.AddScoped<PocketQuests.Services.Catalogs.ICatalogService, PocketQuests.Services.Catalogs.CatalogService>();
+        builder.Services.AddScoped<PocketQuests.Services.Schedules.IPlanningService, PocketQuests.Services.Schedules.PlanningService>();
         builder.Services.AddTransient(services => new ApiTestAuthentication(
             services.GetRequiredService<Microsoft.Extensions.Options.IOptionsMonitor<AuthenticationSchemeOptions>>(),
             services.GetRequiredService<ILoggerFactory>(),
@@ -74,9 +72,7 @@ internal sealed class ApiTestHost(WebApplication app, HttpClient client, ApiTest
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseRateLimiter();
-        app.MapQuestEndpoints();
-        PocketQuests.Api.Endpoints.Quests.QuestEndpoints.MapQuestCommands(app);
-        app.MapExportEndpoints();
+        app.MapProductEndpoints();
         app.MapOpenApi();
         await app.StartAsync();
         var client = app.GetTestClient();

@@ -11,9 +11,9 @@ using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Models.Skills;
 using PocketQuests.Domain.Models.Synchronization;
 using PocketQuests.Domain.Quests.Aggregates;
-using PocketQuests.Domain.Services.Quests;
 using PocketQuests.SchemaTests.Quests;
 using PocketQuests.Services.Synchronization.Mapping;
+using PocketQuests.Tests.Fixtures;
 using System.Text.Json;
 
 namespace PocketQuests.SchemaTests;
@@ -24,7 +24,7 @@ public sealed class RelationalHistoryTests(SchemaFixture fixture) : IClassFixtur
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private IQuestService Store => fixture.Commands();
+    private TestQuestWorkflow Store => fixture.Commands();
 
     /// <summary>Undo clears a revoked selection durably; re-earning never silently equips it during receipt replay.</summary>
     /// <returns>Completion after comparing current and original-response profile selection.</returns>

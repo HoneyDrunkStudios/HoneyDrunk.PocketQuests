@@ -2,11 +2,13 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using PocketQuests.Data;
 using PocketQuests.Data.DataServices;
+using PocketQuests.Data.Entities.Progress;
+using PocketQuests.Data.Entities.Quests;
+using PocketQuests.Data.Entities.Synchronization;
 using PocketQuests.Domain.Commands;
 using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Models.Schedules;
-using PocketQuests.Domain.Services;
-using PocketQuests.Domain.Services.Quests;
+using PocketQuests.Tests.Fixtures;
 
 namespace PocketQuests.SchemaTests;
 
@@ -14,6 +16,37 @@ namespace PocketQuests.SchemaTests;
 /// <param name="fixture">The disposable DACPAC database.</param>
 public sealed class EfQueryVolumeTests(SchemaFixture fixture) : IClassFixture<SchemaFixture>
 {
+    /// <summary>Current reads materialize current terms rather than every old receipt, revision and reward projection.</summary>
+    /// <returns>Completion after inspecting real EF materialization across fifteen retained edits.</returns>
+    [Fact]
+    public async Task CurrentReadSelectsNeededTermsWithoutReceiptOrProjectionHistory()
+    {
+        var materialized = new MaterializedEntities();
+        var services = new ServiceCollection();
+        services.AddQuestDataServices(fixture.Connection);
+        PersistenceServices.Register(services);
+        services.ConfigureDbContext<AppDbContext>((_, options) => options.AddInterceptors(materialized));
+        await using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
+        await using var scope = provider.CreateAsyncScope();
+        var workflow = scope.ServiceProvider.GetRequiredService<TestQuestWorkflow>();
+        var owner = new AccountIdentity("honeydrunk-identity", "usr_" + Guid.NewGuid().ToString("N")[..26].ToUpperInvariant());
+        var at = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        await workflow.Initialize(owner, "Etc/UTC", at);
+        var quest = new PocketQuests.Domain.Models.Quests.Quest(Guid.NewGuid().ToString("D"), "Current terms", "Done", "c01", PocketQuests.Domain.Models.Progress.Rank.F, PocketQuests.Domain.Models.Quests.Effort.Small, [], [], true);
+        for (var version = 0; version < 15; version++)
+        {
+            quest = quest with { Title = "Revision " + version };
+            await workflow.Execute(owner, new(Guid.NewGuid(), QuestActions.SaveDefinition, Definition: quest, ExpectedRevision: version), at);
+        }
+
+        materialized.Counts.Clear();
+        Assert.Equal(quest.Title, (await workflow.Read(owner, at)).Definitions.Single().Quest.Title);
+        Assert.Equal(1, materialized.Counts.GetValueOrDefault(typeof(QuestDefinitionRevisionEntity)));
+        foreach (var excluded in new[] { typeof(CommandReceiptEntity), typeof(QuestCommandHistoryEntity), typeof(QuestOccurrenceRevisionEntity), typeof(XpLedgerEntryEntity), typeof(XpBalanceEntity) })
+            Assert.Equal(0, materialized.Counts.GetValueOrDefault(excluded));
+        await File.WriteAllTextAsync(Path.Combine(Environment.GetEnvironmentVariable("POCKETQUESTS_SCHEMA_EVIDENCE")!, "ef-read-materialization.json"), System.Text.Json.JsonSerializer.Serialize(new { retainedRevisions = 15, currentRead = materialized.Counts.ToDictionary(pair => pair.Key.Name, pair => pair.Value) }));
+    }
+
     /// <summary>Profile commands load each account collection once and reused scopes refresh at the next transaction.</summary>
     /// <returns>Completion after SQL-count and durable-history comparisons.</returns>
     [Fact]
@@ -22,11 +55,11 @@ public sealed class EfQueryVolumeTests(SchemaFixture fixture) : IClassFixture<Sc
         var count = 0;
         var services = new ServiceCollection();
         services.AddQuestDataServices(fixture.Connection);
-        services.AddQuestBusinessServices();
+        PersistenceServices.Register(services);
         services.ConfigureDbContext<AppDbContext>((_, options) => options.LogTo(_ => count++, [RelationalEventId.CommandExecuted]));
         await using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
         await using var scope = provider.CreateAsyncScope();
-        var workflow = scope.ServiceProvider.GetRequiredService<IQuestService>();
+        var workflow = scope.ServiceProvider.GetRequiredService<TestQuestWorkflow>();
         var owner = new AccountIdentity("honeydrunk-identity", "usr_" + Guid.NewGuid().ToString("N")[..26].ToUpperInvariant());
         var now = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
         await workflow.Initialize(owner, "Etc/UTC", now);
@@ -45,5 +78,17 @@ public sealed class EfQueryVolumeTests(SchemaFixture fixture) : IClassFixture<Sc
         var evidence = Environment.GetEnvironmentVariable("POCKETQUESTS_SCHEMA_EVIDENCE");
         if (evidence is not null)
             await File.WriteAllTextAsync(Path.Combine(evidence, "ef-query-volume.json"), System.Text.Json.JsonSerializer.Serialize(new { firstCount, laterCount, firstOccurrences = 1, laterOccurrences = 100 }));
+    }
+
+    private sealed class MaterializedEntities : IMaterializationInterceptor
+    {
+        internal Dictionary<Type, int> Counts { get; } = [];
+
+        public object InitializedInstance(MaterializationInterceptionData materializationData, object entity)
+        {
+            var type = entity.GetType();
+            Counts[type] = Counts.GetValueOrDefault(type) + 1;
+            return entity;
+        }
     }
 }

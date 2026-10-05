@@ -1,12 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
-using PocketQuests.Application.Persistence;
-using PocketQuests.Application.Synchronization;
 using PocketQuests.Data;
 using PocketQuests.Data.DataServices;
 using PocketQuests.Data.Entities.Accounts;
-using PocketQuests.Domain.Services;
-using PocketQuests.Domain.Services.Lifecycle;
-using PocketQuests.Domain.Services.Quests;
+using PocketQuests.Tests.Fixtures;
 
 namespace PocketQuests.SchemaTests;
 
@@ -37,31 +33,31 @@ public sealed class EfDataServiceRegistrationTests
         Assert.NotSame(first.ServiceProvider.GetRequiredService<AppDbContext>(), second.ServiceProvider.GetRequiredService<AppDbContext>());
     }
 
-    /// <summary>Actual Domain registrations and Application aliases resolve only inside scopes.</summary>
+    /// <summary>Real feature contracts resolve with scoped Data and the Domain assembly has no persistence dependencies.</summary>
     [Fact]
-    public void BusinessServicesAndApplicationAdaptersResolveWithTheirScopedDependencies()
+    public void FeatureServicesResolveWithScopedDependenciesAndDomainRemainsPure()
     {
         var services = new ServiceCollection();
         services.AddQuestDataServices("Server=(localdb)\\unused;Database=unused;Integrated Security=true");
-        services.AddQuestBusinessServices();
-        services.AddScoped<QuestStore>();
-        services.AddScoped<IQuestStore>(provider => provider.GetRequiredService<QuestStore>());
-        services.AddScoped<ISyncAnchors>(provider => provider.GetRequiredService<QuestStore>());
+        PersistenceServices.Register(services);
         using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
         using var first = provider.CreateScope();
         using var second = provider.CreateScope();
-        var contracts = typeof(IQuestService).Assembly.GetTypes()
-            .Where(type => type.IsInterface && type.Namespace?.StartsWith("PocketQuests.Domain.Services.", StringComparison.Ordinal) == true).ToArray();
-        Assert.Equal(35, contracts.Length);
-        foreach (var contract in contracts.Concat([typeof(IQuestStore), typeof(ISyncAnchors)]))
+        var contracts = typeof(PocketQuests.Services.Quests.IQuestService).Assembly.GetTypes()
+            .Where(type => type.IsInterface && type.Namespace?.StartsWith("PocketQuests.Services.", StringComparison.Ordinal) == true).ToArray();
+        Assert.Contains(typeof(PocketQuests.Services.Lifecycle.ILifecycleService), contracts);
+        Assert.Contains(typeof(PocketQuests.Services.Profiles.IProfileService), contracts);
+        foreach (var contract in contracts)
         {
             Assert.Same(first.ServiceProvider.GetRequiredService(contract), first.ServiceProvider.GetRequiredService(contract));
             Assert.NotSame(first.ServiceProvider.GetRequiredService(contract), second.ServiceProvider.GetRequiredService(contract));
             Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService(contract));
         }
 
-        Assert.Same(first.ServiceProvider.GetRequiredService<QuestStore>(), first.ServiceProvider.GetRequiredService<IQuestStore>());
-        Assert.Same(first.ServiceProvider.GetRequiredService<QuestStore>(), first.ServiceProvider.GetRequiredService<ISyncAnchors>());
-        Assert.Same(first.ServiceProvider.GetRequiredService<IAccountLifecycleStateService>(), first.ServiceProvider.GetRequiredService<IQuestLifecycle>());
+        Assert.Same(first.ServiceProvider.GetRequiredService<PocketQuests.Services.Quests.QuestService>(), first.ServiceProvider.GetRequiredService<PocketQuests.Services.Quests.IQuestService>());
+        Assert.Same(first.ServiceProvider.GetRequiredService<PocketQuests.Services.Lifecycle.LifecycleService>(), first.ServiceProvider.GetRequiredService<PocketQuests.Services.Lifecycle.ILifecycleService>());
+        var domain = typeof(PocketQuests.Domain.Quests.Aggregates.QuestAggregate).Assembly;
+        Assert.DoesNotContain(domain.GetReferencedAssemblies(), assembly => assembly.Name?.Contains("Data", StringComparison.Ordinal) == true || assembly.Name?.Contains("EntityFramework", StringComparison.Ordinal) == true || assembly.Name?.Contains("Identity", StringComparison.Ordinal) == true);
+        Assert.DoesNotContain(domain.GetTypes(), type => type.Namespace?.StartsWith("PocketQuests.Domain.Services.", StringComparison.Ordinal) == true);
     }
 }

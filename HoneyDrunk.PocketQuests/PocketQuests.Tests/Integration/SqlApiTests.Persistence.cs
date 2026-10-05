@@ -1,7 +1,5 @@
-using PocketQuests.Application.Persistence;
 using PocketQuests.Domain.Models.Accounts;
-using PocketQuests.Domain.Services.Lifecycle;
-using PocketQuests.Domain.Services.Quests;
+using PocketQuests.Services.Lifecycle;
 using PocketQuests.Tests.Fixtures;
 using System.Security.Cryptography;
 using System.Text;
@@ -17,11 +15,11 @@ public sealed partial class SqlApiTests
 
     private ProductDatabase Context() => new(Connection);
 
-    private QuestStore Store() => Services().Resolve<QuestStore>();
+    private TestQuestWorkflow Store() => Services().Resolve<TestQuestWorkflow>();
 
-    private IQuestService Commands() => Services().Resolve<IQuestService>();
+    private TestQuestWorkflow Commands() => Services().Resolve<TestQuestWorkflow>();
 
-    private IAccountLifecycleStateService Lifecycle() => Services().Resolve<IAccountLifecycleStateService>();
+    private LifecycleService Lifecycle() => Services().Resolve<LifecycleService>();
 
     private PersistenceServices Services() => persistence ??= new(Connection);
 

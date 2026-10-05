@@ -11,4 +11,9 @@ public interface IQuestService
     /// <param name="token">Cancellation.</param>
     /// <returns>The authoritative command response.</returns>
     Task<QuestState> Execute(QuestCommand request, CancellationToken token = default);
+
+    /// <summary>Projects current owned sources without writing account rows or reward projections.</summary>
+    /// <param name="token">Cancellation.</param>
+    /// <returns>The authenticated account state.</returns>
+    Task<QuestState> Read(CancellationToken token = default);
 }

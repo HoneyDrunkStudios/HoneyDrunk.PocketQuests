@@ -5,6 +5,6 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../PocketQuests.Domain/PocketQuests.Domain.csproj" />
+    <ProjectReference Include="../PocketQuests.Services/PocketQuests.Services.csproj" />
   </ItemGroup>
 </Project>

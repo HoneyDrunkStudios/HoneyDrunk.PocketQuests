@@ -45,13 +45,20 @@
     "test:logic": "node scripts/test-ci.cjs",
     "test:ci": "node scripts/test-ci.cjs",
     "check:ui": "node scripts/ui-snapshot.cjs",
-    "pretypecheck": "npm run check:ui"
+    "pretypecheck": "npm run check:ui",
+    "postinstall": "node scripts/patch-query-decoder.cjs",
+    "check:security-patch": "node scripts/patch-query-decoder.cjs --check",
+    "audit:security": "npm audit --audit-level=moderate",
+    "generate:api": "node scripts/generate-api.cjs",
+    "check:api": "node scripts/generate-api.cjs --check",
+    "eas-build-post-install": "npm run audit:security"
   },
   "private": true,
   "overrides": {
     "xcode": {
       "uuid": "11.1.1"
-    }
+    },
+    "decode-uri-component": "0.5.0"
   },
   "workspaces": [
     "packages/*"

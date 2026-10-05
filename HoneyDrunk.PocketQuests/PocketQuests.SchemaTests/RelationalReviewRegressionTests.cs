@@ -10,7 +10,7 @@ using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Models.Progress;
 using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Models.Schedules;
-using PocketQuests.Domain.Services.Quests;
+using PocketQuests.Tests.Fixtures;
 using System.Globalization;
 using System.Text.Json;
 
@@ -22,12 +22,12 @@ public sealed class RelationalReviewRegressionTests(SchemaFixture fixture) : ICl
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private IQuestService Store => fixture.Commands();
+    private TestQuestWorkflow Store => fixture.Commands();
 
     /// <summary>A current series quest cannot change through another action, without a newer revision, or without owned immutable configuration.</summary>
-    /// <returns>Completion after rejecting unversioned and missing-configuration changes through the actual scoped entity service.</returns>
+    /// <returns>Completion after rejecting unversioned and missing-configuration changes through real source reads after controlled same-owner corruption.</returns>
     [Fact]
-    public async Task SeriesQuestPointerRequiresNewOwnedSaveSeriesConfiguration()
+    public async Task SeriesQuestPointerRejectsMismatchedAndMissingCommittedConfiguration()
     {
         var owner = new AccountIdentity("honeydrunk-identity", "usr_00000000000000000000000999");
         await Store.Initialize(owner, "Etc/UTC", Start);
@@ -37,14 +37,14 @@ public sealed class RelationalReviewRegressionTests(SchemaFixture fixture) : ICl
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var account = await db.Account.SingleAsync(row => row.IdentityUserId == owner.Subject);
         var series = await db.QuestSeries.OrderBy(row => row.CreationOrdinal).Where(row => row.AccountId == account.Id).ToArrayAsync();
-        var service = scope.ServiceProvider.GetRequiredService<IQuestSeriesService>();
         var originalDefinition = series[0].QuestDefinitionId;
-        series[0].QuestDefinitionId = series[1].QuestDefinitionId;
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SaveAsync(account.Id, series[0]));
-        series[0].Revision++;
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SaveAsync(account.Id, series[0]));
-        db.ChangeTracker.Clear();
-        Assert.Equal(originalDefinition, (await db.QuestSeries.SingleAsync(row => row.Id == series[0].Id)).QuestDefinitionId);
+        await fixture.Execute($"UPDATE pocketquests.QuestSeries SET QuestDefinitionId='{series[1].QuestDefinitionId:D}' WHERE Id='{series[0].Id:D}';");
+        await Assert.ThrowsAsync<InvalidOperationException>(() => Store.Read(owner, Start));
+        await fixture.Execute($"UPDATE pocketquests.QuestSeries SET QuestDefinitionId='{originalDefinition:D}', Revision=Revision+1 WHERE Id='{series[0].Id:D}';");
+        await Assert.ThrowsAsync<InvalidOperationException>(() => Store.Read(owner, Start));
+        await fixture.Execute($"UPDATE pocketquests.QuestSeries SET Revision=Revision-1 WHERE Id='{series[0].Id:D}';");
+        var recovered = await Store.Read(owner, Start);
+        Assert.Equal(2, recovered.Schedule.Series.Length);
     }
 
     /// <summary>New deliveries link the exact terms/consent configuration; previously generated deliveries keep their original link.</summary>
