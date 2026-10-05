@@ -9,12 +9,12 @@ public interface IQuestOccurrenceRevisionDataService : IBaseDataService<QuestOcc
     /// <param name="accountId">Resolved product account identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<QuestOccurrenceRevisionEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<QuestOccurrenceRevisionEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default);
 
     /// <summary>Reads only account-owned rows referenced by a bounded query.</summary>
     /// <param name="accountId">Resolved account.</param>
     /// <param name="ids">Referenced identifiers.</param>
     /// <param name="token">Cancellation.</param>
     /// <returns>Matching committed rows.</returns>
-    Task<IReadOnlyList<QuestOccurrenceRevisionEntity>> GetSelectedAsync(Guid accountId, Guid[] ids, CancellationToken token = default);
+    Task<IReadOnlyList<QuestOccurrenceRevisionEntity>> GetSelected(Guid accountId, Guid[] ids, CancellationToken token = default);
 }

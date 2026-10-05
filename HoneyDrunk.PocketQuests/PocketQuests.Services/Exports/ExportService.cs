@@ -37,8 +37,8 @@ public sealed class ExportService(IAccountDataService data, QuestService quests,
             var history = await data.ReadDefinitionHistory(account.Id, cancellationToken);
             var terms = QuestTerms.Read(history.Terms);
             var definitions = history.Terms.DefinitionRevisions.OrderBy(row => row.QuestDefinitionId).ThenBy(row => row.Revision)
-                .Select(row => new QuestDefinition(terms[row.Id], row.Revision, history.ArchivedRevisionIds.Contains(row.Id)));
-            return new(1, now.ToUniversalTime(), at, account.Id, aggregate.Project(at), [.. definitions], [.. aggregate.Completions], [.. aggregate.Undos]);
+                .Select(row => row.ToModel(terms[row.Id], history.ArchivedRevisionIds.Contains(row.Id)));
+            return aggregate.Project(at).ToExport(now.ToUniversalTime(), at, account.Id, definitions, aggregate.Completions, aggregate.Undos);
         }
     }
 }

@@ -8,13 +8,13 @@ namespace PocketQuests.Data.DataServices.Quests;
 public sealed class QuestDefinitionDataService(AppDbContext context) : BaseDataService<QuestDefinitionEntity>(context), IQuestDefinitionDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<QuestDefinitionEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<QuestDefinitionEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<QuestDefinitionEntity>> GetSelectedAsync(Guid accountId, Guid[] ids, CancellationToken token = default)
+    public async Task<IReadOnlyList<QuestDefinitionEntity>> GetSelected(Guid accountId, Guid[] ids, CancellationToken token = default)
     {
         return await DbSet.AsNoTracking().Where(row => row.AccountId == accountId && ids.Contains(row.Id)).ToListAsync(token);
     }

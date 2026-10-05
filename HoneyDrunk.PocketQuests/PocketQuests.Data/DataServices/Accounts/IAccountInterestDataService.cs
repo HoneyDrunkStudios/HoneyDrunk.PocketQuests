@@ -9,5 +9,5 @@ public interface IAccountInterestDataService : IBaseDataService<AccountInterestE
     /// <param name="accountId">Resolved product account identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<AccountInterestEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AccountInterestEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default);
 }

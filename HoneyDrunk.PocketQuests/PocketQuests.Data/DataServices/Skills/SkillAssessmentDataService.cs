@@ -8,7 +8,7 @@ namespace PocketQuests.Data.DataServices.Skills;
 public sealed class SkillAssessmentDataService(AppDbContext context) : BaseDataService<SkillAssessmentEntity>(context), ISkillAssessmentDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<SkillAssessmentEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<SkillAssessmentEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }

@@ -19,7 +19,7 @@ public sealed class ReconciliationService(IAccountDataService data, QuestService
         if (maximumAccounts is < 1 or > 50 || maximumDeliveries is < 1 or > 1000)
             throw new ArgumentOutOfRangeException(nameof(maximumAccounts));
         now = now.ToUniversalTime();
-        var rows = await data.GetReconciliationCandidatesAsync(now, after?.ProjectionAsOfAt, after?.AccountId, maximumAccounts, IdentityProtocol.Active, token);
+        var rows = await data.GetReconciliationCandidates(now, after?.ProjectionAsOfAt, after?.AccountId, maximumAccounts, IdentityProtocol.Active, token);
         var next = rows.Count > maximumAccounts ? new ReconciliationCursor(rows[maximumAccounts - 1].ProjectionAsOfAt, rows[maximumAccounts - 1].Id) : null;
         var reconciled = 0;
         var deliveries = 0;
@@ -29,7 +29,7 @@ public sealed class ReconciliationService(IAccountDataService data, QuestService
             var day = Scheduling.LocalDay(at, account.TimeZoneId);
             var date = DateOnly.ParseExact(Scheduling.DateText(day), "yyyy-MM-dd", CultureInfo.InvariantCulture);
             var needed = account.HasPendingReconciliation || day != Scheduling.LocalDay(account.ProjectionAsOfAt, account.TimeZoneId)
-                || await data.HasDueWorkAsync(account.Id, date, at, !account.IsAccountPaused, token);
+                || await data.HasDueWork(account.Id, date, at, !account.IsAccountPaused, token);
             if (!needed)
                 continue;
             try
@@ -62,7 +62,7 @@ public sealed class ReconciliationService(IAccountDataService data, QuestService
             var at = QuestClock.Max(now, account.LastRecordedAt);
             var progress = aggregate.Reconcile(at, maximumDeliveries);
             var projectionDue = Scheduling.LocalDay(at, account.TimeZoneId) != Scheduling.LocalDay(account.ProjectionAsOfAt, account.TimeZoneId)
-                || await data.HasDueWorkAsync(account.Id, DateOnly.FromDateTime(at.UtcDateTime), at, false, cancellationToken);
+                || await data.HasDueWork(account.Id, DateOnly.FromDateTime(at.UtcDateTime), at, false, cancellationToken);
             if (progress.Processed > 0 || account.HasPendingReconciliation || projectionDue)
                 await quests.StageReconciliation(identity, account, rows, aggregate, at, now.ToUniversalTime(), maximumDeliveries, progress.HasMore, cancellationToken);
             return progress;

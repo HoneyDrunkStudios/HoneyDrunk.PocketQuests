@@ -8,6 +8,6 @@ namespace PocketQuests.Data.DataServices.Quests;
 public sealed class SystemQuestDataService(AppDbContext context) : BaseDataService<SystemQuestEntity>(context), ISystemQuestDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<SystemQuestEntity>> GetCatalogAsync(CancellationToken cancellationToken = default) =>
+    public async Task<IReadOnlyList<SystemQuestEntity>> GetCatalog(CancellationToken cancellationToken = default) =>
         await DbSet.ToListAsync(cancellationToken);
 }

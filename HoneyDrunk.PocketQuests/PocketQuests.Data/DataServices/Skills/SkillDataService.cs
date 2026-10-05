@@ -8,6 +8,6 @@ namespace PocketQuests.Data.DataServices.Skills;
 public sealed class SkillDataService(AppDbContext context) : BaseDataService<SkillEntity>(context), ISkillDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<SkillEntity>> GetCatalogAsync(CancellationToken cancellationToken = default) =>
+    public async Task<IReadOnlyList<SkillEntity>> GetCatalog(CancellationToken cancellationToken = default) =>
         await DbSet.OrderBy(row => row.SortOrder).ToListAsync(cancellationToken);
 }

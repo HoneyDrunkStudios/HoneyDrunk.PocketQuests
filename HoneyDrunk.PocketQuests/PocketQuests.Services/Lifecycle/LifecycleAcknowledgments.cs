@@ -20,8 +20,8 @@ internal static class LifecycleAcknowledgments
             return;
         }
 
-        var account = await accounts.GetByIdentityUserIdAsync(intent.UserId, token);
+        var account = await accounts.GetByIdentityUserId(intent.UserId, token);
         var expiresAt = (intent.ExpiresAt < now.AddHours(1) ? intent.ExpiresAt : now.AddHours(1)).ToUniversalTime();
-        await messages.AddWithEnvelopeAsync(intent.ToOwnership(id, account?.Id, expiresAt, now), intent.ToEnvelope(id, queue, now), token);
+        await messages.AddWithEnvelope(intent.ToOwnership(id, account?.Id, expiresAt, now), intent.ToEnvelope(id, queue, now), token);
     }
 }

@@ -8,7 +8,7 @@ namespace PocketQuests.Data.DataServices.Accounts;
 public sealed class TimeZoneChangeDataService(AppDbContext context) : BaseDataService<TimeZoneChangeEntity>(context), ITimeZoneChangeDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<TimeZoneChangeEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TimeZoneChangeEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }

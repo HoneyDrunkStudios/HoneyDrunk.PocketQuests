@@ -9,13 +9,13 @@ public partial interface IAccountDataService : IBaseDataService<AccountEntity>
     /// <param name="identityUserId">Verified canonical Identity user identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>The tracked account, or null when no profile exists.</returns>
-    Task<AccountEntity?> GetByIdentityUserIdAsync(string identityUserId, CancellationToken cancellationToken = default);
+    Task<AccountEntity?> GetByIdentityUserId(string identityUserId, CancellationToken cancellationToken = default);
 
     /// <summary>Serializes commands and verified lifecycle transitions using the existing SQL transaction lock resource.</summary>
     /// <param name="identityUserId">Verified canonical Identity user.</param>
     /// <param name="token">Cancellation.</param>
     /// <returns>Completion of the persistence operation.</returns>
-    Task AcquireCommandLockAsync(string identityUserId, CancellationToken token = default);
+    Task AcquireCommandLock(string identityUserId, CancellationToken token = default);
 
     /// <summary>Reads a bounded maintenance keyset page without tracking or writing accounts.</summary>
     /// <param name="now">Maintenance instant.</param>
@@ -25,7 +25,7 @@ public partial interface IAccountDataService : IBaseDataService<AccountEntity>
     /// <param name="activeState">Authoritative active state discriminator.</param>
     /// <param name="token">Cancellation.</param>
     /// <returns>Candidate accounts including one lookahead row.</returns>
-    Task<IReadOnlyList<AccountEntity>> GetReconciliationCandidatesAsync(DateTimeOffset now, DateTimeOffset? afterProjectionAt, Guid? afterAccountId, int maximumAccounts, string activeState, CancellationToken token = default);
+    Task<IReadOnlyList<AccountEntity>> GetReconciliationCandidates(DateTimeOffset now, DateTimeOffset? afterProjectionAt, Guid? afterAccountId, int maximumAccounts, string activeState, CancellationToken token = default);
 
     /// <summary>Checks indexed recurring deliveries and expired active occurrences.</summary>
     /// <param name="accountId">Resolved account.</param>
@@ -34,11 +34,11 @@ public partial interface IAccountDataService : IBaseDataService<AccountEntity>
     /// <param name="includeSeries">Whether the account can deliver recurring offers.</param>
     /// <param name="token">Cancellation.</param>
     /// <returns>Whether persisted state needs reconciliation.</returns>
-    Task<bool> HasDueWorkAsync(Guid accountId, DateOnly date, DateTimeOffset at, bool includeSeries, CancellationToken token = default);
+    Task<bool> HasDueWork(Guid accountId, DateOnly date, DateTimeOffset at, bool includeSeries, CancellationToken token = default);
 
     /// <summary>Deletes only verified account-owned rows and explicitly linked shared records in FK order.</summary>
     /// <param name="identityUserId">Verified canonical user under the account lock.</param>
     /// <param name="token">Cancellation.</param>
     /// <returns>Completion of the persistence operation.</returns>
-    Task DeleteOwnedAsync(string identityUserId, CancellationToken token = default);
+    Task DeleteOwned(string identityUserId, CancellationToken token = default);
 }

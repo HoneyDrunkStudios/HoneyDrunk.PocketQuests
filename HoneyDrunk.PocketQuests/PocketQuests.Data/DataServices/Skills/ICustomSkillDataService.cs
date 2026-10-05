@@ -9,12 +9,12 @@ public interface ICustomSkillDataService : IBaseDataService<CustomSkillEntity>
     /// <param name="accountId">Resolved product account identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<CustomSkillEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<CustomSkillEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default);
 
     /// <summary>Reads only referenced account-owned skills.</summary>
     /// <param name="accountId">Resolved account.</param>
     /// <param name="ids">Referenced identifiers.</param>
     /// <param name="token">Cancellation.</param>
     /// <returns>Matching committed skills.</returns>
-    Task<IReadOnlyList<CustomSkillEntity>> GetSelectedAsync(Guid accountId, Guid[] ids, CancellationToken token = default);
+    Task<IReadOnlyList<CustomSkillEntity>> GetSelected(Guid accountId, Guid[] ids, CancellationToken token = default);
 }

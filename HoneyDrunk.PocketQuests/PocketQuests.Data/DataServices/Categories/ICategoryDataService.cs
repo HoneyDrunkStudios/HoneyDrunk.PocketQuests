@@ -8,5 +8,5 @@ public interface ICategoryDataService : IBaseDataService<CategoryEntity>
     /// <summary>Gets the versioned public catalog.</summary>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<CategoryEntity>> GetCatalogAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<CategoryEntity>> GetCatalog(CancellationToken cancellationToken = default);
 }

@@ -8,13 +8,13 @@ namespace PocketQuests.Data.DataServices.Quests;
 public sealed class QuestCompletionDataService(AppDbContext context) : BaseDataService<QuestCompletionEntity>(context), IQuestCompletionDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<QuestCompletionEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<QuestCompletionEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<QuestCompletionEntity>> GetCurrentForOccurrencesAsync(Guid accountId, Guid[] ids, DateTimeOffset at, CancellationToken token = default)
+    public async Task<IReadOnlyList<QuestCompletionEntity>> GetCurrentForOccurrences(Guid accountId, Guid[] ids, DateTimeOffset at, CancellationToken token = default)
     {
         return await DbSet.AsNoTracking().Where(row => row.AccountId == accountId && ids.Contains(row.QuestOccurrenceId) && row.UndoneAt == null && row.RecordedAt <= at).ToListAsync(token);
     }

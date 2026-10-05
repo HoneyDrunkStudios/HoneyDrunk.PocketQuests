@@ -8,7 +8,7 @@ namespace PocketQuests.Data.DataServices.Categories;
 public sealed class CategoryProgressDataService(AppDbContext context) : BaseDataService<CategoryProgressEntity>(context), ICategoryProgressDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<CategoryProgressEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<CategoryProgressEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }

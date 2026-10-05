@@ -8,7 +8,7 @@ namespace PocketQuests.Data.DataServices.Accounts;
 public sealed class AccountInterestDataService(AppDbContext context) : BaseDataService<AccountInterestEntity>(context), IAccountInterestDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<AccountInterestEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<AccountInterestEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }

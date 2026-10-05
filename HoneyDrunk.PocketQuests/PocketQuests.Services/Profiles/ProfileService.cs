@@ -35,7 +35,7 @@ public sealed class ProfileService(IAccountDataService data, QuestService quests
         async Task<bool> Perform(CancellationToken cancellationToken)
         {
             await quests.RequireAccess(identity, true, cancellationToken);
-            if (await data.GetByIdentityUserIdAsync(identity.Subject, cancellationToken) is not null)
+            if (await data.GetByIdentityUserId(identity.Subject, cancellationToken) is not null)
                 return false;
             var account = AccountMapping.Create(identity, canonicalZone, now.ToUniversalTime());
             await data.AddAsync(account, cancellationToken);

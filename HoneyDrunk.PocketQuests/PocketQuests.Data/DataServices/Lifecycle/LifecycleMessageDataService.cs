@@ -8,20 +8,20 @@ namespace PocketQuests.Data.DataServices.Lifecycle;
 public sealed class LifecycleMessageDataService(AppDbContext context) : BaseDataService<LifecycleMessageEntity>(context), ILifecycleMessageDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<LifecycleMessageEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<LifecycleMessageEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task AddWithEnvelopeAsync(LifecycleMessageEntity ownership, HoneyDrunk.Data.Outbox.OutboxMessage message, CancellationToken token = default)
+    public async Task AddWithEnvelope(LifecycleMessageEntity ownership, HoneyDrunk.Data.Outbox.OutboxMessage message, CancellationToken token = default)
     {
         await Context.Set<HoneyDrunk.Data.Outbox.OutboxMessage>().AddAsync(message, token);
         await AddAsync(ownership, token);
     }
 
     /// <inheritdoc />
-    public async Task DeleteDeliveredOrExpiredAsync(DateTimeOffset now, CancellationToken token = default)
+    public async Task DeleteDeliveredOrExpired(DateTimeOffset now, CancellationToken token = default)
     {
         if (Context.Database.CurrentTransaction is null)
             throw new InvalidOperationException("Owned envelope retention requires a transaction.");

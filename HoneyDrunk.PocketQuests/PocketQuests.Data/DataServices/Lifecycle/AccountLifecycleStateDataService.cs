@@ -12,11 +12,11 @@ public sealed class AccountLifecycleStateDataService(AppDbContext context) : Bas
         DbSet.AsNoTracking().SingleOrDefaultAsync(row => row.IdentityUserId == identityUserId, token);
 
     /// <inheritdoc />
-    public Task<AccountLifecycleStateEntity?> GetByIdentityUserIdAsync(string identityUserId, CancellationToken token = default) =>
+    public Task<AccountLifecycleStateEntity?> GetByIdentityUserId(string identityUserId, CancellationToken token = default) =>
         DbSet.SingleOrDefaultAsync(row => row.IdentityUserId == identityUserId, token);
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<AccountLifecycleStateEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<AccountLifecycleStateEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }

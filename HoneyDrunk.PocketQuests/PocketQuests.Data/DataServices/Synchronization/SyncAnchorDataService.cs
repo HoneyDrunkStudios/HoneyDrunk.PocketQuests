@@ -8,7 +8,7 @@ namespace PocketQuests.Data.DataServices.Synchronization;
 public sealed class SyncAnchorDataService(AppDbContext context) : BaseDataService<SyncAnchorEntity>(context), ISyncAnchorDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<SyncAnchorEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<SyncAnchorEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }

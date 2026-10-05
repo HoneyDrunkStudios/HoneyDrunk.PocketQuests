@@ -9,5 +9,5 @@ public interface IQuestCommandInterestDataService : IBaseDataService<QuestComman
     /// <param name="accountId">Resolved product account identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<QuestCommandInterestEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<QuestCommandInterestEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default);
 }

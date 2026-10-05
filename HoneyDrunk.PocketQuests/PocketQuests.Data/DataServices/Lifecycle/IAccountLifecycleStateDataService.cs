@@ -15,11 +15,11 @@ public interface IAccountLifecycleStateDataService : IBaseDataService<AccountLif
     /// <param name="identityUserId">Canonical Identity user identifier.</param>
     /// <param name="token">Cancellation.</param>
     /// <returns>The tracked fence or null.</returns>
-    Task<AccountLifecycleStateEntity?> GetByIdentityUserIdAsync(string identityUserId, CancellationToken token = default);
+    Task<AccountLifecycleStateEntity?> GetByIdentityUserId(string identityUserId, CancellationToken token = default);
 
     /// <summary>Gets rows owned by the resolved product account.</summary>
     /// <param name="accountId">Resolved product account identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<AccountLifecycleStateEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AccountLifecycleStateEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default);
 }

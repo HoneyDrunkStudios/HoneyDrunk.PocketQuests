@@ -8,5 +8,5 @@ public interface ISkillDataService : IBaseDataService<SkillEntity>
     /// <summary>Gets the versioned public catalog.</summary>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<SkillEntity>> GetCatalogAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SkillEntity>> GetCatalog(CancellationToken cancellationToken = default);
 }

@@ -8,5 +8,5 @@ public interface IAttributeDataService : IBaseDataService<AttributeEntity>
     /// <summary>Gets the versioned public catalog.</summary>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<AttributeEntity>> GetCatalogAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AttributeEntity>> GetCatalog(CancellationToken cancellationToken = default);
 }

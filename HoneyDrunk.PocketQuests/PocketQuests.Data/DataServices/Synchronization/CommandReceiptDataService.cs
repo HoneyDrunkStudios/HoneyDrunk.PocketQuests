@@ -8,7 +8,7 @@ namespace PocketQuests.Data.DataServices.Synchronization;
 public sealed class CommandReceiptDataService(AppDbContext context) : BaseDataService<CommandReceiptEntity>(context), ICommandReceiptDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<CommandReceiptEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<CommandReceiptEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }

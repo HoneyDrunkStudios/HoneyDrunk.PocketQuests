@@ -82,7 +82,7 @@ public sealed class QuestService(IAccountDataService data, ICurrentAccount curre
     {
         IdentityValidation.RequireCanonical(identity);
         if (commandLock)
-            await data.AcquireCommandLockAsync(identity.Subject, token);
+            await data.AcquireCommandLock(identity.Subject, token);
         var marker = await data.GetErasure(identity.Subject, token);
         var lifecycle = await data.GetLifecycle(identity.Subject, token);
         if (marker is not null || (lifecycle is not null && lifecycle.StateCode != IdentityProtocol.Active))
@@ -90,7 +90,7 @@ public sealed class QuestService(IAccountDataService data, ICurrentAccount curre
     }
 
     internal async Task<AccountEntity> Account(AccountIdentity identity, CancellationToken token) =>
-        await data.GetByIdentityUserIdAsync(identity.Subject, token) ?? throw new QuestNotFoundException("Initialize a profile before using its quest state.");
+        await data.GetByIdentityUserId(identity.Subject, token) ?? throw new QuestNotFoundException("Initialize a profile before using its quest state.");
 
     internal async Task Stage(AccountIdentity identity, QuestMutation change, QuestStateRows rows, byte[] digest, SyncAnchorEntity? anchor, CancellationToken token)
     {

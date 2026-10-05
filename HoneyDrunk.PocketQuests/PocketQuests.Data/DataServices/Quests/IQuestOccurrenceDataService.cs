@@ -9,7 +9,7 @@ public interface IQuestOccurrenceDataService : IBaseDataService<QuestOccurrenceE
     /// <param name="accountId">Resolved product account identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<QuestOccurrenceEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<QuestOccurrenceEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default);
 
     /// <summary>Reads a bounded occurrence keyset page including a lookahead row.</summary>
     /// <param name="accountId">Resolved account.</param>
@@ -17,5 +17,5 @@ public interface IQuestOccurrenceDataService : IBaseDataService<QuestOccurrenceE
     /// <param name="size">Page size.</param>
     /// <param name="token">Cancellation.</param>
     /// <returns>Committed rows in creation order.</returns>
-    Task<IReadOnlyList<QuestOccurrenceEntity>> GetPageAsync(Guid accountId, int after, int size, CancellationToken token = default);
+    Task<IReadOnlyList<QuestOccurrenceEntity>> GetPage(Guid accountId, int after, int size, CancellationToken token = default);
 }

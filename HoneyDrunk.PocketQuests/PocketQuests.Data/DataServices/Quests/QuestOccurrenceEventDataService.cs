@@ -8,7 +8,7 @@ namespace PocketQuests.Data.DataServices.Quests;
 public sealed class QuestOccurrenceEventDataService(AppDbContext context) : BaseDataService<QuestOccurrenceEventEntity>(context), IQuestOccurrenceEventDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<QuestOccurrenceEventEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<QuestOccurrenceEventEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }

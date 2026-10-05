@@ -9,7 +9,7 @@ public interface IQuestCompletionDataService : IBaseDataService<QuestCompletionE
     /// <param name="accountId">Resolved product account identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<QuestCompletionEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<QuestCompletionEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default);
 
     /// <summary>Reads current completions for the selected occurrence page.</summary>
     /// <param name="accountId">Resolved account.</param>
@@ -17,5 +17,5 @@ public interface IQuestCompletionDataService : IBaseDataService<QuestCompletionE
     /// <param name="at">Projection instant.</param>
     /// <param name="token">Cancellation.</param>
     /// <returns>Current committed completions.</returns>
-    Task<IReadOnlyList<QuestCompletionEntity>> GetCurrentForOccurrencesAsync(Guid accountId, Guid[] ids, DateTimeOffset at, CancellationToken token = default);
+    Task<IReadOnlyList<QuestCompletionEntity>> GetCurrentForOccurrences(Guid accountId, Guid[] ids, DateTimeOffset at, CancellationToken token = default);
 }

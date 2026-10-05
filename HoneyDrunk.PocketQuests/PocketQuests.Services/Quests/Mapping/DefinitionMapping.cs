@@ -8,6 +8,9 @@ namespace PocketQuests.Services.Quests.Mapping;
 
 internal static class DefinitionMapping
 {
+    internal static QuestDefinition ToModel(this QuestDefinitionRevisionEntity row, Quest terms, bool archived) =>
+        new(terms, row.Revision, archived);
+
     internal static QuestDefinitionEntity ToHead(this Quest quest, QuestMutation change, Guid id, int revision, int ordinal) => new()
     {
         Id = id,

@@ -46,9 +46,9 @@ public sealed class EfDataServiceSqlTests(SchemaFixture fixture) : IClassFixture
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var accounts = scope.ServiceProvider.GetRequiredService<IAccountDataService>();
             var skills = scope.ServiceProvider.GetRequiredService<ICustomSkillDataService>();
-            Assert.Equal(account.Id, (await accounts.GetByIdentityUserIdAsync(account.IdentityUserId))!.Id);
-            Assert.Null(await accounts.GetByIdentityUserIdAsync("usr_00000000000000000000000000"));
-            var found = Assert.Single(await skills.GetByAccountIdAsync(account.Id));
+            Assert.Equal(account.Id, (await accounts.GetByIdentityUserId(account.IdentityUserId))!.Id);
+            Assert.Null(await accounts.GetByIdentityUserId("usr_00000000000000000000000000"));
+            var found = Assert.Single(await skills.GetByAccountId(account.Id));
             Assert.Equal(EntityState.Unchanged, db.Entry(found).State);
             Assert.Same(found, await skills.FindByIdAsync(skill.Id));
             found.Name = "Changed name";
@@ -170,8 +170,8 @@ public sealed class EfDataServiceSqlTests(SchemaFixture fixture) : IClassFixture
         await using (var read = Context())
         {
             var data = new CustomSkillDataService(read);
-            Assert.Equal(owner.Id, Assert.Single(await data.GetByAccountIdAsync(owner.Id)).AccountId);
-            Assert.Equal(other.Id, Assert.Single(await data.GetByAccountIdAsync(other.Id)).AccountId);
+            Assert.Equal(owner.Id, Assert.Single(await data.GetByAccountId(owner.Id)).AccountId);
+            Assert.Equal(other.Id, Assert.Single(await data.GetByAccountId(other.Id)).AccountId);
         }
 
         await using var invalid = Context();

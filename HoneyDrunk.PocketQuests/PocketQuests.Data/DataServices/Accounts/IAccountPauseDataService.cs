@@ -9,5 +9,5 @@ public interface IAccountPauseDataService : IBaseDataService<AccountPauseEntity>
     /// <param name="accountId">Resolved product account identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<AccountPauseEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AccountPauseEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default);
 }

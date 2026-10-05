@@ -9,5 +9,5 @@ public interface ITimeZoneChangeDataService : IBaseDataService<TimeZoneChangeEnt
     /// <param name="accountId">Resolved product account identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<TimeZoneChangeEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TimeZoneChangeEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default);
 }

@@ -9,5 +9,5 @@ public interface ISyncAnchorDataService : IBaseDataService<SyncAnchorEntity>
     /// <param name="accountId">Resolved product account identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<SyncAnchorEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SyncAnchorEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default);
 }

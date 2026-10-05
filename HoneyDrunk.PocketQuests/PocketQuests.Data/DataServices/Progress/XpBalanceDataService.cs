@@ -8,7 +8,7 @@ namespace PocketQuests.Data.DataServices.Progress;
 public sealed class XpBalanceDataService(AppDbContext context) : BaseDataService<XpBalanceEntity>(context), IXpBalanceDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<XpBalanceEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<XpBalanceEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }

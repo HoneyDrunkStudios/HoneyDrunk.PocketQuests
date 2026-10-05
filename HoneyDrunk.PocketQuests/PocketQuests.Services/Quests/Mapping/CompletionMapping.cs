@@ -6,6 +6,9 @@ namespace PocketQuests.Services.Quests.Mapping;
 
 internal static class CompletionMapping
 {
+    internal static Completion ToModel(this QuestCompletionEntity row, Quest terms) =>
+        new(row.Id, row.QuestOccurrenceId, row.RecordedAt, terms);
+
     internal static QuestCompletionEntity ToEntity(QuestMutation change, Completion completion, QuestOccurrenceEntity occurrence)
     {
         return new QuestCompletionEntity

@@ -8,7 +8,7 @@ namespace PocketQuests.Data.DataServices.Progress;
 public sealed class AccountEntitlementDataService(AppDbContext context) : BaseDataService<AccountEntitlementEntity>(context), IAccountEntitlementDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<AccountEntitlementEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<AccountEntitlementEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }

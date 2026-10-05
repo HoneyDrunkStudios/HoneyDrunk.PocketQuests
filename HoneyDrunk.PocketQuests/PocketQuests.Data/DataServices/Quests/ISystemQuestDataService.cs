@@ -8,5 +8,5 @@ public interface ISystemQuestDataService : IBaseDataService<SystemQuestEntity>
     /// <summary>Gets the versioned public catalog.</summary>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<SystemQuestEntity>> GetCatalogAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SystemQuestEntity>> GetCatalog(CancellationToken cancellationToken = default);
 }

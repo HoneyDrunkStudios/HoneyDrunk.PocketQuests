@@ -35,27 +35,30 @@ public sealed class OccurrenceReadService(IAccountDataService data, IQuestOccurr
 
     private async Task<QuestOccurrencePage> ReadPage(AccountEntity account, int after, int size, DateTimeOffset at, CancellationToken token)
     {
-        var selected = await occurrences.GetPageAsync(account.Id, after, size, token);
+        var selected = await occurrences.GetPage(account.Id, after, size, token);
         var next = selected.Count > size ? selected[size - 1].CreationOrdinal : (int?)null;
         var rows = selected.Take(size).ToArray();
         var ids = rows.Select(row => row.Id).ToArray();
-        var completionRows = await completions.GetCurrentForOccurrencesAsync(account.Id, ids, at, token);
+        var completionRows = await completions.GetCurrentForOccurrences(account.Id, ids, at, token);
         var completionRevisionIds = completionRows.Select(row => row.QuestOccurrenceRevisionId).ToArray();
-        var completionRevisions = (await revisions.GetSelectedAsync(account.Id, completionRevisionIds, token)).ToDictionary(row => row.Id);
+        var completionRevisions = (await revisions.GetSelected(account.Id, completionRevisionIds, token)).ToDictionary(row => row.Id);
         var termIds = rows.Select(row => row.QuestDefinitionRevisionId).Concat(completionRevisions.Values.Select(row => row.QuestDefinitionRevisionId)).Distinct().ToArray();
         var terms = QuestTerms.Read(await data.ReadSelectedTerms(account.Id, termIds, token));
         var seriesIds = rows.Where(row => row.QuestSeriesRevisionId is not null).Select(row => row.QuestSeriesRevisionId!.Value).Distinct().ToArray();
-        var seriesRows = (await series.GetSelectedAsync(account.Id, seriesIds, token)).ToDictionary(row => row.Id);
+        var seriesRows = (await series.GetSelected(account.Id, seriesIds, token)).ToDictionary(row => row.Id);
         var views = rows.Select(row =>
         {
             var occurrence = row.ToModel(terms, seriesRows);
             var source = completionRows.SingleOrDefault(completion => completion.QuestOccurrenceId == row.Id);
-            var completion = source is null ? null : new Completion(source.Id, row.Id, source.RecordedAt, terms[completionRevisions[source.QuestOccurrenceRevisionId].QuestDefinitionRevisionId]);
+            var completion = source?.ToModel(terms[completionRevisions[source.QuestOccurrenceRevisionId].QuestDefinitionRevisionId]);
             var status = row.AcceptedAt is null ? QuestStatus.Offered : completion is not null ? QuestStatus.Completed
                 : row.AbandonedAt is not null ? QuestStatus.Abandoned : row.FrozenAt is not null ? QuestStatus.Frozen
                 : row.DeadlineAt <= at ? QuestStatus.Missed : QuestStatus.Active;
-            return new OccurrenceView(occurrence, status, completion, completion is not null && at >= completion.RecordedAt && at < completion.RecordedAt.AddHours(24), occurrence.DueDate is not null && occurrence.PlannedTime is not null ? Scheduling.Planned(occurrence.DueDate, occurrence.PlannedTime, row.DeadlineTimeZoneId!) : null);
+            var canUndo = completion is not null && at >= completion.RecordedAt && at < completion.RecordedAt.AddHours(24);
+            var planned = occurrence.DueDate is not null && occurrence.PlannedTime is not null
+                ? Scheduling.Planned(occurrence.DueDate, occurrence.PlannedTime, row.DeadlineTimeZoneId!) : null;
+            return occurrence.ToView(status, completion, canUndo, planned);
         });
-        return new([.. views], next, account.MutationVersion, account.ProjectionAsOfAt, account.HasPendingReconciliation);
+        return views.ToPage(next, account);
     }
 }

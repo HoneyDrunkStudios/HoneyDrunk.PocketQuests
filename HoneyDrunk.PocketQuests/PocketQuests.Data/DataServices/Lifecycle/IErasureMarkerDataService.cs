@@ -9,11 +9,11 @@ public interface IErasureMarkerDataService : IBaseDataService<ErasureMarkerEntit
     /// <param name="identityUserId">Verified canonical Identity user identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<ErasureMarkerEntity>> GetByIdentityUserIdAsync(string identityUserId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ErasureMarkerEntity>> GetByIdentityUserId(string identityUserId, CancellationToken cancellationToken = default);
 
     /// <summary>Deletes minimal markers whose original erasure instant is outside retention.</summary>
     /// <param name="cutoff">Inclusive original erasure cutoff.</param>
     /// <param name="token">Cancellation.</param>
     /// <returns>Completion of the persistence operation.</returns>
-    Task DeleteExpiredAsync(DateTimeOffset cutoff, CancellationToken token = default);
+    Task DeleteExpired(DateTimeOffset cutoff, CancellationToken token = default);
 }

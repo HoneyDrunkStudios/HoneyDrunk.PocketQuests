@@ -9,5 +9,5 @@ public interface ICategoryProgressDataService : IBaseDataService<CategoryProgres
     /// <param name="accountId">Resolved product account identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<CategoryProgressEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<CategoryProgressEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default);
 }

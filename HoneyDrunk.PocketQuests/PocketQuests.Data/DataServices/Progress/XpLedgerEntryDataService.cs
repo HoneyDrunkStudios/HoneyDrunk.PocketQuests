@@ -8,7 +8,7 @@ namespace PocketQuests.Data.DataServices.Progress;
 public sealed class XpLedgerEntryDataService(AppDbContext context) : BaseDataService<XpLedgerEntryEntity>(context), IXpLedgerEntryDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<XpLedgerEntryEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<XpLedgerEntryEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }

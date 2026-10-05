@@ -9,14 +9,14 @@ namespace PocketQuests.Data.DataServices.Accounts;
 public sealed partial class AccountDataService(AppDbContext context) : BaseDataService<AccountEntity>(context), IAccountDataService
 {
     /// <inheritdoc />
-    public Task<AccountEntity?> GetByIdentityUserIdAsync(string identityUserId, CancellationToken cancellationToken = default) =>
+    public Task<AccountEntity?> GetByIdentityUserId(string identityUserId, CancellationToken cancellationToken = default) =>
         DbSet.SingleOrDefaultAsync(row => row.IdentityUserId == identityUserId, cancellationToken);
 
     /// <inheritdoc />
-    public Task AcquireCommandLockAsync(string identityUserId, CancellationToken token = default) => AccountQueries.AcquireLock(Context, identityUserId, token);
+    public Task AcquireCommandLock(string identityUserId, CancellationToken token = default) => AccountQueries.AcquireLock(Context, identityUserId, token);
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<AccountEntity>> GetReconciliationCandidatesAsync(DateTimeOffset now, DateTimeOffset? afterProjectionAt, Guid? afterAccountId, int maximumAccounts, string activeState, CancellationToken token = default)
+    public async Task<IReadOnlyList<AccountEntity>> GetReconciliationCandidates(DateTimeOffset now, DateTimeOffset? afterProjectionAt, Guid? afterAccountId, int maximumAccounts, string activeState, CancellationToken token = default)
     {
         var query = DbSet.AsNoTracking().Where(account => account.ProjectionAsOfAt < now && account.MutationVersion > 0
             && !Context.ErasureMarker.Any(marker => marker.Id == account.IdentityUserId)
@@ -27,14 +27,14 @@ public sealed partial class AccountDataService(AppDbContext context) : BaseDataS
     }
 
     /// <inheritdoc />
-    public async Task<bool> HasDueWorkAsync(Guid accountId, DateOnly date, DateTimeOffset at, bool includeSeries, CancellationToken token = default)
+    public async Task<bool> HasDueWork(Guid accountId, DateOnly date, DateTimeOffset at, bool includeSeries, CancellationToken token = default)
     {
         return (includeSeries && await Context.QuestSeries.AnyAsync(series => series.AccountId == accountId && series.StoppedAt == null && series.NextDeliveryOn <= date, token))
             || await Context.QuestOccurrence.AnyAsync(occurrence => occurrence.AccountId == accountId && occurrence.StateCode == "Active" && occurrence.DeadlineAt <= at, token);
     }
 
     /// <inheritdoc />
-    public async Task DeleteOwnedAsync(string identityUserId, CancellationToken token = default)
+    public async Task DeleteOwned(string identityUserId, CancellationToken token = default)
     {
         if (Context.Database.CurrentTransaction is null)
             throw new InvalidOperationException("Erasure requires an explicit verified lifecycle transaction.");

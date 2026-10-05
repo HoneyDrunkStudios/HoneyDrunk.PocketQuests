@@ -8,6 +8,6 @@ namespace PocketQuests.Data.DataServices.Attributes;
 public sealed class AttributeDataService(AppDbContext context) : BaseDataService<AttributeEntity>(context), IAttributeDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<AttributeEntity>> GetCatalogAsync(CancellationToken cancellationToken = default) =>
+    public async Task<IReadOnlyList<AttributeEntity>> GetCatalog(CancellationToken cancellationToken = default) =>
         await DbSet.OrderBy(row => row.SortOrder).ToListAsync(cancellationToken);
 }

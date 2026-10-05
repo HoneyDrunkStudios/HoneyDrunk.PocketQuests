@@ -8,13 +8,13 @@ namespace PocketQuests.Data.DataServices.Accounts;
 public sealed class AccountAuditRecordDataService(AppDbContext context) : BaseDataService<AccountAuditRecordEntity>(context), IAccountAuditRecordDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<AccountAuditRecordEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<AccountAuditRecordEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task AddWithAuditAsync(AccountAuditRecordEntity ownership, HoneyDrunk.Audit.Data.AuditRecord audit, CancellationToken token = default)
+    public async Task AddWithAudit(AccountAuditRecordEntity ownership, HoneyDrunk.Audit.Data.AuditRecord audit, CancellationToken token = default)
     {
         await Context.Set<HoneyDrunk.Audit.Data.AuditRecord>().AddAsync(audit, token);
         await AddAsync(ownership, token);

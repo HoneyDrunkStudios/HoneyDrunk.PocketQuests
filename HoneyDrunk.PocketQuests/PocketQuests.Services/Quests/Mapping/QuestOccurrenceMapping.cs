@@ -1,5 +1,7 @@
+using PocketQuests.Data.Entities.Accounts;
 using PocketQuests.Data.Entities.Quests;
 using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Schedules;
 using QuestValues = PocketQuests.Domain.Quests.QuestValues;
 
@@ -7,6 +9,12 @@ namespace PocketQuests.Services.Quests.Mapping;
 
 internal static class QuestOccurrenceMapping
 {
+    internal static OccurrenceView ToView(this Occurrence occurrence, QuestStatus status, Completion? completion, bool canUndo, PlannedMoment? planned) =>
+        new(occurrence, status, completion, canUndo, planned);
+
+    internal static QuestOccurrencePage ToPage(this IEnumerable<OccurrenceView> views, int? next, AccountEntity account) =>
+        new([.. views], next, account.MutationVersion, account.ProjectionAsOfAt, account.HasPendingReconciliation);
+
     internal static Occurrence ToModel(this QuestOccurrenceEntity row, IReadOnlyDictionary<Guid, Quest> terms, IReadOnlyDictionary<Guid, QuestSeriesRevisionEntity> series) => new(
         row.Id,
         terms[row.QuestDefinitionRevisionId],

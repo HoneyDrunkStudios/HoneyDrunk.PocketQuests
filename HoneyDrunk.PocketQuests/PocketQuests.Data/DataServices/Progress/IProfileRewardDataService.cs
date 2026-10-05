@@ -8,5 +8,5 @@ public interface IProfileRewardDataService : IBaseDataService<ProfileRewardEntit
     /// <summary>Gets the versioned public catalog.</summary>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<ProfileRewardEntity>> GetCatalogAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ProfileRewardEntity>> GetCatalog(CancellationToken cancellationToken = default);
 }

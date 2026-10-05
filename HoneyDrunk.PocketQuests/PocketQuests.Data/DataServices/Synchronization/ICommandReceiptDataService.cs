@@ -9,5 +9,5 @@ public interface ICommandReceiptDataService : IBaseDataService<CommandReceiptEnt
     /// <param name="accountId">Resolved product account identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<CommandReceiptEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<CommandReceiptEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default);
 }

@@ -9,5 +9,5 @@ public interface ISkillAssessmentDataService : IBaseDataService<SkillAssessmentE
     /// <param name="accountId">Resolved product account identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>
     /// <returns>Matching tracked entities.</returns>
-    Task<IReadOnlyList<SkillAssessmentEntity>> GetByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SkillAssessmentEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default);
 }

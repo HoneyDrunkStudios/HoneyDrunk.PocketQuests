@@ -8,6 +8,6 @@ namespace PocketQuests.Data.DataServices.Progress;
 public sealed class ProfileRewardDataService(AppDbContext context) : BaseDataService<ProfileRewardEntity>(context), IProfileRewardDataService
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<ProfileRewardEntity>> GetCatalogAsync(CancellationToken cancellationToken = default) =>
+    public async Task<IReadOnlyList<ProfileRewardEntity>> GetCatalog(CancellationToken cancellationToken = default) =>
         await DbSet.ToListAsync(cancellationToken);
 }

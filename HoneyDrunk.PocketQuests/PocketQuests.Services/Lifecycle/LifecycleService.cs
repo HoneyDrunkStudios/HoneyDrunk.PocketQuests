@@ -45,10 +45,10 @@ public sealed class LifecycleService(IAccountDataService data, IAccountLifecycle
             LifecycleValidator.ActiveVersion(user, seen);
             if (user.LifecycleVersion == (seen?.Version ?? 0))
                 return false;
-            await data.AcquireCommandLockAsync(identity.Subject, cancellationToken);
+            await data.AcquireCommandLock(identity.Subject, cancellationToken);
             if (await markers.FindByIdAsync(user.UserId, cancellationToken) is not null)
                 throw new UnauthorizedAccessException("This account was erased.");
-            var barrier = await barriers.GetByIdentityUserIdAsync(user.UserId, cancellationToken);
+            var barrier = await barriers.GetByIdentityUserId(user.UserId, cancellationToken);
             LifecycleValidator.ActiveVersion(user, barrier);
             if (user.LifecycleVersion > (barrier?.Version ?? 0))
                 await Apply(identity, user.LifecycleVersion, IdentityProtocol.Active, now, user.DeletionPausedAt!.Value.ToUniversalTime(), barrier, now, cancellationToken);
@@ -68,15 +68,15 @@ public sealed class LifecycleService(IAccountDataService data, IAccountLifecycle
 
         async Task<bool> ReceiveIntent(CancellationToken cancellationToken)
         {
-            await data.AcquireCommandLockAsync(identity.Subject, cancellationToken);
+            await data.AcquireCommandLock(identity.Subject, cancellationToken);
             var marker = await markers.FindByIdAsync(identity.Subject, cancellationToken);
-            var barrier = await barriers.GetByIdentityUserIdAsync(identity.Subject, cancellationToken);
+            var barrier = await barriers.GetByIdentityUserId(identity.Subject, cancellationToken);
             if (marker is null && intent.Version > (barrier?.Version ?? 0))
             {
                 if (intent.State == IdentityProtocol.Erasing)
                 {
                     var oldAbsentRetry = intent.EffectiveAt <= now.AddDays(-35) && barrier is null
-                        && await data.GetByIdentityUserIdAsync(identity.Subject, cancellationToken) is null;
+                        && await data.GetByIdentityUserId(identity.Subject, cancellationToken) is null;
                     if (!oldAbsentRetry)
                         await Purge(identity.Subject, now, cancellationToken);
                 }
@@ -99,7 +99,7 @@ public sealed class LifecycleService(IAccountDataService data, IAccountLifecycle
 
         async Task<bool> Restore(CancellationToken cancellationToken)
         {
-            await data.AcquireCommandLockAsync(identity.Subject, cancellationToken);
+            await data.AcquireCommandLock(identity.Subject, cancellationToken);
             await Purge(identity.Subject, originalErasedAt, cancellationToken);
             return true;
         }
@@ -111,22 +111,22 @@ public sealed class LifecycleService(IAccountDataService data, IAccountLifecycle
 
         async Task<bool> PruneOwned(CancellationToken cancellationToken)
         {
-            await messages.DeleteDeliveredOrExpiredAsync(now.ToUniversalTime(), cancellationToken);
-            await markers.DeleteExpiredAsync(now.ToUniversalTime().AddDays(-35), cancellationToken);
+            await messages.DeleteDeliveredOrExpired(now.ToUniversalTime(), cancellationToken);
+            await markers.DeleteExpired(now.ToUniversalTime().AddDays(-35), cancellationToken);
             return true;
         }
     }
 
     private async Task Purge(string userId, DateTimeOffset originalErasedAt, CancellationToken token)
     {
-        await data.DeleteOwnedAsync(userId, token);
+        await data.DeleteOwned(userId, token);
         if (await markers.FindByIdAsync(userId, token) is null)
             await markers.AddAsync(LifecycleMapping.ToMarker(userId, originalErasedAt), token);
     }
 
     private async Task Apply(AccountIdentity identity, long version, string state, DateTimeOffset effectiveAt, DateTimeOffset pausedAt, AccountLifecycleStateEntity? barrier, DateTimeOffset now, CancellationToken token)
     {
-        var account = await data.GetByIdentityUserIdAsync(identity.Subject, token);
+        var account = await data.GetByIdentityUserId(identity.Subject, token);
         if (account is not null)
             await quests.StageLifecyclePause(identity, account, pausedAt, now, token);
         if (barrier is null)
@@ -138,7 +138,7 @@ public sealed class LifecycleService(IAccountDataService data, IAccountLifecycle
         barrier.ApplyTo(account?.Id, version, state, effectiveAt, pausedAt, now);
         if (account is not null)
         {
-            foreach (var anchor in await anchors.GetByAccountIdAsync(account.Id, token))
+            foreach (var anchor in await anchors.GetByAccountId(account.Id, token))
             {
                 if (anchor.InvalidatedAt is null)
                     anchor.Invalidate(now);
