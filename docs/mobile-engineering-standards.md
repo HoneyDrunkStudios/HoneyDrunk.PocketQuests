@@ -1,6 +1,6 @@
 # Mobile engineering standards
 
-These standards apply to `apps/mobile`. Read its [Expo instructions](../apps/mobile/AGENTS.md) for SDK documentation, package installation and native configuration rules. Backend conventions remain in [engineering standards](engineering-standards.md); they are not a template for React component layers.
+These standards apply to `apps/mobile`. Read [the root repository instructions](../AGENTS.md) first; SDK documentation and native configuration rules follow below. Backend conventions remain in [engineering standards](engineering-standards.md); they are not a template for React component layers.
 
 ## Boundaries and state
 
@@ -48,3 +48,13 @@ Before a release, use [mobile release checks](mobile-release.md) for signed iOS/
 Dependency remediation must use compatible supported versions and regression evidence. Keep audit gates active; isolate unqualified transitive patches. Do not suppress advisories or publish packages merely to obtain green checks.
 
 Review the exact intended/staged diff, use Conventional Commits and the task's publication authorization. PR/merge/release holds belong in task evidence, not permanent source rules.
+
+## Expo SDK and native configuration
+
+Before changing Expo, EAS or React Native APIs, read the installed Expo major version in `apps/mobile/package.json` and fetch that version's official documentation (`https://docs.expo.dev/versions/v<major>.0.0/`). The [Expo documentation index](https://docs.expo.dev/llms.txt) routes to the specific guides. Do not substitute remembered APIs or the latest docs for the installed SDK.
+
+Use `npx expo install <package>` for SDK-compatible packages. This repository uses npm and its committed lockfile; only use Bun commands if the package-manager choice is explicitly changed. `npx expo start`, `npx expo lint`, `npx tsc --noEmit` and `npx expo-doctor` support local development. Inspect the proposed diff before applying `npx expo install --fix`.
+
+Expo Router owns navigation. Routes live in `src/app/`; non-route components, hooks and workflows stay outside it. Use `Link`, `router` and `useLocalSearchParams` from `expo-router` where appropriate. See [Expo Router](https://docs.expo.dev/router/introduction/).
+
+If `ios/` and `android/` are generated rather than tracked, configure native behavior in app configuration and plugins. Native modules outside Expo Go require a development build. EAS can build/sign/submit and deliver updates, but build services, signing, submission and over-the-air publication require their own selected execution scope; an instruction audit does not authorize those actions. Follow [EAS documentation](https://docs.expo.dev/eas/) and the repository's release checks.
