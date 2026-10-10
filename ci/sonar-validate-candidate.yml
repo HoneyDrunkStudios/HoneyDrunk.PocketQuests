@@ -61,6 +61,8 @@ jobs:
             /d:sonar.host.url="https://sonarcloud.io" /d:sonar.token="$env:SONAR_TOKEN" `
             /d:sonar.projectBaseDir="$env:GITHUB_WORKSPACE/product" `
             /d:sonar.scanner.scanAll=true `
+            /d:sonar.tsql.file.suffixes=".sql,.tsql" `
+            /d:sonar.plsql.file.suffixes=".plsql,.pks,.pkb" `
             /d:sonar.exclusions="**/node_modules/**,**/bin/**,**/obj/**,**/.expo/**,.local/**,.packages/**,artifacts/**,apps/mobile/dist/**,apps/mobile/packages/**,apps/mobile/src/api/generated.ts,apps/mobile/src/api/runtime-schemas.json" `
             /d:sonar.cs.opencover.reportsPaths="artifacts/identity-validation/**/coverage.opencover.xml" `
             /d:sonar.qualitygate.wait=true /d:sonar.qualitygate.timeout=300

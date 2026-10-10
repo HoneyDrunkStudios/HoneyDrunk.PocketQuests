@@ -26,6 +26,9 @@ Exclusions cover dependency/build output, generated API files, and the exact
 shared UI snapshots under `apps/mobile/packages` (owned by HoneyDrunk.UI,
 whose Sonar onboarding is still pending). Authored API wrappers, mobile features, domain/data code and
 SQL/tooling remain in scope. Do not broaden exclusions to hide findings.
+The candidate explicitly assigns `.sql`/`.tsql` to Microsoft's T-SQL analyzer;
+Sonar's default assigns `.sql` to Oracle PL/SQL. Other PL/SQL suffixes remain
+associated with PL/SQL, and no SQL file is excluded by this dialect correction.
 
 Fork PRs retain normal validation but receive no secret-backed scan. Report
 that limitation; never use `pull_request_target` to run untrusted code with the
