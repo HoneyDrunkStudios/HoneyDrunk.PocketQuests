@@ -45,6 +45,20 @@ jobs:
       - name: Validate relational schema and EF parity in disposable SQL
         shell: pwsh
         run: ./product/scripts/Test-RelationalSchema.ps1 -NoBuild
+      - name: Retain disposable SQL test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-sql-evidence
+          retention-days: 7
+          if-no-files-found: ignore
+          path: |
+            product/artifacts/identity-validation/tests.log
+            product/artifacts/identity-validation/schema-tests.trx
+            product/artifacts/identity-validation/run.json
+            product/artifacts/schema-validation/tests.log
+            product/artifacts/schema-validation/schema-tests.trx
+            product/artifacts/schema-validation/run.json
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 15

@@ -1,5 +1,31 @@
 # PocketQuests dependency assessment
 
+## October 10 parent-path investigation and watcher remediation
+
+[Expo's upstream removal](https://github.com/expo/expo/pull/51093) is published as **@expo/metro-file-map 57.0.4**, within CLI 57.0.27's existing `^57.0.3` range. `npm update @expo/metro-file-map --package-lock-only --ignore-scripts` changes only that package's lock entry and removes its micromatch dependency. The published implementation replaces internally constructed globs with extension, basename and prefix checks.
+
+After clean installation, both full and `--omit=dev` audits report **18 high, zero critical affected-package entries** (previously 19 high); @expo/metro-file-map is no longer reported. Both audits still exit 1. Braces remains installed through Metro, so this improvement does **not** close alert #3. Node-forge remains unresolved. GitHub alert counts must be read separately after merges.
+
+### Exact installed paths and affected functionality
+
+| Advisory | Installed dependency paths after watcher update | Actual functionality and exposure |
+| --- | --- | --- |
+| [braces GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) | `expo 57.0.25 -> @expo/metro 56.0.2 -> metro-file-map 0.84.5 -> micromatch 4.0.8 -> braces 3.0.3`; independently `react-native 0.86.3 -> @react-native/community-cli-plugin 0.86.3 -> metro 0.84.5 -> metro-file-map 0.84.5 -> micromatch -> braces` | Metro file-watcher pattern matching. The installed watcher calls `micromatch.some`, which invokes Picomatch, not braces' recursive compile/expand walkers. Globs come from configured extensions plus fixed package/health-check patterns; filenames are candidate strings. Untrusted deeply nested patterns reaching the braces APIs would still be unsafe. |
+| [node-forge GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv) | `expo 57.0.25 -> @expo/cli 57.0.27 -> node-forge 1.4.0`; also `@expo/cli -> @expo/code-signing-certificates 0.0.6 -> node-forge 1.4.0` | Expo CLI parses local Apple signing certificates and uses the certificate helper for development/update signing. The helper really calls certificate and RSA signature verification, so the vulnerable functionality is not an unused declared dependency. Project signing validates a configured local certificate/key pair; manifest signing verifies a locally generated signature. A forged remote signature reaching these paths was not demonstrated. |
+
+Fresh Android/iOS/web JavaScript export maps contain **no braces, micromatch or node-forge sources**. The three main bundles do include Expo CLI's `build/metro-require/require.js` loader; that does not pull in certificate verification or node-forge. Source maps describe these exported JavaScript artifacts, not signed native binaries, all plugins or every release workflow. Committed app config has no `updates.codeSigningCertificate`, signing metadata or EAS project ID, but externally supplied release configuration was not inspected. No keys were generated or signing services contacted.
+
+Bounded local probes exercise both original watcher implementations with five ordinary cases each; a counted braces wrapper records zero calls, while a direct micromatch.braces positive control records a call. The replacement watcher passes 13 predicate cases and a real local filesystem smoke for `.env`, compound extensions, package.json, health-check prefixes and literal braces in filenames, with an unrelated image excluded. These checks narrow demonstrated exposure and verify the replacement's behavior; they do not patch the remaining installed braces package.
+
+### Supported options checked
+
+- **Compatible parent updates:** Expo 57.0.27 / CLI 57.0.28 retain both direct node-forge and the certificate helper. Latest certificate helper 0.0.7 also requires node-forge. Published Metro 0.84.6 still requires micromatch; upgrading only that line does not remove braces. The watcher patch above is the available supported path reduction.
+- **New framework lines:** React Native 0.87.1 still brings Metro 0.87.1 -> metro-file-map 0.87.1 -> micromatch. Expo's next SDK 58 / CLI 58.1.6 still brings node-forge. Those migrations would not solve these remaining alerts, and SDK 57 officially targets RN 0.86.
+- **Unused-package removal:** Removing expo-dev-client or a lint package cannot remove the independent root Expo and React Native paths. Both frameworks are used by application code and native modules. HoneyDrunk.UI likewise imports React Native and declares it as a required host peer; its root dev dependency also provides real native typings. Removing or making that peer optional would change the supported contract, and its production-only audit still contains braces.
+- **Replacement:** Upstream Metro [#2000](https://github.com/react/metro/pull/2000) removes micromatch and [#2024](https://github.com/react/metro/pull/2024) fixes dotfile behavior, but the current registry's highest stable Metro release, 0.87.1, does not contain that removal. A published compatible backport is the smallest remaining remedy. Aliasing legacy metro-file-map to Expo's fork or micromatch to Picomatch is not an established compatible substitution. Replacing forge requires adapting Expo's PEM/key/certificate/CSR and signature contracts; an app crypto swap does not alter CLI dependencies. A custom backport/fork would create separately reviewed security-patch maintenance, not an incidental lockfile fix, and no such patch was applied.
+
+The remaining decision is whether to wait for compatible published Metro and node-forge fixes while retaining release blockers, or explicitly select and resource a maintained security patch with upstream regression and native/build/signing verification. A locally patched package retaining its affected version may still be reported by Dependabot. No release-risk acceptance, dismissal, suppression or framework migration is implied by this investigation.
+
 ## October 10 remediation and live Dependabot inventory
 
 The GitHub organization alert API reported exactly five open alerts on October 10, 2026: four in PocketQuests and one in HoneyDrunk.UI. These are GitHub alert records, not npm's count of affected packages. PocketQuests' default-branch alerts were:
