@@ -23,8 +23,8 @@ execution evidence, not coverage. Inspect the server's indexed file inventory
 and coverage mapping before claiming the API/mobile source surface is covered.
 
 Exclusions cover dependency/build output, generated API files, and the exact
-shared UI snapshots under `apps/mobile/packages` (owned and scanned in
-HoneyDrunk.UI). Authored API wrappers, mobile features, domain/data code and
+shared UI snapshots under `apps/mobile/packages` (owned by HoneyDrunk.UI,
+whose Sonar onboarding is still pending). Authored API wrappers, mobile features, domain/data code and
 SQL/tooling remain in scope. Do not broaden exclusions to hide findings.
 
 Fork PRs retain normal validation but receive no secret-backed scan. Report
