@@ -1,4 +1,21 @@
-# PocketQuests dependency assessment - October 3, 2026
+# PocketQuests dependency assessment
+
+## October 10 remediation and live Dependabot inventory
+
+The GitHub organization alert API reported exactly five open alerts on October 10, 2026: four in PocketQuests and one in HoneyDrunk.UI. These are GitHub alert records, not npm's count of affected packages. PocketQuests' default-branch alerts were:
+
+| Alert | Advisory / package | Locked remediation or remaining blocker |
+| --- | --- | --- |
+| [#5](https://github.com/HoneyDrunkStudios/HoneyDrunk.PocketQuests/security/dependabot/5) | [GHSA-pqg4-j6r4-53mv](https://github.com/advisories/GHSA-pqg4-j6r4-53mv), critical, shell-quote | 1.10.0 -> 1.12.0; first patched release is 1.11.0. |
+| [#4](https://github.com/HoneyDrunkStudios/HoneyDrunk.PocketQuests/security/dependabot/4) | [GHSA-68fv-2mgg-jv7q](https://github.com/advisories/GHSA-68fv-2mgg-jv7q), high, source-map-js | 1.2.1 -> patched 1.2.2. |
+| [#3](https://github.com/HoneyDrunkStudios/HoneyDrunk.PocketQuests/security/dependabot/3) | [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm), high, braces | Published latest 3.0.3 remains affected; no patched version. |
+| [#2](https://github.com/HoneyDrunkStudios/HoneyDrunk.PocketQuests/security/dependabot/2) | [GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv), high, node-forge | Published latest 1.4.0 remains affected; no patched version. |
+
+From `apps/mobile`, `npm update shell-quote source-map-js --package-lock-only --ignore-scripts` regenerated only those two lock entries within their consumers' existing ranges. A subsequent clean `npm ci` reapplied the existing query-decoder compatibility patch. No manifest, Expo/RN version, override, signing configuration or scanner setting changed.
+
+The fresh full audit dropped from **20 high and 1 critical affected package entries** to **19 high and zero critical**, with neither fixed advisory present. Its exit status remains 1 because braces and node-forge are unresolved. The release audit remains active; functional validation does not establish a clean security result. GitHub closes alerts only after the corrected lockfile reaches the default branch and its dependency scan processes it; branch-local audit results do not prove closure.
+
+Registry and upstream checks still show micromatch 4.0.8 requiring braces `^3.0.3`, latest metro-file-map 0.87.1 requiring micromatch `^4.0.4`, and latest @expo/code-signing-certificates 0.0.7 requiring node-forge `^1.4.0`. The [braces depth-guard issue](https://github.com/micromatch/braces/issues/70) remains open, and the [node-forge candidate fix](https://github.com/digitalbazaar/forge/pull/1152) is open and unmerged. npm's proposed Expo 44 / RN 0.72 downgrade is incompatible with the selected SDK 57 / RN 0.86 stack. A supported patched release or qualified upstream removal is still required; no advisory was dismissed or hidden. The earlier reachability evidence below remains dated evidence, not a fresh native-device assessment.
 
 ## October 4 remediation and remaining release blockers
 
