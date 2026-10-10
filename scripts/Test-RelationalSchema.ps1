@@ -47,9 +47,6 @@ try {
     }
     & dotnet test $project --configuration Release --no-build --no-restore --logger 'trx;LogFileName=schema-tests.trx' --results-directory $EvidenceDirectory @filterArguments @coverageArguments *> (Join-Path $EvidenceDirectory 'tests.log')
     $testExitCode = $LASTEXITCODE
-    if ($CollectCoverage -and !(Get-ChildItem -LiteralPath $EvidenceDirectory -Filter 'coverage.opencover.xml' -Recurse -File)) {
-        throw 'Coverage was requested but no OpenCover report was generated.'
-    }
     [xml]$testResults = Get-Content -LiteralPath (Join-Path $EvidenceDirectory 'schema-tests.trx') -Raw
     $counters = $testResults.TestRun.ResultSummary.Counters
     $summary.testProject = $projectName
@@ -61,6 +58,9 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Scratch database cleanup verification failed.' }
     $summary.databaseCleanupVerified = $true
     if ($testExitCode -ne 0) { throw 'Schema tests failed; inspect tests.log and TRX.' }
+    if ($CollectCoverage -and !(Get-ChildItem -LiteralPath $EvidenceDirectory -Filter 'coverage.opencover.xml' -Recurse -File)) {
+        throw 'Coverage was requested but no OpenCover report was generated.'
+    }
     $summary.result = 'passed'
 }
 catch {
