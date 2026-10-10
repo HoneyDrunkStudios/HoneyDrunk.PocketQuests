@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Upgrade locked mobile tooling to shell-quote 1.12.0 and source-map-js 1.2.2, fixing the command-injection and indexed source-map advisories. Record the remaining unpatched braces and node-forge release blockers.
 - Remove universal quest write staging in favor of scoped feature services, typed CRUD and ordinary EF tracking. Preserve atomic replay/history writes and service-owned audit clocks; simplify convention-only EF facets and document repository engineering standards in the root agent guidance.
 - Replace serialized account persistence with explicit account-owned relational tables, immutable terms/source history, compact receipts, ownership/rowversion constraints, query-justified indexes and table/column metadata. Keep shared Audit/Outbox ownership unchanged.
 - Convert every backend command, read, initialization, anchor, export, maintenance and lifecycle operation to Services/Contracts/Data with named typed handlers, pure Domain rules, explicit mappings and Data-owned transactions. Remove Application and persistence-aware Domain wrappers. Preserve reward rules, wire contracts, late replay and Undo; add retained-term and real-command retry regressions.
