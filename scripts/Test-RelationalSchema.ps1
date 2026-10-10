@@ -1,10 +1,16 @@
 [CmdletBinding()]
-param([switch]$NoBuild, [string]$EvidenceDirectory, [string]$TestFilter, [switch]$IdentityIntegration)
+param([switch]$NoBuild, [string]$EvidenceDirectory, [string]$TestFilter, [switch]$IdentityIntegration, [switch]$CollectCoverage)
 $ErrorActionPreference = 'Stop'
+if ($CollectCoverage -and !$IdentityIntegration) {
+    throw 'Coverage collection currently requires the IdentityIntegration lane, which references coverlet.collector.'
+}
 $root = Split-Path $PSScriptRoot -Parent
 if (!$EvidenceDirectory) { $EvidenceDirectory = Join-Path $root 'artifacts/schema-validation' }
 New-Item -ItemType Directory -Force -Path $EvidenceDirectory | Out-Null
 $EvidenceDirectory = (Resolve-Path -LiteralPath $EvidenceDirectory).Path
+if ($CollectCoverage -and (Get-ChildItem -LiteralPath $EvidenceDirectory -Filter 'coverage.opencover.xml' -Recurse -File)) {
+    throw 'Use a fresh evidence directory for coverage collection; existing reports must not be mistaken for this run.'
+}
 $instance = 'PQSchema_' + [guid]::NewGuid().ToString('N').Substring(0,12)
 $created = $false
 $previousInstance = $env:POCKETQUESTS_SCHEMA_TEST_INSTANCE
@@ -35,7 +41,11 @@ try {
     $env:POCKETQUESTS_SCHEMA_EVIDENCE = $EvidenceDirectory
     $filterArguments = @()
     if ($TestFilter) { $filterArguments = @('--filter', $TestFilter); $summary.testFilter = $TestFilter }
-    & dotnet test $project --configuration Release --no-build --no-restore --logger 'trx;LogFileName=schema-tests.trx' --results-directory $EvidenceDirectory @filterArguments *> (Join-Path $EvidenceDirectory 'tests.log')
+    $coverageArguments = @()
+    if ($CollectCoverage) {
+        $coverageArguments = @('--collect', 'XPlat Code Coverage', '--', 'DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover')
+    }
+    & dotnet test $project --configuration Release --no-build --no-restore --logger 'trx;LogFileName=schema-tests.trx' --results-directory $EvidenceDirectory @filterArguments @coverageArguments *> (Join-Path $EvidenceDirectory 'tests.log')
     $testExitCode = $LASTEXITCODE
     [xml]$testResults = Get-Content -LiteralPath (Join-Path $EvidenceDirectory 'schema-tests.trx') -Raw
     $counters = $testResults.TestRun.ResultSummary.Counters
@@ -48,6 +58,9 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Scratch database cleanup verification failed.' }
     $summary.databaseCleanupVerified = $true
     if ($testExitCode -ne 0) { throw 'Schema tests failed; inspect tests.log and TRX.' }
+    if ($CollectCoverage -and !(Get-ChildItem -LiteralPath $EvidenceDirectory -Filter 'coverage.opencover.xml' -Recurse -File)) {
+        throw 'Coverage was requested but no OpenCover report was generated.'
+    }
     $summary.result = 'passed'
 }
 catch {
