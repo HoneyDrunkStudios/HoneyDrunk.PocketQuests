@@ -58,11 +58,7 @@ export function QuestPlanEditor({ item }: Readonly<{ item: OccurrenceView }>) {
       <Text accessibilityRole="header" style={styles.subtitle}>
         Your plan
       </Text>
-      <Label>
-        {savedDate ? `Due ${savedDate}` : "Unscheduled · no deadline"}
-        {savedDate && savedTime ? ` at ${savedTime} (planned only)` : ""}
-        {savedZone ? ` · ${savedZone}` : ""}
-      </Label>
+      <SavedPlanSummary date={savedDate} time={savedTime} zone={savedZone} />
       {locked ? (
         <Label>{locked}</Label>
       ) : (
@@ -136,5 +132,19 @@ export function QuestPlanEditor({ item }: Readonly<{ item: OccurrenceView }>) {
         </>
       )}
     </View>
+  );
+}
+
+function SavedPlanSummary({
+  date,
+  time,
+  zone,
+}: Readonly<{ date: string; time: string; zone: string | undefined }>) {
+  return (
+    <Label>
+      {date ? `Due ${date}` : "Unscheduled · no deadline"}
+      {date && time ? ` at ${time} (planned only)` : ""}
+      {zone ? ` · ${zone}` : ""}
+    </Label>
   );
 }
