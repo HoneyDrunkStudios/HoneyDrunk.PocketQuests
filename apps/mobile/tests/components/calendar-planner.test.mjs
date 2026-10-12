@@ -284,3 +284,27 @@ test("empty-day choose and create keep the selected due date through the real ac
     }
   }
 });
+
+test("calendar history remains viewable without offering invalid due dates", async () => {
+  reset();
+  const view = await mount();
+  try {
+    for (const date of ["2026-10-11", "9999-01-01"]) {
+      await view.fill("Calendar date YYYY-MM-DD", date);
+      await view.click("Go to date");
+      assert.ok(view.element.querySelector(`[data-day="${date}"]`));
+      assert.equal(view.button(`Choose a quest for ${date}`), undefined);
+      assert.equal(view.button(`Create a quest for ${date}`), undefined);
+      assert.match(view.element.textContent, /view-only/);
+    }
+    await view.fill("Calendar date YYYY-MM-DD", "2026-10-10");
+    await view.click("Go to date");
+    await view.click("7 days");
+    assert.equal(view.button("Choose a quest for 2026-10-11"), undefined);
+    assert.ok(view.button("Choose a quest for 2026-10-12"));
+    assert.ok(view.button("Create a quest for 2026-10-16"));
+    assert.deepEqual(sent, []);
+  } finally {
+    await view.unmount();
+  }
+});

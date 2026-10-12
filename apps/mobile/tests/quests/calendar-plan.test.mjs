@@ -4,6 +4,7 @@ import {
   isCalendarDate,
   shiftCalendarDate,
   calendarPlan,
+  canPlanCalendarDate,
 } from "../../src/features/quests/calendar-plan.ts";
 
 function item(
@@ -15,6 +16,13 @@ function item(
 ) {
   return { occurrence: { id, dueDate, plannedTime, acceptedAt }, status };
 }
+
+test("calendar planning only permits dates the server can accept", () => {
+  for (const date of ["2026-10-11", "9999-01-01", "9999-12-31", "2026-02-30"])
+    assert.equal(canPlanCalendarDate(date, "2026-10-12"), false);
+  for (const date of ["2026-10-12", "2026-10-13", "9998-12-31"])
+    assert.equal(canPlanCalendarDate(date, "2026-10-12"), true);
+});
 
 test("calendar rejects rolled-over, malformed and out-of-range dates", () => {
   for (const date of [
