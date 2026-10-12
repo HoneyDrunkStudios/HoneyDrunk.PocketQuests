@@ -18,7 +18,7 @@ import { useSession } from "../session/session";
 import { RecoveryPanel } from "../features/profile/account-settings";
 import { Button, Label, Card, colors, styles } from "../shared/ui";
 WebBrowser.maybeCompleteAuthSession();
-function SignIn({ config, discovery }: ProviderSetup) {
+function SignIn({ config, discovery }: Readonly<ProviderSetup>) {
   const { connect, busy } = useSession();
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
