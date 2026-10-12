@@ -13,19 +13,31 @@ const { createRoot } = require("react-dom/client");
 process.env.PQ_REAL_REACT = "1";
 require("../session/provider-harness.cjs");
 const originalLoad = Module._load;
-let state, sent, inputHandlers, busy, pending;
+let state, sent, inputHandlers, busy, pending, queuedCount;
 const container = ({ children, accessibilityRole }) =>
   React.createElement("div", { role: accessibilityRole }, children);
 const Button = ({ title, onPress, disabled }) =>
   React.createElement("button", { onClick: onPress, disabled }, title);
-const Input = ({ accessibilityLabel, value, onChangeText, editable }) => {
+const Input = ({
+  accessibilityLabel,
+  value,
+  onChangeText,
+  editable,
+  error,
+}) => {
   inputHandlers.set(accessibilityLabel, onChangeText);
-  return React.createElement("input", {
-    "aria-label": accessibilityLabel,
-    value,
-    disabled: editable === false,
-    onChange: (e) => onChangeText(e.target.value),
-  });
+  return React.createElement(
+    React.Fragment,
+    null,
+    React.createElement("input", {
+      "aria-label": accessibilityLabel,
+      "data-error": error,
+      value,
+      disabled: editable === false,
+      onChange: (e) => onChangeText(e.target.value),
+    }),
+    error ? React.createElement("span", null, error) : null,
+  );
 };
 const quest = {
   id: "q",
@@ -74,6 +86,7 @@ Module._load = function (name, ...rest) {
         command: async (command) => sent.push(command),
         busy,
         pending,
+        queuedCount,
       }),
     };
   if (name.endsWith("/session-page")) return { Page: container };
@@ -129,6 +142,7 @@ const {
   QuestPlanEditor,
 } = require("../../src/features/quests/quest-plan-editor.tsx");
 function reset() {
+  queuedCount = 0;
   state = {
     today: "2026-10-12",
     zone: "America/New_York",
@@ -350,20 +364,104 @@ test("plan editor validates dates/times, clears both values for unscheduled and 
     await view.rerender({ item: acknowledged });
     assert.equal(view.button("Save plan").disabled, true);
     assert.equal(view.button("Load saved plan"), undefined);
-    // A rejected optimistic projection restores saved state without losing the draft.
-    await view.rerender({ item });
-    assert.equal(view.button("Save plan").disabled, false);
-    assert.equal(view.button("Load saved plan"), undefined);
-    assert.equal(
-      view.element.querySelector('[aria-label="Quest due date YYYY-MM-DD"]')
-        .value,
-      "",
-    );
-    await view.rerender({ item: acknowledged });
     await view.click("Plan for today");
     await view.click("Save plan");
     assert.equal(sent[1].dueDate, state.today);
     assert.equal(sent[1].plannedTime, null);
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("reverted and acknowledged clean drafts follow later saved plans without a false conflict", async () => {
+  for (const finish of ["revert", "acknowledge"]) {
+    reset();
+    const view = await mount(QuestPlanEditor, { item: plannedItem() });
+    try {
+      await view.fill("Quest due date YYYY-MM-DD", "2026-10-16");
+      if (finish === "revert") {
+        await view.fill("Quest due date YYYY-MM-DD", " 2026-10-15 ");
+      } else {
+        await view.click("Save plan");
+        await view.rerender({ item: plannedItem({ dueDate: "2026-10-16" }) });
+      }
+      assert.equal(view.button("Save plan").disabled, true);
+      await view.rerender({
+        item: plannedItem({ dueDate: "2026-10-18", plannedTime: "10:45" }),
+      });
+      assert.equal(view.button("Load saved plan"), undefined);
+      assert.equal(view.button("Save plan").disabled, true);
+      assert.equal(
+        view.element.querySelector('[aria-label="Quest due date YYYY-MM-DD"]')
+          .value,
+        "2026-10-18",
+      );
+      assert.equal(
+        view.element.querySelector('[aria-label="Quest planned time HH:mm"]')
+          .value,
+        "10:45",
+      );
+    } finally {
+      await view.unmount();
+    }
+  }
+});
+
+test("an acknowledged plan follows saved updates while unrelated queued commands settle", async () => {
+  reset();
+  const view = await mount(QuestPlanEditor, { item: plannedItem() });
+  try {
+    await view.fill("Quest due date YYYY-MM-DD", "2026-10-16");
+    await view.click("Save plan");
+    // Plan values come from the server, not the optimistic queue projection.
+    busy = true;
+    pending = true;
+    queuedCount = 1;
+    await view.rerender({ item: plannedItem({ dueDate: "2026-10-16" }) });
+    await view.rerender({ item: plannedItem({ dueDate: "2026-10-19" }) });
+    busy = false;
+    pending = false;
+    queuedCount = 0;
+    await view.rerender();
+    assert.equal(view.button("Save plan").disabled, true);
+    assert.equal(view.button("Load saved plan"), undefined);
+    assert.equal(
+      view.element.querySelector('[aria-label="Quest due date YYYY-MM-DD"]')
+        .value,
+      "2026-10-19",
+    );
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("plan validation sends errors to the corresponding shared Input contract", async () => {
+  reset();
+  const view = await mount(QuestPlanEditor, { item: plannedItem() });
+  const field = (label) =>
+    view.element.querySelector(`[aria-label="${label}"]`);
+  try {
+    await view.fill("Quest due date YYYY-MM-DD", "2026-02-30");
+    assert.match(
+      field("Quest due date YYYY-MM-DD").dataset.error,
+      /real due date/,
+    );
+    assert.equal(field("Quest planned time HH:mm").dataset.error, undefined);
+    await view.fill("Quest due date YYYY-MM-DD", "2026-10-16");
+    await view.fill("Quest planned time HH:mm", "24:00");
+    assert.equal(field("Quest due date YYYY-MM-DD").dataset.error, undefined);
+    assert.match(
+      field("Quest planned time HH:mm").dataset.error,
+      /00:00 to 23:59/,
+    );
+    await view.fill("Quest planned time HH:mm", "10:00");
+    assert.equal(field("Quest planned time HH:mm").dataset.error, undefined);
+    await view.fill("Quest due date YYYY-MM-DD", "");
+    assert.match(
+      field("Quest due date YYYY-MM-DD").dataset.error,
+      /needs a due date/,
+    );
+    assert.equal(field("Quest planned time HH:mm").dataset.error, undefined);
   } finally {
     await view.unmount();
   }

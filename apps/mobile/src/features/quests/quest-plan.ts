@@ -15,14 +15,26 @@ export function planInputError(
   date: string,
   time: string,
   today: string,
-): string | null {
+): { field: "date" | "time"; message: string } | null {
   if (date && !isCalendarDate(date))
-    return "Enter a real due date in YYYY-MM-DD format.";
-  if (date && date < today) return "Choose today or a future due date.";
-  if (date >= "9999-01-01") return "Choose a due date before year 9999.";
+    return {
+      field: "date",
+      message: "Enter a real due date in YYYY-MM-DD format.",
+    };
+  if (date && date < today)
+    return { field: "date", message: "Choose today or a future due date." };
+  if (date >= "9999-01-01")
+    return { field: "date", message: "Choose a due date before year 9999." };
   if (time && !date)
-    return "A planned time needs a due date. Leave both blank for an unscheduled quest.";
+    return {
+      field: "date",
+      message:
+        "A planned time needs a due date. Leave both blank for an unscheduled quest.",
+    };
   if (time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time))
-    return "Enter a planned time from 00:00 to 23:59 in HH:mm format.";
+    return {
+      field: "time",
+      message: "Enter a planned time from 00:00 to 23:59 in HH:mm format.",
+    };
   return null;
 }
