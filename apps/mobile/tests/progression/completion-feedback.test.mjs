@@ -13,7 +13,10 @@ const ts = require("typescript");
 require.extensions[".ts"] = (module, file) =>
   module._compile(
     ts.transpileModule(require("node:fs").readFileSync(file, "utf8"), {
+      fileName: file,
       compilerOptions: {
+        inlineSourceMap: true,
+        inlineSources: true,
         module: ts.ModuleKind.CommonJS,
         target: ts.ScriptTarget.ES2022,
       },

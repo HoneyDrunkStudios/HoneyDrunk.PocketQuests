@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Enable CI Sonar analysis with real source-mapped test coverage, preserving validation and secret boundaries.
+
 - Update @expo/metro-file-map to 57.0.4, whose supported watcher implementation removes its micromatch/braces dependency path. Document the remaining Metro and Expo certificate paths, fresh bundle exposure evidence and upstream remediation options.
 - Upgrade locked mobile tooling to shell-quote 1.12.0 and source-map-js 1.2.2, fixing the command-injection and indexed source-map advisories. Record the remaining unpatched braces and node-forge release blockers.
 - Remove universal quest write staging in favor of scoped feature services, typed CRUD and ordinary EF tracking. Preserve atomic replay/history writes and service-owned audit clocks; simplify convention-only EF facets and document repository engineering standards in the root agent guidance.

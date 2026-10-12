@@ -14,7 +14,10 @@ for (const extension of [".ts", ".tsx"])
   require.extensions[extension] = (module, file) => {
     const source = require("node:fs").readFileSync(file, "utf8");
     const output = ts.transpileModule(source, {
+      fileName: file,
       compilerOptions: {
+        inlineSourceMap: true,
+        inlineSources: true,
         module: ts.ModuleKind.CommonJS,
         jsx: ts.JsxEmit.ReactJSX,
         target: ts.ScriptTarget.ES2022,
