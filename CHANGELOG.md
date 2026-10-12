@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Make welcome and account-recovery sign-in retryable after configuration or provider-discovery failures; bound setup waits and handle interrupted browser prompts.
+
 - Enable CI Sonar analysis with real source-mapped test coverage, preserving validation and secret boundaries.
 
 - Update @expo/metro-file-map to 57.0.4, whose supported watcher implementation removes its micromatch/braces dependency path. Document the remaining Metro and Expo certificate paths, fresh bundle exposure evidence and upstream remediation options.
