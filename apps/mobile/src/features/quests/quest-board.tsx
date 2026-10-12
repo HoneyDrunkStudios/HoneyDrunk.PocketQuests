@@ -32,13 +32,11 @@ export function QuestBoard() {
         <ProfileEditor />
       </Page>
     );
-  const items = state.occurrences.filter((o) =>
-    section === "Completed"
-      ? o.status === "Completed"
-      : section === "Active"
-        ? ["Active", "Frozen"].includes(o.status)
-        : o.status === "Offered",
-  );
+  const items = state.occurrences.filter((o) => {
+    if (section === "Completed") return o.status === "Completed";
+    if (section === "Active") return ["Active", "Frozen"].includes(o.status);
+    return o.status === "Offered";
+  });
   const sections: QuestHistorySection[] =
     section === "Active"
       ? [

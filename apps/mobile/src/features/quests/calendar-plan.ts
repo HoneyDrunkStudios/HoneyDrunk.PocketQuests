@@ -5,8 +5,7 @@ const dayMilliseconds = 86_400_000;
 // Selected-zone dates, not device-local instants. UTC is only an arithmetic
 // container; the API continues to own actual deadlines.
 export function isCalendarDate(value: string): boolean {
-  if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value) || value < "0001-01-01")
-    return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || value < "0001-01-01") return false;
   const instant = Date.parse(`${value}T00:00:00Z`);
   return (
     Number.isFinite(instant) &&
