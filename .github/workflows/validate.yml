@@ -35,28 +35,16 @@ jobs:
         run: ./product/scripts/Initialize-Local.ps1 -IdentitySourceRoot "$env:GITHUB_WORKSPACE/identity"
       - name: Restore locked source dependencies
         run: dotnet restore product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --locked-mode
-      - name: Install mobile dependencies and collect real LCOV coverage
-        working-directory: product/apps/mobile
-        run: npm ci && npm run test:coverage
-      - name: Map mobile LCOV paths to the scanner root
-        shell: pwsh
-        run: |
-          $report = 'product/apps/mobile/coverage/lcov.info'
-          $content = Get-Content -LiteralPath $report
-          if (-not ($content -match '^SF:src[\\/]') -or -not ($content -match '^DA:')) {
-            throw 'Mobile LCOV is missing measured authored-source coverage.'
-          }
-          $content | ForEach-Object {
-            if ($_ -like 'SF:*') {
-              'SF:apps/mobile/' + $_.Substring(3).Replace('\', '/')
-            } else { $_ }
-          } | Set-Content -LiteralPath $report -Encoding utf8
       - name: Install SonarScanner for .NET
+        id: sonar_install
+        continue-on-error: true
         if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
         shell: pwsh
         run: dotnet tool install dotnet-sonarscanner --tool-path "$env:RUNNER_TEMP/sonar-scanner"
       - name: Begin API and mobile analysis
-        if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
+        id: sonar_begin
+        continue-on-error: true
+        if: steps.sonar_install.outcome == 'success' && (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'))
         working-directory: product
         shell: pwsh
         env:
@@ -87,8 +75,25 @@ jobs:
       - name: Validate relational schema and EF parity in disposable SQL
         shell: pwsh
         run: ./product/scripts/Test-RelationalSchema.ps1 -NoBuild
+      - name: Install mobile dependencies and collect real LCOV coverage
+        working-directory: product/apps/mobile
+        run: npm ci && npm run test:coverage
+      - name: Map mobile LCOV paths to the scanner root
+        shell: pwsh
+        run: |
+          $report = 'product/apps/mobile/coverage/lcov.info'
+          $content = Get-Content -LiteralPath $report
+          if (-not ($content -match '^SF:src[\\/]') -or -not ($content -match '^DA:')) {
+            throw 'Mobile LCOV is missing measured authored-source coverage.'
+          }
+          $content | ForEach-Object {
+            if ($_ -like 'SF:*') {
+              'SF:apps/mobile/' + $_.Substring(3).Replace('\', '/')
+            } else { $_ }
+          } | Set-Content -LiteralPath $report -Encoding utf8
       - name: Complete API and mobile analysis and await the quality gate
-        if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
+        id: sonar_end
+        if: steps.sonar_begin.outcome == 'success' && (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'))
         working-directory: product
         shell: pwsh
         env:
@@ -97,6 +102,18 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
           & "$env:RUNNER_TEMP/sonar-scanner/dotnet-sonarscanner" end /d:sonar.token="$env:SONAR_TOKEN"
+      - name: Enforce analysis outcome after product validation
+        if: always() && (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'))
+        shell: pwsh
+        env:
+          SONAR_INSTALL_OUTCOME: ${{ steps.sonar_install.outcome }}
+          SONAR_BEGIN_OUTCOME: ${{ steps.sonar_begin.outcome }}
+          SONAR_END_OUTCOME: ${{ steps.sonar_end.outcome }}
+        run: |
+          # Startup failures must not skip product tests or become a green job.
+          if ($env:SONAR_INSTALL_OUTCOME -ne 'success' -or $env:SONAR_BEGIN_OUTCOME -ne 'success' -or $env:SONAR_END_OUTCOME -ne 'success') {
+            throw 'Sonar analysis did not complete successfully. Product validation evidence is retained separately.'
+          }
       - name: Retain disposable SQL test evidence
         if: always()
         uses: actions/upload-artifact@v4

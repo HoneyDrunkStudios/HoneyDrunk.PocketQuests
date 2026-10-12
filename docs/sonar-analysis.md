@@ -29,3 +29,9 @@ Fork and Dependabot pull requests retain validation without secret-backed scanni
 credentials fail trusted scans explicitly. No `pull_request_target`, fabricated
 coverage, threshold reductions or issue suppressions are used. Test evidence
 is retained even when analysis fails.
+
+Scanner installation and startup failures are recorded without preventing the
+backend build, API contract checks or SQL lanes from running. A final outcome
+check still fails trusted runs unless installation, begin and end all succeeded;
+this deferral is not an optional quality gate. Mobile coverage runs after the
+backend lanes so a mobile install failure does not prevent their evidence.
