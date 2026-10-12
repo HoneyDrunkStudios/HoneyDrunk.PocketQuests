@@ -52,11 +52,11 @@ jobs:
             } else { $_ }
           } | Set-Content -LiteralPath $report -Encoding utf8
       - name: Install SonarScanner for .NET
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
         shell: pwsh
         run: dotnet tool install dotnet-sonarscanner --tool-path "$env:RUNNER_TEMP/sonar-scanner"
       - name: Begin API and mobile analysis
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
         working-directory: product
         shell: pwsh
         env:
@@ -88,7 +88,7 @@ jobs:
         shell: pwsh
         run: ./product/scripts/Test-RelationalSchema.ps1 -NoBuild
       - name: Complete API and mobile analysis and await the quality gate
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
         working-directory: product
         shell: pwsh
         env:

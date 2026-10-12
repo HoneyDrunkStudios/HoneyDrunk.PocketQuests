@@ -25,7 +25,7 @@ wrappers, app features, backend and SQL stay in scope. The scanner waits for
 the real gate; a successful upload alone is insufficient. Review actual
 new-code findings on the exact head before merge, and record any mapping gaps.
 
-Fork pull requests retain validation without secret-backed scanning. Missing
+Fork and Dependabot pull requests retain validation without secret-backed scanning. Missing
 credentials fail trusted scans explicitly. No `pull_request_target`, fabricated
 coverage, threshold reductions or issue suppressions are used. Test evidence
 is retained even when analysis fails.
