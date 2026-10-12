@@ -43,6 +43,9 @@ jobs:
         run: |
           $report = 'product/apps/mobile/coverage/lcov.info'
           $content = Get-Content -LiteralPath $report
+          if (-not ($content -match '^SF:src[\\/]') -or -not ($content -match '^DA:')) {
+            throw 'Mobile LCOV is missing measured authored-source coverage.'
+          }
           $content | ForEach-Object {
             if ($_ -like 'SF:*') {
               'SF:apps/mobile/' + $_.Substring(3).Replace('\', '/')

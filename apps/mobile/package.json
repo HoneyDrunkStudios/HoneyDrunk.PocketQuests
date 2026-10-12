@@ -54,7 +54,7 @@
     "generate:api": "node scripts/generate-api.cjs",
     "check:api": "node scripts/generate-api.cjs --check",
     "eas-build-post-install": "npm run audit:security",
-    "test:coverage": "c8 node --enable-source-maps scripts/test-ci.cjs"
+    "test:coverage": "c8 --config .c8rc.json node --enable-source-maps scripts/test-ci.cjs"
   },
   "private": true,
   "overrides": {
@@ -65,24 +65,5 @@
   },
   "workspaces": [
     "packages/*"
-  ],
-  "c8": {
-    "all": true,
-    "include": [
-      "src/**/*.ts",
-      "src/**/*.tsx"
-    ],
-    "exclude": [
-      "src/api/generated.ts"
-    ],
-    "extension": [
-      ".ts",
-      ".tsx"
-    ],
-    "reporter": [
-      "text-summary",
-      "lcov"
-    ],
-    "reports-dir": "coverage"
-  }
+  ]
 }
