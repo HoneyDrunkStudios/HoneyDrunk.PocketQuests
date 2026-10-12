@@ -13,18 +13,31 @@ const { createRoot } = require("react-dom/client");
 process.env.PQ_REAL_REACT = "1";
 require("../session/provider-harness.cjs");
 const originalLoad = Module._load;
-let state, sent, inputHandlers;
+let state, sent, inputHandlers, busy, pending, queuedCount;
 const container = ({ children, accessibilityRole }) =>
   React.createElement("div", { role: accessibilityRole }, children);
 const Button = ({ title, onPress, disabled }) =>
   React.createElement("button", { onClick: onPress, disabled }, title);
-const Input = ({ accessibilityLabel, value, onChangeText }) => {
+const Input = ({
+  accessibilityLabel,
+  value,
+  onChangeText,
+  editable,
+  error,
+}) => {
   inputHandlers.set(accessibilityLabel, onChangeText);
-  return React.createElement("input", {
-    "aria-label": accessibilityLabel,
-    value,
-    onChange: (e) => onChangeText(e.target.value),
-  });
+  return React.createElement(
+    React.Fragment,
+    null,
+    React.createElement("input", {
+      "aria-label": accessibilityLabel,
+      "data-error": error,
+      value,
+      disabled: editable === false,
+      onChange: (e) => onChangeText(e.target.value),
+    }),
+    error ? React.createElement("span", null, error) : null,
+  );
 };
 const quest = {
   id: "q",
@@ -71,8 +84,9 @@ Module._load = function (name, ...rest) {
           skills: [],
         },
         command: async (command) => sent.push(command),
-        busy: false,
-        pending: false,
+        busy,
+        pending,
+        queuedCount,
       }),
     };
   if (name.endsWith("/session-page")) return { Page: container };
@@ -124,7 +138,11 @@ const {
   CalendarPlanner,
 } = require("../../src/features/quests/calendar-planner.tsx");
 const { QuestBoard } = require("../../src/features/quests/quest-board.tsx");
+const {
+  QuestPlanEditor,
+} = require("../../src/features/quests/quest-plan-editor.tsx");
 function reset() {
+  queuedCount = 0;
   state = {
     today: "2026-10-12",
     zone: "America/New_York",
@@ -136,13 +154,15 @@ function reset() {
     skills: [],
   };
   sent = [];
+  busy = false;
+  pending = false;
   inputHandlers = new Map();
 }
-async function mount(Component = CalendarPlanner) {
+async function mount(Component = CalendarPlanner, props = {}) {
   const element = document.createElement("div");
   document.body.append(element);
   const root = createRoot(element);
-  await act(async () => root.render(React.createElement(Component)));
+  await act(async () => root.render(React.createElement(Component, props)));
   return {
     element,
     button: (title) =>
@@ -158,6 +178,10 @@ async function mount(Component = CalendarPlanner) {
     },
     async fill(label, value) {
       await act(async () => inputHandlers.get(label)(value));
+    },
+    async rerender(nextProps = props) {
+      props = nextProps;
+      await act(async () => root.render(React.createElement(Component, props)));
     },
     async unmount() {
       await act(async () => root.unmount());
@@ -286,6 +310,227 @@ test("empty-day choose and create keep the selected due date through the real ac
   }
 });
 
+function plannedItem(overrides = {}) {
+  return {
+    status: "Active",
+    occurrence: {
+      id: "occurrence",
+      dueDate: "2026-10-15",
+      plannedTime: "09:30",
+      ...overrides,
+    },
+  };
+}
+
+test("plan editor validates dates/times, clears both values for unscheduled and follows a saved acknowledgement", async () => {
+  reset();
+  const item = plannedItem();
+  const view = await mount(QuestPlanEditor, { item });
+  try {
+    assert.equal(view.button("Save plan").disabled, true);
+    await view.fill("Quest due date YYYY-MM-DD", "2026-02-30");
+    assert.match(view.element.textContent, /real due date/);
+    assert.equal(view.button("Save plan").disabled, true);
+    await view.fill("Quest due date YYYY-MM-DD", "2026-10-11");
+    assert.match(view.element.textContent, /today or a future/);
+    await view.fill("Quest due date YYYY-MM-DD", "9999-01-01");
+    assert.match(view.element.textContent, /before year 9999/);
+    assert.equal(view.button("Save plan").disabled, true);
+    await view.fill("Quest due date YYYY-MM-DD", "2026-10-16");
+    await view.fill("Quest planned time HH:mm", "24:00");
+    assert.match(view.element.textContent, /00:00 to 23:59/);
+    await view.fill("Quest planned time HH:mm", "09:30");
+    await view.fill("Quest due date YYYY-MM-DD", "");
+    assert.match(view.element.textContent, /planned time needs a due date/);
+    await view.click("Leave this quest unscheduled");
+    assert.equal(
+      view.element.querySelector('[aria-label="Quest planned time HH:mm"]')
+        .value,
+      "",
+    );
+    assert.equal(view.button("Save plan").disabled, false);
+    await view.click("Save plan");
+    assert.deepEqual(sent, [
+      {
+        action: "plan",
+        occurrenceId: "occurrence",
+        dueDate: null,
+        plannedTime: null,
+      },
+    ]);
+    // A failed save leaves the entered draft available for retry.
+    assert.equal(view.button("Save plan").disabled, false);
+    const acknowledged = plannedItem({ dueDate: null, plannedTime: null });
+    await view.rerender({ item: acknowledged });
+    assert.equal(view.button("Save plan").disabled, true);
+    assert.equal(view.button("Load saved plan"), undefined);
+    await view.click("Plan for today");
+    await view.click("Save plan");
+    assert.equal(sent[1].dueDate, state.today);
+    assert.equal(sent[1].plannedTime, null);
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("reverted and acknowledged clean drafts follow later saved plans without a false conflict", async () => {
+  for (const finish of ["revert", "acknowledge"]) {
+    reset();
+    const view = await mount(QuestPlanEditor, { item: plannedItem() });
+    try {
+      await view.fill("Quest due date YYYY-MM-DD", "2026-10-16");
+      if (finish === "revert") {
+        await view.fill("Quest due date YYYY-MM-DD", " 2026-10-15 ");
+      } else {
+        await view.click("Save plan");
+        await view.rerender({ item: plannedItem({ dueDate: "2026-10-16" }) });
+      }
+      assert.equal(view.button("Save plan").disabled, true);
+      await view.rerender({
+        item: plannedItem({ dueDate: "2026-10-18", plannedTime: "10:45" }),
+      });
+      assert.equal(view.button("Load saved plan"), undefined);
+      assert.equal(view.button("Save plan").disabled, true);
+      assert.equal(
+        view.element.querySelector('[aria-label="Quest due date YYYY-MM-DD"]')
+          .value,
+        "2026-10-18",
+      );
+      assert.equal(
+        view.element.querySelector('[aria-label="Quest planned time HH:mm"]')
+          .value,
+        "10:45",
+      );
+    } finally {
+      await view.unmount();
+    }
+  }
+});
+
+test("an acknowledged plan follows saved updates while unrelated queued commands settle", async () => {
+  reset();
+  const view = await mount(QuestPlanEditor, { item: plannedItem() });
+  try {
+    await view.fill("Quest due date YYYY-MM-DD", "2026-10-16");
+    await view.click("Save plan");
+    // Plan values come from the server, not the optimistic queue projection.
+    busy = true;
+    pending = true;
+    queuedCount = 1;
+    await view.rerender({ item: plannedItem({ dueDate: "2026-10-16" }) });
+    await view.rerender({ item: plannedItem({ dueDate: "2026-10-19" }) });
+    busy = false;
+    pending = false;
+    queuedCount = 0;
+    await view.rerender();
+    assert.equal(view.button("Save plan").disabled, true);
+    assert.equal(view.button("Load saved plan"), undefined);
+    assert.equal(
+      view.element.querySelector('[aria-label="Quest due date YYYY-MM-DD"]')
+        .value,
+      "2026-10-19",
+    );
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("plan validation sends errors to the corresponding shared Input contract", async () => {
+  reset();
+  const view = await mount(QuestPlanEditor, { item: plannedItem() });
+  const field = (label) =>
+    view.element.querySelector(`[aria-label="${label}"]`);
+  try {
+    await view.fill("Quest due date YYYY-MM-DD", "2026-02-30");
+    assert.match(
+      field("Quest due date YYYY-MM-DD").dataset.error,
+      /real due date/,
+    );
+    assert.equal(field("Quest planned time HH:mm").dataset.error, undefined);
+    await view.fill("Quest due date YYYY-MM-DD", "2026-10-16");
+    await view.fill("Quest planned time HH:mm", "24:00");
+    assert.equal(field("Quest due date YYYY-MM-DD").dataset.error, undefined);
+    assert.match(
+      field("Quest planned time HH:mm").dataset.error,
+      /00:00 to 23:59/,
+    );
+    await view.fill("Quest planned time HH:mm", "10:00");
+    assert.equal(field("Quest planned time HH:mm").dataset.error, undefined);
+    await view.fill("Quest due date YYYY-MM-DD", "");
+    assert.match(
+      field("Quest due date YYYY-MM-DD").dataset.error,
+      /needs a due date/,
+    );
+    assert.equal(field("Quest planned time HH:mm").dataset.error, undefined);
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("plan editor preserves a conflicting draft until explicit reload and blocks writes while busy or pending", async () => {
+  reset();
+  const view = await mount(QuestPlanEditor, { item: plannedItem() });
+  try {
+    await view.fill("Quest due date YYYY-MM-DD", "2026-10-16");
+    busy = true;
+    await view.rerender();
+    assert.equal(view.button("Save plan").disabled, true);
+    assert.equal(view.button("Leave this quest unscheduled").disabled, true);
+    busy = false;
+    pending = true;
+    await view.rerender();
+    assert.equal(view.button("Save plan").disabled, true);
+    pending = false;
+    await view.rerender({ item: plannedItem({ dueDate: "2026-10-17" }) });
+    assert.match(view.element.textContent, /saved plan changed/);
+    assert.equal(
+      view.element.querySelector('[aria-label="Quest due date YYYY-MM-DD"]')
+        .value,
+      "2026-10-16",
+    );
+    assert.equal(view.button("Save plan").disabled, true);
+    await view.click("Load saved plan");
+    assert.equal(
+      view.element.querySelector('[aria-label="Quest due date YYYY-MM-DD"]')
+        .value,
+      "2026-10-17",
+    );
+    assert.equal(view.button("Save plan").disabled, true);
+    assert.deepEqual(sent, []);
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("plan editor explains immutable, frozen, recurring and accepted-penalty plans without offering writes", async () => {
+  for (const [item, message] of [
+    [
+      {
+        ...plannedItem({ lifecycle: { deadlineZone: "Asia/Tokyo" } }),
+        status: "Completed",
+      },
+      /Only active/,
+    ],
+    [{ ...plannedItem(), status: "Frozen" }, /resumed first/],
+    [{ ...plannedItem(), status: "Missed" }, /Only active/],
+    [plannedItem({ lifecycle: { seriesId: "series" } }), /recurring series/],
+    [plannedItem({ lifecycle: { lockedLoss: 0 } }), /accepted penalty terms/],
+  ]) {
+    reset();
+    const view = await mount(QuestPlanEditor, { item });
+    try {
+      assert.match(view.element.textContent, message);
+      if (item.status === "Completed")
+        assert.match(view.element.textContent, /Asia\/Tokyo/);
+      assert.equal(view.button("Save plan"), undefined);
+      assert.equal(view.element.querySelector("input"), null);
+      assert.deepEqual(sent, []);
+    } finally {
+      await view.unmount();
+    }
+  }
+});
+
 test("calendar history remains viewable without offering invalid due dates", async () => {
   reset();
   const view = await mount();
@@ -305,6 +550,93 @@ test("calendar history remains viewable without offering invalid due dates", asy
     assert.ok(view.button("Choose a quest for 2026-10-12"));
     assert.ok(view.button("Create a quest for 2026-10-16"));
     assert.deepEqual(sent, []);
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("zone-only saved changes require reloading a dirty plan, including unscheduled plans", async () => {
+  for (const scheduled of [true, false]) {
+    reset();
+    const original = plannedItem(
+      scheduled
+        ? { lifecycle: { deadlineZone: state.zone } }
+        : { dueDate: null, plannedTime: null },
+    );
+    const view = await mount(QuestPlanEditor, { item: original });
+    try {
+      await view.fill("Quest due date YYYY-MM-DD", "2026-10-16");
+      state.zone = "Asia/Tokyo";
+      const updated = scheduled
+        ? plannedItem({ lifecycle: { deadlineZone: state.zone } })
+        : original;
+      await view.rerender({ item: updated });
+      assert.match(view.element.textContent, /saved plan changed/);
+      assert.equal(view.button("Save plan").disabled, true);
+      assert.equal(
+        view.element.querySelector('[aria-label="Quest due date YYYY-MM-DD"]')
+          .value,
+        "2026-10-16",
+      );
+      await view.click("Load saved plan");
+      assert.equal(view.button("Load saved plan"), undefined);
+      await view.fill("Quest due date YYYY-MM-DD", "2026-10-17");
+      assert.equal(view.button("Save plan").disabled, false);
+      assert.deepEqual(sent, []);
+    } finally {
+      await view.unmount();
+    }
+  }
+});
+
+test("account timezone changes conflict with dirty plans whose saved deadline zone is unchanged", async () => {
+  reset();
+  const item = plannedItem({ lifecycle: { deadlineZone: state.zone } });
+  const view = await mount(QuestPlanEditor, { item });
+  try {
+    await view.fill("Quest due date YYYY-MM-DD", "2026-10-16");
+    state.zone = "Asia/Tokyo";
+    await view.rerender();
+    assert.match(view.element.textContent, /saved plan changed/);
+    assert.match(view.element.textContent, /America\/New_York/);
+    assert.match(view.element.textContent, /selected zone: Asia\/Tokyo/);
+    assert.equal(view.button("Save plan").disabled, true);
+    await view.fill("Quest planned time HH:mm", "11:00");
+    assert.equal(view.button("Save plan").disabled, true);
+    await view.click("Save plan");
+    assert.deepEqual(sent, []);
+    await view.click("Load saved plan");
+    assert.equal(view.button("Load saved plan"), undefined);
+    await view.fill("Quest due date YYYY-MM-DD", "2026-10-17");
+    assert.equal(view.button("Save plan").disabled, false);
+    await view.click("Save plan");
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].dueDate, "2026-10-17");
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("clean plans follow timezone updates and permanent locks take precedence over frozen guidance", async () => {
+  reset();
+  const view = await mount(QuestPlanEditor, { item: plannedItem() });
+  try {
+    state.zone = "Asia/Tokyo";
+    await view.rerender();
+    assert.equal(view.button("Load saved plan"), undefined);
+    await view.fill("Quest due date YYYY-MM-DD", "2026-10-16");
+    assert.equal(view.button("Save plan").disabled, false);
+    for (const lifecycle of [{ seriesId: "s" }, { lockedLoss: 0 }]) {
+      await view.rerender({
+        item: { ...plannedItem({ lifecycle }), status: "Frozen" },
+      });
+      assert.doesNotMatch(view.element.textContent, /resumed first/);
+      assert.match(
+        view.element.textContent,
+        /recurring series|accepted penalty terms/,
+      );
+      assert.equal(view.button("Save plan"), undefined);
+    }
   } finally {
     await view.unmount();
   }
