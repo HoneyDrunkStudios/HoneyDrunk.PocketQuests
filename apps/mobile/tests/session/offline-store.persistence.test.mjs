@@ -92,7 +92,10 @@ Module._load = function (name, ...rest) {
 require.extensions[".ts"] = (module, filename) =>
   module._compile(
     ts.transpileModule(fs.readFileSync(filename, "utf8"), {
+      fileName: filename,
       compilerOptions: {
+        inlineSourceMap: true,
+        inlineSources: true,
         module: ts.ModuleKind.CommonJS,
         target: ts.ScriptTarget.ES2022,
         esModuleInterop: true,
@@ -108,7 +111,10 @@ compiled.filename = source;
 compiled.paths = Module._nodeModulePaths(source);
 compiled._compile(
   ts.transpileModule(fs.readFileSync(source, "utf8"), {
+    fileName: source,
     compilerOptions: {
+      inlineSourceMap: true,
+      inlineSources: true,
       module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2022,
     },

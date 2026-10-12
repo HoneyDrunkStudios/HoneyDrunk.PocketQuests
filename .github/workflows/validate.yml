@@ -10,11 +10,12 @@ jobs:
     runs-on: windows-latest
     # Both disposable-SQL passes take about 20 minutes before restore/build.
     # Allow hosted-runner variance without skipping either verification lane.
-    timeout-minutes: 35
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
         with:
           path: product
+          fetch-depth: 0
       - name: Verify coverage collection contract without SQL
         shell: pwsh
         run: ./product/scripts/tests/Test-CoverageCollection.ps1
@@ -34,6 +35,44 @@ jobs:
         run: ./product/scripts/Initialize-Local.ps1 -IdentitySourceRoot "$env:GITHUB_WORKSPACE/identity"
       - name: Restore locked source dependencies
         run: dotnet restore product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --locked-mode
+      - name: Install mobile dependencies and collect real LCOV coverage
+        working-directory: product/apps/mobile
+        run: npm ci && npm run test:coverage
+      - name: Map mobile LCOV paths to the scanner root
+        shell: pwsh
+        run: |
+          $report = 'product/apps/mobile/coverage/lcov.info'
+          $content = Get-Content -LiteralPath $report
+          $content | ForEach-Object {
+            if ($_ -like 'SF:*') {
+              'SF:apps/mobile/' + $_.Substring(3).Replace('\', '/')
+            } else { $_ }
+          } | Set-Content -LiteralPath $report -Encoding utf8
+      - name: Install SonarScanner for .NET
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        shell: pwsh
+        run: dotnet tool install dotnet-sonarscanner --tool-path "$env:RUNNER_TEMP/sonar-scanner"
+      - name: Begin API and mobile analysis
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        working-directory: product
+        shell: pwsh
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          if ([string]::IsNullOrWhiteSpace($env:SONAR_TOKEN)) { throw 'SONAR_TOKEN is not bound to this repository.' }
+          & "$env:RUNNER_TEMP/sonar-scanner/dotnet-sonarscanner" begin `
+            /k:"HoneyDrunkStudios_HoneyDrunk.PocketQuests" /o:"honeydrunkstudios" `
+            /d:sonar.host.url="https://sonarcloud.io" /d:sonar.token="$env:SONAR_TOKEN" `
+            /d:sonar.projectBaseDir="$env:GITHUB_WORKSPACE/product" `
+            /d:sonar.scanner.scanAll=true `
+            /d:sonar.tsql.file.suffixes=".sql,.tsql" `
+            /d:sonar.plsql.file.suffixes=".plsql,.pks,.pkb" `
+            /d:sonar.exclusions="**/node_modules/**,**/bin/**,**/obj/**,**/.expo/**,.local/**,.packages/**,artifacts/**,apps/mobile/dist/**,apps/mobile/coverage/**,apps/mobile/reports/**,apps/mobile/packages/**,apps/mobile/src/api/generated.ts,apps/mobile/src/api/runtime-schemas.json" `
+            /d:sonar.cs.opencover.reportsPaths="artifacts/identity-validation/**/coverage.opencover.xml" `
+            /d:sonar.javascript.lcov.reportPaths="apps/mobile/coverage/lcov.info" `
+            /d:sonar.qualitygate.wait=true /d:sonar.qualitygate.timeout=300
       - name: Build solution and DACPACs
         run: dotnet build product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore
       - name: Verify endpoint OpenAPI and wire compatibility
@@ -41,10 +80,20 @@ jobs:
         run: ./product/scripts/Test-ApiContract.ps1 -NoBuild -Configuration Release
       - name: Test SQL and domain boundaries
         shell: pwsh
-        run: ./product/scripts/Test-RelationalSchema.ps1 -NoBuild -IdentityIntegration -EvidenceDirectory product/artifacts/identity-validation
+        run: ./product/scripts/Test-RelationalSchema.ps1 -NoBuild -IdentityIntegration -CollectCoverage -EvidenceDirectory product/artifacts/identity-validation
       - name: Validate relational schema and EF parity in disposable SQL
         shell: pwsh
         run: ./product/scripts/Test-RelationalSchema.ps1 -NoBuild
+      - name: Complete API and mobile analysis and await the quality gate
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        working-directory: product
+        shell: pwsh
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          & "$env:RUNNER_TEMP/sonar-scanner/dotnet-sonarscanner" end /d:sonar.token="$env:SONAR_TOKEN"
       - name: Retain disposable SQL test evidence
         if: always()
         uses: actions/upload-artifact@v4

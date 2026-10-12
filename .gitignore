@@ -20,3 +20,6 @@ artifacts/
 # Visual Studio per-user state
 *.user
 *.suo
+
+# Executed mobile test coverage
+apps/mobile/coverage/

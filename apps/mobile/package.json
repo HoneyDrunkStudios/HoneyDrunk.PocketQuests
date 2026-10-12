@@ -30,6 +30,7 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@types/react": "~19.2.2",
+    "c8": "12.0.0",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~57.0.2",
     "jsdom": "30.1.2",
@@ -52,7 +53,8 @@
     "audit:security": "npm audit --audit-level=moderate",
     "generate:api": "node scripts/generate-api.cjs",
     "check:api": "node scripts/generate-api.cjs --check",
-    "eas-build-post-install": "npm run audit:security"
+    "eas-build-post-install": "npm run audit:security",
+    "test:coverage": "c8 node --enable-source-maps scripts/test-ci.cjs"
   },
   "private": true,
   "overrides": {
@@ -63,5 +65,24 @@
   },
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "c8": {
+    "all": true,
+    "include": [
+      "src/**/*.ts",
+      "src/**/*.tsx"
+    ],
+    "exclude": [
+      "src/api/generated.ts"
+    ],
+    "extension": [
+      ".ts",
+      ".tsx"
+    ],
+    "reporter": [
+      "text-summary",
+      "lcov"
+    ],
+    "reports-dir": "coverage"
+  }
 }
