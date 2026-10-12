@@ -2,7 +2,6 @@
 
 ## [Unreleased]
 
-
 - Enable CI Sonar analysis with real source-mapped test coverage, preserving validation and secret boundaries.
 
 - Update @expo/metro-file-map to 57.0.4, whose supported watcher implementation removes its micromatch/braces dependency path. Document the remaining Metro and Expo certificate paths, fresh bundle exposure evidence and upstream remediation options.
