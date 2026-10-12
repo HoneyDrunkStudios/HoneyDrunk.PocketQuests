@@ -112,6 +112,25 @@ test("large history initially mounts a bounded SectionList window with accessibl
   assert.ok((html.match(/Open quest/g) ?? []).length <= 20);
 });
 
+test("empty calendar sections render their planning actions in the existing list", () => {
+  const html = render(QuestHistory, {
+    sections: [
+      {
+        key: "2026-10-12",
+        title: "Monday",
+        data: [],
+        emptyContent: React.createElement(
+          "button",
+          null,
+          "Choose a quest for Monday",
+        ),
+      },
+    ],
+  });
+  assert.match(html, /Monday/);
+  assert.match(html, /Choose a quest for Monday/);
+});
+
 test("quarantine-only recovery displays labeled discard controls even with zero readable actions", () => {
   recoveryRequired = true;
   busy = true;

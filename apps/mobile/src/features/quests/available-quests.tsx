@@ -9,17 +9,25 @@ import { eligible } from "./quest-rules";
 import { PlannedPreview } from "./planned-preview";
 import { SeriesEditor } from "./series-editor";
 import type { Quest, Series, Definition } from "../../shared/contracts";
-export function AvailableQuests() {
+export function AvailableQuests({
+  initialDate = "",
+  initialCreate = false,
+}: Readonly<{
+  initialDate?: string;
+  initialCreate?: boolean;
+}> = {}) {
   const { catalog, state, command, busy, pending } = useSession();
   const [recurring, setRecurring] = useState<{
     quest: Quest;
     initial?: Series;
   } | null>(null);
   const [penaltyConsent, setPenaltyConsent] = useState<Quest | null>(null);
-  const [editing, setEditing] = useState<Definition | "new" | null>(null);
+  const [editing, setEditing] = useState<Definition | "new" | null>(
+    initialCreate ? "new" : null,
+  );
   const [time, setTime] = useState("");
   const [category, setCategory] = useState<string | null>(null);
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(initialDate);
   const [unscheduled, setUnscheduled] = useState(false);
   if (state && !state.profile.onboardingComplete)
     return (

@@ -218,9 +218,12 @@ try {
     .getByRole("button", { name: "Save custom quest", exact: true })
     .click();
   await expect(
-    visibleText("Temporary save failure for retry verification.", {
-      exact: true,
-    }),
+    visibleText(
+      "The request could not be completed (503). Try again when connected.",
+      {
+        exact: true,
+      },
+    ),
   ).toBeVisible();
   await expect(page.getByLabel("Quest title", { exact: true })).toHaveValue(
     "Browser verified custom quest",
@@ -463,7 +466,10 @@ try {
     .getByRole("button", { name: "Undo recent completion", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Synchronize recorded changes", exact: true }),
+    page.getByRole("button", {
+      name: "Synchronize recorded changes",
+      exact: true,
+    }),
   ).toBeEnabled();
   await page
     .getByRole("button", { name: "Synchronize recorded changes", exact: true })
@@ -510,6 +516,98 @@ try {
     }),
   ).toBeEnabled();
   await page.getByRole("link", { name: "Back to Home", exact: true }).click();
+  // Calendar planning uses the same saved account and real SQL-backed commands.
+  await page.getByRole("tab", { name: "Calendar", exact: true }).click();
+  await page.getByRole("tab", { name: "7 days", exact: true }).click();
+  await expect(
+    page.getByRole("tab", { name: "7 days", exact: true }),
+  ).toHaveAttribute("aria-selected", "true");
+  const plannedDate = new Date(
+    Date.parse(synced.today + "T00:00:00Z") + 3 * 86400000,
+  )
+    .toISOString()
+    .slice(0, 10);
+  await page.getByLabel("Calendar date YYYY-MM-DD").fill("2026-02-30");
+  await page.getByRole("button", { name: "Go to date", exact: true }).click();
+  await expect(visibleText(/Enter a real date/)).toBeVisible();
+  await page.getByLabel("Calendar date YYYY-MM-DD").fill(plannedDate);
+  await page.getByRole("button", { name: "Go to date", exact: true }).click();
+  await page
+    .getByRole("button", {
+      name: `Create a quest for ${plannedDate}`,
+      exact: true,
+    })
+    .click();
+  await page
+    .getByLabel("Quest title", { exact: true })
+    .fill("Calendar planned quest");
+  await page
+    .getByLabel("Completion criterion", { exact: true })
+    .fill("Finish the planned calendar action");
+  await page
+    .getByRole("button", { name: "Save custom quest", exact: true })
+    .click();
+  await expect(visibleText(/Saved revision 1/)).toBeVisible();
+  await page
+    .getByRole("button", { name: "Back to available quests", exact: true })
+    .click();
+  await expect(page.getByLabel("Due date in YYYY-MM-DD format")).toHaveValue(
+    plannedDate,
+  );
+  await page.getByLabel("Optional planned time HH:mm").fill("09:30");
+  const startCalendarQuest = page.getByRole("button", {
+    name: "Start: Calendar planned quest",
+    exact: true,
+  });
+  await expect(startCalendarQuest).toBeEnabled();
+  await startCalendarQuest.click();
+  await expect(startCalendarQuest).toBeHidden();
+  await page
+    .getByRole("button", { name: "Back to calendar", exact: true })
+    .click();
+  await expect(
+    visibleText("Calendar planned quest", { exact: true }),
+  ).toBeVisible();
+  let plannedState;
+  await expect
+    .poll(async () => {
+      plannedState = await (
+        await context.request.get("http://localhost:5217/api/state", {
+          headers: { Authorization: `Bearer ${fixture.token}` },
+        })
+      ).json();
+      return plannedState.occurrences.some(
+        (row) => row.occurrence.quest.title === "Calendar planned quest",
+      );
+    })
+    .toBe(true);
+  const calendarQuest = plannedState.occurrences.find(
+    (row) => row.occurrence.quest.title === "Calendar planned quest",
+  );
+  expect(calendarQuest.occurrence.dueDate).toBe(plannedDate);
+  expect(calendarQuest.occurrence.plannedTime).toBe("09:30");
+  expect(calendarQuest.status).toBe("Active");
+  expect(plannedState.overallXp).toBe(synced.overallXp);
+  await page.screenshot({
+    path: path.join(artifacts, "calendar-seven-days.png"),
+  });
+  await page.getByRole("tab", { name: "Day", exact: true }).click();
+  await page.screenshot({ path: path.join(artifacts, "calendar-day.png") });
+  await page.getByRole("tab", { name: "Quests", exact: true }).click();
+  await page.getByRole("tab", { name: "Active", exact: true }).click();
+  await expect(
+    visibleText(`Today · ${plannedState.today}`, { exact: true }),
+  ).toBeVisible();
+  await expect(visibleText("Unscheduled", { exact: true })).toBeVisible();
+  await expect(visibleText("Upcoming", { exact: true })).toBeVisible();
+  await expect(
+    visibleText("Calendar planned quest", { exact: true }),
+  ).toBeVisible();
+  await page.screenshot({ path: path.join(artifacts, "active-planning.png") });
+  await page.getByRole("tab", { name: "Home", exact: true }).click();
+  console.log(
+    "Calendar day/week navigation, invalid-date recovery and selected-date custom creation/acceptance passed against real SQL; planning awarded no XP.",
+  );
   for (const [width, height] of [
     [320, 720],
     [430, 932],
