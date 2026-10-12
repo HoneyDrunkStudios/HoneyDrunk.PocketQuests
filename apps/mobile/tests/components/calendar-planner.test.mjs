@@ -455,3 +455,62 @@ test("calendar history remains viewable without offering invalid due dates", asy
     await view.unmount();
   }
 });
+
+test("zone-only saved changes require reloading a dirty plan, including unscheduled plans", async () => {
+  for (const scheduled of [true, false]) {
+    reset();
+    const original = plannedItem(
+      scheduled
+        ? { lifecycle: { deadlineZone: state.zone } }
+        : { dueDate: null, plannedTime: null },
+    );
+    const view = await mount(QuestPlanEditor, { item: original });
+    try {
+      await view.fill("Quest due date YYYY-MM-DD", "2026-10-16");
+      state.zone = "Asia/Tokyo";
+      const updated = scheduled
+        ? plannedItem({ lifecycle: { deadlineZone: state.zone } })
+        : original;
+      await view.rerender({ item: updated });
+      assert.match(view.element.textContent, /saved plan changed/);
+      assert.equal(view.button("Save plan").disabled, true);
+      assert.equal(
+        view.element.querySelector('[aria-label="Quest due date YYYY-MM-DD"]')
+          .value,
+        "2026-10-16",
+      );
+      await view.click("Load saved plan");
+      assert.equal(view.button("Load saved plan"), undefined);
+      await view.fill("Quest due date YYYY-MM-DD", "2026-10-17");
+      assert.equal(view.button("Save plan").disabled, false);
+      assert.deepEqual(sent, []);
+    } finally {
+      await view.unmount();
+    }
+  }
+});
+
+test("clean plans follow timezone updates and permanent locks take precedence over frozen guidance", async () => {
+  reset();
+  const view = await mount(QuestPlanEditor, { item: plannedItem() });
+  try {
+    state.zone = "Asia/Tokyo";
+    await view.rerender();
+    assert.equal(view.button("Load saved plan"), undefined);
+    await view.fill("Quest due date YYYY-MM-DD", "2026-10-16");
+    assert.equal(view.button("Save plan").disabled, false);
+    for (const lifecycle of [{ seriesId: "s" }, { lockedLoss: 0 }]) {
+      await view.rerender({
+        item: { ...plannedItem({ lifecycle }), status: "Frozen" },
+      });
+      assert.doesNotMatch(view.element.textContent, /resumed first/);
+      assert.match(
+        view.element.textContent,
+        /recurring series|accepted penalty terms/,
+      );
+      assert.equal(view.button("Save plan"), undefined);
+    }
+  } finally {
+    await view.unmount();
+  }
+});

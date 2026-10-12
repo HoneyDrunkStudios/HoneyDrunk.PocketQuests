@@ -2,12 +2,12 @@ import type { OccurrenceView } from "../../shared/contracts";
 import { isCalendarDate } from "./calendar-plan";
 
 export function planLockReason(item: OccurrenceView): string | null {
-  if (item.status !== "Active")
-    return "Only active commitments can be replanned. Completed and past plans stay in your history; frozen commitments must be resumed first.";
   if (item.occurrence.lifecycle?.seriesId)
     return "This occurrence belongs to a recurring series. Its delivery date cannot be changed here.";
   if (item.occurrence.lifecycle?.lockedLoss != null)
     return "This commitment has accepted penalty terms. Its date stays locked to those terms.";
+  if (item.status !== "Active")
+    return "Only active commitments can be replanned. Completed and past plans stay in your history; frozen commitments must be resumed first.";
   return null;
 }
 

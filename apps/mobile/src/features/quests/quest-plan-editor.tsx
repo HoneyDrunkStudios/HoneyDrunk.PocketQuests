@@ -12,6 +12,7 @@ type PlanDraft = {
   time: string;
   baseDate: string;
   baseTime: string;
+  baseZone: string | undefined;
 };
 
 export function QuestPlanEditor({ item }: Readonly<{ item: OccurrenceView }>) {
@@ -28,7 +29,9 @@ export function QuestPlanEditor({ item }: Readonly<{ item: OccurrenceView }>) {
   const conflict =
     dirty &&
     draft !== null &&
-    (savedDate !== draft.baseDate || savedTime !== draft.baseTime);
+    (savedDate !== draft.baseDate ||
+      savedTime !== draft.baseTime ||
+      savedZone !== draft.baseZone);
   const locked = planLockReason(item);
   const error = planInputError(nextDate, nextTime, state?.today ?? "");
   const disabled = busy || pending || !state;
@@ -38,6 +41,7 @@ export function QuestPlanEditor({ item }: Readonly<{ item: OccurrenceView }>) {
       time,
       baseDate: dirty && draft ? draft.baseDate : savedDate,
       baseTime: dirty && draft ? draft.baseTime : savedTime,
+      baseZone: dirty && draft ? draft.baseZone : savedZone,
       ...change,
     });
   }
