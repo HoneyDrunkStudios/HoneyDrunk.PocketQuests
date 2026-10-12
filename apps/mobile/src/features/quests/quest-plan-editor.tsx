@@ -13,6 +13,7 @@ type PlanDraft = {
   baseDate: string;
   baseTime: string;
   baseZone: string | undefined;
+  baseAccountZone: string | undefined;
 };
 
 export function QuestPlanEditor({ item }: Readonly<{ item: OccurrenceView }>) {
@@ -34,7 +35,8 @@ export function QuestPlanEditor({ item }: Readonly<{ item: OccurrenceView }>) {
     draft !== null &&
     (savedDate !== draft.baseDate ||
       savedTime !== draft.baseTime ||
-      savedZone !== draft.baseZone);
+      savedZone !== draft.baseZone ||
+      state?.zone !== draft.baseAccountZone);
   const locked = planLockReason(item);
   const error = planInputError(nextDate, nextTime, state?.today ?? "");
   const disabled = busy || pending || !state;
@@ -45,6 +47,7 @@ export function QuestPlanEditor({ item }: Readonly<{ item: OccurrenceView }>) {
       baseDate: dirty && draft ? draft.baseDate : savedDate,
       baseTime: dirty && draft ? draft.baseTime : savedTime,
       baseZone: dirty && draft ? draft.baseZone : savedZone,
+      baseAccountZone: dirty && draft ? draft.baseAccountZone : state?.zone,
       ...change,
     };
     setDraft(
