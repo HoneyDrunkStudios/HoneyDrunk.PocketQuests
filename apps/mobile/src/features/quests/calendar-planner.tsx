@@ -8,6 +8,7 @@ import { QuestHistory } from "./quest-history";
 import { QuestViewTabs } from "./quest-view-tabs";
 import {
   calendarDateLabel,
+  canPlanCalendarDate,
   calendarPlan,
   isCalendarDate,
   shiftCalendarDate,
@@ -60,19 +61,20 @@ export function CalendarPlanner() {
   };
   const previous = shiftCalendarDate(selected, week ? -7 : -1);
   const next = shiftCalendarDate(selected, week ? 7 : 1);
-  const chooseActions = (day: string) => (
-    <View style={{ gap: 8 }}>
-      <Button
-        title={`Choose a quest for ${day}`}
-        onPress={() => setPlanning({ date: day, create: false })}
-      />
-      <Button
-        title={`Create a quest for ${day}`}
-        secondary
-        onPress={() => setPlanning({ date: day, create: true })}
-      />
-    </View>
-  );
+  const chooseActions = (day: string) =>
+    canPlanCalendarDate(day, state.today) ? (
+      <View style={{ gap: 8 }}>
+        <Button
+          title={`Choose a quest for ${day}`}
+          onPress={() => setPlanning({ date: day, create: false })}
+        />
+        <Button
+          title={`Create a quest for ${day}`}
+          secondary
+          onPress={() => setPlanning({ date: day, create: true })}
+        />
+      </View>
+    ) : null;
   return (
     <QuestHistory
       sections={[
@@ -160,6 +162,12 @@ export function CalendarPlanner() {
         Planned times come first, then acceptance order. All statuses remain
         visible; planned times do not change deadlines.
       </Label>
+      {plan.days.some((day) => !canPlanCalendarDate(day.date, state.today)) && (
+        <Label>
+          Past dates and dates in year 9999 are view-only. Choose today or a
+          future date before year 9999 to plan quests.
+        </Label>
+      )}
       {plan.days[0]?.data.length ? chooseActions(selected) : null}
     </QuestHistory>
   );

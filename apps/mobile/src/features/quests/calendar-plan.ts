@@ -22,6 +22,10 @@ export function shiftCalendarDate(value: string, days: number): string | null {
   return isCalendarDate(result) ? result : null;
 }
 
+export function canPlanCalendarDate(date: string, today: string): boolean {
+  return isCalendarDate(date) && date >= today && date < "9999-01-01";
+}
+
 export function calendarDateLabel(date: string): string {
   return new Intl.DateTimeFormat(undefined, {
     weekday: "short",
@@ -31,7 +35,10 @@ export function calendarDateLabel(date: string): string {
   }).format(new Date(`${date}T00:00:00Z`));
 }
 
-export function comparePlannedOccurrences(a: OccurrenceView, b: OccurrenceView) {
+export function comparePlannedOccurrences(
+  a: OccurrenceView,
+  b: OccurrenceView,
+) {
   return (
     (a.occurrence.plannedTime ?? "\uffff").localeCompare(
       b.occurrence.plannedTime ?? "\uffff",
