@@ -7,8 +7,8 @@ The root contains standard repository/build configuration and README. Product co
 | `HoneyDrunk.PocketQuests/` | Existing .NET solution, Contracts/Services/Domain/API/Data/SQL/Aspire projects and backend test project. |
 | `apps/mobile/src/app/` | Expo Router routes and navigation layouts only. Route paths and public navigation stay unchanged. |
 | `apps/mobile/src/features/quests/` | Quest discovery, definition/recurrence editors, quest commands/rules, reward previews, optional focus timer and deadline-warning planning. |
-| `apps/mobile/src/features/progression/` | Completion feedback reconciliation, celebration presentation and root modal. |
-| `apps/mobile/src/features/profile/` | Onboarding, profile/account settings and export presentation. |
+| `apps/mobile/src/features/progression/` | Character sheet, API-backed rank requirements/ladder, category/attribute/skill balances, completion feedback reconciliation, celebration presentation and root modal. |
+| `apps/mobile/src/features/profile/` | Character portrait, onboarding, profile/account settings and export presentation. |
 | `apps/mobile/src/session/` | Authenticated session coordination, provider sign-in, private cache, offline projections and request errors. |
 | `apps/mobile/src/shared/` | App contracts, app-local theme and adapter to the generic UI package. Generic primitives remain upstream-owned. |
 | `apps/mobile/src/config/` | Client endpoints, timeout constants and redirect configuration. |

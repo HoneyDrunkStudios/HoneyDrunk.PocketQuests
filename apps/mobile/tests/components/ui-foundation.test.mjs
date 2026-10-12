@@ -140,6 +140,7 @@ test("Pocket Quests body, muted, error and button text meet AA contrast", () => 
     [c.onPrimary, c.primary],
     [c.text, c.input],
     [c.accent, c.surface],
+    [c.onPrimary, c.accent],
   ]) {
     const a = luminance(fg),
       b = luminance(bg);

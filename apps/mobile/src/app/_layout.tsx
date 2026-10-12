@@ -1,4 +1,5 @@
 import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { SessionProvider } from "../session/session";
 import { ThemeProvider } from "@honeydrunk/ui-native";
 import { pocketQuestsTheme } from "../shared/theme";
@@ -8,6 +9,7 @@ export { AppErrorBoundary as ErrorBoundary } from "../shared/error-boundary";
 export default function Layout() {
   return (
     <ThemeProvider theme={pocketQuestsTheme}>
+      <StatusBar style="light" />
       <SessionProvider>
         <Stack
           screenOptions={{

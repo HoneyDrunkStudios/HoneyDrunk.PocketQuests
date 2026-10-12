@@ -337,12 +337,50 @@ try {
     visibleText("280 overall XP earned", { exact: true }),
   ).toBeVisible();
   console.log("Verified completion response-loss retry and character totals.");
+  const rankBars = page.getByRole("progressbar");
+  await expect(rankBars).toHaveCount(2);
+  await page
+    .getByRole("button", { name: "See the rank ladder", exact: true })
+    .click();
+  await expect(
+    visibleText("Rank F · Current rank", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    visibleText(
+      "10 categories at 9000 XP each, and 150000 combined category XP",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await page.screenshot({ path: path.join(artifacts, "rank-ladder.png") });
+  await page
+    .getByRole("button", { name: "Hide rank ladder", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "See category requirements", exact: true })
+    .click();
+  await expect(
+    visibleText("280 XP · Floor met", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Hide category requirements", exact: true })
+    .click();
   await expect(page.getByRole("button", { name: /^Complete:/ })).toHaveCount(0);
   await expect(
     visibleText("Work & Purpose: 1 day in this streak. Done today.", {
       exact: true,
     }),
   ).toBeVisible();
+  await page
+    .getByRole("heading", { name: "Your character", exact: true })
+    .scrollIntoViewIfNeeded();
+  await page.setViewportSize({ width: 320, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({ path: path.join(artifacts, "character-narrow.png") });
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({
     path: path.join(artifacts, "character-home.png"),
     fullPage: false,

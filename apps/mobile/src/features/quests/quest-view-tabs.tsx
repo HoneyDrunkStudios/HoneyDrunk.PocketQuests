@@ -37,7 +37,7 @@ export function QuestViewTabs<T extends string>({
             style={[
               styles.text,
               {
-                color: selected === option ? "#FFFFFF" : colors.gold,
+                color: selected === option ? colors.onGold : colors.gold,
                 fontWeight: "600",
               },
             ]}
