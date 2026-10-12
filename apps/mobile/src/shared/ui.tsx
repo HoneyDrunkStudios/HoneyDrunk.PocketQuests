@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
 import { createStyles } from "@honeydrunk/ui-native";
 import { pocketQuestsTheme } from "./theme";
-export { Button, Label, Input, Card } from "@honeydrunk/ui-native";
+export { Button, Label, Input, Card, Progress } from "@honeydrunk/ui-native";
 export const colors = {
   ink: pocketQuestsTheme.colors.text,
   muted: pocketQuestsTheme.colors.muted,
@@ -10,6 +10,7 @@ export const colors = {
   green: pocketQuestsTheme.colors.primary,
   line: pocketQuestsTheme.colors.border,
   gold: pocketQuestsTheme.colors.accent,
+  onGold: pocketQuestsTheme.colors.onPrimary,
   danger: pocketQuestsTheme.colors.danger,
 };
 export const styles = StyleSheet.create(createStyles(pocketQuestsTheme));
