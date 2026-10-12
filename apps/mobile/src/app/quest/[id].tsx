@@ -2,12 +2,13 @@ import { Page } from "../../session/session-page";
 import { questActions } from "../../features/quests/commands/quest-actions";
 import { useState } from "react";
 import { Link, Redirect, useLocalSearchParams } from "expo-router";
-import { Text, TextInput, View } from "react-native";
+import { Text } from "react-native";
 import { useSession } from "../../session/session";
 import { Button, Label, styles } from "../../shared/ui";
 import { QuestRewards } from "../../features/quests/quest-rewards";
 import { FocusTimer } from "../../features/quests/focus-timer";
 import { DefinitionManagement } from "../../features/quests/definition-management";
+import { QuestPlanEditor } from "../../features/quests/quest-plan-editor";
 export default function QuestDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { state, catalog, command, busy, pending, signedIn } = useSession();
@@ -197,7 +198,7 @@ export default function QuestDetails() {
         key={item.occurrence.quest.id}
         questId={item.occurrence.quest.id}
       />
-      <Planning key={id} id={id} />
+      <QuestPlanEditor key={id} item={item} />
       <Text style={styles.subtitle}>Linked goal and steps</Text>
       {item.occurrence.parentId ? (
         <Link
@@ -255,50 +256,5 @@ export default function QuestDetails() {
         Back to Home
       </Link>
     </Page>
-  );
-}
-function Planning({ id }: { id: string }) {
-  const { state, command, busy, pending } = useSession();
-  const item = state!.occurrences.find((o) => o.occurrence.id === id)!;
-  const [date, setDate] = useState(item.occurrence.dueDate ?? "");
-  const [time, setTime] = useState(item.occurrence.plannedTime ?? "");
-  return (
-    <View style={{ gap: 12 }}>
-      <Label>Due day (blank means unscheduled)</Label>
-      <TextInput
-        accessibilityLabel="Quest due date YYYY-MM-DD"
-        value={date}
-        onChangeText={setDate}
-        style={styles.input}
-      />
-      <Label>
-        Optional planned time, HH:mm; the deadline stays at the end of the due
-        day.
-      </Label>
-      <TextInput
-        accessibilityLabel="Quest planned time HH:mm"
-        value={time}
-        onChangeText={setTime}
-        style={styles.input}
-      />
-      <Button
-        title="Save plan"
-        disabled={
-          busy ||
-          pending ||
-          item.status !== "Active" ||
-          !!item.occurrence.lifecycle?.seriesId ||
-          item.occurrence.lifecycle?.lockedLoss != null
-        }
-        onPress={() =>
-          void command({
-            action: questActions.plan,
-            occurrenceId: id,
-            dueDate: date || null,
-            plannedTime: time || null,
-          })
-        }
-      />
-    </View>
   );
 }

@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Add validated quest-plan editing, explicit unscheduled/today actions, saved-plan conflict recovery and explanations for locked plans, using the existing persisted plan command.
 - Add day/seven-day calendar navigation, strict date selection, per-day quest groups ordered by planned time, and choose/create actions that retain the selected date.
 - Group Active quests into today, unscheduled, earlier and upcoming plans; keep missed/abandoned history behind an explicit show/hide control and preserve server-owned lifecycle status.
 

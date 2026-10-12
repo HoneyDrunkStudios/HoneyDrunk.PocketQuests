@@ -604,9 +604,73 @@ try {
     visibleText("Calendar planned quest", { exact: true }),
   ).toBeVisible();
   await page.screenshot({ path: path.join(artifacts, "active-planning.png") });
+  await page
+    .getByRole("link", { name: "Open quest", exact: true })
+    .and(page.locator(`a[href="/quest/${calendarQuest.occurrence.id}"]`))
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Save plan", exact: true }),
+  ).toBeDisabled();
+  await page
+    .getByRole("textbox", { name: "Quest due date YYYY-MM-DD", exact: true })
+    .fill("2026-02-30");
+  await expect(
+    visibleText("Enter a real due date in YYYY-MM-DD format.", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save plan", exact: true }),
+  ).toBeDisabled();
+  await page
+    .getByRole("button", { name: "Leave this quest unscheduled", exact: true })
+    .click();
+  await expect(
+    page.getByRole("textbox", {
+      name: "Quest planned time HH:mm",
+      exact: true,
+    }),
+  ).toHaveValue("");
+  await page.getByRole("button", { name: "Save plan", exact: true }).click();
+  async function waitForSavedPlan(dueDate, plannedTime) {
+    await expect
+      .poll(async () => {
+        const account = await (
+          await context.request.get("http://localhost:5217/api/state", {
+            headers: { Authorization: `Bearer ${fixture.token}` },
+          })
+        ).json();
+        const occurrence = account.occurrences.find(
+          (row) => row.occurrence.id === calendarQuest.occurrence.id,
+        )?.occurrence;
+        return {
+          dueDate: occurrence?.dueDate,
+          plannedTime: occurrence?.plannedTime,
+          xp: account.overallXp,
+        };
+      })
+      .toEqual({ dueDate, plannedTime, xp: synced.overallXp });
+  }
+  await waitForSavedPlan(null, null);
+  await page
+    .getByRole("button", { name: "Plan for today", exact: true })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Quest planned time HH:mm", exact: true })
+    .fill("08:15");
+  await page.getByRole("button", { name: "Save plan", exact: true }).click();
+  await waitForSavedPlan(plannedState.today, "08:15");
+  await expect(
+    page.getByRole("button", { name: "Save plan", exact: true }),
+  ).toBeDisabled();
+  await page.screenshot({
+    path: path.join(artifacts, "quest-plan-editor.png"),
+  });
+  await page.getByRole("link", { name: "Back to Home", exact: true }).click();
   await page.getByRole("tab", { name: "Home", exact: true }).click();
   console.log(
     "Calendar day/week navigation, invalid-date recovery and selected-date custom creation/acceptance passed against real SQL; planning awarded no XP.",
+  );
+  console.log(
+    "Quest plan editing rejected invalid dates, persisted unscheduled date/time removal and today's timed plan, and preserved XP.",
   );
   for (const [width, height] of [
     [320, 720],
