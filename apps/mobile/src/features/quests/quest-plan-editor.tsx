@@ -26,6 +26,9 @@ export function QuestPlanEditor({ item }: Readonly<{ item: OccurrenceView }>) {
   const nextDate = date.trim();
   const nextTime = time.trim();
   const dirty = nextDate !== savedDate || nextTime !== savedTime;
+  // Plans are not projected by the offline queue; matching saved values are
+  // authoritative even while unrelated queued commands are still settling.
+  if (draft && !dirty) setDraft(null);
   const conflict =
     dirty &&
     draft !== null &&
@@ -36,14 +39,19 @@ export function QuestPlanEditor({ item }: Readonly<{ item: OccurrenceView }>) {
   const error = planInputError(nextDate, nextTime, state?.today ?? "");
   const disabled = busy || pending || !state;
   function edit(change: Partial<Pick<PlanDraft, "date" | "time">>) {
-    setDraft({
+    const next = {
       date,
       time,
       baseDate: dirty && draft ? draft.baseDate : savedDate,
       baseTime: dirty && draft ? draft.baseTime : savedTime,
       baseZone: dirty && draft ? draft.baseZone : savedZone,
       ...change,
-    });
+    };
+    setDraft(
+      next.date.trim() === savedDate && next.time.trim() === savedTime
+        ? null
+        : next,
+    );
   }
   return (
     <View style={{ gap: 12 }}>
@@ -64,6 +72,7 @@ export function QuestPlanEditor({ item }: Readonly<{ item: OccurrenceView }>) {
           <Input
             accessibilityLabel="Quest due date YYYY-MM-DD"
             value={date}
+            error={dirty && error?.field === "date" ? error.message : undefined}
             onChangeText={(value) => edit({ date: value })}
             editable={!disabled}
             style={styles.input}
@@ -75,6 +84,7 @@ export function QuestPlanEditor({ item }: Readonly<{ item: OccurrenceView }>) {
           <Input
             accessibilityLabel="Quest planned time HH:mm"
             value={time}
+            error={dirty && error?.field === "time" ? error.message : undefined}
             onChangeText={(value) => edit({ time: value })}
             editable={!disabled}
             style={styles.input}
@@ -91,14 +101,6 @@ export function QuestPlanEditor({ item }: Readonly<{ item: OccurrenceView }>) {
             disabled={disabled}
             onPress={() => edit({ date: "", time: "" })}
           />
-          {dirty && error && (
-            <Text
-              accessibilityRole="alert"
-              style={[styles.text, { color: colors.danger }]}
-            >
-              {error}
-            </Text>
-          )}
           {conflict && (
             <>
               <Text
