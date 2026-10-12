@@ -112,6 +112,25 @@ test("large history initially mounts a bounded SectionList window with accessibl
   assert.ok((html.match(/Open quest/g) ?? []).length <= 20);
 });
 
+test("empty calendar sections render their planning actions in the existing list", () => {
+  const html = render(QuestHistory, {
+    sections: [
+      {
+        key: "2026-10-12",
+        title: "Monday",
+        data: [],
+        emptyContent: React.createElement(
+          "button",
+          null,
+          "Choose a quest for Monday",
+        ),
+      },
+    ],
+  });
+  assert.match(html, /Monday/);
+  assert.match(html, /Choose a quest for Monday/);
+});
+
 test("quarantine-only recovery displays labeled discard controls even with zero readable actions", () => {
   recoveryRequired = true;
   busy = true;
@@ -367,4 +386,24 @@ test("custom definition controls stay accessible in active/frozen details and re
     render(QuestDetails),
     /Manage custom quest|aria-label="Edit:/,
   );
+});
+
+test("populated sections render their footer without empty-state content", () => {
+  const wire = require("../../../../contracts/wire-fixtures.json");
+  const html = render(QuestHistory, {
+    sections: [
+      {
+        key: "populated",
+        data: [wire.state.occurrences[0]],
+        emptyContent: React.createElement("span", null, "Should remain hidden"),
+        footerContent: React.createElement(
+          "button",
+          null,
+          "Plan another quest",
+        ),
+      },
+    ],
+  });
+  assert.match(html, /Plan another quest/);
+  assert.doesNotMatch(html, /Should remain hidden/);
 });

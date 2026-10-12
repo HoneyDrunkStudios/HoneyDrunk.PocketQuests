@@ -9,14 +9,16 @@ export type QuestHistorySection = {
   key: string;
   title?: string;
   data: OccurrenceView[];
+  emptyContent?: React.ReactElement;
+  footerContent?: React.ReactElement | null;
 };
 export function QuestHistory({
   sections,
   children,
-}: {
+}: Readonly<{
   sections: QuestHistorySection[];
   children: React.ReactNode;
-}) {
+}>) {
   const insets = useSafeAreaInsets();
   return (
     <SectionList
@@ -31,6 +33,12 @@ export function QuestHistory({
         ) : null
       }
       stickySectionHeadersEnabled={false}
+      renderSectionFooter={({ section }) => (
+        <View style={{ gap: 12 }}>
+          {section.data.length === 0 ? section.emptyContent : null}
+          {section.footerContent}
+        </View>
+      )}
       ListHeaderComponent={
         <View style={{ gap: 20 }}>
           <SessionRecovery />
