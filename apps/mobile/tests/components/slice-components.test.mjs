@@ -387,3 +387,23 @@ test("custom definition controls stay accessible in active/frozen details and re
     /Manage custom quest|aria-label="Edit:/,
   );
 });
+
+test("populated sections render their footer without empty-state content", () => {
+  const wire = require("../../../../contracts/wire-fixtures.json");
+  const html = render(QuestHistory, {
+    sections: [
+      {
+        key: "populated",
+        data: [wire.state.occurrences[0]],
+        emptyContent: React.createElement("span", null, "Should remain hidden"),
+        footerContent: React.createElement(
+          "button",
+          null,
+          "Plan another quest",
+        ),
+      },
+    ],
+  });
+  assert.match(html, /Plan another quest/);
+  assert.doesNotMatch(html, /Should remain hidden/);
+});

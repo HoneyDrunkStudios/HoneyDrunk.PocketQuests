@@ -82,12 +82,8 @@ export function CalendarPlanner() {
           key: day.key,
           title: `${calendarDateLabel(day.date)} · ${day.date}`,
           data: day.data,
-          emptyContent: (
-            <View style={{ gap: 12 }}>
-              <Label>No quests planned for this day.</Label>
-              {chooseActions(day.date)}
-            </View>
-          ),
+          emptyContent: <Label>No quests planned for this day.</Label>,
+          footerContent: chooseActions(day.date),
         })),
         {
           key: "unscheduled",
@@ -126,10 +122,8 @@ export function CalendarPlanner() {
       </View>
       <Label>
         {selected}
-        {week && plan.days.length
-          ? ` – ${plan.days[plan.days.length - 1].date}`
-          : ""}{" "}
-        · {state.zone}
+        {week && plan.days.length ? ` – ${plan.days.at(-1)?.date}` : ""} ·{" "}
+        {state.zone}
       </Label>
       <TextInput
         accessibilityLabel="Calendar date YYYY-MM-DD"
@@ -168,7 +162,6 @@ export function CalendarPlanner() {
           future date before year 9999 to plan quests.
         </Label>
       )}
-      {plan.days[0]?.data.length ? chooseActions(selected) : null}
     </QuestHistory>
   );
 }

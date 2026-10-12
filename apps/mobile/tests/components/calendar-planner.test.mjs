@@ -100,6 +100,7 @@ Module._load = function (name, ...rest) {
                     ),
                   )
                 : section.emptyContent,
+              section.footerContent,
             ),
           ),
         ),
@@ -510,6 +511,50 @@ test("clean plans follow timezone updates and permanent locks take precedence ov
       );
       assert.equal(view.button("Save plan"), undefined);
     }
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("populated week days retain one date-specific planning entry point", async () => {
+  reset();
+  state.occurrences = ["2026-10-11", "2026-10-12", "2026-10-15"].map(
+    (dueDate) => ({
+      occurrence: {
+        id: dueDate,
+        dueDate,
+        plannedTime: null,
+        acceptedAt: "2026-10-01T12:00:00Z",
+        quest: { ...quest, id: "existing" },
+      },
+      status: "Active",
+    }),
+  );
+  const view = await mount();
+  try {
+    await view.click("7 days");
+    for (const date of ["2026-10-12", "2026-10-15"]) {
+      const section = view.element.querySelector(`[data-day="${date}"]`);
+      assert.match(section.textContent, /Practice/);
+      assert.equal(
+        [...section.querySelectorAll("button")].filter(
+          (b) => b.textContent === `Choose a quest for ${date}`,
+        ).length,
+        1,
+      );
+    }
+    await view.click("Choose a quest for 2026-10-15");
+    await view.click("Start: Practice");
+    assert.equal(sent[0].dueDate, "2026-10-15");
+    await view.click("Back to calendar");
+    await view.fill("Calendar date YYYY-MM-DD", "2026-10-11");
+    await view.click("Go to date");
+    assert.match(
+      view.element.querySelector('[data-day="2026-10-11"]').textContent,
+      /Practice/,
+    );
+    assert.equal(view.button("Choose a quest for 2026-10-11"), undefined);
+    assert.ok(view.button("Create a quest for 2026-10-15"));
   } finally {
     await view.unmount();
   }
