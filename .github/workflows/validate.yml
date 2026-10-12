@@ -65,7 +65,9 @@ jobs:
             /d:sonar.javascript.lcov.reportPaths="apps/mobile/coverage/lcov.info" `
             /d:sonar.qualitygate.wait=true /d:sonar.qualitygate.timeout=300
       - name: Build solution and DACPACs
-        run: dotnet build product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore
+        # MSBuild must discover the same .sonarqube directory as begin/end.
+        working-directory: product
+        run: dotnet build HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore --no-incremental
       - name: Verify endpoint OpenAPI and wire compatibility
         shell: pwsh
         run: ./product/scripts/Test-ApiContract.ps1 -NoBuild -Configuration Release
