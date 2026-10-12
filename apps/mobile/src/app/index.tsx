@@ -2,32 +2,27 @@ import { Page } from "../session/session-page";
 import {
   providerScopes,
   providerCredentials,
-  validateProviderConfiguration,
 } from "../session/provider-session";
+import {
+  useProviderSetup,
+  type ProviderSetup,
+} from "../session/use-provider-setup";
 import { Loading } from "@honeydrunk/ui-native";
-import { requestTimeoutMs, signInRedirect } from "../config/client";
+import { signInRedirect } from "../config/client";
 import { useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import { Redirect } from "expo-router";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
-import { identityUrl, useSession } from "../session/session";
+import { useSession } from "../session/session";
 import { RecoveryPanel } from "../features/profile/account-settings";
 import { Button, Label, Card, colors, styles } from "../shared/ui";
 WebBrowser.maybeCompleteAuthSession();
-type Configuration = { authority: string; clientId: string; scope: string };
-async function fetchConfiguration(): Promise<Configuration> {
-  const response = await fetch(identityUrl + "/client-configuration", {
-    signal: AbortSignal.timeout(requestTimeoutMs.signInConfiguration),
-  });
-  if (!response.ok) throw new Error("Sign-in configuration unavailable");
-  return validateProviderConfiguration(await response.json());
-}
-function SignIn({ config }: { config: Configuration }) {
+function SignIn({ config, discovery }: Readonly<ProviderSetup>) {
   const { connect, busy } = useSession();
   const [error, setError] = useState<string | null>(null);
+  const [working, setWorking] = useState(false);
   const exchangedCode = useRef<string | null>(null);
-  const discovery = AuthSession.useAutoDiscovery(config.authority);
   const redirectUri = AuthSession.makeRedirectUri(signInRedirect);
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
@@ -54,7 +49,8 @@ function SignIn({ config }: { config: Configuration }) {
       discovery,
     )
       .then((tokens) => connect(providerCredentials(tokens, config)))
-      .catch(() => setError("Sign-in did not finish. Please try again."));
+      .catch(() => setError("Sign-in did not finish. Please try again."))
+      .finally(() => setWorking(false));
   }, [
     response,
     discovery,
@@ -67,10 +63,20 @@ function SignIn({ config }: { config: Configuration }) {
     <>
       <Button
         title="Sign in or create an account"
-        disabled={!request || busy}
+        disabled={!request || busy || working}
         onPress={() => {
           setError(null);
-          void promptAsync();
+          setWorking(true);
+          void promptAsync()
+            .then((result) => {
+              if (result.type !== "success") setWorking(false);
+              if (result.type === "error")
+                setError("Sign-in did not finish. Please try again.");
+            })
+            .catch(() => {
+              setWorking(false);
+              setError("Sign-in was interrupted. Please try again.");
+            });
         }}
       />
       {error && <Label>{error}</Label>}
@@ -79,34 +85,7 @@ function SignIn({ config }: { config: Configuration }) {
 }
 export default function Welcome() {
   const { signedIn, busy } = useSession();
-  const [config, setConfig] = useState<Configuration | null>(null);
-  const [message, setMessage] = useState("Connecting to sign-in…");
-  async function load() {
-    try {
-      setConfig(await fetchConfiguration());
-    } catch {
-      setMessage(
-        "Sign-in setup is still in progress. Please try again shortly.",
-      );
-    }
-  }
-  useEffect(() => {
-    let active = true;
-    fetchConfiguration().then(
-      (value) => {
-        if (active) setConfig(value);
-      },
-      () => {
-        if (active)
-          setMessage(
-            "Sign-in setup is still in progress. Please try again shortly.",
-          );
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, []);
+  const { setup, error, retry } = useProviderSetup();
   if (signedIn) return <Redirect href="/(tabs)" />;
   return (
     <Page>
@@ -156,18 +135,16 @@ export default function Welcome() {
           Private quests, meaningful progress, and room to begin again.
         </Label>
         {busy && <Loading label="Restoring session" />}
-        {config ? (
-          <SignIn config={config} />
+        {setup ? (
+          <SignIn {...setup} />
         ) : (
           <>
             <Text selectable style={styles.muted}>
-              {message}
+              {error || "Preparing secure sign-in…"}
             </Text>
-            <Button
-              title="Check sign-in setup"
-              onPress={() => void load()}
-              secondary
-            />
+            {error && (
+              <Button title="Retry sign-in setup" onPress={retry} secondary />
+            )}
           </>
         )}
       </Card>

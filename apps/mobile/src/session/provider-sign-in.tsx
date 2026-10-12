@@ -1,12 +1,10 @@
-import { validateProviderConfiguration } from "./provider-session";
-import { requestTimeoutMs, signInRedirect } from "../config/client";
+import { useProviderSetup, type ProviderSetup } from "./use-provider-setup";
+import { signInRedirect } from "../config/client";
 import { useEffect, useRef, useState } from "react";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
-import { identityUrl } from "./session";
 import { Button, Label } from "../shared/ui";
 WebBrowser.maybeCompleteAuthSession();
-type Configuration = { authority: string; clientId: string; scope: string };
 export function ProviderSignIn({
   title,
   onToken,
@@ -18,33 +16,24 @@ export function ProviderSignIn({
   disabled?: boolean;
   recent?: boolean;
 }) {
-  const [config, setConfig] = useState<Configuration | null>(null);
-  const [error, setError] = useState("");
-  useEffect(() => {
-    let active = true;
-    fetch(identityUrl + "/client-configuration", {
-      signal: AbortSignal.timeout(requestTimeoutMs.signInConfiguration),
-    })
-      .then(async (response) => {
-        if (!response.ok)
-          throw new Error("Provider sign-in is not configured yet.");
-        const value = validateProviderConfiguration(await response.json());
-        if (active) setConfig(value);
-      })
-      .catch(() => {
-        if (active)
-          setError(
-            "Provider sign-in is unavailable. Try again when connected.",
-          );
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-  if (!config) return <Label>{error || "Preparing secure sign-in…"}</Label>;
+  const { setup, error, retry } = useProviderSetup();
+  if (!setup)
+    return (
+      <>
+        <Label>{error || "Preparing secure sign-in…"}</Label>
+        {error && (
+          <Button
+            title="Retry sign-in setup"
+            onPress={retry}
+            disabled={disabled}
+            secondary
+          />
+        )}
+      </>
+    );
   return (
     <LoadedProof
-      config={config}
+      {...setup}
       title={title}
       disabled={disabled}
       recent={recent}
@@ -54,18 +43,17 @@ export function ProviderSignIn({
 }
 function LoadedProof({
   config,
+  discovery,
   title,
   disabled,
   recent,
   onToken,
 }: {
-  config: Configuration;
   title: string;
   disabled: boolean;
   recent: boolean;
   onToken(token: string): Promise<void>;
-}) {
-  const discovery = AuthSession.useAutoDiscovery(config.authority);
+} & ProviderSetup) {
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
   const exchanged = useRef<string | null>(null);
