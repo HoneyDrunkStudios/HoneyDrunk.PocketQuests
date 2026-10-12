@@ -589,6 +589,34 @@ test("zone-only saved changes require reloading a dirty plan, including unschedu
   }
 });
 
+test("account timezone changes conflict with dirty plans whose saved deadline zone is unchanged", async () => {
+  reset();
+  const item = plannedItem({ lifecycle: { deadlineZone: state.zone } });
+  const view = await mount(QuestPlanEditor, { item });
+  try {
+    await view.fill("Quest due date YYYY-MM-DD", "2026-10-16");
+    state.zone = "Asia/Tokyo";
+    await view.rerender();
+    assert.match(view.element.textContent, /saved plan changed/);
+    assert.match(view.element.textContent, /America\/New_York/);
+    assert.match(view.element.textContent, /selected zone: Asia\/Tokyo/);
+    assert.equal(view.button("Save plan").disabled, true);
+    await view.fill("Quest planned time HH:mm", "11:00");
+    assert.equal(view.button("Save plan").disabled, true);
+    await view.click("Save plan");
+    assert.deepEqual(sent, []);
+    await view.click("Load saved plan");
+    assert.equal(view.button("Load saved plan"), undefined);
+    await view.fill("Quest due date YYYY-MM-DD", "2026-10-17");
+    assert.equal(view.button("Save plan").disabled, false);
+    await view.click("Save plan");
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].dueDate, "2026-10-17");
+  } finally {
+    await view.unmount();
+  }
+});
+
 test("clean plans follow timezone updates and permanent locks take precedence over frozen guidance", async () => {
   reset();
   const view = await mount(QuestPlanEditor, { item: plannedItem() });
