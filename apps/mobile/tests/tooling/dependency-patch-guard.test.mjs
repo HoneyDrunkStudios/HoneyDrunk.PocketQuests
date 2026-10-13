@@ -4,6 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { applyPatches } from "../../scripts/patch-dependencies.cjs";
 import { spawnSync } from "node:child_process";
 
 const app = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -14,7 +15,7 @@ function fixture(action) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "pq-patch-guard-"));
   try {
     fs.mkdirSync(path.join(root, "scripts"));
-    for (const file of ["patch-dependencies.cjs", "dependency-patches.json"])
+    for (const file of ["dependency-patches.json"])
       fs.copyFileSync(
         path.join(app, "scripts", file),
         path.join(root, "scripts", file),
@@ -42,12 +43,14 @@ function fixture(action) {
       path.join(root, "package-lock.json"),
       JSON.stringify({ packages }),
     );
-    const run = (...args) =>
-      spawnSync(
-        process.execPath,
-        [path.join(root, "scripts/patch-dependencies.cjs"), ...args],
-        { encoding: "utf8" },
-      );
+    const run = (...args) => {
+      try {
+        applyPatches(root, args.includes("--check"));
+        return { status: 0, stderr: "" };
+      } catch (error) {
+        return { status: 1, stderr: error.message };
+      }
+    };
     action(root, run);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -89,3 +92,22 @@ test("additional dependency copies require review instead of leaving an unpatche
     fs.writeFileSync(lockPath, JSON.stringify(lock));
     assert.match(run().stderr, /additional or relocated copies/);
   }));
+
+test("an upstream package version change requires patch review", () =>
+  fixture((root, run) => {
+    fs.writeFileSync(
+      path.join(root, "node_modules/braces/package.json"),
+      JSON.stringify({ name: "braces", version: "3.0.4" }),
+    );
+    assert.match(run().stderr, /Review braces 3.0.4/);
+  }));
+
+test("the install-hook command checks the actual locked installation", () => {
+  const result = spawnSync(
+    process.execPath,
+    [path.join(app, "scripts/patch-dependencies.cjs"), "--check"],
+    { encoding: "utf8" },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /registry advisories remain visible/);
+});

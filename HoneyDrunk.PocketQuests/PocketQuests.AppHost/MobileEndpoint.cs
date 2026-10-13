@@ -4,7 +4,7 @@ namespace PocketQuests.AppHost;
 
 internal static class MobileEndpoint
 {
-    internal static string Resolve(string? configured, string host, int port)
+    internal static string Resolve(string? configured, string host, int port, string? trustedEmulatorHost = null)
     {
         if (!string.IsNullOrWhiteSpace(configured))
         {
@@ -17,7 +17,8 @@ internal static class MobileEndpoint
 
         // Plaintext is limited to this machine and Android's host-loopback bridge.
         // Physical devices must configure a trusted HTTPS service URL explicitly.
-        var local = host.Equals("localhost", StringComparison.OrdinalIgnoreCase) || host == "10.0.2.2" ||
+        var local = host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+            (!string.IsNullOrWhiteSpace(trustedEmulatorHost) && host.Equals(trustedEmulatorHost, StringComparison.OrdinalIgnoreCase)) ||
             (IPAddress.TryParse(host, out var address) && IPAddress.IsLoopback(address));
         if (!local)
             throw new InvalidOperationException("Physical-device access requires explicit Mobile:ApiUrl and Mobile:IdentityUrl HTTPS endpoints.");

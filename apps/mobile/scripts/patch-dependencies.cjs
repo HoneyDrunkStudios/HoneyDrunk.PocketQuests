@@ -4,22 +4,14 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { createHash } = require("node:crypto");
 const patches = require("./dependency-patches.json");
-const lock = require("../package-lock.json");
-for (const name of new Set(patches.map((patch) => patch.package))) {
-  const copies = Object.keys(lock.packages).filter((entry) =>
-    entry.endsWith("node_modules/" + name),
-  );
-  if (copies.length !== 1 || copies[0] !== "node_modules/" + name)
-    throw new Error(
-      `Review additional or relocated copies of ${name} before applying security patches`,
-    );
-}
 const hash = (text) => createHash("sha256").update(text).digest("hex");
-const checkOnly = process.argv.includes("--check");
-
-// Validate every input before writing any patch. Unexpected upgrades fail closed.
-const changes = patches.map((patch) => {
-  const packagePath = require.resolve(patch.package + "/package.json");
+function preparePatch(root, patch, checkOnly) {
+  const packagePath = path.join(
+    root,
+    "node_modules",
+    patch.package,
+    "package.json",
+  );
   const installed = JSON.parse(fs.readFileSync(packagePath, "utf8"));
   if (installed.version !== patch.version)
     throw new Error(
@@ -43,10 +35,30 @@ const changes = patches.map((patch) => {
   if (hash(patched) !== patch.patchedSha256)
     throw new Error(`Patch output mismatch: ${patch.package}/${patch.file}`);
   return { file, patched };
-});
-for (const change of changes) {
-  if (change) fs.writeFileSync(change.file, change.patched);
 }
-console.log(
-  "Pinned braces depth guards and forge DigestAlgorithm validation verified; registry advisories remain visible.",
-);
+function applyPatches(root, checkOnly = false) {
+  const lock = JSON.parse(
+    fs.readFileSync(path.join(root, "package-lock.json"), "utf8"),
+  );
+  for (const name of new Set(patches.map((patch) => patch.package))) {
+    const copies = Object.keys(lock.packages).filter((entry) =>
+      entry.endsWith("node_modules/" + name),
+    );
+    if (copies.length !== 1 || copies[0] !== "node_modules/" + name)
+      throw new Error(
+        `Review additional or relocated copies of ${name} before applying security patches`,
+      );
+  }
+  // Validate every input before writing any patch. Unexpected upgrades fail closed.
+  const changes = patches.map((patch) => preparePatch(root, patch, checkOnly));
+  for (const change of changes) {
+    if (change) fs.writeFileSync(change.file, change.patched);
+  }
+}
+module.exports = { applyPatches };
+if (require.main === module) {
+  applyPatches(path.resolve(__dirname, ".."), process.argv.includes("--check"));
+  console.log(
+    "Pinned braces depth guards and forge DigestAlgorithm validation verified; registry advisories remain visible.",
+  );
+}

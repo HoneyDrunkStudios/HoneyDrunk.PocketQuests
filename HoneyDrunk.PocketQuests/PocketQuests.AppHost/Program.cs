@@ -12,6 +12,7 @@ var api = builder.AddProject<Projects.PocketQuests_Api>("api")
     .WithEnvironment("Persistence__ReconciliationEnabled", builder.Configuration["Persistence:ReconciliationEnabled"] ?? "true")
     .WithHttpHealthCheck("/health");
 var deviceHost = builder.Configuration["Mobile:DeviceHost"] ?? "localhost";
+var trustedEmulatorHost = builder.Configuration["Mobile:TrustedEmulatorHost"];
 if (Uri.CheckHostName(deviceHost) is not (UriHostNameType.Dns or UriHostNameType.IPv4))
     throw new InvalidOperationException("Mobile:DeviceHost must be a DNS name or IPv4 address.");
 
@@ -35,7 +36,7 @@ else
         .WithReference(builder.AddConnectionString("identity"))
         .WithHttpHealthCheck("/health");
     api.WithEnvironment("Identity__BaseUrl", identity.GetEndpoint("http")).WaitFor(identity);
-    identityUrl = MobileEndpoint.Resolve(builder.Configuration["Mobile:IdentityUrl"], deviceHost, 5218);
+    identityUrl = MobileEndpoint.Resolve(builder.Configuration["Mobile:IdentityUrl"], deviceHost, 5218, trustedEmulatorHost);
 }
 
 // Device addresses describe the caller's route to the Aspire proxy. A physical
@@ -46,7 +47,7 @@ string[] arguments = OperatingSystem.IsWindows()
     : ["run", "start", "--", "--port", "8081"];
 builder.AddExecutable("mobile", executable, "../../apps/mobile", arguments)
     .WaitFor(api)
-    .WithEnvironment("EXPO_PUBLIC_API_URL", MobileEndpoint.Resolve(builder.Configuration["Mobile:ApiUrl"], deviceHost, 5217))
+    .WithEnvironment("EXPO_PUBLIC_API_URL", MobileEndpoint.Resolve(builder.Configuration["Mobile:ApiUrl"], deviceHost, 5217, trustedEmulatorHost))
     .WithEnvironment("EXPO_PUBLIC_IDENTITY_URL", identityUrl)
     .WithEnvironment("EXPO_NO_TELEMETRY", "1")
     .WithHttpEndpoint(port: 8081, targetPort: 8081, isProxied: false);
