@@ -337,8 +337,24 @@ try {
     visibleText("280 overall XP earned", { exact: true }),
   ).toBeVisible();
   console.log("Verified completion response-loss retry and character totals.");
-  const rankBars = page.getByRole("progressbar");
+  await expect(
+    page.getByRole("progressbar", { name: / level progress$/ }),
+  ).toHaveCount(
+    1 +
+      committed.categories.length +
+      committed.attributes.length +
+      committed.skills.length,
+  );
+  const rankBars = page.getByRole("progressbar", {
+    name: /^(Qualifying categories|Combined category XP)$/,
+  });
   await expect(rankBars).toHaveCount(2);
+  await expect(
+    page.getByRole("progressbar", {
+      name: "Overall level progress",
+      exact: true,
+    }),
+  ).toHaveAttribute("aria-valuetext", "180/300 XP toward level 3");
   await page
     .getByRole("button", { name: "See the rank ladder", exact: true })
     .click();
