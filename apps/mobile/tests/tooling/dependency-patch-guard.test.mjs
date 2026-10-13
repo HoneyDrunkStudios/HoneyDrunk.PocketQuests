@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { applyPatches } from "../../scripts/patch-dependencies.cjs";
+import { applyPatches } from "../../scripts/dependency-patches.cjs";
 import { spawnSync } from "node:child_process";
 
 const app = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -14,12 +14,6 @@ const patches = JSON.parse(
 function fixture(action) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "pq-patch-guard-"));
   try {
-    fs.mkdirSync(path.join(root, "scripts"));
-    for (const file of ["dependency-patches.json"])
-      fs.copyFileSync(
-        path.join(app, "scripts", file),
-        path.join(root, "scripts", file),
-      );
     const packages = {};
     for (const patch of patches) {
       const directory = path.join(root, "node_modules", patch.package);
