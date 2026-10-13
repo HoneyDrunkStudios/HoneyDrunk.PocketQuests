@@ -3,6 +3,8 @@
 const { createRequire } = require("node:module");
 const Module = require("node:module");
 const fs = require("node:fs");
+const path = require("node:path");
+const { fileURLToPath, pathToFileURL } = require("node:url");
 const ts = require("typescript");
 const localRequire = createRequire(__filename);
 const originalLoad = Module._load;
@@ -161,10 +163,27 @@ Module._load = function (name, ...rest) {
     };
   return originalLoad.call(this, name, ...rest);
 };
-for (const extension of [".ts", ".tsx"])
-  require.extensions[extension] = (module, file) =>
-    module._compile(
-      ts.transpileModule(fs.readFileSync(file, "utf8"), {
+Module.registerHooks({
+  resolve(specifier, context, nextResolve) {
+    if (specifier.startsWith(".") && context.parentURL?.startsWith("file:")) {
+      const base = path.resolve(
+        path.dirname(fileURLToPath(context.parentURL)),
+        specifier,
+      );
+      for (const suffix of [".ts", ".tsx", "/index.ts", "/index.tsx"])
+        if (fs.existsSync(base + suffix))
+          return { url: pathToFileURL(base + suffix).href, shortCircuit: true };
+    }
+    return nextResolve(specifier, context);
+  },
+  load(url, context, nextLoad) {
+    if (!url.startsWith("file:") || !/\.tsx?$/.test(url))
+      return nextLoad(url, context);
+    const file = fileURLToPath(url);
+    return {
+      format: "commonjs",
+      shortCircuit: true,
+      source: ts.transpileModule(fs.readFileSync(file, "utf8"), {
         fileName: file,
         compilerOptions: {
           inlineSourceMap: true,
@@ -174,8 +193,9 @@ for (const extension of [".ts", ".tsx"])
           target: ts.ScriptTarget.ES2022,
         },
       }).outputText,
-      file,
-    );
+    };
+  },
+});
 const { SessionProvider, useSession, useAccountSnapshot, useSessionActions } =
   localRequire("../../src/session/session.tsx");
 const { RequestError } = localRequire("../../src/session/request-error.ts");

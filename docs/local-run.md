@@ -26,7 +26,7 @@ Stop the AppHost before starting Expo separately. For a frontend-only browser pr
 
 ## Current local wiring
 
-AppHost permits its plaintext mobile-service defaults only for localhost, loopback IPs and Android's `10.0.2.2` host bridge. A physical device needs explicit `Mobile:ApiUrl` and, when starting Identity from source, `Mobile:IdentityUrl` HTTPS URLs with device-trusted certificates; a LAN `Mobile:DeviceHost` alone is rejected. These settings configure the mobile client's route, not TLS termination or trust. The existing loopback-only browser/emulator environment remains usable.
+AppHost permits its plaintext mobile-service defaults only for localhost, loopback IPs and the explicitly configured `Mobile:TrustedEmulatorHost` (the development settings name Android's `10.0.2.2` host bridge). A physical device needs explicit `Mobile:ApiUrl` and, when starting Identity from source, `Mobile:IdentityUrl` HTTPS URLs with device-trusted certificates; a LAN `Mobile:DeviceHost` alone is rejected. These settings configure the mobile client's route, not TLS termination or trust. The existing loopback-only browser/emulator environment remains usable.
 
 UI snapshot checks do not invoke Git. Importing a new reviewed upstream snapshot uses the installed Git at `C:/Program Files/Git/cmd/git.exe` on Windows or `/usr/bin/git` on Unix, avoiding PATH lookup. For a nonstandard trusted installation, set `PQ_GIT_EXECUTABLE` to its absolute executable path before running the existing `ui-snapshot.cjs --source` workflow.
 

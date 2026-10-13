@@ -18,6 +18,8 @@ let busy = false;
 Module._load = function (name, ...rest) {
   if (name === "react-native") return nativeWeb;
   if (name === "expo-crypto") return { randomUUID: () => "fixture-id" };
+  if (name.endsWith("/notifications"))
+    return { requestWarningPermission: async () => false };
   if (name.endsWith("/session")) {
     const read = () => ({
       state,
@@ -86,6 +88,9 @@ const QuestDetails = require("../../src/app/quest/[id].tsx").default;
 const { Page } = require("../../src/session/session-page.tsx");
 const { QuestHistory } = require("../../src/features/quests/quest-history.tsx");
 const { AppErrorBoundary } = require("../../src/shared/error-boundary.tsx");
+const {
+  SettingsEditor,
+} = require("../../src/features/profile/settings-editor.tsx");
 const render = (component, props = {}) =>
   renderToStaticMarkup(
     React.createElement(
@@ -94,6 +99,29 @@ const render = (component, props = {}) =>
       React.createElement(component, props),
     ),
   );
+
+test("timezone guidance requires a nonempty device zone different from the account", () => {
+  state = structuredClone(
+    require("../../../../contracts/wire-fixtures.json").state,
+  );
+  state.zone = "UTC";
+  const original = Intl.DateTimeFormat;
+  try {
+    for (const deviceZone of ["", "UTC", "America/New_York"]) {
+      Intl.DateTimeFormat = () => ({
+        resolvedOptions: () => ({ timeZone: deviceZone }),
+      });
+      const html = render(SettingsEditor);
+      assert.equal(
+        html.includes("Your device uses"),
+        deviceZone === "America/New_York",
+      );
+      assert.match(html, /Selected timezone: UTC/);
+    }
+  } finally {
+    Intl.DateTimeFormat = original;
+  }
+});
 
 test("large history initially mounts a bounded SectionList window with accessible quest links", () => {
   const wire = require("../../../../contracts/wire-fixtures.json");

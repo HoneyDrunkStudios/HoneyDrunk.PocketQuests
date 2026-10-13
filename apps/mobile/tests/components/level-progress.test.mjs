@@ -24,6 +24,8 @@ for (const extension of [".ts", ".tsx"])
       ts.transpileModule(require("node:fs").readFileSync(file, "utf8"), {
         fileName: file,
         compilerOptions: {
+          inlineSourceMap: true,
+          inlineSources: true,
           module: ts.ModuleKind.CommonJS,
           jsx: ts.JsxEmit.ReactJSX,
           target: ts.ScriptTarget.ES2022,

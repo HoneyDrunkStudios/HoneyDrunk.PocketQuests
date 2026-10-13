@@ -11,9 +11,17 @@ public sealed class MobileEndpointTests
     [Theory]
     [InlineData("localhost", "http://localhost:5217")]
     [InlineData("127.0.0.1", "http://127.0.0.1:5217")]
-    [InlineData("10.0.2.2", "http://10.0.2.2:5217")]
     public void LocalDefaults(string host, string expected) =>
         Assert.Equal(expected, MobileEndpoint.Resolve(null, host, 5217));
+
+    /// <summary>Emulator transport must be an explicitly trusted development route.</summary>
+    [Fact]
+    public void EmulatorBridgeRequiresExplicitTrust()
+    {
+        Assert.Throws<InvalidOperationException>(() => MobileEndpoint.Resolve(null, "10.0.2.2", 5217));
+        Assert.Equal("http://10.0.2.2:5217", MobileEndpoint.Resolve(null, "10.0.2.2", 5217, "10.0.2.2"));
+        Assert.Throws<InvalidOperationException>(() => MobileEndpoint.Resolve(null, "192.168.1.20", 5217, "10.0.2.2"));
+    }
 
     /// <summary>Remote hosts cannot inherit the local plaintext defaults.</summary>
     /// <param name="host">The remote host name.</param>

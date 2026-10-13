@@ -26,6 +26,12 @@ const run = (root) =>
   spawnSync(process.execPath, [path.join(root, "scripts/ui-snapshot.cjs")], {
     encoding: "utf8",
   });
+
+test("the shipped UI snapshot command verifies the actual reviewed snapshot", () => {
+  const result = run(app);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /UI snapshot matches/);
+});
 test("snapshot check accepts exact committed files and Windows line endings", () =>
   fixture((root) => {
     assert.equal(run(root).status, 0);

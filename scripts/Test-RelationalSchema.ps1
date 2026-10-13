@@ -43,7 +43,9 @@ try {
     if ($TestFilter) { $filterArguments = @('--filter', $TestFilter); $summary.testFilter = $TestFilter }
     $coverageArguments = @()
     if ($CollectCoverage) {
-        $coverageArguments = @('--collect', 'XPlat Code Coverage', '--', 'DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover')
+        # Include linked AppHost source exercised in the test assembly. Sonar still
+        # classifies actual test files as tests; no production source is excluded.
+        $coverageArguments = @('--collect', 'XPlat Code Coverage', '--', 'DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover', 'DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.IncludeTestAssembly=true')
     }
     & dotnet test $project --configuration Release --no-build --no-restore --logger 'trx;LogFileName=schema-tests.trx' --results-directory $EvidenceDirectory @filterArguments @coverageArguments *> (Join-Path $EvidenceDirectory 'tests.log')
     $testExitCode = $LASTEXITCODE
