@@ -397,6 +397,15 @@ try {
   ).toBe(true);
   await page.screenshot({ path: path.join(artifacts, "character-narrow.png") });
   await page.setViewportSize({ width: 390, height: 844 });
+  const portrait = await page
+    .getByRole("img", { name: "Character portrait silhouette", exact: true })
+    .boundingBox();
+  const overallBar = await page
+    .getByRole("progressbar", { name: "Overall level progress", exact: true })
+    .boundingBox();
+  expect(portrait).not.toBeNull();
+  expect(overallBar).not.toBeNull();
+  expect(overallBar.x + overallBar.width).toBeLessThanOrEqual(portrait.x);
   await page.screenshot({
     path: path.join(artifacts, "character-home.png"),
     fullPage: false,

@@ -36,7 +36,15 @@ export function CharacterHome() {
             alignItems: "center",
           }}
         >
-          <View style={{ flexGrow: 1, flexShrink: 1, minWidth: 140, gap: 10 }}>
+          <View
+            style={{
+              flexBasis: 140,
+              flexGrow: 1,
+              flexShrink: 1,
+              minWidth: 140,
+              gap: 10,
+            }}
+          >
             <Text accessibilityRole="header" style={styles.title}>
               Level {state.overallLevel}
             </Text>
