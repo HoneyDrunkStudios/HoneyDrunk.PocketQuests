@@ -15,11 +15,12 @@ export function LevelProgress({
 }>) {
   const progress = levelProgress(track, xp, level);
   if (!progress) return <Label>Level progress unavailable.</Label>;
+  const progressName = track === "overall" ? name : `${name} ${track}`;
   const valueText = `${progress.earned}/${progress.required} XP toward level ${progress.nextLevel}`;
   return (
     <View style={{ gap: 4 }}>
       <Progress
-        label={`${name} level progress`}
+        label={`${progressName} level progress`}
         value={progress.earned}
         max={progress.required}
         valueText={valueText}

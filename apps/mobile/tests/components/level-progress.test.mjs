@@ -41,6 +41,33 @@ const {
 const {
   levelProgress,
 } = require("../../src/features/progression/level-progress.ts");
+
+test("same-named categories and attributes expose distinct accessible progress names", () => {
+  const { renderToStaticMarkup } = require("react-dom/server");
+  const element = document.createElement("div");
+  element.innerHTML = renderToStaticMarkup(
+    React.createElement(
+      ThemeProvider,
+      { theme: pocketQuestsTheme },
+      ["category", "attribute"].map((track) =>
+        React.createElement(LevelProgress, {
+          key: track,
+          name: "Creativity",
+          track,
+          xp: 0,
+          level: 1,
+        }),
+      ),
+    ),
+  );
+  const names = [...element.querySelectorAll('[role="progressbar"]')].map(
+    (bar) => bar.getAttribute("aria-label"),
+  );
+  assert.deepEqual(names, [
+    "Creativity category level progress",
+    "Creativity attribute level progress",
+  ]);
+});
 test("approved independent XP tracks reset only at their own next level", () => {
   for (const [track, threshold] of [
     ["overall", 100],
