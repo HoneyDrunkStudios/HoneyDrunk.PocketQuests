@@ -27,7 +27,7 @@ export function SettingsEditor() {
         Selected timezone: {state.zone}. Planned times organize your calendar;
         deadlines remain the end of the due day.
       </Label>
-      {deviceZone && deviceZone !== state.zone && (
+      {Boolean(deviceZone) && deviceZone !== state.zone && (
         <Label>
           Your device uses {deviceZone}. Your selected zone stays {state.zone}{" "}
           until you explicitly change it.

@@ -3,12 +3,31 @@ from copy import deepcopy
 from pathlib import Path
 import json
 import unittest
-from validate_contract import validate
+import argparse
+import tempfile
+from unittest.mock import patch
+from validate_contract import validate, contract_path
 
 CONTRACT = json.loads((Path(__file__).resolve().parents[2] / 'docs/schema/schema-contract.json').read_text(encoding='utf-8'))
 
 
 class ContractGateTests(unittest.TestCase):
+    def test_contract_path_is_confined_after_resolution(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            repository=root/'repository'
+            repository.mkdir()
+            inside=repository/'contract.json'
+            inside.write_text('{}',encoding='utf-8')
+            outside=root/'outside.json'
+            outside.write_text('{}',encoding='utf-8')
+            with patch('validate_contract.REPOSITORY',repository.resolve()):
+                self.assertEqual(inside.resolve(),contract_path(inside))
+                with self.assertRaises(argparse.ArgumentTypeError):
+                    contract_path(repository/'..'/'outside.json')
+                with self.assertRaises(argparse.ArgumentTypeError):
+                    contract_path(outside)
+
     def reject(self, mutation, message):
         contract = deepcopy(CONTRACT)
         mutation(contract)

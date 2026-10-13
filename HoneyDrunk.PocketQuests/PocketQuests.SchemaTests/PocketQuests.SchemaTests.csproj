@@ -10,6 +10,7 @@
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
     <Using Include="Xunit" />
+    <Compile Include="../PocketQuests.AppHost/MobileEndpoint.cs" Link="Hosting/MobileEndpoint.cs" />
     <ProjectReference Include="../PocketQuests.Data/PocketQuests.Data.csproj" />
     <ProjectReference Include="../PocketQuests.Api/PocketQuests.Api.csproj" />
     <ProjectReference Include="../PocketQuests.Database/PocketQuests.Database.sqlproj" ReferenceOutputAssembly="false" />

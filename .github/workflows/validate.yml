@@ -79,7 +79,7 @@ jobs:
         run: ./product/scripts/Test-RelationalSchema.ps1 -NoBuild
       - name: Install mobile dependencies and collect real LCOV coverage
         working-directory: product/apps/mobile
-        run: npm ci && npm run test:coverage
+        run: npm ci --ignore-scripts && node scripts/patch-query-decoder.cjs && node scripts/patch-dependencies.cjs && npm run test:coverage
       - name: Map mobile LCOV paths to the scanner root
         shell: pwsh
         run: |
@@ -143,11 +143,14 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: apps/mobile/package-lock.json
-      - run: npm ci
+      - run: npm ci --ignore-scripts
+      - run: node scripts/patch-query-decoder.cjs
+      - run: node scripts/patch-dependencies.cjs
+      - run: npm run check:security-patch
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:logic
-      - run: npx expo export --platform web
+      - run: node node_modules/expo/bin/cli export --platform web
         env:
           # This is a local fixture bundle. EAS preview/production profiles must
           # supply explicit public HTTPS service URLs and pass the release guard.

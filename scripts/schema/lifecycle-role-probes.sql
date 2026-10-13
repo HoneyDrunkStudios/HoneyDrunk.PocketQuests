@@ -10,7 +10,7 @@ BEGIN TRY
     BEGIN TRANSACTION;
     INSERT pocketquests.ErasureMarker(Id,CreatedAt) VALUES('usr_00000000000000000000000019','2026-01-01T00:00:00+00:00');
     DELETE pocketquests.ErasureMarker WHERE Id='usr_00000000000000000000000019';
-    UPDATE outbox.OutboxMessages SET Status=Status WHERE 1=0;
+    UPDATE outbox.OutboxMessages SET Status=0 WHERE 1=0;
     DELETE dbo.AuditRecords WHERE 1=0;
     DELETE pocketquests.QuestDefinitionRevision WHERE 1=0;
     ROLLBACK;

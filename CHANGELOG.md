@@ -1,5 +1,12 @@
 # Changelog
 
+## Security and reliability cleanup — October 13, 2026
+
+- Add hash-pinned local braces depth guards and forge DigestAlgorithm validation with failing-before/passing-after security regressions; retain upstream Dependabot alerts and release audit gates until compatible fixes ship.
+- Install CI dependencies without third-party lifecycle execution, explicitly apply reviewed patches, and export through the locked Expo CLI.
+- Confine schema-contract input to the checkout, avoid PATH-based Git lookup for UI imports, and require explicit HTTPS endpoints for physical-device AppHost access.
+- Preserve quest-history timestamps at creation, scope SQL probes to their fixture rows, clarify clock-fixture branches, and fix the timezone render conditional and progression square-root conversion with boundary regressions.
+
 ## [Unreleased]
 
 - Add day/seven-day calendar navigation, strict date selection, per-day quest groups ordered by planned time, and choose/create actions that retain the selected date.

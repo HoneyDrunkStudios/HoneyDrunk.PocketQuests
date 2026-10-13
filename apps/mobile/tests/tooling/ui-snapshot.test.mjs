@@ -56,3 +56,17 @@ test("snapshot check rejects unexpected generic files", () =>
     assert.equal(result.status, 1);
     assert.match(result.stderr, /inventory diverged/);
   }));
+
+test("snapshot import rejects relative Git executable configuration", () =>
+  fixture((root) => {
+    const result = spawnSync(
+      process.execPath,
+      [path.join(root, "scripts/ui-snapshot.cjs"), "--source", root],
+      {
+        encoding: "utf8",
+        env: { ...process.env, PQ_GIT_EXECUTABLE: "git" },
+      },
+    );
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /absolute path/);
+  }));

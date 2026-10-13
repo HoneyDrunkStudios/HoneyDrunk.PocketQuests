@@ -204,6 +204,26 @@ function account(queue = []) {
     anchor: null,
   };
 }
+function readClock(host) {
+  const observedUtc = new Date(host.wallMs).toISOString();
+  if (host.clockEpoch === null) {
+    return {
+      observedUtc,
+      sample: null,
+      reason: "Device timing is unavailable; pending timing verification.",
+    };
+  }
+  return {
+    observedUtc,
+    sample: {
+      kind: "android-elapsed-realtime-v1",
+      epoch: host.clockEpoch,
+      elapsedMilliseconds: host.clockMs,
+      deviceUtc: observedUtc,
+    },
+    reason: undefined,
+  };
+}
 function createHarness(
   disk = account(),
   boot = "process",
@@ -231,22 +251,7 @@ function createHarness(
     ...clockOverrides,
   };
   host.clockSource = {
-    read: () => ({
-      observedUtc: new Date(host.wallMs).toISOString(),
-      sample:
-        host.clockEpoch === null
-          ? null
-          : {
-              kind: "android-elapsed-realtime-v1",
-              epoch: host.clockEpoch,
-              elapsedMilliseconds: host.clockMs,
-              deviceUtc: new Date(host.wallMs).toISOString(),
-            },
-      reason:
-        host.clockEpoch === null
-          ? "Device timing is unavailable; pending timing verification."
-          : undefined,
-    }),
+    read: () => readClock(host),
   };
   host.advance = (milliseconds) => {
     host.clockMs += milliseconds;

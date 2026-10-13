@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PocketQuests.Data.DataServices;
 using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Models.Quests;
+using PocketQuests.ReplayProbe;
 using PocketQuests.Services;
 using PocketQuests.Services.Accounts;
 using PocketQuests.Services.Quests;

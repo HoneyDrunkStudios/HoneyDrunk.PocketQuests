@@ -70,6 +70,15 @@ public class DomainTests
             Assert.Equal(level - 1, Progression.Level(threshold - 1, track));
             Assert.Equal(level, Progression.Level(threshold, track));
         }
+
+        ReadOnlySpan<int> largeLevels = [1000000, 100000000, 300000000];
+        foreach (var level in largeLevels)
+        {
+            var threshold = Progression.Threshold(level, track);
+            Assert.Equal(level - 1, Progression.Level(threshold - 1, track));
+            Assert.Equal(level, Progression.Level(threshold, track));
+            Assert.Equal(level, Progression.Level(threshold + 1, track));
+        }
     }
 
     /// <summary>Verifies allocations conserve pool and reject duplicate or invalid weights.</summary>

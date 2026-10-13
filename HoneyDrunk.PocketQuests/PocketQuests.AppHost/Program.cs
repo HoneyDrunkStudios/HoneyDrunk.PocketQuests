@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using PocketQuests.AppHost;
 
 var builder = DistributedApplication.CreateBuilder(args);
 if (!builder.Environment.IsDevelopment())
@@ -34,7 +35,7 @@ else
         .WithReference(builder.AddConnectionString("identity"))
         .WithHttpHealthCheck("/health");
     api.WithEnvironment("Identity__BaseUrl", identity.GetEndpoint("http")).WaitFor(identity);
-    identityUrl = $"http://{deviceHost}:5218";
+    identityUrl = MobileEndpoint.Resolve(builder.Configuration["Mobile:IdentityUrl"], deviceHost, 5218);
 }
 
 // Device addresses describe the caller's route to the Aspire proxy. A physical
@@ -45,7 +46,7 @@ string[] arguments = OperatingSystem.IsWindows()
     : ["run", "start", "--", "--port", "8081"];
 builder.AddExecutable("mobile", executable, "../../apps/mobile", arguments)
     .WaitFor(api)
-    .WithEnvironment("EXPO_PUBLIC_API_URL", $"http://{deviceHost}:5217")
+    .WithEnvironment("EXPO_PUBLIC_API_URL", MobileEndpoint.Resolve(builder.Configuration["Mobile:ApiUrl"], deviceHost, 5217))
     .WithEnvironment("EXPO_PUBLIC_IDENTITY_URL", identityUrl)
     .WithEnvironment("EXPO_NO_TELEMETRY", "1")
     .WithHttpEndpoint(port: 8081, targetPort: 8081, isProxied: false);

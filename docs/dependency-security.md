@@ -1,5 +1,22 @@
 # PocketQuests dependency assessment
 
+## October 13 local mitigations and remaining upstream alerts
+
+The current registry still publishes braces 3.0.3 and node-forge 1.4.0 with no patched release for alerts #3 and #2. The full audit remains **18 high affected-package entries, zero critical**, and exits 1. These counts are not 18 independent vulnerabilities. Neither alert is dismissed, hidden, renamed or accepted, and the release audit remains unchanged.
+
+The app now owns temporary, source-hash-pinned mitigations in `apps/mobile/scripts/dependency-patches.json`, applied by `patch-dependencies.cjs` after installation:
+
+- Braces parsing and the compile/expand/stringify walkers reject nesting beyond 100 before exhausting the JavaScript call stack. This implements the bound recommended in [upstream issue #70](https://github.com/micromatch/braces/issues/70), including caller-supplied ASTs that bypass parsing. Ordinary alternatives, ranges and escaped literals retain their behavior. Excessively nested patterns deliberately fail with a bounded validation error; callers must still handle invalid input.
+- Forge validates the nested DigestAlgorithm element count, following [upstream PR #1152](https://github.com/digitalbazaar/forge/pull/1152). Extra unconsumed children are rejected while valid RSA signatures and certificate verification remain supported. This is a local backport of an unmerged fix, not a published upstream security release.
+
+The guard checks exact package versions, every original/patched source hash and the lockfile's installed-copy inventory before writing any patch. Unexpected source, upgrades or extra nested copies fail closed for review. `--check` detects missing or altered patches; repeated application is idempotent. Native package/build signing remains an additional acceptance gate.
+
+CI uses `npm ci --ignore-scripts`, then explicitly runs only the two checked-in patch scripts. Expo export invokes the locked local CLI directly rather than allowing `npx` to download a tool. A normal developer `npm ci` invokes the same patches through postinstall. An ignored-script install must explicitly run both patch scripts before using the tooling. Run `npm run check:security-patch` to verify the installation.
+
+Regression tests failed on both original dependencies and pass on the patched sources. Coverage includes excessive parser/AST depth, valid brace patterns, malformed nested DigestAlgorithm data, valid signatures, PEM certificate round trips, and the actual Expo certificate-validation/sign-and-verify helper with synthetic keys. Patch application tests cover absent patches, tampering, idempotence, all-input validation before writes, and duplicate dependency copies. These are local tooling checks, not signed-device or live-provider acceptance.
+
+Remove these backports only after compatible upstream releases or dependency removal are reviewed, installed and verified with the same regression tests, exports and native release checks. Keep registry alerts and release blockers visible until that reconciliation is complete.
+
 ## October 10 parent-path investigation and watcher remediation
 
 [Expo's upstream removal](https://github.com/expo/expo/pull/51093) is published as **@expo/metro-file-map 57.0.4**, within CLI 57.0.27's existing `^57.0.3` range. `npm update @expo/metro-file-map --package-lock-only --ignore-scripts` changes only that package's lock entry and removes its micromatch dependency. The published implementation replaces internally constructed globs with extension, basename and prefix checks.

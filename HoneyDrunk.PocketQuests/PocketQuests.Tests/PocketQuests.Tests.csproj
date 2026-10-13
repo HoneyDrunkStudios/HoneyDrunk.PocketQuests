@@ -14,6 +14,7 @@
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
+    <Compile Include="../PocketQuests.AppHost/MobileEndpoint.cs" Link="Hosting/MobileEndpoint.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PocketQuests.Domain\PocketQuests.Domain.csproj" />

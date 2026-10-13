@@ -6,6 +6,14 @@ import re
 import sys
 
 ROOT=Path(__file__).resolve().parent
+REPOSITORY=ROOT.parents[1]
+
+def contract_path(value):
+    """Accept only JSON contracts inside this checkout, resolving symlinks first."""
+    candidate=Path(value).resolve(strict=True)
+    if not candidate.is_relative_to(REPOSITORY) or candidate.suffix != '.json' or not candidate.is_file():
+        raise argparse.ArgumentTypeError('Contract must be a JSON file inside this repository.')
+    return candidate
 
 def validate(data):
     errors=[]; reviews=[]; seen=set()
@@ -92,7 +100,7 @@ def validate(data):
     return errors,sorted(set(reviews))
 
 def main():
-    p=argparse.ArgumentParser(); p.add_argument('--contract',type=Path,default=ROOT.parents[1]/'docs/schema/schema-contract.json'); args=p.parse_args()
+    p=argparse.ArgumentParser(); p.add_argument('--contract',type=contract_path,default=str(REPOSITORY/'docs/schema/schema-contract.json')); args=p.parse_args()
     data=json.loads(args.contract.read_text(encoding='utf-8')); errors,reviews=validate(data)
     print(json.dumps({'status':'FAIL' if errors else 'PASS','tables':len(data['tables']),
         'columns':sum(len(t['columns']) for t in data['tables']),'errors':errors,'reviews':reviews},indent=2))
