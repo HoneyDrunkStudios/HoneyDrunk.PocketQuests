@@ -19,10 +19,13 @@ jobs:
       - name: Verify coverage collection contract without SQL
         shell: pwsh
         run: ./product/scripts/tests/Test-CoverageCollection.ps1
+      - name: Verify explicit Identity initialization modes
+        shell: pwsh
+        run: ./product/scripts/tests/Test-InitializeLocal.ps1
       - uses: actions/checkout@v5
         with:
           repository: HoneyDrunkStudios/HoneyDrunk.Identity
-          ref: a18ba880351b0a76d87c6b68eac45b38551c4e1a
+          ref: 5cfc1da16f075b566e845df8ba81de5f0e4347a8
           path: identity
       - uses: actions/setup-dotnet@v5
         with:
@@ -60,7 +63,7 @@ jobs:
             /d:sonar.scanner.scanAll=true `
             /d:sonar.tsql.file.suffixes=".sql,.tsql" `
             /d:sonar.plsql.file.suffixes=".plsql,.pks,.pkb" `
-            /d:sonar.test.inclusions="**/*.Tests/**,**/*.SchemaTests/**,apps/mobile/tests/**,apps/mobile/e2e/**,scripts/schema/test_*.py,scripts/schema/*-probes.sql,scripts/schema/negative-constraints.sql" `
+            /d:sonar.test.inclusions="**/*.Tests/**,**/*.SchemaTests/**,apps/mobile/tests/**,apps/mobile/e2e/**,scripts/tests/**,scripts/schema/test_*.py,scripts/schema/*-probes.sql,scripts/schema/negative-constraints.sql" `
             /d:sonar.exclusions="**/node_modules/**,**/bin/**,**/obj/**,**/.expo/**,.local/**,.packages/**,artifacts/**,apps/mobile/dist/**,apps/mobile/coverage/**,apps/mobile/reports/**,apps/mobile/packages/**,apps/mobile/src/api/generated.ts,apps/mobile/src/api/runtime-schemas.json" `
             /d:sonar.cs.opencover.reportsPaths="artifacts/identity-validation/**/coverage.opencover.xml" `
             /d:sonar.javascript.lcov.reportPaths="apps/mobile/coverage/lcov.info" `

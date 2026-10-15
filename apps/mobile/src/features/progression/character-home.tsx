@@ -6,6 +6,7 @@ import { Label, Card, colors, styles } from "../../shared/ui";
 import { ProgressRow, CategoryProgress } from "./character-tracks";
 import { RankProgress } from "./rank-progress";
 import { CharacterPortrait } from "../profile/character-portrait";
+import { LevelProgress } from "./level-progress-view";
 
 export function CharacterHome() {
   const { state, catalog } = useAccountSnapshot();
@@ -35,11 +36,25 @@ export function CharacterHome() {
             alignItems: "center",
           }}
         >
-          <View style={{ flexGrow: 1, flexShrink: 1, minWidth: 140, gap: 10 }}>
+          <View
+            style={{
+              flexBasis: 140,
+              flexGrow: 1,
+              flexShrink: 1,
+              minWidth: 140,
+              gap: 10,
+            }}
+          >
             <Text accessibilityRole="header" style={styles.title}>
               Level {state.overallLevel}
             </Text>
             <Label>{state.overallXp} overall XP earned</Label>
+            <LevelProgress
+              name="Overall"
+              track="overall"
+              xp={state.overallXp}
+              level={state.overallLevel}
+            />
             <Text style={[styles.subtitle, { color: colors.gold }]}>
               Global rank {state.rank.current}
             </Text>
@@ -70,7 +85,7 @@ export function CharacterHome() {
       </Text>
       <Card>
         {state.attributes.map((item) => (
-          <ProgressRow key={item.id} item={item} />
+          <ProgressRow key={item.id} item={item} track="attribute" />
         ))}
       </Card>
       <Text accessibilityRole="header" style={styles.subtitle}>
@@ -78,7 +93,7 @@ export function CharacterHome() {
       </Text>
       <Card>
         {state.skills.map((item) => (
-          <ProgressRow key={item.id} item={item} />
+          <ProgressRow key={item.id} item={item} track="skill" />
         ))}
       </Card>
     </Page>

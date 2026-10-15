@@ -14,7 +14,7 @@ The application implements the starter catalog, custom quests and revisions, XP/
 
 ## First setup on Windows
 
-Requirements: .NET SDK 10.0.401, Node compatible with Expo SDK 57, SQL Server LocalDB and the matching [Identity implementation](https://github.com/HoneyDrunkStudios/HoneyDrunk.Identity/pull/1). Until that PR merges, use its `feat/identity-foundation` branch. CI pins an exact Identity revision.
+Requirements: .NET SDK 10.0.401, Node compatible with Expo SDK 57, SQL Server LocalDB and a matching [Identity source checkout](https://github.com/HoneyDrunkStudios/HoneyDrunk.Identity). CI pins an exact reviewed Identity revision in [validate.yml](.github/workflows/validate.yml).
 
 From the repository root:
 
@@ -34,7 +34,7 @@ Pop-Location
 
 Run Identity's own `scripts/Deploy-LocalDatabase.ps1` in its checkout, review its script, then publish with `-Action Publish`. Each service owns a separate database on the same local SQL Server instance. See [database deployment](docs/database-project.md).
 
-Initialize-Local writes ignored source configuration, enables source references and reconciles every Identity solution project with the supplied checkout path. No particular sibling layout is required after initialization. To test package mode instead, supply `-ClientPackageDirectory PATH` containing the exact 0.1.0-alpha.4 candidates built by Identity's Pack-Client script. These packages are not on NuGet.org; package release is a separate action. Package mode uses committed lockfiles; source mode has separate ignored locks.
+Initialize-Local writes ignored source configuration, enables source references by default and reconciles every Identity solution project with the supplied checkout path. No particular sibling layout is required after initialization. Add `-UsePublishedClientPackages` to use the published Identity Abstractions/Client `0.1.0-alpha.4` packages from nuget.org for consumers while retaining the service source checkout. The old `-ClientPackageDirectory` option is rejected before any files are changed; local candidate packages are no longer selected. Package mode uses committed lockfiles; source mode has separate ignored locks. See [local setup](docs/local-run.md) for package-mode validation commands.
 
 ## Run
 

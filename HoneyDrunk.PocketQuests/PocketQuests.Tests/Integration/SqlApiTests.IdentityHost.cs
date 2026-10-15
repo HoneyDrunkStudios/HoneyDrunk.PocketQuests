@@ -4,6 +4,7 @@ using HoneyDrunk.Identity.Api;
 using HoneyDrunk.Identity.Client;
 using HoneyDrunk.Identity.Persistence.Context;
 using HoneyDrunk.Identity.Providers.Entra.Authentication;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -90,6 +91,28 @@ public sealed partial class SqlApiTests : IAsyncLifetime
         });
     }
 
+    /// <summary>The browser fixture permits only its exact loopback origins.</summary>
+    /// <param name="origin">The browser origin sent by the preflight.</param>
+    /// <param name="allowed">Whether the isolated fixture should permit it.</param>
+    /// <returns>A task completing after the preflight check.</returns>
+    [Theory]
+    [InlineData("http://localhost:8081", true)]
+    [InlineData("http://127.0.0.1:8081", true)]
+    [InlineData("http://localhost:8082", false)]
+    [InlineData("https://untrusted.example", false)]
+    public async Task IdentityFixtureRestrictsBrowserOrigins(string origin, bool allowed)
+    {
+        using var host = new Host(Connection);
+        using var client = host.CreateIdentityClient();
+        using var request = new HttpRequestMessage(HttpMethod.Options, "/users/me");
+        request.Headers.Add("Origin", origin);
+        request.Headers.Add("Access-Control-Request-Method", "GET");
+        using var response = await client.SendAsync(request);
+        Assert.Equal(allowed, response.Headers.TryGetValues("Access-Control-Allow-Origin", out var origins));
+        if (allowed)
+            Assert.Equal(origin, Assert.Single(origins ?? []));
+    }
+
     private async Task Republish()
     {
         await using var db = Context();
@@ -104,6 +127,8 @@ public sealed partial class SqlApiTests : IAsyncLifetime
         private readonly IdentityHost identityHost = new(connection.Replace(";Integrated Security", "_Identity;Integrated Security"), networkIdentity);
 
         public HoneyDrunk.Identity.Abstractions.Authentication.IExternalAccounts External => identityHost.Services.GetRequiredService<HoneyDrunk.Identity.Abstractions.Authentication.IExternalAccounts>();
+
+        public HttpClient CreateIdentityClient() => identityHost.CreateClient();
 
         public HttpClient Client(string subject, string audience = "quests", bool wrongSignature = false)
         {
@@ -157,6 +182,9 @@ public sealed partial class SqlApiTests : IAsyncLifetime
                 }));
                 builder.ConfigureServices(services =>
                 {
+                    // The Testing host is isolated from deployed CORS configuration.
+                    services.PostConfigure<CorsOptions>(options => options.AddDefaultPolicy(policy =>
+                        policy.WithOrigins("http://localhost:8081", "http://127.0.0.1:8081").AllowAnyHeader().AllowAnyMethod()));
                     services.AddSingleton(new EntraSigningKeys(new ConfigurationBuilder().Build()));
                     services.AddSingleton<ISigningKeyProvider>(new TestKeys());
                     services.AddSingleton<HoneyDrunk.Identity.Abstractions.Authentication.IExternalAccounts>(new TestExternalAccounts());

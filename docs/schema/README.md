@@ -40,11 +40,12 @@ From the repository root, with .NET 10.0.401, Python and LocalDB installed:
 python scripts/schema/validate_contract.py
 python scripts/schema/test_contract.py
 python scripts/schema/generate_schema.py --check
-dotnet restore HoneyDrunk.PocketQuests/PocketQuests.SchemaTests --locked-mode
-./scripts/Test-RelationalSchema.ps1
+dotnet restore HoneyDrunk.PocketQuests/PocketQuests.SchemaTests --locked-mode -p:UseIdentitySource=false
+dotnet build HoneyDrunk.PocketQuests/PocketQuests.SchemaTests -c Release --no-restore -p:UseIdentitySource=false
+./scripts/Test-RelationalSchema.ps1 -NoBuild
 ```
 
-The current Identity 0.1.0-alpha.4 candidates must exist in the authorized `.packages/feed` or package cache; this slice does not publish them or prove a public clean-machine restore. Existing repository source mode also works in CI. No source-mode Identity build is necessary for this schema lane.
+For current reproduction, package mode resolves the published Identity Abstractions/Client `0.1.0-alpha.4` packages from nuget.org using the committed lockfiles. If local setup enabled source references, pass `-p:UseIdentitySource=false` when restoring and building this schema lane. No local candidate feed or source-mode Identity build is necessary. The historical validation above predates that package publication; see [current setup](../local-run.md).
 
 The runner creates a random `PQSchema_<hex>` instance, refuses to reuse an existing name and removes only the instance it created. Tests create and drop their own `PocketQuests_SchemaTests_<guid>` databases. Existing `PocketQuests`, `MSSQLLocalDB`, user databases and running application sessions are not targets. Synthetic evidence is saved under ignored `artifacts/schema-validation` (or the explicitly supplied evidence directory).
 

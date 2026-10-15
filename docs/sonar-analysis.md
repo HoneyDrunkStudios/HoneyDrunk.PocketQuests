@@ -14,7 +14,9 @@ SQL and tooling files. SQL is explicitly T-SQL, not Oracle PL/SQL.
 
 Both disposable SQL lanes and API/frontend checks remain mandatory. The
 Identity integration lane collects real OpenCover; schema-only tests do not
-produce coverage. Mobile `npm run test:coverage` uses c8 around the existing
+produce coverage. PowerShell regression harnesses under `scripts/tests/` are
+classified as test code; production scripts (including `Initialize-Local.ps1`)
+remain analyzed source with no coverage exclusion. Mobile `npm run test:coverage` uses c8 around the existing
 Node tests. TypeScript CommonJS hooks emit inline source maps. LCOV includes
 unexecuted authored mobile files, and CI normalizes its paths to the product
 root before import. Native-provider and real-device acceptance remain separate.

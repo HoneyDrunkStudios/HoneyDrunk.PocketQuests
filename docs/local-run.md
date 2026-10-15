@@ -30,11 +30,23 @@ AppHost permits its plaintext mobile-service defaults only for localhost, loopba
 
 UI snapshot checks do not invoke Git. Importing a new reviewed upstream snapshot uses the installed Git at `C:/Program Files/Git/cmd/git.exe` on Windows or `/usr/bin/git` on Unix, avoiding PATH lookup. For a nonstandard trusted installation, set `PQ_GIT_EXECUTABLE` to its absolute executable path before running the existing `ui-snapshot.cjs --source` workflow.
 
-Ignored `.local/Identity.props` enables the explicit `UseIdentitySource=true` switch for current joint service development, and `.local/development.json` locates the Identity checkout. No client secrets belong in the mobile app. See `environments.md` for SQL and endpoint configuration.
+By default, ignored `.local/Identity.props` enables `UseIdentitySource=true` for joint service development, and `.local/development.json` locates the Identity checkout. To retain that service checkout but use published client contracts in consumers, run `scripts/Initialize-Local.ps1 -IdentitySourceRoot PATH -UsePublishedClientPackages`. This sets `UseIdentitySource=false` and resolves Identity Abstractions/Client `0.1.0-alpha.4` from nuget.org with the committed lockfiles. The retired `-ClientPackageDirectory` option fails before writing configuration or invoking `dotnet`; copied local candidates are not a supported input. No client secrets belong in the mobile app. See `environments.md` for SQL and endpoint configuration.
 
 The Identity solution is `HoneyDrunk.Identity/HoneyDrunk.Identity.slnx` inside the separate Identity checkout. The Pocket Quests solution also loads the Identity API and its dependencies under an `Identity` solution folder, referencing their existing checkout. Visual Studio requires the API project to be loaded to launch it through Aspire. `Initialize-Local.ps1` reconciles all configured Identity projects to the solution. A second Visual Studio instance is optional.
 
 If the AppHost dashboard opens but Expo does not start, check the Identity resource first: the API waits for Identity, and mobile waits for the API. After changing the solution, stop debugging, accept Visual Studio's solution reload prompt, and start AppHost again.
+
+## Published-package validation
+
+The isolated package-mode schema/API/domain lane needs no Identity source checkout or local candidate feed. From the repository root:
+
+```powershell
+dotnet restore HoneyDrunk.PocketQuests/PocketQuests.SchemaTests/PocketQuests.SchemaTests.csproj --locked-mode -p:UseIdentitySource=false
+dotnet build HoneyDrunk.PocketQuests/PocketQuests.SchemaTests/PocketQuests.SchemaTests.csproj -c Release --no-restore -p:UseIdentitySource=false
+./scripts/Test-RelationalSchema.ps1 -NoBuild
+```
+
+The explicit property overrides any source-mode setting in ignored local configuration. Full `PocketQuests.Tests` and browser fixtures require Identity source mode; rerun the initializer without `-UsePublishedClientPackages` before building those lanes. Existing machines that cached historical locally packed `0.1.0-alpha.4` artifacts may receive a lockfile content-hash mismatch: remove only those two Identity package/version cache entries, then restore the published artifacts. Do not edit lockfile hashes to accept a local package. See [dependency provenance](dependency-security.md) and the [testing contract](testing-contract.md).
 
 ## Database projects
 
