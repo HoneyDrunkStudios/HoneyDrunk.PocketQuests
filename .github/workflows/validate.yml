@@ -63,7 +63,7 @@ jobs:
             /d:sonar.scanner.scanAll=true `
             /d:sonar.tsql.file.suffixes=".sql,.tsql" `
             /d:sonar.plsql.file.suffixes=".plsql,.pks,.pkb" `
-            /d:sonar.test.inclusions="**/*.Tests/**,**/*.SchemaTests/**,apps/mobile/tests/**,apps/mobile/e2e/**,scripts/schema/test_*.py,scripts/schema/*-probes.sql,scripts/schema/negative-constraints.sql" `
+            /d:sonar.test.inclusions="**/*.Tests/**,**/*.SchemaTests/**,apps/mobile/tests/**,apps/mobile/e2e/**,scripts/tests/**,scripts/schema/test_*.py,scripts/schema/*-probes.sql,scripts/schema/negative-constraints.sql" `
             /d:sonar.exclusions="**/node_modules/**,**/bin/**,**/obj/**,**/.expo/**,.local/**,.packages/**,artifacts/**,apps/mobile/dist/**,apps/mobile/coverage/**,apps/mobile/reports/**,apps/mobile/packages/**,apps/mobile/src/api/generated.ts,apps/mobile/src/api/runtime-schemas.json" `
             /d:sonar.cs.opencover.reportsPaths="artifacts/identity-validation/**/coverage.opencover.xml" `
             /d:sonar.javascript.lcov.reportPaths="apps/mobile/coverage/lcov.info" `
