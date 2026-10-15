@@ -1,6 +1,7 @@
+import { requestProviderConfiguration } from "./identity-client";
 import { useCallback, useEffect, useState } from "react";
 import { fetchDiscoveryAsync, type DiscoveryDocument } from "expo-auth-session";
-import { identityUrl, requestTimeoutMs } from "../config/client";
+import { requestTimeoutMs } from "../config/client";
 import { waitForAuth } from "./auth-request";
 import {
   validateProviderConfiguration,
@@ -28,9 +29,7 @@ export function useProviderSetup() {
     let current = true;
     const controller = new AbortController();
     const load = async (): Promise<ProviderSetup> => {
-      const response = await fetch(identityUrl + "/client-configuration", {
-        signal: controller.signal,
-      });
+      const response = await requestProviderConfiguration(controller.signal);
       if (!response.ok) throw new Error("Sign-in configuration unavailable");
       const config = validateProviderConfiguration(await response.json());
       if (controller.signal.aborted) throw new Error("Sign-in setup cancelled");

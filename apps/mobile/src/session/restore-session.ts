@@ -1,4 +1,4 @@
-import { identityUrl, requestTimeoutMs } from "../config/client";
+import { requestIdentityUser } from "./identity-client";
 import { RequestError } from "./request-error";
 import type { SessionInternals } from "./session-runtime";
 export async function restoreSession(
@@ -60,10 +60,7 @@ export async function restoreSession(
     // Restore and verify using the same refresh coordinator as requests.
     await auth
       .run(async (token) => {
-        const response = await fetch(identityUrl + "/users/me", {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: AbortSignal.timeout(requestTimeoutMs.api),
-        });
+        const response = await requestIdentityUser(token);
         if (!response.ok)
           throw new RequestError(
             response.status,

@@ -10,7 +10,7 @@ Follow the user's current scope and publication instructions. Task-specific revi
 
 ## Verification entrypoints
 
-Use [the testing contract](docs/testing-contract.md) for the backend solution, pinned Identity-source prerequisites and disposable SQL fixtures. For mobile work, run commands from `apps/mobile`: `npm ci`, `npm run lint`, `npm run typecheck`, `npm run check:ui`, `npm run check:api`, `npm run check:security-patch`, `npm run test:ci`, plus the appropriate Expo export/build. Native/device/provider acceptance remains separate.
+Use [the testing contract](docs/testing-contract.md) for the backend solution, pinned Identity-source prerequisites and disposable SQL fixtures. For fast compiled backend boundaries without SQL, run `pwsh -NoProfile -File scripts/Test-BackendArchitecture.ps1` (or `-NoBuild` after a current Release build). For mobile work, run commands from `apps/mobile`: `npm ci`, `npm run lint`, `npm run check:architecture`, `npm run typecheck`, `npm run check:ui`, `npm run check:api`, `npm run check:security-patch`, `npm run test:ci`, plus the appropriate Expo export/build. Native/device/provider acceptance remains separate.
 
 ## Shared conventions and delivery
 

@@ -13,6 +13,19 @@ These standards apply to `apps/mobile`. Read [the root repository instructions](
 - Prefer `useAccountSnapshot`, `useSessionActions` or `useSessionStatus` for the data a consumer needs. Actions stay stable; projections are memoized by the local account generation. The compatibility `useSession` hook subscribes to all three, so use it only when all are relevant.
 - Use functional components, typed props and ordinary functions/hooks. Avoid interface-per-class layers, a service locator, a generic command engine or a global state library without a demonstrated need.
 
+## Executable architecture pilot
+
+Run `npm run check:architecture` from `apps/mobile` for the focused boundary fixtures and production lint. The same ESLint rule runs in `npm run lint`; the fixture suite is discovered by `test:ci` / `test:logic` and coverage CI. No extra dependency or separate architecture framework is required. The fixtures exercise the effective Expo ESLint configuration, assert rejection and acceptance, and fail if no production source is discovered or the rule is disabled.
+
+`apps/mobile/scripts/architecture-rules.cjs` owns the narrow, reviewed policy:
+
+- Raw HTTP globals and known HTTP client packages belong in `api/client.ts` or `session/identity-client.ts`. The Identity helpers own the repeated URL/header/timeout construction, and the API client owns binary export transport. Callers retain response status policy, runtime validation, auth retries, cancellation ownership and account-epoch checks. Do not add a generic forwarding wrapper to evade the rule.
+- SecureStore belongs in `session/storage.ts` and `session/offline-store.ts`; filesystem access in the offline store and profile export adapter; sharing in the export adapter; notifications in `features/quests/notifications.ts`. Auth/browser SDKs remain in the existing provider adapters and Router sign-in/callback entry points. The exact module/owner map is executable. Browser storage globals are rejected even in native adapters: web state remains page-memory only.
+- Shared UI (`shared/ui.tsx`, `shared/theme.ts`, `shared/error-boundary.tsx`) cannot import features. `shared/contracts.ts` deliberately retains its existing domain-type dependency; this pilot does not pretend that all shared files form a domain-free layer.
+- Cross-feature imports use the existing public leaf modules: profile's `character-portrait` and `profile-editor`; quests' `quest-rules`, `commands/quest-actions` and `notifications`. Same-feature imports and route/session composition retain their existing structure. New public contracts need an explicit policy/test change; a broad barrel would introduce cycles and eagerly load native adapters.
+
+The rule inspects AST imports, exports, static `require`, dynamic imports and scoped global references; relative paths and the root alias are normalized. Computed module names are rejected because their boundary cannot be established. It is a focused regression guard, not a JavaScript sandbox or a complete dependency graph: runtime code generation, indirect global-object aliases, arbitrary new networking libraries and every React Native API are outside this pilot. Crypto ID generation, platform selection, accessibility and existing AppState owners are intentionally unchanged. Reviews still need to assess new dependencies and APIs. Native device/provider behavior is not established by these static checks or a web export.
+
 ## API and storage boundaries
 
 - Receive JSON as `unknown`. Generated TypeScript types do not validate runtime data. `api/decode.ts` validates the current OpenAPI subset using the schema artifact emitted by the same generator as the types. The drift check covers both artifacts. Unknown additive properties are accepted; missing required/nested fields, incompatible primitive types and enum values are rejected without coercion.

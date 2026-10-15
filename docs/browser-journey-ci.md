@@ -1,0 +1,25 @@
+# Hosted browser journey
+
+[Browser journey](../.github/workflows/browser-journey.yml) is a separate Windows lane for the existing [real API/SQL browser journey](testing-contract.md). It leaves the backend's two SQL passes and their 45-minute budget unchanged. This lane installs locked dependencies, builds the pinned Identity source and actual application fixture, installs Chromium from the locked Playwright package, then runs `scripts/Test-BrowserJourneyCI.ps1`.
+
+The checkout is the pull request head (or push SHA), not the synthetic merge commit. `PQ_EXPECTED_HEAD` must match `git rev-parse HEAD`; evidence separately records the pull request base, GitHub repository/run/attempt, pinned Identity revision, timestamps, actual harness exit code and cleanup outcomes. A timeout records no fabricated exit code. These are ordinary CI provenance records, not signed attestations or a security boundary against a malicious workflow. A passing check does not configure branch protection or prove merge-candidate compatibility.
+
+## Isolation and failure handling
+
+The wrapper refuses occupied ports 8081 and 5217–5219 and a nonempty evidence directory. It creates a unique `PQSchema_<12hex>` LocalDB instance and passes it to the existing fixture. Expo starts from this checkout with `CI=1`, development configuration and loopback only; the wrapper owns and stops only processes it created. Environment overrides are restored even after errors.
+
+Expo has 120 seconds to become ready. The existing harness retains its 120-second fixture startup, six-minute browser journey and 30-second graceful fixture cleanup; its outer process is bounded at ten minutes. Cleanup attempts continue even when startup, journey, or process termination fails. Before deleting the owned instance, SQL verifies that no non-system databases remain. Instance deletion must succeed and enumeration must confirm absence. A failed journey or unconfirmed cleanup fails the command and CI job. Process evidence distinguishes owned parent termination from the fixture lifecycle acknowledgment. An abnormal harness exit does not certify descendant cleanup, even after a tree-kill attempt; the failed hosted runner remains disposable. Job cancellation or runner loss can interrupt cleanup; neither is successful evidence.
+
+The browser uses the real application, API, Identity and SQL with a test-only OIDC provider and disposable users. Existing interrupted-save, committed-response-loss, completion, Undo, restart and viewport assertions remain in `apps/mobile/e2e/journey.mjs`. Native/device behavior and live-provider acceptance remain `not-run` and are not inferred from browser success.
+
+## Evidence boundary
+
+The workflow uploads only the five explicit browser screenshots from [the testing contract](testing-contract.md), plus `artifacts/browser-journey/run.json` containing the metadata described above. This narrowly adds that JSON summary to the browser evidence allowlist. It does not authorize broad artifact uploads. All raw logs and failure HTML remain runner-local and are not uploaded. In particular, Playwright request errors may include Authorization headers, so even the previously allowlisted raw journey logs are deliberately excluded. Expo, harness-orchestration and LocalDB command logs remain in an ignored unique `.local/browser-ci-*` directory. Never upload `.local`, `ready.json`, bearer tokens, environment dumps, database files, or credentials. Failure screenshots are diagnostics, not acceptance.
+
+Build/install failures occur before the wrapper and therefore may have no browser evidence; the failed job remains authoritative. Always inspect the exact tested head and actual job conclusion alongside artifacts. An artifact alone is not a passing quality gate.
+
+## Portable verification
+
+Run `pwsh -NoProfile -File scripts/tests/Test-BrowserJourneyCI.ps1` on any PowerShell 7 host. The test copies the wrapper into disposable temporary trees and mocks external commands/processes. It checks success, nonzero journey exit, timeout, exited Expo, spawn failure, partial SQL creation, remaining databases, failed/unconfirmed deletion, process cleanup failure, recoverable stop failure, occupied ports, wrong head and stale evidence. These contract tests do not run the app, SQL or browser; hosted Windows execution supplies that separate evidence.
+
+To run the real wrapper manually on Windows, first install/build the documented prerequisites in an isolated checkout and set `PQ_EXPECTED_HEAD` to its actual commit. Use an empty `artifacts/browser-journey` directory; the wrapper will not overwrite old results. For CI, the workflow provides provenance variables and prerequisites automatically.

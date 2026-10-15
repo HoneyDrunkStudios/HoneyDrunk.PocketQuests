@@ -26,3 +26,19 @@ export async function identityRequest<T>(
   }
   return response.json();
 }
+
+// Return the wire response so each lifecycle keeps its own status and owner policy.
+export function requestIdentityUser(token: string) {
+  return fetch(identityUrl + "/users/me", {
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(requestTimeoutMs.api),
+  });
+}
+
+export function requestProviderConfiguration(
+  signal: AbortSignal = AbortSignal.timeout(
+    requestTimeoutMs.signInConfiguration,
+  ),
+) {
+  return fetch(identityUrl + "/client-configuration", { signal });
+}
