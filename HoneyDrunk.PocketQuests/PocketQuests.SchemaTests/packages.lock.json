@@ -250,12 +250,12 @@
       "HoneyDrunk.Identity.Abstractions": {
         "type": "Transitive",
         "resolved": "0.1.0-alpha.4",
-        "contentHash": "gUv4Reb3RtZjq3LJNPUdS1SvCN4Jz0slE328RArv+IRJaGNsRQ++XexWLT9sjqO3Z03piXCs9bhu0mYUC09sBA=="
+        "contentHash": "IIU+UY2sp0WDvoGpwzYCp7PXRG0uZQKxXiRaH2q7yR6NIH96w/3J0n8oHtssD7vJjZ3UrDhr5dHPYZgvcl1jUA=="
       },
       "HoneyDrunk.Identity.Client": {
         "type": "Transitive",
         "resolved": "0.1.0-alpha.4",
-        "contentHash": "OnBuuGSO5h1BXgzUw1G4bsN2LLr+iSzObTnYzU9WXLTUunOBxv8/zwagwLSuK/DNJVy64uhi9ligRoFj/Jx4rQ==",
+        "contentHash": "PGwRlxWAzwLt6r/a/KmFpN5osM+Z9OEp4qoZsgcu6yh9msm42H1uPRtDDDqFYTYIj8Ul4/kGG7CpOeZXJh0BYw==",
         "dependencies": {
           "HoneyDrunk.Identity.Abstractions": "0.1.0-alpha.4"
         }
@@ -1219,8 +1219,8 @@
       },
       "System.Security.Cryptography.Pkcs": {
         "type": "Transitive",
-        "resolved": "9.0.11",
-        "contentHash": "YS2YqtN6fFjlTDIQI+ucjbbrEvwMn796r+VLTQRr/5Oy6g+i+m7nIou83KnJCnAcKna2I+5eVJRks6SoHSpetQ=="
+        "resolved": "9.0.21",
+        "contentHash": "KD+oHoYIxwNCajjVe58WVwq9cRpum+Pg3tRveDRtkcaw6w3oc7sNBoMRtb5P5OehI3bgv1ucMpgjf8lpj5J96A=="
       },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
@@ -1313,7 +1313,8 @@
           "HoneyDrunk.Audit.Data": "[0.2.1, )",
           "HoneyDrunk.Data.EntityFramework": "[0.7.1, )",
           "HoneyDrunk.Data.Outbox": "[0.7.1, )",
-          "Microsoft.EntityFrameworkCore.SqlServer": "[10.0.12, )"
+          "Microsoft.EntityFrameworkCore.SqlServer": "[10.0.12, )",
+          "System.Security.Cryptography.Pkcs": "[9.0.21, )"
         }
       },
       "pocketquests.domain": {

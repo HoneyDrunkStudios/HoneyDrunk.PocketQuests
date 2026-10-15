@@ -19,10 +19,13 @@ jobs:
       - name: Verify coverage collection contract without SQL
         shell: pwsh
         run: ./product/scripts/tests/Test-CoverageCollection.ps1
+      - name: Verify explicit Identity initialization modes
+        shell: pwsh
+        run: ./product/scripts/tests/Test-InitializeLocal.ps1
       - uses: actions/checkout@v5
         with:
           repository: HoneyDrunkStudios/HoneyDrunk.Identity
-          ref: a18ba880351b0a76d87c6b68eac45b38551c4e1a
+          ref: 5cfc1da16f075b566e845df8ba81de5f0e4347a8
           path: identity
       - uses: actions/setup-dotnet@v5
         with:

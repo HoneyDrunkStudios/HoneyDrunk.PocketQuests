@@ -1,5 +1,13 @@
 # PocketQuests dependency assessment
 
+## October 15 PKCS dependency remediation
+
+`Microsoft.Data.SqlClient` 6.1.6 introduces a lower bound of `System.Security.Cryptography.Pkcs` 9.0.11. The Data project now directly requires 9.0.21, the patched 9.x version for [GHSA-846f-f764-76mx](https://github.com/advisories/GHSA-846f-f764-76mx) and [GHSA-2fmv-rv2c-59x7](https://github.com/advisories/GHSA-2fmv-rv2c-59x7). The six consuming package-mode lockfiles are regenerated; audit checks and warning-as-error behavior remain enabled.
+
+Package mode now resolves the unchanged Identity Abstractions/Client version `0.1.0-alpha.4` from nuget.org. The previous lock hashes described historical local candidate packages, not the published artifacts. The new hashes come from restoring the actual published packages. Their embedded repository metadata identifies commit `9438ef8e5417e5144587da4b83bc9c7fc14ee665`, matching the [Identity alpha.4 release and publication evidence](https://github.com/HoneyDrunkStudios/HoneyDrunk.Identity/releases/tag/v0.1.0-alpha.4). No package was republished, renamed or fabricated, and no Identity package version or client contract changed.
+
+Identity source-mode integration is separately pinned to security-fix commit `5cfc1da16f075b566e845df8ba81de5f0e4347a8` in the validation workflow and uses generated ignored source-mode lockfiles. Updating a package-mode lock does not repair an older external Identity source checkout; both dependency graphs must be verified. The browser fixture explicitly supplies only its two loopback CORS origins in the Testing host, without relaxing deployed Identity origin validation.
+
 ## October 13 local mitigations and remaining upstream alerts
 
 The current registry still publishes braces 3.0.3 and node-forge 1.4.0 with no patched release for alerts #3 and #2. The full audit remains **18 high affected-package entries, zero critical**, and exits 1. These counts are not 18 independent vulnerabilities. Neither alert is dismissed, hidden, renamed or accepted, and the release audit remains unchanged.
