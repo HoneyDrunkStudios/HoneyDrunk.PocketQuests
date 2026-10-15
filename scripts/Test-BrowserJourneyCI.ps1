@@ -60,7 +60,7 @@ try {
     }
     $journey = Start-Process -FilePath (Get-Command pwsh).Source -ArgumentList @('-NoProfile', '-File', ('"{0}"' -f (Join-Path $PSScriptRoot 'Test-BrowserJourney.ps1')), '-Configuration', $Configuration) -WorkingDirectory $root -PassThru -RedirectStandardOutput (Join-Path $private 'harness.stdout.log') -RedirectStandardError (Join-Path $private 'harness.stderr.log')
     # Existing harness owns 120s fixture startup, 6m journey and 30s cleanup.
-    if (!$journey.WaitForExit(600000)) { throw 'Browser harness exceeded ten minutes.' }
+    if (-not $journey.WaitForExit(600000)) { throw 'Browser harness exceeded ten minutes.' }
     $summary.journeyHarnessExitCode = $journey.ExitCode
     if ($journey.ExitCode -ne 0) { throw 'Browser harness failed.' }
     if ($expo.HasExited) { throw 'Owned Expo process exited during the journey.' }
@@ -72,9 +72,9 @@ finally {
     $processCleanup = $true
     foreach ($process in @($journey, $expo)) {
         try {
-            if ($process -and !$process.HasExited) {
+            if ($process -and -not $process.HasExited) {
                 $process.Kill($true)
-                if (!$process.WaitForExit(30000)) { throw 'Owned process did not stop.' }
+                if (-not $process.WaitForExit(30000)) { throw 'Owned process did not stop.' }
             }
         } catch { $processCleanup = $false; $failure = $_ }
     }
@@ -101,7 +101,7 @@ finally {
     $env:POCKETQUESTS_SCHEMA_TEST_INSTANCE = $previousInstance
     $env:CI = $previousCI
     $env:EXPO_PUBLIC_APP_ENV = $previousAppEnv
-    $summary.result = if (!$failure -and $summary.journeyHarnessExitCode -eq 0 -and $summary.databaseCleanupVerified -and $summary.instanceDeleted -and $summary.ownedParentProcessesStopped -and $summary.fixtureLifecycleConfirmed) { 'passed' } else { 'failed' }
+    $summary.result = if (-not $failure -and $summary.journeyHarnessExitCode -eq 0 -and $summary.databaseCleanupVerified -and $summary.instanceDeleted -and $summary.ownedParentProcessesStopped -and $summary.fixtureLifecycleConfirmed) { 'passed' } else { 'failed' }
     $summary.finishedAt = [DateTimeOffset]::UtcNow.ToString('o')
     # Metadata only: no environment dump, ready.json, tokens or private logs.
     $summary | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $artifacts 'run.json') -Encoding utf8

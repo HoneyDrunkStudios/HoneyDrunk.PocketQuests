@@ -145,8 +145,7 @@ module.exports = {
         }
         function checkImport(node, source) {
           if (
-            !source ||
-            source.type !== "Literal" ||
+            source?.type !== "Literal" ||
             typeof source.value !== "string"
           ) {
             context.report({ node, messageId: "dynamic" });
@@ -173,11 +172,12 @@ module.exports = {
           )
             context.report({ node, messageId: "http" });
           // Both Metro's root alias and relative imports resolve to the same boundary.
-          const resolved = name.startsWith(".")
-            ? path.resolve(path.dirname(context.filename), name)
-            : name.startsWith("@/")
-              ? path.resolve(root, name.slice(2))
-              : null;
+          let resolved = null;
+          if (name.startsWith(".")) {
+            resolved = path.resolve(path.dirname(context.filename), name);
+          } else if (name.startsWith("@/")) {
+            resolved = path.resolve(root, name.slice(2));
+          }
           if (!resolved) return;
           const target = path
             .relative(root, resolved)

@@ -6,7 +6,7 @@ namespace PocketQuests.SchemaTests.Architecture;
 /// <summary>Reads compiled member references without executing application code.</summary>
 internal static class MethodBodyDependencies
 {
-    private static readonly IReadOnlyDictionary<short, OpCode> Codes = typeof(OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static)
+    private static readonly Dictionary<short, OpCode> Codes = typeof(OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static)
         .Where(field => field.FieldType == typeof(OpCode))
         .Select(field => (OpCode)(field.GetValue(null) ?? throw new InvalidOperationException("Missing opcode.")))
         .ToDictionary(code => code.Value);

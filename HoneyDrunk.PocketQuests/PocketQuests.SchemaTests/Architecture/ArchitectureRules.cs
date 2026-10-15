@@ -27,11 +27,11 @@ internal static class ArchitectureRules
     internal static bool InNamespace(Type type, string name) => type.Namespace == name
         || type.Namespace?.StartsWith(name + ".", StringComparison.Ordinal) == true;
 
-    internal static string[] Violations(IEnumerable<Type> types, Func<Type, bool> forbidden) => types
+    internal static string[] Violations(IEnumerable<Type> types, Func<Type, bool> forbidden) => [.. types
         .SelectMany(source => TypeDependencies.Read(source)
             .Where(dependency => dependency != source && forbidden(dependency))
             .Select(dependency => $"{source.FullName} -> {dependency.FullName}"))
-        .Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray();
+        .Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 
     // CommandDigest uses deterministic in-memory serialization, not host file access.
     private static bool IsHostIo(Type type) => InNamespace(type, "System.IO")
