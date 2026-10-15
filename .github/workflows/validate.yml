@@ -73,6 +73,9 @@ jobs:
         # MSBuild must discover the same .sonarqube directory as begin/end.
         working-directory: product
         run: dotnet build HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore --no-incremental
+      - name: Verify compiled backend architecture without SQL
+        shell: pwsh
+        run: ./product/scripts/Test-BackendArchitecture.ps1 -NoBuild -Configuration Release
       - name: Verify endpoint OpenAPI and wire compatibility
         shell: pwsh
         run: ./product/scripts/Test-ApiContract.ps1 -NoBuild -Configuration Release

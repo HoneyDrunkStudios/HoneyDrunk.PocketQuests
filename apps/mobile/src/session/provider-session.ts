@@ -1,5 +1,9 @@
+import {
+  requestIdentityUser,
+  requestProviderConfiguration,
+} from "./identity-client";
 import type { DiscoveryDocument, TokenResponse } from "expo-auth-session";
-import { identityUrl, requestTimeoutMs } from "../config/client";
+import { requestTimeoutMs } from "../config/client";
 import type { Credentials } from "./auth-session";
 import type { Session } from "./storage";
 import { RequestError } from "./request-error";
@@ -66,9 +70,7 @@ export function providerCredentials(
 }
 
 async function configurationFor(session: Session) {
-  const configuration = await fetch(identityUrl + "/client-configuration", {
-    signal: AbortSignal.timeout(requestTimeoutMs.signInConfiguration),
-  });
+  const configuration = await requestProviderConfiguration();
   if (!configuration.ok)
     throw new RequestError(
       configuration.status,
@@ -139,10 +141,7 @@ export async function verifyProviderSession(session: Session): Promise<void> {
   await configurationFor(session);
   // The coordinator retained the candidate securely before this network call.
   // Verification never releases another account's queue, including on restart.
-  const response = await fetch(identityUrl + "/users/me", {
-    headers: { Authorization: `Bearer ${session.token}` },
-    signal: AbortSignal.timeout(requestTimeoutMs.api),
-  });
+  const response = await requestIdentityUser(session.token);
   if (!response.ok)
     throw new RequestError(
       response.status,

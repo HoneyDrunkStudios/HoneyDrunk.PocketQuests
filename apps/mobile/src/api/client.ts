@@ -43,3 +43,11 @@ export function createQuestClient(
     });
   };
 }
+
+// Binary export is outside the generated JSON decoder; auth/retry stays with its caller.
+export function requestQuestExport(token: string, format: "json" | "csv") {
+  return fetch(`${apiUrl}/api/export/${format}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(requestTimeoutMs.export),
+  });
+}

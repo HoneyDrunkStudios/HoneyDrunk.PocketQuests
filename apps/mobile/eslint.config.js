@@ -5,6 +5,11 @@ const expoConfig = require("eslint-config-expo/flat");
 module.exports = defineConfig([
   expoConfig,
   {
+    files: ["src/**/*.{ts,tsx,js,jsx}"],
+    plugins: { architecture: require("./scripts/architecture-rules.cjs") },
+    rules: { "architecture/boundaries": "error" },
+  },
+  {
     ignores: ["dist/*"],
   },
   {

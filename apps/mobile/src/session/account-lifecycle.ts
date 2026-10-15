@@ -1,9 +1,8 @@
 import { createQuestClient } from "../api/client";
-import { identityUrl, requestTimeoutMs } from "../config/client";
 import { syncWarnings } from "../features/quests/notifications";
 import { signInRequired } from "./auth-request";
 import { type Credentials } from "./auth-session";
-import { identityRequest } from "./identity-client";
+import { identityRequest, requestIdentityUser } from "./identity-client";
 import { cacheRecoveryNotice } from "./offline-store";
 import { RequestError } from "./request-error";
 import type { SessionInternals } from "./session-runtime";
@@ -103,10 +102,7 @@ export function createAccountLifecycle({
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch(identityUrl + "/users/me", {
-        headers: { Authorization: `Bearer ${token}` },
-        signal: AbortSignal.timeout(requestTimeoutMs.api),
-      });
+      const response = await requestIdentityUser(token);
       if (auth.epoch !== epoch) throw signInRequired();
       if (!response.ok) {
         if (response.status === 401) {

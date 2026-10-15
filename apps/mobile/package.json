@@ -44,6 +44,7 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint && eslint scripts",
+    "check:architecture": "node --test tests/tooling/architecture.test.mjs && eslint src --max-warnings 0",
     "test:logic": "node scripts/test-ci.cjs",
     "test:ci": "node scripts/test-ci.cjs",
     "check:ui": "node scripts/ui-snapshot.cjs",

@@ -1,0 +1,74 @@
+name: Browser journey
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  browser-journey:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: product
+          # Test the PR head explicitly; record the base separately, never label
+          # a synthetic merge build as exact-head verification.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/checkout@v5
+        with:
+          repository: HoneyDrunkStudios/HoneyDrunk.Identity
+          ref: 5cfc1da16f075b566e845df8ba81de5f0e4347a8
+          path: identity
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: product/global.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: product/apps/mobile/package-lock.json
+      - name: Test browser orchestration failure paths without SQL
+        shell: pwsh
+        run: ./product/scripts/tests/Test-BrowserJourneyCI.ps1
+      - name: Build pinned Identity and real app fixture
+        timeout-minutes: 18
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          ./product/scripts/Initialize-Local.ps1 -IdentitySourceRoot "$env:GITHUB_WORKSPACE/identity"
+          dotnet restore product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --locked-mode
+          dotnet build product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore
+      - name: Install locked mobile and browser dependencies
+        timeout-minutes: 5
+        working-directory: product/apps/mobile
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          npm ci --ignore-scripts
+          node scripts/patch-query-decoder.cjs
+          node scripts/patch-dependencies.cjs
+          node node_modules/@playwright/test/cli.js install chromium
+      - name: Verify actual browser journey and disposable cleanup
+        timeout-minutes: 14
+        shell: pwsh
+        env:
+          PQ_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          PQ_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: ./product/scripts/Test-BrowserJourneyCI.ps1
+      - name: Retain only allowlisted browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-journey-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            product/artifacts/browser-journey/run.json
+            product/artifacts/browser-journey/completion-celebration.png
+            product/artifacts/browser-journey/character-home.png
+            product/artifacts/browser-journey/home-320.png
+            product/artifacts/browser-journey/home-430.png
+            product/artifacts/browser-journey/browser-failure.png

@@ -1,4 +1,4 @@
-import { apiUrl, requestTimeoutMs } from "../config/client";
+import { requestQuestExport } from "../api/client";
 import { saveExport } from "../features/profile/export-download";
 import { identityRequest } from "./identity-client";
 import { RequestError } from "./request-error";
@@ -81,10 +81,7 @@ export function createSessionRequests({
     setError(null);
     try {
       const response = await auth.run(async (token) => {
-        const result = await fetch(`${apiUrl}/api/export/${format}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: AbortSignal.timeout(requestTimeoutMs.export),
-        });
+        const result = await requestQuestExport(token, format);
         if (!result.ok)
           throw new RequestError(
             result.status,
