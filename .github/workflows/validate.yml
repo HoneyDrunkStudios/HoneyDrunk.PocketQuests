@@ -60,9 +60,11 @@ jobs:
             /d:sonar.scanner.scanAll=true `
             /d:sonar.tsql.file.suffixes=".sql,.tsql" `
             /d:sonar.plsql.file.suffixes=".plsql,.pks,.pkb" `
+            /d:sonar.test.inclusions="**/*.Tests/**,**/*.SchemaTests/**,apps/mobile/tests/**,apps/mobile/e2e/**,scripts/schema/test_*.py,scripts/schema/*-probes.sql,scripts/schema/negative-constraints.sql" `
             /d:sonar.exclusions="**/node_modules/**,**/bin/**,**/obj/**,**/.expo/**,.local/**,.packages/**,artifacts/**,apps/mobile/dist/**,apps/mobile/coverage/**,apps/mobile/reports/**,apps/mobile/packages/**,apps/mobile/src/api/generated.ts,apps/mobile/src/api/runtime-schemas.json" `
             /d:sonar.cs.opencover.reportsPaths="artifacts/identity-validation/**/coverage.opencover.xml" `
             /d:sonar.javascript.lcov.reportPaths="apps/mobile/coverage/lcov.info" `
+            /d:sonar.python.coverage.reportPaths="artifacts/python-coverage.xml" `
             /d:sonar.qualitygate.wait=true /d:sonar.qualitygate.timeout=300
       - name: Build solution and DACPACs
         # MSBuild must discover the same .sonarqube directory as begin/end.
@@ -79,7 +81,7 @@ jobs:
         run: ./product/scripts/Test-RelationalSchema.ps1 -NoBuild
       - name: Install mobile dependencies and collect real LCOV coverage
         working-directory: product/apps/mobile
-        run: npm ci && npm run test:coverage
+        run: npm ci --ignore-scripts && node scripts/patch-query-decoder.cjs && node scripts/patch-dependencies.cjs && npm run test:coverage
       - name: Map mobile LCOV paths to the scanner root
         shell: pwsh
         run: |
@@ -93,6 +95,16 @@ jobs:
               'SF:apps/mobile/' + $_.Substring(3).Replace('\', '/')
             } else { $_ }
           } | Set-Content -LiteralPath $report -Encoding utf8
+      - name: Collect Python contract-validator coverage
+        working-directory: product
+        shell: pwsh
+        env:
+          COVERAGE_FILE: artifacts/python.coverage
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          python -m pip install --only-binary=:all: coverage==7.16.2
+          python -m coverage run --source=scripts/schema -m unittest discover -s scripts/schema -p test_contract.py
+          python -m coverage xml -o artifacts/python-coverage.xml
       - name: Complete API and mobile analysis and await the quality gate
         id: sonar_end
         if: steps.sonar_begin.outcome == 'success' && (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'))
@@ -143,11 +155,14 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: apps/mobile/package-lock.json
-      - run: npm ci
+      - run: npm ci --ignore-scripts
+      - run: node scripts/patch-query-decoder.cjs
+      - run: node scripts/patch-dependencies.cjs
+      - run: npm run check:security-patch
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:logic
-      - run: npx expo export --platform web
+      - run: node node_modules/expo/bin/cli export --platform web
         env:
           # This is a local fixture bundle. EAS preview/production profiles must
           # supply explicit public HTTPS service URLs and pass the release guard.

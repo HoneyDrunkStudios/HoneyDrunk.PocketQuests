@@ -1,0 +1,87 @@
+[
+  {
+    "package": "braces",
+    "version": "3.0.3",
+    "file": "lib/parse.js",
+    "originalSha256": "e572166565f15fa6ad9865ae49d678218e32aabfd1b3720f6d0d43d39800d310",
+    "patchedSha256": "1f0763d1bbcb2ee8f7f8768fef55a6bbee387f23a66f1fc541f7ee04125f533e",
+    "replacements": [
+      {
+        "before": "    stack.push(block);",
+        "after": "    if (stack.length > 100) throw new RangeError('Brace nesting exceeds 100');\n    stack.push(block);",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "package": "braces",
+    "version": "3.0.3",
+    "file": "lib/compile.js",
+    "originalSha256": "dc98f22eee3d511785d92a00758d5f0d48efed5f5813bdecc2de430c529b5c9f",
+    "patchedSha256": "f6c2e287a68fb084bd5afd88b9667836d8967f8141f70d8982c3eac767585015",
+    "replacements": [
+      {
+        "before": "const walk = (node, parent = {}) => {",
+        "after": "const walk = (node, parent = {}, depth = 0) => {\n    if (depth > 100) throw new RangeError('Brace nesting exceeds 100');",
+        "count": 1
+      },
+      {
+        "before": "walk(child, node)",
+        "after": "walk(child, node, depth + 1)",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "package": "braces",
+    "version": "3.0.3",
+    "file": "lib/expand.js",
+    "originalSha256": "41ccc196ebfa7b7781a634e721eb744e4e7bcb54cba427a7e3d6806a1b9e58f7",
+    "patchedSha256": "c5eafb3dad4874e38f3d5dfbd1bf49e589dd7d7a4f70062355f61101bf0bcff4",
+    "replacements": [
+      {
+        "before": "const walk = (node, parent = {}) => {",
+        "after": "const walk = (node, parent = {}, depth = 0) => {\n    if (depth > 100) throw new RangeError('Brace nesting exceeds 100');",
+        "count": 1
+      },
+      {
+        "before": "walk(child, node)",
+        "after": "walk(child, node, depth + 1)",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "package": "braces",
+    "version": "3.0.3",
+    "file": "lib/stringify.js",
+    "originalSha256": "379f22d77bfa1478341ccd49c5e4267464aabcbba03558bab332aac23fc6f23a",
+    "patchedSha256": "c61e142ce86efd78878133e0e5497e75db74d782b1943f2c5a81b7d2bc07b88c",
+    "replacements": [
+      {
+        "before": "const stringify = (node, parent = {}) => {",
+        "after": "const stringify = (node, parent = {}, depth = 0) => {\n    if (depth > 100) throw new RangeError('Brace nesting exceeds 100');",
+        "count": 1
+      },
+      {
+        "before": "stringify(child)",
+        "after": "stringify(child, {}, depth + 1)",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "package": "node-forge",
+    "version": "1.4.0",
+    "file": "lib/rsa.js",
+    "originalSha256": "fd4740238145ec26470eb3f06a627c72039538ce1307dbdce40521f94dfd0a50",
+    "patchedSha256": "c9b1e3799e230528b6d6815c1f6cd3c6058b9d45975264b55d995abb976589af",
+    "replacements": [
+      {
+        "before": "obj.value.length !== 2) {",
+        "after": "obj.value.length !== 2 ||\n            obj.value[0].value.length !==\n              (('parameters' in capture) ? 2 : 1)) {",
+        "count": 1
+      }
+    ]
+  }
+]

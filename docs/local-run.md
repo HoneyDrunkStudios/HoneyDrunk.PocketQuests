@@ -26,6 +26,10 @@ Stop the AppHost before starting Expo separately. For a frontend-only browser pr
 
 ## Current local wiring
 
+AppHost permits its plaintext mobile-service defaults only for localhost, loopback IPs and the explicitly configured `Mobile:TrustedEmulatorHost` (the development settings name Android's `10.0.2.2` host bridge). A physical device needs explicit `Mobile:ApiUrl` and, when starting Identity from source, `Mobile:IdentityUrl` HTTPS URLs with device-trusted certificates; a LAN `Mobile:DeviceHost` alone is rejected. These settings configure the mobile client's route, not TLS termination or trust. The existing loopback-only browser/emulator environment remains usable.
+
+UI snapshot checks do not invoke Git. Importing a new reviewed upstream snapshot uses the installed Git at `C:/Program Files/Git/cmd/git.exe` on Windows or `/usr/bin/git` on Unix, avoiding PATH lookup. For a nonstandard trusted installation, set `PQ_GIT_EXECUTABLE` to its absolute executable path before running the existing `ui-snapshot.cjs --source` workflow.
+
 Ignored `.local/Identity.props` enables the explicit `UseIdentitySource=true` switch for current joint service development, and `.local/development.json` locates the Identity checkout. No client secrets belong in the mobile app. See `environments.md` for SQL and endpoint configuration.
 
 The Identity solution is `HoneyDrunk.Identity/HoneyDrunk.Identity.slnx` inside the separate Identity checkout. The Pocket Quests solution also loads the Identity API and its dependencies under an `Identity` solution folder, referencing their existing checkout. Visual Studio requires the API project to be loaded to launch it through Aspire. `Initialize-Local.ps1` reconciles all configured Identity projects to the solution. A second Visual Studio instance is optional.

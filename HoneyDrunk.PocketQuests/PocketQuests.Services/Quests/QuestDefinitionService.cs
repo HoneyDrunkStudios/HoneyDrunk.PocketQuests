@@ -39,15 +39,6 @@ internal sealed class QuestDefinitionService(
         if (QuestHistory.CommandTargets(change).quest is { } selectedQuest)
             Ensure(selectedQuest);
 
-        foreach (var row in newDefinitions)
-            row.CreatedAt = row.ModifiedAt = change.Now;
-        foreach (var row in newDefinitionRevisions)
-            row.CreatedAt = change.Now;
-        foreach (var row in newDefinitionAttributes)
-            row.CreatedAt = change.Now;
-        foreach (var row in newDefinitionSkills)
-            row.CreatedAt = change.Now;
-
         await definitionData.AddRangeAsync(newDefinitions, token);
         await revisionData.AddRangeAsync(newDefinitionRevisions, token);
         await attributeData.AddRangeAsync(newDefinitionAttributes, token);
@@ -61,6 +52,7 @@ internal sealed class QuestDefinitionService(
             {
                 var ordinal = quest.IsCustom ? change.Aggregate.Definitions.FindIndex(item => item.Quest.Id == quest.Id) + 1 : 0;
                 identity = quest.ToHead(change, definitionId, revision ?? 1, ordinal);
+                identity.CreatedAt = identity.ModifiedAt = change.Now;
                 definitions.Add(identity.Id, identity);
                 newDefinitions.Add(identity);
             }
@@ -72,11 +64,22 @@ internal sealed class QuestDefinitionService(
                 return existing;
             var number = revision ?? checked(revisions.Where(row => row.QuestDefinitionId == definitionId).Select(row => row.Revision).DefaultIfEmpty(0).Max() + 1);
             var next = quest.ToRevision(change, definitionId, number);
+            next.CreatedAt = change.Now;
             revisions.Add(next);
             terms.Add(next.Id, quest);
             newDefinitionRevisions.Add(next);
-            newDefinitionAttributes.AddRange(quest.ToAttributes(change, next.Id));
-            newDefinitionSkills.AddRange(quest.ToSkills(change, next.Id));
+            foreach (var attribute in quest.ToAttributes(change, next.Id))
+            {
+                attribute.CreatedAt = change.Now;
+                newDefinitionAttributes.Add(attribute);
+            }
+
+            foreach (var skill in quest.ToSkills(change, next.Id))
+            {
+                skill.CreatedAt = change.Now;
+                newDefinitionSkills.Add(skill);
+            }
+
             return next;
         }
     }

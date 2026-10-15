@@ -23,12 +23,14 @@ function inventory(directory, prefix) {
 function check(manifest) {
   if (!manifest.files || !/^[a-f0-9]{40}$/.test(manifest.revision))
     throw new Error("Missing exact UI provenance");
-  const expected = Object.keys(manifest.files).sort();
+  const expected = Object.keys(manifest.files).sort((a, b) =>
+    a.localeCompare(b),
+  );
   const actual = ["ui-native", "ui-tokens"]
     .flatMap((name) =>
       inventory(path.join(root, "packages", name), "packages/" + name),
     )
-    .sort();
+    .sort((a, b) => a.localeCompare(b));
   if (JSON.stringify(expected) !== JSON.stringify(actual))
     throw new Error(
       "UI snapshot file inventory diverged from upstream manifest",
@@ -66,8 +68,20 @@ try {
     const revision = args[3] || manifest.revision;
     if (!/^[a-f0-9]{40}$/.test(revision))
       throw new Error("Provide an exact reviewed commit SHA");
+    // Do not search a caller-controlled PATH when importing trusted source.
+    const gitExecutable =
+      process.env.PQ_GIT_EXECUTABLE ||
+      (process.platform === "win32"
+        ? "C:/Program Files/Git/cmd/git.exe"
+        : "/usr/bin/git");
+    if (!path.isAbsolute(gitExecutable) || !fs.statSync(gitExecutable).isFile())
+      throw new Error(
+        "PQ_GIT_EXECUTABLE must name an installed Git executable by absolute path",
+      );
     const git = (parameters) =>
-      execFileSync("git", ["-C", source, ...parameters], { encoding: "utf8" });
+      execFileSync(gitExecutable, ["-C", source, ...parameters], {
+        encoding: "utf8",
+      });
     const remote = git(["remote", "get-url", "origin"])
       .trim()
       .replace(/\.git$/, "");

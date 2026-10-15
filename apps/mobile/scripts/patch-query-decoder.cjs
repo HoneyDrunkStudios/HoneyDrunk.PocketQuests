@@ -21,7 +21,7 @@ if (hash !== expected || !original.includes(before))
 if (process.argv.includes("--check")) {
   if (!code.includes(after))
     throw new Error(
-      "The decoder compatibility patch was not applied. Run npm ci with install scripts.",
+      "The decoder compatibility patch was not applied. Run node scripts/patch-query-decoder.cjs.",
     );
 } else if (code !== original.replace(before, after)) {
   fs.writeFileSync(source, original.replace(before, after));

@@ -65,10 +65,13 @@ EXEC #ExpectError N'Category bonus cannot exceed twenty percent',N'INSERT pocket
 EXEC #ExpectError N'Canonical pre-onboarding lifecycle key',N'INSERT pocketquests.AccountLifecycleState(Id,IdentityUserId,Version,StateCode,EffectiveAt) VALUES(NEWID(),''provider-subject'',1,''Active'',TODATETIMEOFFSET(SYSUTCDATETIME(),''+00:00''))',547,N'CK_AccountLifecycleState_IdentityUserId';
 
 -- Zero-share allocations are legal and do not imply an all-positive pool rule.
-UPDATE pocketquests.QuestDefinitionAttributeAllocation SET BasisPoints=0;
-UPDATE pocketquests.QuestDefinitionAttributeAllocation SET BasisPoints=10000;
+UPDATE pocketquests.QuestDefinitionAttributeAllocation SET BasisPoints=0
+WHERE QuestDefinitionRevisionId='30000000-0000-0000-0000-000000000001' AND AttributeId='a01';
+UPDATE pocketquests.QuestDefinitionAttributeAllocation SET BasisPoints=10000
+WHERE QuestDefinitionRevisionId='30000000-0000-0000-0000-000000000001' AND AttributeId='a01';
 
-UPDATE pocketquests.QuestCompletion SET UndoneAt=DATEADD(minute,1,RecordedAt),UndoQuestOccurrenceEventId='60000000-0000-0000-0000-000000000003';
+UPDATE pocketquests.QuestCompletion SET UndoneAt=DATEADD(minute,1,RecordedAt),UndoQuestOccurrenceEventId='60000000-0000-0000-0000-000000000003'
+WHERE Id='60000000-0000-0000-0000-000000000001';
 INSERT pocketquests.QuestCompletion(Id,AccountId,QuestOccurrenceId,QuestOccurrenceRevisionId,RecordedAt)
 SELECT '60000000-0000-0000-0000-000000000002',AccountId,QuestOccurrenceId,QuestOccurrenceRevisionId,RecordedAt FROM pocketquests.QuestCompletion;
 IF (SELECT COUNT(*) FROM pocketquests.QuestCompletion WHERE UndoneAt IS NULL)<>1 THROW 51003,'Valid recompletion did not leave one live completion.',1;

@@ -2,14 +2,16 @@
   "all": true,
   "include": [
     "src/**/*.ts",
-    "src/**/*.tsx"
+    "src/**/*.tsx",
+    "scripts/**/*.cjs"
   ],
   "exclude": [
     "src/api/generated.ts"
   ],
   "extension": [
     ".ts",
-    ".tsx"
+    ".tsx",
+    ".cjs"
   ],
   "reporter": [
     "text-summary",

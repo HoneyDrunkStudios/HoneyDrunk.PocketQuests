@@ -55,7 +55,7 @@ public static class Progression
 
         // Integer comparisons correct floating-point rounding at large thresholds.
         var k = Coefficient(track);
-        long root = (long)Math.Sqrt(xp / k);
+        long root = (long)Math.Sqrt((double)xp / k);
         while ((root + 1) <= (xp / k) / (root + 1))
             root++;
         while (root > 0 && root > (xp / k) / root)

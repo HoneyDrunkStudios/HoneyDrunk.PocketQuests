@@ -26,6 +26,12 @@ const run = (root) =>
   spawnSync(process.execPath, [path.join(root, "scripts/ui-snapshot.cjs")], {
     encoding: "utf8",
   });
+
+test("the shipped UI snapshot command verifies the actual reviewed snapshot", () => {
+  const result = run(app);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /UI snapshot matches/);
+});
 test("snapshot check accepts exact committed files and Windows line endings", () =>
   fixture((root) => {
     assert.equal(run(root).status, 0);
@@ -55,4 +61,18 @@ test("snapshot check rejects unexpected generic files", () =>
     const result = run(root);
     assert.equal(result.status, 1);
     assert.match(result.stderr, /inventory diverged/);
+  }));
+
+test("snapshot import rejects relative Git executable configuration", () =>
+  fixture((root) => {
+    const result = spawnSync(
+      process.execPath,
+      [path.join(root, "scripts/ui-snapshot.cjs"), "--source", root],
+      {
+        encoding: "utf8",
+        env: { ...process.env, PQ_GIT_EXECUTABLE: "git" },
+      },
+    );
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /absolute path/);
   }));
