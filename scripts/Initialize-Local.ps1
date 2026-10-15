@@ -15,7 +15,7 @@ if (!(Test-Path -LiteralPath $identityProject)) { throw 'Expected a HoneyDrunk.I
 $localDirectory = Join-Path $appRoot '.local'
 New-Item -ItemType Directory -Force -Path $localDirectory | Out-Null
 $escapedRoot = [Security.SecurityElement]::Escape($identityRoot)
-$useSource = (!$UsePublishedClientPackages).ToString().ToLowerInvariant()
+$useSource = (-not $UsePublishedClientPackages).ToString().ToLowerInvariant()
 "<Project><PropertyGroup><IdentitySourceRoot>$escapedRoot</IdentitySourceRoot><UseIdentitySource>$useSource</UseIdentitySource></PropertyGroup></Project>" | Set-Content (Join-Path $localDirectory 'Identity.props')
 $settingsPath = Join-Path $localDirectory 'development.json'
 $settings = if (Test-Path -LiteralPath $settingsPath) { Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json -AsHashtable } else { @{ Mobile = @{ DeviceHost = 'localhost' } } }
