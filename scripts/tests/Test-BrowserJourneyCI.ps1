@@ -14,6 +14,7 @@ $state = @{}
 $head = 'a' * 40
 $originalExpected = $env:PQ_EXPECTED_HEAD
 $originalInstance = $env:POCKETQUESTS_SCHEMA_TEST_INSTANCE
+$originalDiagnostics = $env:POCKETQUESTS_JOURNEY_DIAGNOSTICS
 $originalCI = $env:CI
 $originalAppEnv = $env:EXPO_PUBLIC_APP_ENV
 function git { $global:LASTEXITCODE = 0; return $head }
@@ -51,10 +52,30 @@ function Start-Process {
     $state.starts++
     $kind = if ($FilePath -eq 'node') { 'expo' } else { 'journey' }
     if ($state.case -eq 'start-failed' -and $kind -eq 'journey') { throw 'Mock journey spawn failure.' }
+    if ($kind -eq 'journey') {
+        $record = switch -Wildcard ($state.case) {
+            'diagnostics-extra*' { '{"checkpoint":"onboarding-save","errorCategory":"timeout","headers":"Bearer secret"}' }
+            'diagnostics-enum' { '{"checkpoint":"https://private/?token=secret","errorCategory":"Bearer secret"}' }
+            'diagnostics-type' { '{"checkpoint":["onboarding"],"errorCategory":{"token":"secret"}}' }
+            'diagnostics-case' { '{"checkpoint":"ONBOARDING","errorCategory":"TIMEOUT"}' }
+            'diagnostics-key-case' { '{"Checkpoint":"onboarding","errorCategory":"timeout"}' }
+            'diagnostics-malformed' { 'Bearer secret' }
+            'diagnostics-large' { 'secret' * 1000 }
+            'diagnostics-null' { 'null' }
+            'diagnostics-array' { '[{"checkpoint":"onboarding","errorCategory":"timeout"}]' }
+            'journey-failed' { '{"checkpoint":"onboarding-save","errorCategory":"assertion"}' }
+            'journey-timeout' { '{"checkpoint":"onboarding-save","errorCategory":"unknown"}' }
+            'diagnostics-none-failed' { '{"checkpoint":"complete","errorCategory":"none"}' }
+            'diagnostics-timeout' { '{"checkpoint":"onboarding","errorCategory":"timeout"}' }
+            'diagnostics-checkpoint-*' { @{checkpoint = $state.case.Substring('diagnostics-checkpoint-'.Length); errorCategory = 'unknown'} | ConvertTo-Json -Compress }
+            default { '{"checkpoint":"complete","errorCategory":"none"}' }
+        }
+        if ($state.case -ne 'diagnostics-missing') { Set-Content -LiteralPath $env:POCKETQUESTS_JOURNEY_DIAGNOSTICS -Value $record }
+    }
     $process = [pscustomobject]@{
         Kind = $kind
         HasExited = ($kind -eq 'journey' -and $state.case -ne 'journey-timeout') -or ($kind -eq 'expo' -and $state.case -eq 'expo-exited')
-        ExitCode = [int]($state.case -eq 'journey-failed') * 7
+        ExitCode = [int]($state.case -in @('journey-failed', 'diagnostics-none-failed', 'diagnostics-extra-failed')) * 7
     }
     $process | Add-Member ScriptMethod WaitForExit {
         param($milliseconds)
@@ -71,14 +92,16 @@ function Start-Process {
     }
     return $process
 }
+$checkpointCases = @('setup', 'sign-in', 'onboarding', 'onboarding-save', 'custom-quest', 'save-retry', 'definition-edit', 'completion-response-loss', 'character', 'export-timer', 'offline-undo', 'clock-undo-retry', 'fresh-session', 'calendar-planning', 'plan-edit', 'viewports', 'page-errors', 'complete') | ForEach-Object { 'diagnostics-checkpoint-' + $_ }
 try {
-    foreach ($case in @('success', 'journey-failed', 'journey-timeout', 'expo-exited', 'start-failed', 'partial-create', 'database-remains', 'delete-failed', 'delete-unconfirmed', 'process-cleanup-failed', 'stop-failed', 'occupied', 'wrong-head', 'stale')) {
+    foreach ($case in @('success', 'journey-failed', 'journey-timeout', 'expo-exited', 'start-failed', 'partial-create', 'database-remains', 'delete-failed', 'delete-unconfirmed', 'process-cleanup-failed', 'stop-failed', 'occupied', 'wrong-head', 'stale', 'diagnostics-extra', 'diagnostics-enum', 'diagnostics-type', 'diagnostics-case', 'diagnostics-key-case', 'diagnostics-malformed', 'diagnostics-large', 'diagnostics-null', 'diagnostics-array', 'diagnostics-missing', 'diagnostics-none-failed', 'diagnostics-extra-failed', 'diagnostics-timeout') + $checkpointCases) {
         $root = Join-Path $fixtureRoot $case
         New-Item -ItemType Directory -Path (Join-Path $root 'scripts') -Force | Out-Null
         Copy-Item (Join-Path $PSScriptRoot '../Test-BrowserJourneyCI.ps1') (Join-Path $root 'scripts/Test-BrowserJourneyCI.ps1')
         $state = @{ case = $case; exists = $false; instance = ''; creates = 0; stops = 0; deletes = 0; databaseChecks = 0; starts = 0; killed = @() }
         $env:PQ_EXPECTED_HEAD = if ($case -eq 'wrong-head') { 'b' * 40 } else { $head }
         $env:POCKETQUESTS_SCHEMA_TEST_INSTANCE = 'preexisting-must-not-touch'
+        $env:POCKETQUESTS_JOURNEY_DIAGNOSTICS = 'prior-diagnostics'
         $env:CI = 'prior-ci'
         $env:EXPO_PUBLIC_APP_ENV = 'prior-app-env'
         if ($case -eq 'stale') {
@@ -88,10 +111,11 @@ try {
         $failure = $null
         try { & (Join-Path $root 'scripts/Test-BrowserJourneyCI.ps1') | Out-Null }
         catch { $failure = $_ }
-        $shouldPass = $case -in @('success', 'stop-failed')
+        $shouldPass = $case -in @('success', 'stop-failed') -or ($case.StartsWith('diagnostics-') -and !$case.EndsWith('-failed'))
         if ($shouldPass -and $failure) { throw "$case unexpectedly failed: $failure" }
+        if ($case -eq 'diagnostics-extra-failed' -and ($failure.Exception.Message -ne 'Browser harness failed.')) { throw 'Malformed diagnostics replaced the original failure.' }
         if (!$shouldPass -and !$failure) { throw "$case falsely passed." }
-        if ($env:CI -ne 'prior-ci' -or $env:POCKETQUESTS_SCHEMA_TEST_INSTANCE -ne 'preexisting-must-not-touch' -or $env:EXPO_PUBLIC_APP_ENV -ne 'prior-app-env') { throw "$case did not restore environment." }
+        if ($env:POCKETQUESTS_JOURNEY_DIAGNOSTICS -ne 'prior-diagnostics' -or $env:CI -ne 'prior-ci' -or $env:POCKETQUESTS_SCHEMA_TEST_INSTANCE -ne 'preexisting-must-not-touch' -or $env:EXPO_PUBLIC_APP_ENV -ne 'prior-app-env') { throw "$case did not restore environment." }
         if ($case -in @('occupied', 'wrong-head', 'stale')) {
             if ($state.creates -or $state.starts -or $state.deletes) { throw "$case changed resources before preflight rejection." }
         } else {
@@ -101,6 +125,17 @@ try {
         }
         if ($case -ne 'stale') {
             $report = Get-Content (Join-Path $root 'artifacts/browser-journey/run.json') -Raw | ConvertFrom-Json
+            $expectedCheckpoint = 'unknown'
+            $expectedCategory = 'unknown'
+            if ($case -in @('success', 'stop-failed', 'database-remains', 'delete-failed', 'delete-unconfirmed', 'process-cleanup-failed', 'diagnostics-none-failed')) { $expectedCheckpoint = 'complete' }
+            if ($case -in @('success', 'stop-failed', 'database-remains', 'delete-failed', 'delete-unconfirmed', 'process-cleanup-failed')) { $expectedCategory = 'none' }
+            if ($case -in @('journey-failed', 'journey-timeout')) { $expectedCheckpoint = 'onboarding-save' }
+            if ($case -eq 'journey-failed') { $expectedCategory = 'assertion' }
+            if ($case -eq 'diagnostics-timeout') { $expectedCheckpoint = 'onboarding'; $expectedCategory = 'timeout' }
+            if ($case.StartsWith('diagnostics-checkpoint-')) { $expectedCheckpoint = $case.Substring('diagnostics-checkpoint-'.Length) }
+            if ($report.journeyCheckpoint -cne $expectedCheckpoint -or $report.journeyErrorCategory -cne $expectedCategory) { throw "$case recorded incorrect diagnostics." }
+            if (($report | ConvertTo-Json -Depth 10) -match 'secret|Bearer|headers|private/|token=') { throw "$case leaked child metadata." }
+            if ($report.schemaVersion -ne 2) { throw 'Unexpected summary schema.' }
             if (($report.result -eq 'passed') -ne $shouldPass) { throw "$case recorded incorrect result." }
             if ($report.testedHead -ne $head -or $report.nativeDeviceResult -ne 'not-run' -or $report.liveProviderResult -ne 'not-run') { throw "$case misrepresented tested evidence." }
             if ($case -in @('journey-failed', 'journey-timeout') -and $report.fixtureLifecycleConfirmed) { throw 'Abnormal exit falsely confirmed descendant cleanup.' }
@@ -110,6 +145,7 @@ try {
         Write-Output "$case passed."
     }
 } finally {
+    $env:POCKETQUESTS_JOURNEY_DIAGNOSTICS = $originalDiagnostics
     $env:PQ_EXPECTED_HEAD = $originalExpected
     $env:POCKETQUESTS_SCHEMA_TEST_INSTANCE = $originalInstance
     $env:CI = $originalCI

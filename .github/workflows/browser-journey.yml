@@ -31,7 +31,10 @@ jobs:
           cache-dependency-path: product/apps/mobile/package-lock.json
       - name: Test browser orchestration failure paths without SQL
         shell: pwsh
-        run: ./product/scripts/tests/Test-BrowserJourneyCI.ps1
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          node --test product/apps/mobile/tests/tooling/safe-diagnostics.test.mjs
+          ./product/scripts/tests/Test-BrowserJourneyCI.ps1
       - name: Build pinned Identity and real app fixture
         timeout-minutes: 18
         shell: pwsh
