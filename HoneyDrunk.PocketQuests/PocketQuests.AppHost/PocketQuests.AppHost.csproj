@@ -9,6 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" Version="13.5.4" />
+    <PackageReference Include="MessagePack" Version="2.5.303" />
     <ProjectReference Include="../PocketQuests.Api/PocketQuests.Api.csproj" />
   </ItemGroup>
   <ItemGroup>

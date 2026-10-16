@@ -2,6 +2,11 @@ import { chromium, expect } from "@playwright/test";
 import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
+import { createDiagnostics } from "./safe-diagnostics.mjs";
+const diagnostics = createDiagnostics(
+  process.env.POCKETQUESTS_JOURNEY_DIAGNOSTICS,
+);
+diagnostics.checkpoint("setup");
 const root = path.resolve("../..");
 const artifacts = path.resolve(
   root,
@@ -103,6 +108,7 @@ await context.route("https://identity.test/**", async (route) => {
   return route.abort();
 });
 try {
+  diagnostics.checkpoint("sign-in");
   await page.goto("http://localhost:8081");
   const signIn = page.getByRole("button", {
     name: "Sign in or create an account",
@@ -112,6 +118,7 @@ try {
   await expect(
     visibleText("Your interests and experience", { exact: true }),
   ).toBeVisible({ timeout: 30000 });
+  diagnostics.checkpoint("onboarding");
   await page
     .getByRole("button", { name: "Choose: Work & Purpose", exact: true })
     .click();
@@ -124,12 +131,14 @@ try {
   await expect(
     visibleText("Current assessment: Expert", { exact: true }),
   ).toBeVisible();
+  diagnostics.checkpoint("onboarding-save");
   await page
     .getByRole("button", {
       name: "Save setup and choose my first quest",
       exact: true,
     })
     .click();
+  diagnostics.checkpoint("custom-quest");
   await page
     .getByRole("button", { name: "Create a custom quest", exact: true })
     .click();
@@ -214,6 +223,7 @@ try {
     }
     return route.continue();
   });
+  diagnostics.checkpoint("save-retry");
   await page
     .getByRole("button", { name: "Save custom quest", exact: true })
     .click();
@@ -246,6 +256,7 @@ try {
     .click();
   await page.getByRole("tab", { name: "Active", exact: true }).click();
   await page.getByRole("link", { name: "Open quest", exact: true }).click();
+  diagnostics.checkpoint("definition-edit");
   await page
     .getByRole("button", {
       name: "Edit: Browser verified custom quest",
@@ -294,6 +305,7 @@ try {
   console.log(
     "Verified active definition editing, recurrence access and archival without losing its occurrence.",
   );
+  diagnostics.checkpoint("completion-response-loss");
   await page
     .getByRole("button", {
       name: "Complete: Browser verified custom quest",
@@ -337,6 +349,7 @@ try {
     visibleText("280 overall XP earned", { exact: true }),
   ).toBeVisible();
   console.log("Verified completion response-loss retry and character totals.");
+  diagnostics.checkpoint("character");
   await expect(
     page.getByRole("progressbar", { name: / level progress$/ }),
   ).toHaveCount(
@@ -410,6 +423,7 @@ try {
     path: path.join(artifacts, "character-home.png"),
     fullPage: false,
   });
+  diagnostics.checkpoint("export-timer");
   await page.getByRole("tab", { name: "Progress", exact: true }).click();
   await expect(
     visibleText("280 base XP earned", { exact: true }),
@@ -472,6 +486,7 @@ try {
   await page
     .getByRole("button", { name: "Close focus timer", exact: true })
     .click();
+  diagnostics.checkpoint("offline-undo");
   await context.setOffline(true);
   await page
     .getByRole("button", { name: "Complete: Enjoy some downtime", exact: true })
@@ -500,6 +515,7 @@ try {
     }),
   ).toBeEnabled();
   console.log("Verified offline completion and matching Undo.");
+  diagnostics.checkpoint("clock-undo-retry");
   // Reproduce the reported clock decrease across normal anchor refresh in the actual client.
   // The server receives an untouched, durably queued proof with a bounded clock lead.
   await page.evaluate(() => {
@@ -562,6 +578,7 @@ try {
   expect(
     synced.occurrences.filter((o) => o.status === "Completed"),
   ).toHaveLength(1);
+  diagnostics.checkpoint("fresh-session");
   await page.reload();
   // Fresh adapter session, same isolated test account: verifies server persistence.
   await expect(signIn).toBeEnabled();
@@ -579,6 +596,7 @@ try {
     }),
   ).toBeEnabled();
   await page.getByRole("link", { name: "Back to Home", exact: true }).click();
+  diagnostics.checkpoint("calendar-planning");
   // Calendar planning uses the same saved account and real SQL-backed commands.
   await page.getByRole("tab", { name: "Calendar", exact: true }).click();
   await page.getByRole("tab", { name: "7 days", exact: true }).click();
@@ -671,6 +689,7 @@ try {
     .getByRole("link", { name: "Open quest", exact: true })
     .and(page.locator(`a[href="/quest/${calendarQuest.occurrence.id}"]`))
     .click();
+  diagnostics.checkpoint("plan-edit");
   await expect(
     page.getByRole("button", { name: "Save plan", exact: true }),
   ).toBeDisabled();
@@ -735,6 +754,7 @@ try {
   console.log(
     "Quest plan editing rejected invalid dates, persisted unscheduled date/time removal and today's timed plan, and preserved XP.",
   );
+  diagnostics.checkpoint("viewports");
   for (const [width, height] of [
     [320, 720],
     [430, 932],
@@ -752,11 +772,13 @@ try {
       ),
     ).toBe(true);
   }
+  diagnostics.checkpoint("page-errors");
   expect(failures).toEqual([]);
   console.log(
     "Web adapter / real API and isolated SQL journey passed: test OIDC/PKCE, save failure and retry, double tap with lost completion response, exact level-up, character sheet, export, completed list, optional timer and route pause, offline completion, reconnect, matching Undo, fresh-session SQL persistence. No real-provider or native-device claim.",
   );
 } catch (error) {
+  diagnostics.fail(error);
   await page.screenshot({
     path: path.join(artifacts, "browser-failure.png"),
     fullPage: false,
@@ -771,3 +793,5 @@ try {
   await browser.close();
   await fs.writeFile(path.join(fixtureDirectory, "done"), "done");
 }
+
+diagnostics.checkpoint("complete");
