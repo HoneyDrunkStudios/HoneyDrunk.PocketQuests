@@ -28,7 +28,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Contract mutation probes failed.' }
     Get-Content -LiteralPath (Join-Path $EvidenceDirectory 'contract-mutation-tests.log')
     $projectName = if ($IdentityIntegration) { 'PocketQuests.Tests' } else { 'PocketQuests.SchemaTests' }
-    $project = Join-Path $root "HoneyDrunk.PocketQuests/$projectName/$projectName.csproj"
+    $project = Join-Path $root "tests/$projectName/$projectName.csproj"
     if (!$NoBuild) {
         & dotnet build $project --configuration Release --nologo -m:1 -nr:false *> (Join-Path $EvidenceDirectory 'build.log')
         if ($LASTEXITCODE -ne 0) { throw 'Schema build failed; inspect build.log.' }

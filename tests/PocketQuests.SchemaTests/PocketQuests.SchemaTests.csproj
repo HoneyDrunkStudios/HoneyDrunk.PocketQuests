@@ -10,13 +10,13 @@
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
     <Using Include="Xunit" />
-    <Compile Include="../PocketQuests.AppHost/MobileEndpoint.cs" Link="Hosting/MobileEndpoint.cs" />
-    <ProjectReference Include="../PocketQuests.Data/PocketQuests.Data.csproj" />
-    <ProjectReference Include="../PocketQuests.Api/PocketQuests.Api.csproj" />
-    <ProjectReference Include="../PocketQuests.Database/PocketQuests.Database.sqlproj" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="../PocketQuests.ReplayProbe/PocketQuests.ReplayProbe.csproj" ReferenceOutputAssembly="false" />
-    <None Include="../PocketQuests.Database/bin/$(Configuration)/PocketQuests.Database.dacpac" Link="PocketQuests.Database.dacpac" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../PocketQuests.Database/bin/$(Configuration)/master.dacpac" Link="master.dacpac" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Include="../../src/PocketQuests.AppHost/MobileEndpoint.cs" Link="Hosting/MobileEndpoint.cs" />
+    <ProjectReference Include="../../src/PocketQuests.Data/PocketQuests.Data.csproj" />
+    <ProjectReference Include="../../src/PocketQuests.Api/PocketQuests.Api.csproj" />
+    <ProjectReference Include="../../src/PocketQuests.Database/PocketQuests.Database.sqlproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../tools/PocketQuests.ReplayProbe/PocketQuests.ReplayProbe.csproj" ReferenceOutputAssembly="false" />
+    <None Include="../../src/PocketQuests.Database/bin/$(Configuration)/PocketQuests.Database.dacpac" Link="PocketQuests.Database.dacpac" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../src/PocketQuests.Database/bin/$(Configuration)/master.dacpac" Link="master.dacpac" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../docs/schema/schema-contract.json" Link="schema-contract.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../scripts/schema/*.sql" Link="Sql/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <!-- Reuse the existing numerical/history regressions in this package-mode lane;
@@ -32,7 +32,7 @@
   </ItemGroup>
   <Target Name="CopyReplayProbe" AfterTargets="Build">
     <ItemGroup>
-      <ReplayProbeFile Include="../PocketQuests.ReplayProbe/bin/$(Configuration)/net10.0/**/*" />
+      <ReplayProbeFile Include="../../tools/PocketQuests.ReplayProbe/bin/$(Configuration)/net10.0/**/*" />
     </ItemGroup>
     <Copy SourceFiles="@(ReplayProbeFile)" DestinationFiles="@(ReplayProbeFile->'$(OutputPath)ReplayProbe/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>

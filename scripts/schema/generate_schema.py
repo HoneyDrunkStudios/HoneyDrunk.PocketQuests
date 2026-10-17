@@ -7,8 +7,8 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-DATABASE = ROOT / 'HoneyDrunk.PocketQuests/PocketQuests.Database'
-DATA = ROOT / 'HoneyDrunk.PocketQuests/PocketQuests.Data/Relational'
+DATABASE = ROOT / 'src/PocketQuests.Database'
+DATA = ROOT / 'src/PocketQuests.Data/Relational'
 CONTRACT = ROOT / 'docs/schema/schema-contract.json'
 TABLE_DOMAINS = {'Account': 'Accounts', 'AccountInterest': 'Accounts', 'AccountPause': 'Accounts', 'TimeZoneChange': 'Accounts', 'AccountAuditRecord': 'Accounts', 'Category': 'Categories', 'CategoryProgress': 'Categories', 'Attribute': 'Attributes', 'Skill': 'Skills', 'CustomSkill': 'Skills', 'SkillAssessment': 'Skills', 'SystemQuest': 'Quests', 'QuestDefinition': 'Quests', 'QuestDefinitionRevision': 'Quests', 'QuestDefinitionAttributeAllocation': 'Quests', 'QuestDefinitionSkillAllocation': 'Quests', 'QuestSeries': 'Quests', 'QuestSeriesRevision': 'Quests', 'QuestOccurrence': 'Quests', 'QuestOccurrenceRevision': 'Quests', 'QuestOccurrenceEvent': 'Quests', 'QuestCompletion': 'Quests', 'QuestCommandHistory': 'Quests', 'QuestCommandInterest': 'Quests', 'ProfileReward': 'Progress', 'XpLedgerEntry': 'Progress', 'XpBalance': 'Progress', 'AccountEntitlement': 'Progress', 'SyncAnchor': 'Synchronization', 'CommandReceipt': 'Synchronization', 'AccountLifecycleState': 'Lifecycle', 'ErasureMarker': 'Lifecycle', 'LifecycleMessage': 'Lifecycle'}
 

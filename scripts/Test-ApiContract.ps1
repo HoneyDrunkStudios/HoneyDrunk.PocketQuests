@@ -6,7 +6,7 @@ $expected = Join-Path $root 'contracts/pocketquests-v1.openapi.json'
 $previousOutput = $env:POCKETQUESTS_OPENAPI_OUTPUT
 try {
     $env:POCKETQUESTS_OPENAPI_OUTPUT = $output
-    $arguments = @('test', (Join-Path $root 'HoneyDrunk.PocketQuests/PocketQuests.SchemaTests/PocketQuests.SchemaTests.csproj'),
+    $arguments = @('test', (Join-Path $root 'tests/PocketQuests.SchemaTests/PocketQuests.SchemaTests.csproj'),
         '--filter', 'FullyQualifiedName~PocketQuests.Tests.Api.ApiContractTests', '--configuration', $Configuration, '--verbosity', 'minimal')
     if ($NoBuild) { $arguments += '--no-build' }
     & dotnet @arguments

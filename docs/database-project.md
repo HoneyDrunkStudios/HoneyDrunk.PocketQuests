@@ -1,6 +1,6 @@
 # SQL database project
 
-`HoneyDrunk.PocketQuests/PocketQuests.Database/PocketQuests.Database.sqlproj` owns the database schema and builds `bin/Debug/PocketQuests.Database.dacpac`. It loads as a traditional SSDT project in Visual Studio 2026. Install the normal SQL Server Data Tools component and .NET Framework 4.8 targeting pack; Framework is used only by the SQL build tools, while the APIs remain on .NET 10.
+`src/PocketQuests.Database/PocketQuests.Database.sqlproj` owns the database schema and builds `bin/Debug/PocketQuests.Database.dacpac`. It loads as a traditional SSDT project in Visual Studio 2026. Install the normal SQL Server Data Tools component and .NET Framework 4.8 targeting pack; Framework is used only by the SQL build tools, while the APIs remain on .NET 10.
 
 The same project conditionally imports Microsoft.Build.Sql only under `dotnet` MSBuild, preserving cross-platform command-line and CI builds. Visual Studio uses its installed SSDT targets. Both paths share the explicit SQL file list and output a DACPAC; intermediate outputs are separated to avoid conflicting caches. Add new SQL files through Visual Studio or explicitly include them in the project. SDK-style SQL project support is not required in Visual Studio.
 

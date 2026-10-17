@@ -8,7 +8,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $true
 $root = Split-Path -Parent $PSScriptRoot
-$project = Join-Path $root 'HoneyDrunk.PocketQuests/PocketQuests.SchemaTests/PocketQuests.SchemaTests.csproj'
+$project = Join-Path $root 'tests/PocketQuests.SchemaTests/PocketQuests.SchemaTests.csproj'
 
 Push-Location $root
 try {

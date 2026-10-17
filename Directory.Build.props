@@ -8,6 +8,8 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <IdentityClientVersion>0.1.0-alpha.4</IdentityClientVersion>
     <UseIdentitySource Condition="'$(UseIdentitySource)' == ''">false</UseIdentitySource>
+    <IdentityProjectsRoot Condition="'$(IdentitySourceRoot)' != ''">$(IdentitySourceRoot)/HoneyDrunk.Identity</IdentityProjectsRoot>
+    <IdentityProjectsRoot Condition="'$(IdentitySourceRoot)' != '' and Exists('$(IdentitySourceRoot)/src/HoneyDrunk.Identity.Api/HoneyDrunk.Identity.Api.csproj')">$(IdentitySourceRoot)/src</IdentityProjectsRoot>
     <NuGetLockFilePath Condition="'$(UseIdentitySource)' == 'true'">$(MSBuildProjectDirectory)/.local/packages.source.lock.json</NuGetLockFilePath>
   </PropertyGroup>
   <ItemGroup>

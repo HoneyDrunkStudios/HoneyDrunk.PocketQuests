@@ -40,8 +40,8 @@ From the repository root, with .NET 10.0.401, Python and LocalDB installed:
 python scripts/schema/validate_contract.py
 python scripts/schema/test_contract.py
 python scripts/schema/generate_schema.py --check
-dotnet restore HoneyDrunk.PocketQuests/PocketQuests.SchemaTests --locked-mode -p:UseIdentitySource=false
-dotnet build HoneyDrunk.PocketQuests/PocketQuests.SchemaTests -c Release --no-restore -p:UseIdentitySource=false
+dotnet restore tests/PocketQuests.SchemaTests --locked-mode -p:UseIdentitySource=false
+dotnet build tests/PocketQuests.SchemaTests -c Release --no-restore -p:UseIdentitySource=false
 ./scripts/Test-RelationalSchema.ps1 -NoBuild
 ```
 

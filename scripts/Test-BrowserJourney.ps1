@@ -4,7 +4,7 @@ param([ValidateSet('Release', 'Debug')][string]$Configuration = 'Release')
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $mobile = Join-Path $root 'apps/mobile'
-$assembly = Join-Path $root "HoneyDrunk.PocketQuests/PocketQuests.BrowserHost/bin/$Configuration/net10.0/PocketQuests.BrowserHost.dll"
+$assembly = Join-Path $root "src/PocketQuests.BrowserHost/bin/$Configuration/net10.0/PocketQuests.BrowserHost.dll"
 if (!(Test-Path -LiteralPath $assembly)) { throw 'Build PocketQuests.BrowserHost before running this harness.' }
 foreach ($port in @(5217, 5218, 5219)) {
     if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) {

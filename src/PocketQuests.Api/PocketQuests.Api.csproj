@@ -19,7 +19,7 @@
     <PackageReference Include="HoneyDrunk.Identity.Client" Version="[$(IdentityClientVersion)]" />
   </ItemGroup>
   <ItemGroup Condition="'$(UseIdentitySource)' == 'true'">
-    <ProjectReference Include="$(IdentitySourceRoot)/HoneyDrunk.Identity/HoneyDrunk.Identity.Client/HoneyDrunk.Identity.Client.csproj" />
+    <ProjectReference Include="$(IdentityProjectsRoot)/HoneyDrunk.Identity.Client/HoneyDrunk.Identity.Client.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="HoneyDrunk.Data.Outbox.Dispatcher" Version="0.7.1" />

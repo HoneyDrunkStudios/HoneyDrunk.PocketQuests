@@ -10,7 +10,11 @@ if ($PSBoundParameters.ContainsKey('ClientPackageDirectory')) {
 }
 $appRoot = Split-Path $PSScriptRoot -Parent
 $identityRoot = (Resolve-Path -LiteralPath $IdentitySourceRoot).Path
-$identityProject = Join-Path $identityRoot 'HoneyDrunk.Identity/HoneyDrunk.Identity.Api/HoneyDrunk.Identity.Api.csproj'
+$identityProjects = Join-Path $identityRoot 'src'
+if (!(Test-Path -LiteralPath (Join-Path $identityProjects 'HoneyDrunk.Identity.Api/HoneyDrunk.Identity.Api.csproj'))) {
+    $identityProjects = Join-Path $identityRoot 'HoneyDrunk.Identity'
+}
+$identityProject = Join-Path $identityProjects 'HoneyDrunk.Identity.Api/HoneyDrunk.Identity.Api.csproj'
 if (!(Test-Path -LiteralPath $identityProject)) { throw 'Expected a HoneyDrunk.Identity checkout with its API project.' }
 $localDirectory = Join-Path $appRoot '.local'
 New-Item -ItemType Directory -Force -Path $localDirectory | Out-Null
@@ -24,7 +28,7 @@ $settings.Identity.SourceRoot = $identityRoot
 $settings | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $settingsPath
 dotnet build $identityProject --configuration Release --nologo
 if ($LASTEXITCODE -ne 0) { throw 'Identity service build failed.' }
-$solutionPath = Join-Path $appRoot 'HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx'
+$solutionPath = Join-Path $appRoot 'HoneyDrunk.PocketQuests.slnx'
 # Visual Studio can launch Aspire project resources only when they are loaded.
 $solution = [System.Xml.Linq.XDocument]::Load($solutionPath)
 $folder = @($solution.Root.Elements('Folder') | Where-Object { $_.Attribute('Name').Value -eq '/Identity/' })
@@ -32,7 +36,7 @@ foreach ($item in $folder) { $item.Remove() }
 $solution.Save($solutionPath)
 foreach ($name in @('HoneyDrunk.Identity.Abstractions', 'HoneyDrunk.Identity.Api', 'HoneyDrunk.Identity.Client', 'HoneyDrunk.Identity.Database', 'HoneyDrunk.Identity.Providers.Entra', 'HoneyDrunk.Identity')) {
     $extension = if ($name.EndsWith('.Database')) { 'sqlproj' } else { 'csproj' }
-    dotnet sln $solutionPath add (Join-Path $identityRoot "HoneyDrunk.Identity/$name/$name.$extension") --solution-folder Identity
+    dotnet sln $solutionPath add (Join-Path $identityProjects "$name/$name.$extension") --solution-folder Identity
     if ($LASTEXITCODE -ne 0) { throw "Adding $name to the development solution failed." }
 }
 dotnet restore $solutionPath
