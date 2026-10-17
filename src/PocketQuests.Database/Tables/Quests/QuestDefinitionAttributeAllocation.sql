@@ -18,19 +18,3 @@ GO
 -- Supports FK_QuestDefinitionAttributeAllocation_Attribute parent-reference validation/deletion and direct child lookup; no covering payload columns.
 CREATE INDEX [IX_QuestDefinitionAttributeAllocation_FK_Attribute] ON [pocketquests].[QuestDefinitionAttributeAllocation] ([AttributeId]);
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'One row is one attribute recipient in an immutable definition revision. Classification: Restricted. History: event; Retain while the account exists, including its recovery interval; erase with the account. No arbitrary age-based pruning of replay source facts.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionAttributeAllocation';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Pocket Quests account that exclusively owns this row; supplied by trusted server context.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionAttributeAllocation', @level2type=N'COLUMN', @level2name=N'AccountId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Immutable revision that owns this allocation.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionAttributeAllocation', @level2type=N'COLUMN', @level2name=N'QuestDefinitionRevisionId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Stable attribute receiving this share.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionAttributeAllocation', @level2type=N'COLUMN', @level2name=N'AttributeId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Exact share 0..10000; nonempty allocation pool must sum to 10000 in the controlled write.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionAttributeAllocation', @level2type=N'COLUMN', @level2name=N'BasisPoints';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC insertion time; not the effective time of a delayed offline action.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionAttributeAllocation', @level2type=N'COLUMN', @level2name=N'CreatedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Original allocation array position, preserving the existing API order; v1 rows retain their display-order adapter.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionAttributeAllocation', @level2type=N'COLUMN', @level2name=N'Position';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Supports FK_QuestDefinitionAttributeAllocation_Attribute parent-reference validation/deletion and direct child lookup; no covering payload columns.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionAttributeAllocation', @level2type=N'INDEX', @level2name=N'IX_QuestDefinitionAttributeAllocation_FK_Attribute';
-GO

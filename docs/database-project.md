@@ -5,7 +5,8 @@
 The same project conditionally imports Microsoft.Build.Sql only under `dotnet` MSBuild, preserving cross-platform command-line and CI builds. Visual Studio uses its installed SSDT targets. Both paths share the explicit SQL file list and output a DACPAC; intermediate outputs are separated to avoid conflicting caches. Add new SQL files through Visual Studio or explicitly include them in the project. SDK-style SQL project support is not required in Visual Studio.
 
 - `Tables/dbo` contains only the unchanged shared Audit table.
-- `Tables/{domain}/{Table}.sql` contains the canonical product model, with metadata on every table and column. See [initial clean-database selection](schema/runtime-cutover.md).
+- `Tables/{domain}/{Table}.sql` contains the canonical product DDL, constraints and indexes. See [initial clean-database selection](schema/runtime-cutover.md).
+- `docs/schema/schema-contract.json` owns product table, column and index descriptions. Both SQL build paths validate this contract and compile its descriptions into `obj/.../SchemaDescriptions.g.sql`, which is included in the DACPAC model. Descriptions are not a post-deployment operation; SQL deployment and parity checks retain their existing behavior. Edit the contract and run `python scripts/schema/generate_schema.py` to regenerate DDL.
 - `Tables/outbox` and `Schemas` contain the shared outbox schema and table.
 - `Data/Seed` contains repeatable data updates explicitly included by `Data/PostDeployment.sql`.
 - `Data/AdHoc` holds manually executed SQL, excluded from automatic publish.
@@ -32,6 +33,8 @@ The profile blocks possible data loss, preserves objects absent from the project
 For a hosted target, use SqlPackage with the DACPAC and an explicitly reviewed target profile supplied by deployment configuration. Do not edit the local profile to point at production or commit credentials. Review a target-specific deployment script/report and take a recovery checkpoint before publishing. Do not treat publishing an older DACPAC as a data rollback.
 
 ## Validation
+
+SQL builds require Python 3 on PATH, including Visual Studio SSDT builds. Set the MSBuild property `SchemaPythonExecutable` to an explicit Python executable path when necessary. The same generator runs in both build systems before SQL inputs are collected, fails the build on an invalid contract, and places its output in the build system's separate intermediate directory. Clean removes that output; the next build recreates it. Generated descriptions must never be edited directly. Shared Audit and Outbox metadata stays with its owning SQL source.
 
 SQL integration tests deploy these same DACPACs into unique test databases. They exercise EF mappings against deployed SQL, verify only canonical product and unchanged shared tables, preserve committed history and pending proof through repeat publication, and check repeated publishing. Identity's DACPAC is also copied into the integration test output from its explicit source checkout.
 

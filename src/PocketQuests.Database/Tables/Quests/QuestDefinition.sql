@@ -29,29 +29,3 @@ GO
 -- Supports FK_QuestDefinition_SystemQuest parent-reference validation/deletion and direct child lookup; no covering payload columns.
 CREATE INDEX [IX_QuestDefinition_FK_SystemQuest] ON [pocketquests].[QuestDefinition] ([SystemQuestId]);
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'One row is one account-owned persistent quest identity, custom or adopted from the system catalog. Classification: Restricted. History: mutable; Retain while the account exists, including its recovery interval; erase with the account. No arbitrary age-based pruning of replay source facts.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinition';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Application-generated stable row UUID; never reused.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinition', @level2type=N'COLUMN', @level2name=N'Id';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Pocket Quests account that exclusively owns this row; supplied by trusted server context.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinition', @level2type=N'COLUMN', @level2name=N'AccountId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'System template identity; null means an editable custom definition.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinition', @level2type=N'COLUMN', @level2name=N'SystemQuestId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Current content revision number; matching immutable revision is committed by the controlled writer.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinition', @level2type=N'COLUMN', @level2name=N'Revision';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Instant this definition was archived; existing occurrences retain history. UTC instant. Null means this event has not happened.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinition', @level2type=N'COLUMN', @level2name=N'ArchivedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC insertion time; not the effective time of a delayed offline action.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinition', @level2type=N'COLUMN', @level2name=N'CreatedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC time of the most recent persisted change; writer must set on each update.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinition', @level2type=N'COLUMN', @level2name=N'ModifiedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'SQL-generated opaque concurrency token; compare as bytes, not as a clock.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinition', @level2type=N'COLUMN', @level2name=N'RowVersion';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Stable one-based position in the existing API array, set once at creation; zero is reserved for public catalog adoption or the retained v1 adapter.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinition', @level2type=N'COLUMN', @level2name=N'CreationOrdinal';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Original accepted UUID spelling for API compatibility; the typed Id remains the ownership key. Null is reserved for public catalog adoption or the retained v1 adapter.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinition', @level2type=N'COLUMN', @level2name=N'ClientKey';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Only one local adopted definition for a system quest in an account.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinition', @level2type=N'INDEX', @level2name=N'UQ_QuestDefinition_SystemIdentity';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Supports FK_QuestDefinition_SystemQuest parent-reference validation/deletion and direct child lookup; no covering payload columns.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinition', @level2type=N'INDEX', @level2name=N'IX_QuestDefinition_FK_SystemQuest';
-GO

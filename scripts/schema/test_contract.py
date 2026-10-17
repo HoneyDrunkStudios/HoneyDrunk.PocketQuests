@@ -7,11 +7,45 @@ import argparse
 import tempfile
 from unittest.mock import patch
 from validate_contract import validate, contract_path
+from generate_schema import metadata_sql, table_sql, main as generate_main
 
 CONTRACT = json.loads((Path(__file__).resolve().parents[2] / 'docs/schema/schema-contract.json').read_text(encoding='utf-8'))
 
 
 class ContractGateTests(unittest.TestCase):
+    def test_metadata_preserves_all_reviewed_descriptions(self):
+        sql = metadata_sql(CONTRACT)
+        expected = sum(1 + len(t['columns']) + len(t['indexes']) for t in CONTRACT['tables'])
+        self.assertEqual(expected, sql.count('EXEC sys.sp_addextendedproperty'))
+        for table in CONTRACT['tables']:
+            self.assertNotIn('sp_addextendedproperty', table_sql(table))
+            descriptions = [table['description']]
+            descriptions.extend(c['description'] for c in table['columns'])
+            descriptions.extend(i['purpose'] for i in table['indexes'])
+            for description in descriptions:
+                self.assertIn("@value=N'" + description.replace("'", "''") + "'", sql)
+
+    def test_metadata_compilation_escapes_unicode_and_apostrophes(self):
+        contract = deepcopy(CONTRACT)
+        contract['tables'][0]['description'] = "Owner's progress – retained history"
+        self.assertIn("@value=N'Owner''s progress – retained history'", metadata_sql(contract))
+
+    def test_metadata_command_writes_only_build_output_and_rejects_invalid_contract(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'obj' / 'descriptions.sql'
+            with patch('sys.argv', ['generate_schema.py', '--metadata-output', str(output)]), patch('generate_schema.outputs') as sources:
+                self.assertEqual(0, generate_main())
+                sources.assert_not_called()
+            original = output.read_text(encoding='utf-8')
+            self.assertEqual(metadata_sql(CONTRACT), original)
+            invalid = deepcopy(CONTRACT)
+            invalid['tables'][0]['description'] = ''
+            contract_file = Path(directory) / 'invalid.json'
+            contract_file.write_text(json.dumps(invalid), encoding='utf-8')
+            with patch('sys.argv', ['generate_schema.py', '--metadata-output', str(output)]), patch('generate_schema.CONTRACT', contract_file):
+                self.assertEqual(1, generate_main())
+            self.assertEqual(original, output.read_text(encoding='utf-8'))
+
     def test_contract_path_is_confined_after_resolution(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
