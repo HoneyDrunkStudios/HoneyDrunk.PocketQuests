@@ -36,6 +36,8 @@ For a hosted target, use SqlPackage with the DACPAC and an explicitly reviewed t
 
 SQL builds require Python 3 on PATH, including Visual Studio SSDT builds. Set the MSBuild property `SchemaPythonExecutable` to an explicit Python executable path when necessary. The same generator runs in both build systems before SQL inputs are collected, fails the build on an invalid contract, and places its output in the build system's separate intermediate directory. Clean removes that output; the next build recreates it. Generated descriptions must never be edited directly. Shared Audit and Outbox metadata stays with its owning SQL source.
 
+SSDT resolves the SQL 150 `master.dacpac` from the Visual Studio installation's `Common7/IDE/Extensions/Microsoft/SQLDB` directory, separately from its MSBuild task targets. A custom installation can override `SqlServerSystemDacpacPath`. The dotnet build retains its pinned system-DACPAC package reference.
+
 SQL integration tests deploy these same DACPACs into unique test databases. They exercise EF mappings against deployed SQL, verify only canonical product and unchanged shared tables, preserve committed history and pending proof through repeat publication, and check repeated publishing. Identity's DACPAC is also copied into the integration test output from its explicit source checkout.
 
 SQL projects use Microsoft's [SDK and post-deployment script support](https://learn.microsoft.com/en-us/sql/tools/sql-database-projects/concepts/pre-post-deployment-scripts).
