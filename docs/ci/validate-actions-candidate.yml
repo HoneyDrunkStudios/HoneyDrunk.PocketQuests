@@ -27,9 +27,9 @@ jobs:
         shell: pwsh
         run: ./product/scripts/Initialize-Local.ps1 -IdentitySourceRoot "$env:GITHUB_WORKSPACE/identity"
       - name: Restore locked source dependencies
-        run: dotnet restore product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --locked-mode
+        run: dotnet restore product/HoneyDrunk.PocketQuests.slnx --locked-mode
       - name: Build solution and DACPACs
-        run: dotnet build product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore
+        run: dotnet build product/HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore
       - name: Start isolated development SQL instance
         shell: pwsh
         run: |
@@ -37,7 +37,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           sqllocaldb start PocketQuests
       - name: Test SQL and domain boundaries
-        run: dotnet test product/HoneyDrunk.PocketQuests/PocketQuests.Tests --configuration Release --no-build --logger trx
+        run: dotnet test product/tests/PocketQuests.Tests --configuration Release --no-build --logger trx
   frontend:
     uses: HoneyDrunkStudios/HoneyDrunk.Actions/.github/workflows/job-node-workspace.yml@NODE_QUALITY_COMMIT
     with:

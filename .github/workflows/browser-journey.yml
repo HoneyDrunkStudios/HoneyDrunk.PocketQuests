@@ -42,8 +42,8 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
           ./product/scripts/Initialize-Local.ps1 -IdentitySourceRoot "$env:GITHUB_WORKSPACE/identity"
-          dotnet restore product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --locked-mode
-          dotnet build product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore
+          dotnet restore product/HoneyDrunk.PocketQuests.slnx --locked-mode
+          dotnet build product/HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore
       - name: Install locked mobile and browser dependencies
         timeout-minutes: 5
         working-directory: product/apps/mobile

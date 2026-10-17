@@ -4,7 +4,7 @@ Work in the primary Pocket Quests checkout. Run `scripts/Initialize-Local.ps1 -I
 
 ## Visual Studio
 
-Open `HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx` from the repository root. Set `PocketQuests.AppHost` as the startup project, choose the `local` launch profile and press F5. The authenticated dashboard URL appears in AppHost output. AppHost launches the API, the configured Identity service, and Expo together.
+Open `HoneyDrunk.PocketQuests.slnx` from the repository root. Set `PocketQuests.AppHost` as the startup project, choose the `local` launch profile and press F5. The authenticated dashboard URL appears in AppHost output. AppHost launches the API, the configured Identity service, and Expo together.
 
 The solution folder contains the application, domain, data, API, AppHost, service defaults, tests and isolated browser test host as peer project folders. There are no .NET `src` or `tests` wrapper folders. The browser test host is an isolated acceptance fixture, not the normal startup project.
 
@@ -19,7 +19,7 @@ For Android use the installed development build/emulator with a reachable Metro 
 From the Pocket Quests repository root:
 
 ```powershell
-dotnet run --project HoneyDrunk.PocketQuests/PocketQuests.AppHost
+dotnet run --project src/PocketQuests.AppHost
 ```
 
 Stop the AppHost before starting Expo separately. For a frontend-only browser preview, from `apps/mobile` run `npm run web`; API and Identity must already be running for connected features.
@@ -41,8 +41,8 @@ If the AppHost dashboard opens but Expo does not start, check the Identity resou
 The isolated package-mode schema/API/domain lane needs no Identity source checkout or local candidate feed. From the repository root:
 
 ```powershell
-dotnet restore HoneyDrunk.PocketQuests/PocketQuests.SchemaTests/PocketQuests.SchemaTests.csproj --locked-mode -p:UseIdentitySource=false
-dotnet build HoneyDrunk.PocketQuests/PocketQuests.SchemaTests/PocketQuests.SchemaTests.csproj -c Release --no-restore -p:UseIdentitySource=false
+dotnet restore tests/PocketQuests.SchemaTests/PocketQuests.SchemaTests.csproj --locked-mode -p:UseIdentitySource=false
+dotnet build tests/PocketQuests.SchemaTests/PocketQuests.SchemaTests.csproj -c Release --no-restore -p:UseIdentitySource=false
 ./scripts/Test-RelationalSchema.ps1 -NoBuild
 ```
 
@@ -51,3 +51,5 @@ The explicit property overrides any source-mode setting in ignored local configu
 ## Database projects
 
 The solution includes PocketQuests.Database and Identity/HoneyDrunk.Identity.Database. Expand Tables for SQL definitions and Data for seed/ad-hoc scripts. Reload the solution when prompted. Deploy each database using that repository's scripts/Deploy-LocalDatabase.ps1; see [DACPAC workflow](database-project.md).
+
+Identity source mode supports both `src/` and the previous nested Identity layout. `Initialize-Local.ps1` detects the checkout layout and refreshes the root solution references; pinned older Identity revisions remain usable.

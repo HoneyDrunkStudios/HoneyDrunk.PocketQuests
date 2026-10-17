@@ -22,14 +22,15 @@ function Get-FixtureSnapshot([string]$root) {
 $fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ('pq-initialize-contract-' + [guid]::NewGuid().ToString('N'))
 $initializer = Join-Path $PSScriptRoot '../Initialize-Local.ps1'
 try {
-    foreach ($caseName in @('source', 'published', 'legacy', 'legacy-empty')) {
+    foreach ($caseName in @('source', 'published', 'source-previous', 'published-previous', 'legacy', 'legacy-empty')) {
         $initializeTestState.calls.Clear()
         $appRoot = Join-Path $fixtureRoot $caseName
         $scripts = Join-Path $appRoot 'scripts'
-        $solutionDirectory = Join-Path $appRoot 'HoneyDrunk.PocketQuests'
+        $solutionDirectory = $appRoot
         $localDirectory = Join-Path $appRoot '.local'
         $identityRoot = Join-Path $appRoot 'identity source & test'
-        $identityProject = Join-Path $identityRoot 'HoneyDrunk.Identity/HoneyDrunk.Identity.Api/HoneyDrunk.Identity.Api.csproj'
+        $identityLayout = if ($caseName.EndsWith('-previous')) { 'HoneyDrunk.Identity' } else { 'src' }
+        $identityProject = Join-Path $identityRoot "$identityLayout/HoneyDrunk.Identity.Api/HoneyDrunk.Identity.Api.csproj"
         foreach ($directory in @($scripts, $solutionDirectory, $localDirectory, (Split-Path $identityProject -Parent))) {
             New-Item -ItemType Directory -Force -Path $directory | Out-Null
         }
@@ -44,7 +45,7 @@ try {
         'Keep unrelated files unchanged.' | Set-Content -LiteralPath (Join-Path $appRoot 'unrelated.txt')
 
         $arguments = @{ IdentitySourceRoot = $identityRoot }
-        if ($caseName -eq 'published') { $arguments.UsePublishedClientPackages = $true }
+        if ($caseName -like 'published*') { $arguments.UsePublishedClientPackages = $true }
         if ($caseName -like 'legacy*') {
             $arguments.ClientPackageDirectory = if ($caseName -eq 'legacy-empty') { '' } else { 'old-candidates' }
             # Rejection must precede both mode selection and even source-path resolution.
@@ -66,7 +67,7 @@ try {
 
         Assert-Setup (!$failure) "${caseName}: initialization failed: $failure"
         $props = [xml](Get-Content -LiteralPath (Join-Path $localDirectory 'Identity.props') -Raw)
-        $expectedMode = if ($caseName -eq 'source') { 'true' } else { 'false' }
+        $expectedMode = if ($caseName -like 'source*') { 'true' } else { 'false' }
         Assert-Setup ($props.Project.PropertyGroup.UseIdentitySource -ceq $expectedMode) "${caseName}: incorrect source/package mode."
         Assert-Setup ($props.Project.PropertyGroup.IdentitySourceRoot -ceq $identityRoot) "${caseName}: source path was not preserved and XML-escaped."
         $settings = Get-Content -LiteralPath (Join-Path $localDirectory 'development.json') -Raw | ConvertFrom-Json
@@ -85,7 +86,7 @@ try {
         for ($index = 0; $index -lt $names.Count; $index++) {
             $name = $names[$index]
             $extension = if ($name.EndsWith('.Database')) { 'sqlproj' } else { 'csproj' }
-            $project = Join-Path $identityRoot "HoneyDrunk.Identity/$name/$name.$extension"
+            $project = Join-Path $identityRoot "$identityLayout/$name/$name.$extension"
             $expected = @('sln', $solutionPath, 'add', $project, '--solution-folder', 'Identity')
             Assert-Setup (($calls[$index + 1] -join '|') -ceq ($expected -join '|')) "${caseName}: incorrect Identity project registration for $name."
         }

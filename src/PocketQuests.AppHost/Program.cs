@@ -29,7 +29,9 @@ else
 {
     var identitySource = builder.Configuration["Identity:SourceRoot"]
         ?? throw new InvalidOperationException("Configure Identity:ServiceUrl, or run scripts/Initialize-Local.ps1 with an explicit Identity source checkout.");
-    var identityProject = Path.Combine(identitySource, "HoneyDrunk.Identity", "HoneyDrunk.Identity.Api", "HoneyDrunk.Identity.Api.csproj");
+    var identityProject = Path.Combine(identitySource, "src", "HoneyDrunk.Identity.Api", "HoneyDrunk.Identity.Api.csproj");
+    if (!File.Exists(identityProject))
+        identityProject = Path.Combine(identitySource, "HoneyDrunk.Identity", "HoneyDrunk.Identity.Api", "HoneyDrunk.Identity.Api.csproj");
     if (!File.Exists(identityProject))
         throw new InvalidOperationException("The configured Identity source project does not exist.");
     var identity = builder.AddProject("identity-api", identityProject)

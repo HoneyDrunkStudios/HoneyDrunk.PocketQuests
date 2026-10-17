@@ -37,7 +37,7 @@ jobs:
         shell: pwsh
         run: ./product/scripts/Initialize-Local.ps1 -IdentitySourceRoot "$env:GITHUB_WORKSPACE/identity"
       - name: Restore locked source dependencies
-        run: dotnet restore product/HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --locked-mode
+        run: dotnet restore product/HoneyDrunk.PocketQuests.slnx --locked-mode
       - name: Install SonarScanner for .NET
         id: sonar_install
         continue-on-error: true
@@ -72,7 +72,7 @@ jobs:
       - name: Build solution and DACPACs
         # MSBuild must discover the same .sonarqube directory as begin/end.
         working-directory: product
-        run: dotnet build HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore --no-incremental
+        run: dotnet build HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore --no-incremental
       - name: Verify compiled backend architecture without SQL
         shell: pwsh
         run: ./product/scripts/Test-BackendArchitecture.ps1 -NoBuild -Configuration Release

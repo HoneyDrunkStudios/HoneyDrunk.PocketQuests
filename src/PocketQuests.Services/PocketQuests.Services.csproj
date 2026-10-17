@@ -18,6 +18,6 @@
     <PackageReference Include="HoneyDrunk.Identity.Abstractions" Version="[$(IdentityClientVersion)]" />
   </ItemGroup>
   <ItemGroup Condition="'$(UseIdentitySource)' == 'true'">
-    <ProjectReference Include="$(IdentitySourceRoot)/HoneyDrunk.Identity/HoneyDrunk.Identity.Abstractions/HoneyDrunk.Identity.Abstractions.csproj" />
+    <ProjectReference Include="$(IdentityProjectsRoot)/HoneyDrunk.Identity.Abstractions/HoneyDrunk.Identity.Abstractions.csproj" />
   </ItemGroup>
 </Project>

@@ -1,5 +1,10 @@
 # Pocket Quests
 
+## Repository layout
+
+Open `HoneyDrunk.PocketQuests.slnx` from the repository root. Production projects live in `src/`, test and canary projects in `tests/`, and examples in `samples/` where present. Shared build configuration stays at the root; project names, namespaces and package identities are unchanged. Existing documentation and release-history locations are retained.
+
+
 A self-improvement app with an Expo/React Native client, .NET 10 API and SQL Server persistence. This is an implementation foundation under review, not a completed or production-deployed product.
 
 ## Structure
@@ -8,7 +13,7 @@ Mobile source is grouped by quest, progression and profile features, with separa
 
 Start backend changes with the [engineering standards](docs/engineering-standards.md). They define service/mapping/validation boundaries, EF tracking and transaction rules, SQL metadata, audit ownership and compatibility checks. [AGENTS.md](AGENTS.md) points automation at the same maintained guidance.
 
-Open `HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx` in Visual Studio. Projects are peers beside the solution, with internal feature/responsibility folders. Domain types represent rules; persistence types use the `Entity` suffix and Fluent API mappings. `PocketQuests.Database` owns SQL tables, data scripts and DACPAC deployment. The separate Identity checkout appears in the solution's Identity folder.
+Open `HoneyDrunk.PocketQuests.slnx` in Visual Studio. Projects are peers beside the solution, with internal feature/responsibility folders. Domain types represent rules; persistence types use the `Entity` suffix and Fluent API mappings. `PocketQuests.Database` owns SQL tables, data scripts and DACPAC deployment. The separate Identity checkout appears in the solution's Identity folder.
 
 The application implements the starter catalog, custom quests and revisions, XP/rank/skill progression, completion-specific Undo, planning/recurrence, onboarding, profile rewards, pause/resume rules, local notification planning, bounded offline command replay, export and account lifecycle integration. APIs own mutation validation, time reconciliation and progression. SQL locks, transactional receipts and canonical audit records protect replay and concurrency. Native behavior and production operations still need verification.
 
@@ -41,7 +46,7 @@ Initialize-Local writes ignored source configuration, enables source references 
 Set **PocketQuests.AppHost** as the startup project, choose the **local** profile and press F5. Aspire starts Identity on 5218, the Quest API on 5217 and Expo on 8081. Open the mobile web endpoint. Alternatively:
 
 ```powershell
-dotnet run --project HoneyDrunk.PocketQuests/PocketQuests.AppHost
+dotnet run --project src/PocketQuests.AppHost
 ```
 
 Edit `apps/mobile` in VS Code if preferred. Do not start a second Expo server while Aspire owns port 8081. See [local run guide](docs/local-run.md) and [environment configuration](docs/environments.md).
@@ -53,9 +58,9 @@ Live sign-in requires your own Entra customer tenant/user flow, API scope and cl
 After initialization:
 
 ```powershell
-dotnet restore HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --locked-mode
-dotnet build HoneyDrunk.PocketQuests/HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore
-dotnet test HoneyDrunk.PocketQuests/PocketQuests.Tests --configuration Release --no-build
+dotnet restore HoneyDrunk.PocketQuests.slnx --locked-mode
+dotnet build HoneyDrunk.PocketQuests.slnx --configuration Release --no-restore
+dotnet test tests/PocketQuests.Tests --configuration Release --no-build
 Push-Location apps/mobile
 npm run lint
 npm run typecheck

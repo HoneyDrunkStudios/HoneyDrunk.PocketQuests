@@ -16,7 +16,7 @@ Both direct API startup and AppHost accept the connection and reconciliation set
 $env:Persistence__ReconciliationEnabled = 'true'
 $env:ConnectionStrings__quests = 'Server=(localdb)\<new-isolated-instance>;Database=<new-empty-database>;Integrated Security=true;Encrypt=true;TrustServerCertificate=true'
 $env:Identity__BaseUrl = 'https://<explicit-identity-service>/'
-dotnet run --project HoneyDrunk.PocketQuests/PocketQuests.Api --no-launch-profile
+dotnet run --project src/PocketQuests.Api --no-launch-profile
 ```
 
 Select `ASPNETCORE_ENVIRONMENT=Development` only for a local development host using a loopback HTTP Identity service. Outside Development/Testing, Identity requires an explicit HTTPS URL. This implementation does not provision Identity or create a provider session.
@@ -41,11 +41,11 @@ sqlcmd -S "(localdb)\$localInstance" -E -I -b -d master -Q "IF DB_ID(N'$localDat
 if ($LASTEXITCODE -ne 0) { throw 'Refusing an existing database target.' }
 dotnet tool restore
 if ($LASTEXITCODE -ne 0) { throw 'SqlPackage restore failed.' }
-dotnet build HoneyDrunk.PocketQuests/PocketQuests.Database/PocketQuests.Database.sqlproj -c Release
+dotnet build src/PocketQuests.Database/PocketQuests.Database.sqlproj -c Release
 if ($LASTEXITCODE -ne 0) { throw 'DACPAC build failed.' }
 New-Item -ItemType Directory -Force .local/database | Out-Null
 $deployArguments = @(
-  '/SourceFile:HoneyDrunk.PocketQuests/PocketQuests.Database/bin/Release/PocketQuests.Database.dacpac',
+  '/SourceFile:src/PocketQuests.Database/bin/Release/PocketQuests.Database.dacpac',
   "/TargetConnectionString:$localConnection",
   '/p:BlockOnPossibleDataLoss=True', '/p:DropObjectsNotInSource=False',
   '/p:ScriptDatabaseOptions=False', '/p:IncludeTransactionalScripts=True'
@@ -93,7 +93,7 @@ Hosted restoration still depends on a trustworthy erasure evidence source outsid
 
 ## Validation and remaining external gates
 
-Run `dotnet restore HoneyDrunk.PocketQuests/PocketQuests.SchemaTests --locked-mode -p:UseIdentitySource=false`, then `dotnet build HoneyDrunk.PocketQuests/PocketQuests.SchemaTests -c Release --no-restore -p:UseIdentitySource=false` and `./scripts/Test-RelationalSchema.ps1 -NoBuild`. The package-mode lane uses the published Identity Abstractions/Client `0.1.0-alpha.4` packages from nuget.org with committed lockfiles and never requires an Identity API source build. Its real API/SQL tests deliberately supply controlled Identity HTTP responses through the actual Identity client; they do not validate provider JWTs or a live Identity service.
+Run `dotnet restore tests/PocketQuests.SchemaTests --locked-mode -p:UseIdentitySource=false`, then `dotnet build tests/PocketQuests.SchemaTests -c Release --no-restore -p:UseIdentitySource=false` and `./scripts/Test-RelationalSchema.ps1 -NoBuild`. The package-mode lane uses the published Identity Abstractions/Client `0.1.0-alpha.4` packages from nuget.org with committed lockfiles and never requires an Identity API source build. Its real API/SQL tests deliberately supply controlled Identity HTTP responses through the actual Identity client; they do not validate provider JWTs or a live Identity service.
 
 The combined gate covers metadata, source/DDL/EF parity, semantic CHECK/default/filter comparison, generator drift, nine contract mutation checks, real role/negative writes, exact replay/Undo/late arrival, concurrency, account isolation, lifecycle failure rollback, retained marker clocks, physical backup/restore, compactness, maintenance and HTTP JSON/CSV behavior. Export tests retain archived revisions, original completion terms, Undo history, formula-safe CSV and private no-store downloads. The same product regressions now run against canonical persistence in the package-mode lane and in the separate Identity source-integration lane. Obsolete old-schema upgrade probes are replaced by fresh/repeat-publication and compact-receipt replay checks; source-only JWT and cross-service lifecycle coverage is retained. A real hosted worker test advances a 400-day backlog without a client mutation and then serves a read-only HTTP projection. Independent fixture deployment is serialized only to avoid LocalDB model-database creation contention; account transaction concurrency remains real.
 
