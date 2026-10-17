@@ -105,8 +105,18 @@ def outputs(contract):
     return result
 
 
+def metadata_output_path(value):
+    """Confine generated SQL to the database project's intermediate output directory."""
+    output = Path(value).resolve()
+    allowed = DATABASE.resolve() / 'obj'
+    if output == allowed or not output.is_relative_to(allowed):
+        raise argparse.ArgumentTypeError('Metadata output must be a file inside the database project obj directory.')
+    return output
+
+
 def compile_metadata(contract, output):
     """Validate build input and preserve incremental builds when descriptions are unchanged."""
+    output = metadata_output_path(output)
     from validate_contract import validate
     errors, _ = validate(contract)
     if errors:
@@ -122,7 +132,7 @@ def compile_metadata(contract, output):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--check', action='store_true')
-    parser.add_argument('--metadata-output', type=Path, help='Compile descriptions for the SQL build without rewriting source files.')
+    parser.add_argument('--metadata-output', type=metadata_output_path, help='Compile descriptions inside the database project obj directory without rewriting source files.')
     args = parser.parse_args()
     contract = json.loads(CONTRACT.read_text(encoding='utf-8'))
     if args.metadata_output:
