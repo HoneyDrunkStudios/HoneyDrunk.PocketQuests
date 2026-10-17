@@ -10,11 +10,3 @@ CREATE TABLE [pocketquests].[AccountAuditRecord] (
     CONSTRAINT [FK_AccountAuditRecord_AuditRecords] FOREIGN KEY ([AuditRecordId]) REFERENCES [dbo].[AuditRecords] ([Id]) ON DELETE NO ACTION
 );
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'One row is one ownership association between a personal account and its canonical shared audit record. Classification: Restricted. History: event; Retain with the linked personal audit record. Delete association and owned audit record atomically on approved final erasure; no content duplicated.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountAuditRecord';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Pocket Quests account that exclusively owns this row; supplied by trusted server context.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountAuditRecord', @level2type=N'COLUMN', @level2name=N'AccountId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Canonical shared AuditRecord ID; envelope content and shape remain Audit-owned. Uses DATABASE_DEFAULT collation to match the unchanged shared AuditRecords.Id.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountAuditRecord', @level2type=N'COLUMN', @level2name=N'AuditRecordId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC insertion time; not the effective time of a delayed offline action.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountAuditRecord', @level2type=N'COLUMN', @level2name=N'CreatedAt';
-GO

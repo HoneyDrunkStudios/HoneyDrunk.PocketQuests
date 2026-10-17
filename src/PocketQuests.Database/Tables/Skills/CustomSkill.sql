@@ -27,29 +27,3 @@ CREATE TABLE [pocketquests].[CustomSkill] (
     CONSTRAINT [FK_CustomSkill_Account] FOREIGN KEY ([AccountId]) REFERENCES [pocketquests].[Account] ([Id]) ON DELETE NO ACTION
 );
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'One row is one account-owned custom skill, including archived skills. Classification: Restricted. History: mutable; Retain while the account exists, including its recovery interval; erase with the account. No arbitrary age-based pruning of replay source facts.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'CustomSkill';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Application-generated stable row UUID; never reused.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'CustomSkill', @level2type=N'COLUMN', @level2name=N'Id';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Pocket Quests account that exclusively owns this row; supplied by trusted server context.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'CustomSkill', @level2type=N'COLUMN', @level2name=N'AccountId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Trimmed custom skill display name, 1 to 80 characters.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'CustomSkill', @level2type=N'COLUMN', @level2name=N'Name';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Versioned OrdinalIgnoreCase-equivalent name key; binary comparison. Archived names remain reserved.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'CustomSkill', @level2type=N'COLUMN', @level2name=N'NormalizedName';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Positive version of the shared product name-normalization algorithm.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'CustomSkill', @level2type=N'COLUMN', @level2name=N'NameNormalizationVersion';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Positive optimistic business revision, distinct from SQL RowVersion.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'CustomSkill', @level2type=N'COLUMN', @level2name=N'Revision';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Instant the skill was archived; not a deletion marker. UTC instant. Null means this event has not happened.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'CustomSkill', @level2type=N'COLUMN', @level2name=N'ArchivedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC insertion time; not the effective time of a delayed offline action.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'CustomSkill', @level2type=N'COLUMN', @level2name=N'CreatedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC time of the most recent persisted change; writer must set on each update.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'CustomSkill', @level2type=N'COLUMN', @level2name=N'ModifiedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'SQL-generated opaque concurrency token; compare as bytes, not as a clock.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'CustomSkill', @level2type=N'COLUMN', @level2name=N'RowVersion';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Stable one-based position in the existing API array, set once at creation; zero is reserved for public catalog adoption or the retained v1 adapter.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'CustomSkill', @level2type=N'COLUMN', @level2name=N'CreationOrdinal';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Original accepted UUID spelling for API compatibility; the typed Id remains the ownership key. Null is reserved for public catalog adoption or the retained v1 adapter.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'CustomSkill', @level2type=N'COLUMN', @level2name=N'ClientKey';
-GO

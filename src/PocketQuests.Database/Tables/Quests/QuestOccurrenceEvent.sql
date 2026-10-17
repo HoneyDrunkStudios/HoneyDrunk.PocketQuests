@@ -30,29 +30,3 @@ GO
 -- Supports FK_QuestOccurrenceEvent_CommandReceipt parent-reference validation/deletion and direct child lookup; no covering payload columns.
 CREATE INDEX [IX_QuestOccurrenceEvent_FK_CommandReceipt] ON [pocketquests].[QuestOccurrenceEvent] ([AccountId], [CommandReceiptId]);
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'One row is one effective occurrence transition including completion, Undo or clock assessment. Classification: Restricted. History: event; Retain while the account exists, including its recovery interval; erase with the account. No arbitrary age-based pruning of replay source facts.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestOccurrenceEvent';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Stable effective event UUID, reused as the completion ID for Completed events.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestOccurrenceEvent', @level2type=N'COLUMN', @level2name=N'Id';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Pocket Quests account that exclusively owns this row; supplied by trusted server context.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestOccurrenceEvent', @level2type=N'COLUMN', @level2name=N'AccountId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Occurrence affected by this transition.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestOccurrenceEvent', @level2type=N'COLUMN', @level2name=N'QuestOccurrenceId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Immutable occurrence version relevant to the transition.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestOccurrenceEvent', @level2type=N'COLUMN', @level2name=N'QuestOccurrenceRevisionId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Accepted, Offered, Edited, Frozen, Resumed, Abandoned, Completed, Undone or DeadlineElapsed.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestOccurrenceEvent', @level2type=N'COLUMN', @level2name=N'EventCode';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Domain action/assessment time; never substituted with server receipt time. UTC instant.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestOccurrenceEvent', @level2type=N'COLUMN', @level2name=N'EffectiveAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Commit visibility order of this event.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestOccurrenceEvent', @level2type=N'COLUMN', @level2name=N'AccountMutationVersion';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Receipt for the command that caused this fact. Null means trusted clock/lifecycle reconciliation, not a client command.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestOccurrenceEvent', @level2type=N'COLUMN', @level2name=N'CommandReceiptId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC insertion time; not the effective time of a delayed offline action.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestOccurrenceEvent', @level2type=N'COLUMN', @level2name=N'CreatedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Ordered source-event replay with stable ties.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestOccurrenceEvent', @level2type=N'INDEX', @level2name=N'IX_QuestOccurrenceEvent_Replay';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Supports FK_QuestOccurrenceEvent_QuestOccurrenceRevision parent-reference validation/deletion and direct child lookup; no covering payload columns.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestOccurrenceEvent', @level2type=N'INDEX', @level2name=N'IX_QuestOccurrenceEvent_FK_QuestOccurrenceRevision';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Supports FK_QuestOccurrenceEvent_CommandReceipt parent-reference validation/deletion and direct child lookup; no covering payload columns.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestOccurrenceEvent', @level2type=N'INDEX', @level2name=N'IX_QuestOccurrenceEvent_FK_CommandReceipt';
-GO

@@ -27,25 +27,3 @@ GO
 -- Supports FK_QuestDefinitionSkillAllocation_CustomSkill parent-reference validation/deletion and direct child lookup; no covering payload columns.
 CREATE INDEX [IX_QuestDefinitionSkillAllocation_FK_CustomSkill] ON [pocketquests].[QuestDefinitionSkillAllocation] ([AccountId], [CustomSkillId]);
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'One row is one system/custom skill recipient in an immutable definition revision. Classification: Restricted. History: event; Retain while the account exists, including its recovery interval; erase with the account. No arbitrary age-based pruning of replay source facts.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionSkillAllocation';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Application-generated stable row UUID; never reused.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionSkillAllocation', @level2type=N'COLUMN', @level2name=N'Id';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Pocket Quests account that exclusively owns this row; supplied by trusted server context.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionSkillAllocation', @level2type=N'COLUMN', @level2name=N'AccountId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Immutable revision that owns this allocation.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionSkillAllocation', @level2type=N'COLUMN', @level2name=N'QuestDefinitionRevisionId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'System skill being referenced; null when CustomSkillId is supplied.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionSkillAllocation', @level2type=N'COLUMN', @level2name=N'SystemSkillId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Custom skill owned by this account; null when SystemSkillId is supplied.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionSkillAllocation', @level2type=N'COLUMN', @level2name=N'CustomSkillId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Exact share 0..10000; nonempty allocation pool must sum to 10000 in the controlled write.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionSkillAllocation', @level2type=N'COLUMN', @level2name=N'BasisPoints';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC insertion time; not the effective time of a delayed offline action.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionSkillAllocation', @level2type=N'COLUMN', @level2name=N'CreatedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Original allocation array position, preserving the existing API order; v1 rows retain their display-order adapter.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionSkillAllocation', @level2type=N'COLUMN', @level2name=N'Position';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Supports FK_QuestDefinitionSkillAllocation_Skill_System parent-reference validation/deletion and direct child lookup; no covering payload columns.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionSkillAllocation', @level2type=N'INDEX', @level2name=N'IX_QuestDefinitionSkillAllocation_FK_Skill_System';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Supports FK_QuestDefinitionSkillAllocation_CustomSkill parent-reference validation/deletion and direct child lookup; no covering payload columns.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestDefinitionSkillAllocation', @level2type=N'INDEX', @level2name=N'IX_QuestDefinitionSkillAllocation_FK_CustomSkill';
-GO

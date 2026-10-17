@@ -5,13 +5,83 @@ import json
 import unittest
 import argparse
 import tempfile
+import os
 from unittest.mock import patch
 from validate_contract import validate, contract_path
+from generate_schema import compile_metadata, metadata_output_path, metadata_sql, table_sql, main as generate_main
 
 CONTRACT = json.loads((Path(__file__).resolve().parents[2] / 'docs/schema/schema-contract.json').read_text(encoding='utf-8'))
 
 
 class ContractGateTests(unittest.TestCase):
+    def test_metadata_output_rejects_traversal_and_absolute_paths_outside_obj(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / 'database'
+            database.mkdir()
+            outside = Path(directory) / 'outside.sql'
+            outside.write_text('preserve this file', encoding='utf-8')
+            with patch('generate_schema.DATABASE', database):
+                inside = database / 'obj' / 'dotnet' / 'Release' / 'SchemaDescriptions.g.sql'
+                self.assertEqual(inside.resolve(), metadata_output_path(inside))
+                for rejected in [outside, database / 'obj' / '..' / 'source.sql', database / 'obj-other' / 'file.sql', database / 'obj']:
+                    with self.subTest(path=rejected):
+                        with self.assertRaises(argparse.ArgumentTypeError):
+                            compile_metadata(CONTRACT, rejected)
+                with patch('sys.argv', ['generate_schema.py', '--metadata-output', str(outside)]):
+                    with self.assertRaises(SystemExit) as failure:
+                        generate_main()
+                    self.assertEqual(2, failure.exception.code)
+            self.assertEqual('preserve this file', outside.read_text(encoding='utf-8'))
+            self.assertFalse((database / 'source.sql').exists())
+            self.assertFalse((database / 'obj-other').exists())
+
+    def test_metadata_timestamp_changes_only_when_descriptions_change(self):
+        with tempfile.TemporaryDirectory() as directory, patch('generate_schema.DATABASE', Path(directory)):
+            output = Path(directory) / 'obj' / 'metadata.sql'
+            self.assertEqual(0, compile_metadata(CONTRACT, output))
+            old_timestamp = 1_600_000_000_000_000_000
+            os.utime(output, ns=(old_timestamp, old_timestamp))
+            self.assertEqual(0, compile_metadata(CONTRACT, output))
+            self.assertEqual(old_timestamp, output.stat().st_mtime_ns)
+            changed = deepcopy(CONTRACT)
+            changed['tables'][0]['description'] += ' Updated description.'
+            self.assertEqual(0, compile_metadata(changed, output))
+            self.assertNotEqual(old_timestamp, output.stat().st_mtime_ns)
+            self.assertIn('Updated description.', output.read_text(encoding='utf-8'))
+
+    def test_metadata_preserves_all_reviewed_descriptions(self):
+        sql = metadata_sql(CONTRACT)
+        expected = sum(1 + len(t['columns']) + len(t['indexes']) for t in CONTRACT['tables'])
+        self.assertEqual(expected, sql.count('EXEC sys.sp_addextendedproperty'))
+        for table in CONTRACT['tables']:
+            self.assertNotIn('sp_addextendedproperty', table_sql(table))
+            descriptions = [table['description']]
+            descriptions.extend(c['description'] for c in table['columns'])
+            descriptions.extend(i['purpose'] for i in table['indexes'])
+            for description in descriptions:
+                self.assertIn("@value=N'" + description.replace("'", "''") + "'", sql)
+
+    def test_metadata_compilation_escapes_unicode_and_apostrophes(self):
+        contract = deepcopy(CONTRACT)
+        contract['tables'][0]['description'] = "Owner's progress – retained history"
+        self.assertIn("@value=N'Owner''s progress – retained history'", metadata_sql(contract))
+
+    def test_metadata_command_writes_only_build_output_and_rejects_invalid_contract(self):
+        with tempfile.TemporaryDirectory() as directory, patch('generate_schema.DATABASE', Path(directory)):
+            output = Path(directory) / 'obj' / 'descriptions.sql'
+            with patch('sys.argv', ['generate_schema.py', '--metadata-output', str(output)]), patch('generate_schema.outputs') as sources:
+                self.assertEqual(0, generate_main())
+                sources.assert_not_called()
+            original = output.read_text(encoding='utf-8')
+            self.assertEqual(metadata_sql(CONTRACT), original)
+            invalid = deepcopy(CONTRACT)
+            invalid['tables'][0]['description'] = ''
+            contract_file = Path(directory) / 'invalid.json'
+            contract_file.write_text(json.dumps(invalid), encoding='utf-8')
+            with patch('sys.argv', ['generate_schema.py', '--metadata-output', str(output)]), patch('generate_schema.CONTRACT', contract_file):
+                self.assertEqual(1, generate_main())
+            self.assertEqual(original, output.read_text(encoding='utf-8'))
+
     def test_contract_path_is_confined_after_resolution(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)

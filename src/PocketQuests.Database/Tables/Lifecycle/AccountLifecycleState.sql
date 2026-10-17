@@ -30,29 +30,3 @@ GO
 -- Supports FK_AccountLifecycleState_Account parent-reference validation/deletion and direct child lookup; no covering payload columns.
 CREATE INDEX [IX_AccountLifecycleState_FK_Account] ON [pocketquests].[AccountLifecycleState] ([AccountId], [IdentityUserId]);
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'One row is one latest accepted lifecycle fence for a canonical Identity user, possibly before onboarding. Classification: Restricted. History: mutable; Retain while required to fence the account/pre-onboarding identity. On verified erasure replace with minimal marker; no content history.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountLifecycleState';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Application-generated stable row UUID; never reused.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountLifecycleState', @level2type=N'COLUMN', @level2name=N'Id';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Canonical external Identity user being fenced; never a provider identity.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountLifecycleState', @level2type=N'COLUMN', @level2name=N'IdentityUserId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Local product profile if one exists; null before onboarding or after purge.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountLifecycleState', @level2type=N'COLUMN', @level2name=N'AccountId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Highest accepted monotonic Identity lifecycle version; old deliveries cannot reduce it.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountLifecycleState', @level2type=N'COLUMN', @level2name=N'Version';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Active, Inactive or Erasing, as defined by the reviewed Identity lifecycle contract.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountLifecycleState', @level2type=N'COLUMN', @level2name=N'StateCode';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Authoritative Identity transition instant. UTC instant.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountLifecycleState', @level2type=N'COLUMN', @level2name=N'EffectiveAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Original deletion-request pause origin, retained across cancellation. UTC instant. Null means this event has not happened.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountLifecycleState', @level2type=N'COLUMN', @level2name=N'PausedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC insertion time; not the effective time of a delayed offline action.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountLifecycleState', @level2type=N'COLUMN', @level2name=N'CreatedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC time of the most recent persisted change; writer must set on each update.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountLifecycleState', @level2type=N'COLUMN', @level2name=N'ModifiedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'SQL-generated opaque concurrency token; compare as bytes, not as a clock.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountLifecycleState', @level2type=N'COLUMN', @level2name=N'RowVersion';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'At most one lifecycle fence attached to a local profile.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountLifecycleState', @level2type=N'INDEX', @level2name=N'UQ_AccountLifecycleState_Account';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Supports FK_AccountLifecycleState_Account parent-reference validation/deletion and direct child lookup; no covering payload columns.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountLifecycleState', @level2type=N'INDEX', @level2name=N'IX_AccountLifecycleState_FK_Account';
-GO

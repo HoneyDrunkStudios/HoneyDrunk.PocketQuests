@@ -18,21 +18,3 @@ CREATE TABLE [pocketquests].[ProfileReward] (
     CONSTRAINT [CK_ProfileReward_ModificationClock] CHECK ([ModifiedAt]>=[CreatedAt])
 );
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'One row is one public achievement, badge or frame definition. Classification: Public. History: reference; Retain referenced reward codes; history is the versioned catalog. Not erased with accounts.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'ProfileReward';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Stable reward code, including existing A01/A02/B01/B02/F01/F02 IDs.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'ProfileReward', @level2type=N'COLUMN', @level2name=N'Id';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Achievement, Badge or Frame; only Badge and Frame are selectable.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'ProfileReward', @level2type=N'COLUMN', @level2name=N'KindCode';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Public display name of this reward.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'ProfileReward', @level2type=N'COLUMN', @level2name=N'Name';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Nonnegative qualifying count in the versioned reward rule.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'ProfileReward', @level2type=N'COLUMN', @level2name=N'RequiredCount';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Minimum global rank in the versioned reward rule.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'ProfileReward', @level2type=N'COLUMN', @level2name=N'RequiredRank';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Reviewed catalog/ruleset version that defines the qualifying predicate.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'ProfileReward', @level2type=N'COLUMN', @level2name=N'RulesetVersion';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC insertion time; not the effective time of a delayed offline action.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'ProfileReward', @level2type=N'COLUMN', @level2name=N'CreatedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC time of the most recent persisted change; writer must set on each update.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'ProfileReward', @level2type=N'COLUMN', @level2name=N'ModifiedAt';
-GO

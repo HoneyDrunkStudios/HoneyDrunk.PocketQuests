@@ -14,15 +14,3 @@ GO
 -- Supports FK_AccountInterest_Category parent-reference validation/deletion and direct child lookup; no covering payload columns.
 CREATE INDEX [IX_AccountInterest_FK_Category] ON [pocketquests].[AccountInterest] ([CategoryId]);
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'One row is one current category selected as an account interest. Classification: Restricted. History: event; Current association only; remove when deselected and at final erasure. No historical interest tracking.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountInterest';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Pocket Quests account that exclusively owns this row; supplied by trusted server context.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountInterest', @level2type=N'COLUMN', @level2name=N'AccountId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Selected category; never enables recurrence implicitly.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountInterest', @level2type=N'COLUMN', @level2name=N'CategoryId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC insertion time; not the effective time of a delayed offline action.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountInterest', @level2type=N'COLUMN', @level2name=N'CreatedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Current selected category array position, zero-based and at most nine.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountInterest', @level2type=N'COLUMN', @level2name=N'Position';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Supports FK_AccountInterest_Category parent-reference validation/deletion and direct child lookup; no covering payload columns.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountInterest', @level2type=N'INDEX', @level2name=N'IX_AccountInterest_FK_Category';
-GO

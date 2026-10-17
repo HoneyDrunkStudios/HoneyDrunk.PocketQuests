@@ -60,6 +60,12 @@ def table_sql(table):
         output.append('CREATE ' + ('UNIQUE ' if index['unique'] else '') + f"INDEX [{index['name']}] ON {full} ({names(index['columns'])})"
                       + (' INCLUDE (' + names(index['include']) + ')' if index['include'] else '')
                       + (' WHERE ' + index['filter'] if index['filter'] else '') + ';\nGO')
+    return '\n'.join(output) + '\n'
+
+
+def table_metadata_sql(table):
+    """Compile reviewed descriptions into SQL model properties, independently of DDL."""
+    output = []
     levels = f", @level0type=N'SCHEMA', @level0name={sql_string(table['schema'])}, @level1type=N'TABLE', @level1name={sql_string(table['name'])}"
     properties = [(table['description'], '')]
     properties += [(c['description'], ", @level2type=N'COLUMN', @level2name=" + sql_string(c['name'])) for c in table['columns']]
@@ -67,6 +73,11 @@ def table_sql(table):
     for value, level in properties:
         output.append("EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=" + sql_string(value) + levels + level + ';\nGO')
     return '\n'.join(output) + '\n'
+
+
+def metadata_sql(contract):
+    return '-- Generated schema descriptions; edit docs/schema/schema-contract.json.\n' + ''.join(
+        table_metadata_sql(table) for table in contract['tables'])
 
 
 def seed_sql(data):
@@ -94,12 +105,42 @@ def outputs(contract):
     return result
 
 
+def metadata_output_path(value):
+    """Confine generated SQL to the database project's intermediate output directory."""
+    output = Path(value).resolve()
+    allowed = DATABASE.resolve() / 'obj'
+    if output == allowed or not output.is_relative_to(allowed):
+        raise argparse.ArgumentTypeError('Metadata output must be a file inside the database project obj directory.')
+    return output
+
+
+def compile_metadata(contract, output):
+    """Validate build input and preserve incremental builds when descriptions are unchanged."""
+    output = metadata_output_path(output)
+    from validate_contract import validate
+    errors, _ = validate(contract)
+    if errors:
+        print('Invalid schema contract:\n' + '\n'.join(errors), file=sys.stderr)
+        return 1
+    content = metadata_sql(contract)
+    if not output.exists() or output.read_text(encoding='utf-8') != content:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(content, encoding='utf-8', newline='\n')
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--check', action='store_true')
+    parser.add_argument('--metadata-output', type=metadata_output_path, help='Compile descriptions inside the database project obj directory without rewriting source files.')
     args = parser.parse_args()
+    contract = json.loads(CONTRACT.read_text(encoding='utf-8'))
+    if args.metadata_output:
+        if args.check:
+            parser.error('--check cannot be combined with --metadata-output')
+        return compile_metadata(contract, args.metadata_output)
     drift = []
-    for path, content in outputs(json.loads(CONTRACT.read_text(encoding='utf-8'))).items():
+    for path, content in outputs(contract).items():
         if args.check:
             if not path.exists() or path.read_text(encoding='utf-8') != content:
                 drift.append(str(path.relative_to(ROOT)))

@@ -16,17 +16,3 @@ GO
 -- Supports ownership FK validation and direct history lookup for FK_QuestCommandInterest_Category.
 CREATE INDEX [IX_QuestCommandInterest_CategoryId] ON [pocketquests].[QuestCommandInterest] ([CategoryId]);
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'One row is one ordered category selected by a successful interests command, retained only to reconstruct its historical response. Classification: Restricted. History: immutable. Erase with its account; no age cutoff on replay history.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestCommandInterest';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Owning account, shared with the parent history row.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestCommandInterest', @level2type=N'COLUMN', @level2name=N'AccountId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Immutable interests transition owning this selected category.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestCommandInterest', @level2type=N'COLUMN', @level2name=N'QuestCommandHistoryId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Selected public category code.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestCommandInterest', @level2type=N'COLUMN', @level2name=N'CategoryId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Original distinct selection order, matching the existing profile array.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestCommandInterest', @level2type=N'COLUMN', @level2name=N'Position';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'UTC server insertion instant.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestCommandInterest', @level2type=N'COLUMN', @level2name=N'CreatedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Supports ownership FK validation and direct history lookup for FK_QuestCommandInterest_Category.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'QuestCommandInterest', @level2type=N'INDEX', @level2name=N'IX_QuestCommandInterest_CategoryId';
-GO

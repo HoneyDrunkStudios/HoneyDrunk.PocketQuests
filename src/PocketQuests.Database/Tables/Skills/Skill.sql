@@ -16,19 +16,3 @@ CREATE TABLE [pocketquests].[Skill] (
     CONSTRAINT [CK_Skill_ModificationClock] CHECK ([ModifiedAt]>=[CreatedAt])
 );
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'One row is one canonical system skill. Classification: Public. History: reference; Retain stable codes indefinitely; source control owns reference history. Not erased with accounts.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'Skill';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Stable public catalog code; preserve existing IDs and ordinal allocation tie-breaking.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'Skill', @level2type=N'COLUMN', @level2name=N'Id';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Current public catalog display name.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'Skill', @level2type=N'COLUMN', @level2name=N'Name';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Version of the reviewed catalog that supplied this row.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'Skill', @level2type=N'COLUMN', @level2name=N'CatalogVersion';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Positive canonical display order; not an independently chosen progression priority.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'Skill', @level2type=N'COLUMN', @level2name=N'SortOrder';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Reserved system skill name normalized by the versioned OrdinalIgnoreCase-equivalent normalizer; compare with BIN2 collation.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'Skill', @level2type=N'COLUMN', @level2name=N'NormalizedName';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC insertion time; not the effective time of a delayed offline action.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'Skill', @level2type=N'COLUMN', @level2name=N'CreatedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC time of the most recent persisted change; writer must set on each update.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'Skill', @level2type=N'COLUMN', @level2name=N'ModifiedAt';
-GO

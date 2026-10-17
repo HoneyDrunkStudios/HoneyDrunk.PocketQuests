@@ -22,23 +22,3 @@ GO
 -- Supports FK_TimeZoneChange_CommandReceipt parent-reference validation/deletion and direct child lookup; no covering payload columns.
 CREATE INDEX [IX_TimeZoneChange_FK_CommandReceipt] ON [pocketquests].[TimeZoneChange] ([AccountId], [CommandReceiptId]);
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'One row is one recorded selection of a new personal calendar timezone. Classification: Restricted. History: event; Retain while the account exists, including its recovery interval; erase with the account. No arbitrary age-based pruning of replay source facts.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'TimeZoneChange';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Application-generated stable row UUID; never reused.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'TimeZoneChange', @level2type=N'COLUMN', @level2name=N'Id';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Pocket Quests account that exclusively owns this row; supplied by trusted server context.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'TimeZoneChange', @level2type=N'COLUMN', @level2name=N'AccountId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'IANA zone before the change.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'TimeZoneChange', @level2type=N'COLUMN', @level2name=N'FromTimeZoneId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'IANA zone selected by the account.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'TimeZoneChange', @level2type=N'COLUMN', @level2name=N'ToTimeZoneId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Recorded time of the timezone change. UTC instant.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'TimeZoneChange', @level2type=N'COLUMN', @level2name=N'EffectiveAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Receipt for the command that caused this fact.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'TimeZoneChange', @level2type=N'COLUMN', @level2name=N'CommandReceiptId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC insertion time; not the effective time of a delayed offline action.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'TimeZoneChange', @level2type=N'COLUMN', @level2name=N'CreatedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Reconstruct selected-zone history with stable event-ID ties.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'TimeZoneChange', @level2type=N'INDEX', @level2name=N'IX_TimeZoneChange_Replay';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Supports FK_TimeZoneChange_CommandReceipt parent-reference validation/deletion and direct child lookup; no covering payload columns.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'TimeZoneChange', @level2type=N'INDEX', @level2name=N'IX_TimeZoneChange_FK_CommandReceipt';
-GO
