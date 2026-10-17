@@ -97,4 +97,16 @@
   <Import Project="Sdk.targets" Sdk="Microsoft.Build.Sql" Version="2.3.0" Condition="'$(MSBuildRuntimeType)' == 'Core'" />
   <Import Project="$(SQLDBExtensionsRefPath)\Microsoft.Data.Tools.Schema.SqlTasks.targets" Condition="'$(MSBuildRuntimeType)' != 'Core' AND '$(SQLDBExtensionsRefPath)' != ''" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" Condition="'$(MSBuildRuntimeType)' != 'Core' AND '$(SQLDBExtensionsRefPath)' == ''" />
+  <!-- Both SSDT and dotnet compile descriptions into the DACPAC model, not post-deploy SQL. -->
+  <Target Name="CompileSchemaDescriptions" BeforeTargets="_SetupSqlBuildInputs">
+    <PropertyGroup>
+      <SchemaPythonExecutable Condition="'$(SchemaPythonExecutable)' == ''">python</SchemaPythonExecutable>
+      <SchemaMetadataFile>$(IntermediateOutputPath)SchemaDescriptions.g.sql</SchemaMetadataFile>
+    </PropertyGroup>
+    <Exec Command="&quot;$(SchemaPythonExecutable)&quot; &quot;$(MSBuildProjectDirectory)/../../scripts/schema/generate_schema.py&quot; --metadata-output &quot;$(SchemaMetadataFile)&quot;" />
+    <ItemGroup>
+      <Build Include="$(SchemaMetadataFile)" />
+      <FileWrites Include="$(SchemaMetadataFile)" />
+    </ItemGroup>
+  </Target>
 </Project>

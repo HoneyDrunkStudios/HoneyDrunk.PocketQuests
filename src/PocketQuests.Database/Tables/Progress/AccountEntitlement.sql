@@ -24,25 +24,3 @@ GO
 -- Supports FK_AccountEntitlement_ProfileReward parent-reference validation/deletion and direct child lookup; no covering payload columns.
 CREATE INDEX [IX_AccountEntitlement_FK_ProfileReward] ON [pocketquests].[AccountEntitlement] ([ProfileRewardId]);
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'One row is one account current eligibility for a public achievement, badge or frame. Classification: Restricted. History: projection; Current projection only; no historical full copies. Erase with account.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountEntitlement';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Application-generated stable row UUID; never reused.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountEntitlement', @level2type=N'COLUMN', @level2name=N'Id';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Pocket Quests account that exclusively owns this row; supplied by trusted server context.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountEntitlement', @level2type=N'COLUMN', @level2name=N'AccountId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Reward definition whose eligibility is projected.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountEntitlement', @level2type=N'COLUMN', @level2name=N'ProfileRewardId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Nonnegative current count of surviving qualifying contributions.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountEntitlement', @level2type=N'COLUMN', @level2name=N'QualifyingCount';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Current derived eligibility; may become false after Undo or rank change.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountEntitlement', @level2type=N'COLUMN', @level2name=N'IsEarned';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Account projection generation for this reward.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountEntitlement', @level2type=N'COLUMN', @level2name=N'ProjectionVersion';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Reviewed trigger version used for this eligibility.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountEntitlement', @level2type=N'COLUMN', @level2name=N'RulesetVersion';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC insertion time; not the effective time of a delayed offline action.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountEntitlement', @level2type=N'COLUMN', @level2name=N'CreatedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC time of the most recent persisted change; writer must set on each update.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountEntitlement', @level2type=N'COLUMN', @level2name=N'ModifiedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Supports FK_AccountEntitlement_ProfileReward parent-reference validation/deletion and direct child lookup; no covering payload columns.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'AccountEntitlement', @level2type=N'INDEX', @level2name=N'IX_AccountEntitlement_FK_ProfileReward';
-GO

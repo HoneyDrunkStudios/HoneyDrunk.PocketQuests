@@ -27,25 +27,3 @@ GO
 -- Supports FK_LifecycleMessage_Account parent-reference validation/deletion and direct child lookup; no covering payload columns.
 CREATE INDEX [IX_LifecycleMessage_FK_Account] ON [pocketquests].[LifecycleMessage] ([AccountId], [IdentityUserId]);
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'One row is one short-lived acknowledgment-envelope ownership binding for private Identity delivery. Classification: Restricted. History: plumbing; Delete after dispatch or within one hour. May outlive Account only long enough to complete the current private acknowledgment.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'LifecycleMessage';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Application-generated stable row UUID; never reused.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'LifecycleMessage', @level2type=N'COLUMN', @level2name=N'Id';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Canonical external user whose lifecycle acknowledgment this is.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'LifecycleMessage', @level2type=N'COLUMN', @level2name=N'IdentityUserId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Product account if still present; null before onboarding or after purge.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'LifecycleMessage', @level2type=N'COLUMN', @level2name=N'AccountId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Identity transition version being acknowledged.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'LifecycleMessage', @level2type=N'COLUMN', @level2name=N'LifecycleVersion';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Shared Data.Outbox row containing the acknowledgment capability and payload.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'LifecycleMessage', @level2type=N'COLUMN', @level2name=N'OutboxMessageId';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Hard delivery-envelope expiration; maximum one hour after creation, matching current protocol. UTC instant.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'LifecycleMessage', @level2type=N'COLUMN', @level2name=N'ExpiresAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Server UTC insertion time; not the effective time of a delayed offline action.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'LifecycleMessage', @level2type=N'COLUMN', @level2name=N'CreatedAt';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Erase/inspect user-owned delivery envelopes without JSON substring matching.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'LifecycleMessage', @level2type=N'INDEX', @level2name=N'IX_LifecycleMessage_OwnerVersion';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Bounded expiry cleanup for delivery bindings.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'LifecycleMessage', @level2type=N'INDEX', @level2name=N'IX_LifecycleMessage_Retention';
-GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Supports FK_LifecycleMessage_Account parent-reference validation/deletion and direct child lookup; no covering payload columns.', @level0type=N'SCHEMA', @level0name=N'pocketquests', @level1type=N'TABLE', @level1name=N'LifecycleMessage', @level2type=N'INDEX', @level2name=N'IX_LifecycleMessage_FK_Account';
-GO
