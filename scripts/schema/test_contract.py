@@ -5,14 +5,29 @@ import json
 import unittest
 import argparse
 import tempfile
+import os
 from unittest.mock import patch
 from validate_contract import validate, contract_path
-from generate_schema import metadata_sql, table_sql, main as generate_main
+from generate_schema import compile_metadata, metadata_sql, table_sql, main as generate_main
 
 CONTRACT = json.loads((Path(__file__).resolve().parents[2] / 'docs/schema/schema-contract.json').read_text(encoding='utf-8'))
 
 
 class ContractGateTests(unittest.TestCase):
+    def test_metadata_timestamp_changes_only_when_descriptions_change(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'metadata.sql'
+            self.assertEqual(0, compile_metadata(CONTRACT, output))
+            old_timestamp = 1_600_000_000_000_000_000
+            os.utime(output, ns=(old_timestamp, old_timestamp))
+            self.assertEqual(0, compile_metadata(CONTRACT, output))
+            self.assertEqual(old_timestamp, output.stat().st_mtime_ns)
+            changed = deepcopy(CONTRACT)
+            changed['tables'][0]['description'] += ' Updated description.'
+            self.assertEqual(0, compile_metadata(changed, output))
+            self.assertNotEqual(old_timestamp, output.stat().st_mtime_ns)
+            self.assertIn('Updated description.', output.read_text(encoding='utf-8'))
+
     def test_metadata_preserves_all_reviewed_descriptions(self):
         sql = metadata_sql(CONTRACT)
         expected = sum(1 + len(t['columns']) + len(t['indexes']) for t in CONTRACT['tables'])

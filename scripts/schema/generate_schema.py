@@ -105,6 +105,20 @@ def outputs(contract):
     return result
 
 
+def compile_metadata(contract, output):
+    """Validate build input and preserve incremental builds when descriptions are unchanged."""
+    from validate_contract import validate
+    errors, _ = validate(contract)
+    if errors:
+        print('Invalid schema contract:\n' + '\n'.join(errors), file=sys.stderr)
+        return 1
+    content = metadata_sql(contract)
+    if not output.exists() or output.read_text(encoding='utf-8') != content:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(content, encoding='utf-8', newline='\n')
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--check', action='store_true')
@@ -114,14 +128,7 @@ def main():
     if args.metadata_output:
         if args.check:
             parser.error('--check cannot be combined with --metadata-output')
-        from validate_contract import validate
-        errors, _ = validate(contract)
-        if errors:
-            print('Invalid schema contract:\n' + '\n'.join(errors), file=sys.stderr)
-            return 1
-        args.metadata_output.parent.mkdir(parents=True, exist_ok=True)
-        args.metadata_output.write_text(metadata_sql(contract), encoding='utf-8', newline='\n')
-        return 0
+        return compile_metadata(contract, args.metadata_output)
     drift = []
     for path, content in outputs(contract).items():
         if args.check:
