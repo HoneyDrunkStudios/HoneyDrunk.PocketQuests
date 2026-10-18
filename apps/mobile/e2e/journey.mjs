@@ -541,7 +541,10 @@ try {
     fullPage: false,
   });
   diagnostics.checkpoint("export-timer");
-  await page.getByRole("tab", { name: "Progress", exact: true }).click();
+  // The overlaid gear must remain reachable above the decorative heading art.
+  await page
+    .getByRole("link", { name: "Settings and profile", exact: true })
+    .click();
   await expect(
     visibleText("280 base XP earned", { exact: true }),
   ).toBeVisible();

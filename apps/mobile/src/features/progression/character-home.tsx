@@ -2,7 +2,7 @@ import { Page } from "../../session/session-page";
 import { Text, View } from "react-native";
 import { Redirect } from "expo-router";
 import { useAccountSnapshot } from "../../session/session";
-import { Label, Card, styles } from "../../shared/ui";
+import { Label, Card, colors, styles } from "../../shared/ui";
 import { JournalHeading } from "../../shared/journal-heading";
 import { ProgressRow, CategoryProgress } from "./character-tracks";
 import { RankProgress } from "./rank-progress";
@@ -32,7 +32,10 @@ export function CharacterHome() {
         />
       }
     >
-      <Card testID="character-sheet" style={{ gap: 12, padding: 12 }}>
+      <Card
+        testID="character-sheet"
+        style={{ gap: 12, padding: 12, borderColor: colors.gold }}
+      >
         <View
           style={{
             flexDirection: "row",

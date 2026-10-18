@@ -1,6 +1,7 @@
 import { ImageBackground, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { Link } from "expo-router";
 import { journalArt } from "./journal-art";
 import { colors, styles } from "./ui";
 
@@ -8,7 +9,8 @@ import { colors, styles } from "./ui";
 export function JournalHeading({
   title,
   description,
-}: Readonly<{ title: string; description?: string }>) {
+  compact = false,
+}: Readonly<{ title: string; description?: string; compact?: boolean }>) {
   const insets = useSafeAreaInsets();
   return (
     <ImageBackground
@@ -18,10 +20,10 @@ export function JournalHeading({
       imageStyle={{ width: "100%", height: "100%" }}
       style={{
         marginHorizontal: -16,
-        paddingHorizontal: 26,
+        paddingHorizontal: 24,
         paddingTop: insets.top + 16,
         paddingBottom: 12,
-        minHeight: 200 + insets.top,
+        minHeight: (compact ? 178 : 220) + insets.top,
         justifyContent: "space-between",
       }}
     >
@@ -31,12 +33,30 @@ export function JournalHeading({
           size={32}
           color={colors.gold}
           accessible={false}
+          aria-hidden
         />
-        <Text style={[styles.subtitle, { fontSize: 24, flexShrink: 1 }]}>
+        <Text style={[styles.subtitle, { fontSize: 24, flex: 1 }]}>
           Pocket Quests
         </Text>
+        <Link
+          href="/(tabs)/profile"
+          accessibilityLabel="Settings and profile"
+          style={{
+            padding: 10,
+            minWidth: 48,
+            minHeight: 48,
+            color: colors.ink,
+          }}
+        >
+          <Ionicons
+            name="settings-outline"
+            size={26}
+            accessible={false}
+            aria-hidden
+          />
+        </Link>
       </View>
-      <View style={{ gap: 6, paddingTop: 78 }}>
+      <View style={{ gap: 6, paddingTop: compact ? 42 : 64 }}>
         <Text accessibilityRole="header" style={styles.title}>
           {title}
         </Text>

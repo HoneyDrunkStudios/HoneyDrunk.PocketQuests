@@ -1,6 +1,6 @@
-import { Image, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { journalArt } from "../../shared/journal-art";
+import { QuestCardArtwork } from "./quest-card-artwork";
 import { Link } from "expo-router";
 import { questActions } from "./commands/quest-actions";
 import {
@@ -34,11 +34,12 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
   return (
     <Card
       style={{
-        borderColor: creative ? "#9274B9" : colors.line,
-        gap: 6,
-        padding: 12,
+        borderColor: creative ? "#9274B9" : colors.gold,
+        gap: 8,
+        padding: 16,
       }}
     >
+      <QuestCardArtwork creative={creative} />
       <View
         style={{
           flexDirection: "row",
@@ -79,7 +80,7 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
         {q.title}
       </Text>
       <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-        <View style={{ flex: 1, gap: 8 }}>
+        <View style={{ flex: 1, gap: 10, minHeight: 62 }}>
           <Text
             style={[
               styles.muted,
@@ -98,12 +99,6 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
               : ""}
           </Text>
         </View>
-        <Image
-          source={creative ? journalArt.sketchbook : journalArt.work}
-          accessible={false}
-          resizeMode="contain"
-          style={{ width: 80, height: 52 }}
-        />
       </View>
       {item.pendingCompletion && (
         <View
@@ -112,6 +107,7 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
             borderColor: colors.line,
             borderRadius: 10,
             padding: 10,
+            backgroundColor: colors.card,
           }}
         >
           <Label style={styles.muted}>
@@ -133,19 +129,20 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
             borderTopWidth: 1,
             borderTopColor: colors.line,
             fontWeight: "600",
+            backgroundColor: "rgba(9, 26, 41, 0.85)",
           },
         ]}
       >
         View quest & rewards
       </Link>
       {item.occurrence.lifecycle?.lockedLoss != null && (
-        <Label>
+        <Label style={{ backgroundColor: colors.card }}>
           Accepted loss: up to {item.occurrence.lifecycle.lockedLoss} category
           XP.
         </Label>
       )}
       {item.status === "Frozen" && (
-        <Label>
+        <Label style={{ backgroundColor: colors.card }}>
           Frozen: resume its category/account pause first. Stopped-series
           commitments can then be resumed in quest details.
         </Label>

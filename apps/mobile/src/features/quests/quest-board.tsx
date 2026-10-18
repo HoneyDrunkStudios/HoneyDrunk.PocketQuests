@@ -1,8 +1,6 @@
 import { Page } from "../../session/session-page";
 import { QuestHistory, type QuestHistorySection } from "./quest-history";
 import { useMemo, useState } from "react";
-import { ThemeProvider } from "@honeydrunk/ui-native";
-import { pocketQuestsTheme } from "../../shared/theme";
 import { JournalHeading } from "../../shared/journal-heading";
 import { useAccountSnapshot } from "../../session/session";
 import { Button, Label } from "../../shared/ui";
@@ -24,13 +22,13 @@ export function QuestBoard() {
   );
   if (!state)
     return (
-      <Page header={<JournalHeading title="Your quests" />}>
+      <Page header={<JournalHeading title="Your quests" compact />}>
         <Label>Loading your quests.</Label>
       </Page>
     );
   if (state && !state.profile.onboardingComplete)
     return (
-      <Page header={<JournalHeading title="Your quests" />}>
+      <Page header={<JournalHeading title="Your quests" compact />}>
         <ProfileEditor />
       </Page>
     );
@@ -74,7 +72,7 @@ export function QuestBoard() {
   return (
     <QuestHistory
       sections={sections}
-      header={<JournalHeading title="Your quests" />}
+      header={<JournalHeading title="Your quests" compact />}
     >
       <QuestViewTabs<BoardView>
         options={boardViews}
@@ -103,21 +101,10 @@ export function QuestBoard() {
               onPress={() => setShowPast((shown) => !shown)}
             />
           )}
-          <ThemeProvider
-            theme={{
-              ...pocketQuestsTheme,
-              colors: {
-                ...pocketQuestsTheme.colors,
-                primary: "#F8794D",
-                onPrimary: "#172332",
-              },
-            }}
-          >
-            <Button
-              title="Choose another quest"
-              onPress={() => setSection("Available")}
-            />
-          </ThemeProvider>
+          <Button
+            title="Choose another quest"
+            onPress={() => setSection("Available")}
+          />
         </>
       )}
       {section !== "Available" && items.length === 0 && (

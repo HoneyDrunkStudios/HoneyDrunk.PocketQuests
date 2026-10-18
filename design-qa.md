@@ -1,5 +1,7 @@
 # Illustrated journal visual QA — October 18, 2026
 
+Current approved city revision: [city journal visual QA](docs/design/city-journal-20261018/README.md), including same-viewport reference/implementation comparisons and narrow pending-card evidence. The remainder of this file records the earlier lake-style implementation and PR #28 follow-up; it is retained as historical evidence.
+
 final result: passed
 
 Scope: the approved Home, active quest cards, shared typography/palette and navigation. This is a visual/component gate, not native-device, authentication-provider or production acceptance.
