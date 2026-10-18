@@ -105,6 +105,11 @@ test("character sections start collapsed, open independently and remove hidden d
   const view = await mount(data);
   try {
     for (const { title } of data) {
+      const heading = [
+        ...view.element.querySelectorAll('[role="heading"]'),
+      ].find((item) => item.textContent === title);
+      assert.ok(heading, `${title} remains reachable by heading navigation`);
+      assert.equal(view.button(title).contains(heading), false);
       assert.equal(view.button(title).getAttribute("role"), "button");
       assert.equal(view.button(title).getAttribute("tabindex"), "0");
       assert.equal(view.button(title).getAttribute("aria-expanded"), "false");

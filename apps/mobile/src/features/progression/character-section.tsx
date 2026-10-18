@@ -20,6 +20,9 @@ export function CharacterSection({
   const [focused, setFocused] = useState(false);
   return (
     <Card style={{ gap: 16 }}>
+      <Text accessibilityRole="header" style={styles.subtitle}>
+        {title}
+      </Text>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${title}, ${count}`}
@@ -49,10 +52,9 @@ export function CharacterSection({
             gap: 8,
           }}
         >
-          <Text style={styles.subtitle}>{title}</Text>
+          <Text style={styles.muted}>{description}</Text>
           <Text style={[styles.text, { color: colors.gold }]}>{count}</Text>
         </View>
-        <Text style={styles.muted}>{description}</Text>
         <Text style={[styles.text, { color: colors.gold }]}>
           {expanded ? "Hide details" : "Show details"}
         </Text>

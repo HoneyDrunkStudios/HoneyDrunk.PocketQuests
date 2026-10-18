@@ -358,6 +358,9 @@ try {
     ["Attributes", committed.attributes],
     ["Skills", committed.skills],
   ]) {
+    await expect(
+      page.getByRole("heading", { name: title, exact: true }),
+    ).toBeVisible();
     const section = page.getByRole("button", {
       name: `${title}, ${items.length}`,
       exact: true,
