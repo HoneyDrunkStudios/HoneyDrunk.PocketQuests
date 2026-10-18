@@ -9,10 +9,10 @@ Scope: the approved Home, active quest cards, shared typography/palette and navi
 Evidence is saved in [docs/design/journal-20261018](docs/design/journal-20261018).
 
 - Source visual truth: `redesign-original-ui-refined-art-home.png` and `redesign-original-ui-refined-art-quests.png` (853 × 1844 pixels each).
-- Implementation: `redesign-implemented-home.png` and `redesign-implemented-quests.png` (242 × 524 pixels), plus `redesign-implemented-quest-cards.png` (407 × 524 browser capture with the cards scrolled into view).
-- Intended viewport: 390 × 844 CSS pixels. The desktop preview scales this to fit the panel (approximately 0.621); source is interpreted at approximately 2.188 pixels per CSS pixel. Comparisons use corresponding content proportions, not a pixel-difference score. The browser capture has surrounding canvas; only the centered app is compared.
+- Implementation: `redesign-implemented-home.png` and `redesign-implemented-quests.png` (242 × 524 pixels).
+- Intended viewport: 390 × 844 CSS pixels. The desktop preview scales this to fit the panel (approximately 0.621); source is interpreted at approximately 2.188 pixels per CSS pixel. Comparisons use corresponding content proportions, not a pixel-difference score. Saved captures contain only the centered app.
 - State: Home collapsed, level 4 / 1,240 XP / rank F; Quests Active, one normal and one pending-sync occurrence. This synthetic session uses the production screen components, bundled images/font and icon glyphs. It substitutes the session/router/native adapters outside the production source. Sample balances are not persisted or included in the app.
-- The original and implementation images were viewed together. Focused inspection covered portrait/XP, rank disclosure, path rows, quest metadata, pending warning and bottom navigation. DOM geometry and accessibility state were checked alongside the scaled captures. Additional 320- and 768-pixel layouts were inspected; the narrow character card stacks.
+- The original and implementation images were viewed together. Focused inspection covered portrait/XP, rank disclosure, path rows, quest metadata, pending warning and bottom navigation. The scrolled pending card was inspected in the live browser capture; its later saved capture was blank when the desktop panel was hidden, so that invalid file is excluded. DOM geometry and accessibility state were checked alongside the scaled captures. Additional 320- and 768-pixel layouts were inspected; the narrow character card stacks.
 
 ## Required fidelity surfaces
 
