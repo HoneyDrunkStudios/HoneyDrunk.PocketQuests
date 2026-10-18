@@ -446,6 +446,9 @@ try {
   expect(portrait).not.toBeNull();
   expect(overallBar).not.toBeNull();
   expect(overallBar.x + overallBar.width).toBeLessThanOrEqual(portrait.x);
+  await page
+    .getByRole("heading", { name: "Categories", exact: true })
+    .evaluate((element) => element.scrollIntoView({ block: "start" }));
   await page.screenshot({
     path: path.join(artifacts, "character-home.png"),
     fullPage: false,
