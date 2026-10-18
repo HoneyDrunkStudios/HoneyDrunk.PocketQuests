@@ -1,9 +1,11 @@
 import { Page } from "../../session/session-page";
 import { QuestHistory, type QuestHistorySection } from "./quest-history";
 import { useMemo, useState } from "react";
-import { Text } from "react-native";
+import { ThemeProvider } from "@honeydrunk/ui-native";
+import { pocketQuestsTheme } from "../../shared/theme";
+import { JournalHeading } from "../../shared/journal-heading";
 import { useAccountSnapshot } from "../../session/session";
-import { Button, Label, styles } from "../../shared/ui";
+import { Button, Label } from "../../shared/ui";
 import { AvailableQuests } from "./available-quests";
 import { ProfileEditor } from "../profile/profile-editor";
 import { activePlan } from "./active-plan";
@@ -22,13 +24,13 @@ export function QuestBoard() {
   );
   if (!state)
     return (
-      <Page>
+      <Page header={<JournalHeading title="Your quests" />}>
         <Label>Loading your quests.</Label>
       </Page>
     );
   if (state && !state.profile.onboardingComplete)
     return (
-      <Page>
+      <Page header={<JournalHeading title="Your quests" />}>
         <ProfileEditor />
       </Page>
     );
@@ -70,10 +72,10 @@ export function QuestBoard() {
         ]
       : [{ key: section, data: items }];
   return (
-    <QuestHistory sections={sections}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Your quests
-      </Text>
+    <QuestHistory
+      sections={sections}
+      header={<JournalHeading title="Your quests" />}
+    >
       <QuestViewTabs<BoardView>
         options={boardViews}
         selected={section}
@@ -81,7 +83,7 @@ export function QuestBoard() {
       />
       {section === "Available" && (
         <>
-          <Label>
+          <Label style={{ fontSize: 14, lineHeight: 20 }}>
             Start picks up a quest. Open it from Active when you are ready to
             complete it.
           </Label>
@@ -90,7 +92,7 @@ export function QuestBoard() {
       )}
       {section === "Active" && (
         <>
-          <Label>
+          <Label style={{ fontSize: 14, lineHeight: 20 }}>
             Your day in {state.zone}. Planned times come first, then acceptance
             order. Unscheduled quests have no deadline.
           </Label>
@@ -101,11 +103,21 @@ export function QuestBoard() {
               onPress={() => setShowPast((shown) => !shown)}
             />
           )}
-          <Button
-            title="Choose another quest"
-            secondary
-            onPress={() => setSection("Available")}
-          />
+          <ThemeProvider
+            theme={{
+              ...pocketQuestsTheme,
+              colors: {
+                ...pocketQuestsTheme.colors,
+                primary: "#F8794D",
+                onPrimary: "#172332",
+              },
+            }}
+          >
+            <Button
+              title="Choose another quest"
+              onPress={() => setSection("Available")}
+            />
+          </ThemeProvider>
         </>
       )}
       {section !== "Available" && items.length === 0 && (

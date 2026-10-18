@@ -1,3 +1,4 @@
+import "./artwork-fixture.mjs";
 import test from "node:test";
 import { strict as assert } from "node:assert";
 import { createRequire } from "node:module";
@@ -145,7 +146,8 @@ test("large history initially mounts a bounded SectionList window with accessibl
   assert.match(html, /Unscheduled history/);
   assert.match(html, /History item 0/);
   assert.doesNotMatch(html, /History item 999/);
-  const detailLinks = html.match(/aria-label="View quest &amp; rewards:/g) ?? [];
+  const detailLinks =
+    html.match(/aria-label="View quest &amp; rewards:/g) ?? [];
   assert.ok(detailLinks.length > 0 && detailLinks.length <= 20);
 });
 
@@ -275,7 +277,7 @@ test("Home exposes compact character sections with an accessible portrait and no
     },
   };
   const html = render(Home);
-  assert.match(html, /aria-label="Character portrait silhouette"/);
+  assert.match(html, /aria-label="Illustrated traveler character portrait"/);
   assert.match(html, /role="img"/);
   assert.match(html, /role="heading"/);
   assert.match(html, /Level 2/);
@@ -286,7 +288,7 @@ test("Home exposes compact character sections with an accessible portrait and no
     "Global rank F",
   ])
     assert.ok(html.includes(name));
-  assert.equal((html.match(/aria-expanded="false"/g) ?? []).length, 3);
+  assert.equal((html.match(/aria-expanded="false"/g) ?? []).length, 4);
   assert.doesNotMatch(html, /Category 9|Attribute 7|Skill 17/);
   assert.doesNotMatch(html, /Complete:|Today quests|No quests planned/);
   const category = () =>

@@ -1,4 +1,6 @@
 import { Stack } from "expo-router";
+import { useFonts } from "expo-font";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { StatusBar } from "expo-status-bar";
 import { SessionProvider } from "../session/session";
 import { ThemeProvider } from "@honeydrunk/ui-native";
@@ -7,6 +9,11 @@ import { colors } from "../shared/ui";
 import { CompletionOverlay } from "../features/progression/completion-overlay";
 export { AppErrorBoundary as ErrorBoundary } from "../shared/error-boundary";
 export default function Layout() {
+  const [fontsLoaded, fontError] = useFonts({
+    JournalSerif: require("../../assets/fonts/LibreBaskerville.ttf"),
+    ...Ionicons.font,
+  });
+  if (!fontsLoaded && !fontError) return null;
   return (
     <ThemeProvider theme={pocketQuestsTheme}>
       <StatusBar style="light" />

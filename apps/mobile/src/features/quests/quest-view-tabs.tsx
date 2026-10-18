@@ -25,7 +25,9 @@ export function QuestViewTabs<T extends string>({
           style={{
             minHeight: 48,
             minWidth: 48,
-            padding: 14,
+            flexGrow: 1,
+            padding: 10,
+            alignItems: "center",
             justifyContent: "center",
             borderRadius: 10,
             borderWidth: 1,

@@ -1,4 +1,6 @@
-import { Text } from "react-native";
+import { Image, Text, View } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { journalArt } from "../../shared/journal-art";
 import { Link } from "expo-router";
 import { questActions } from "./commands/quest-actions";
 import {
@@ -8,44 +10,128 @@ import {
 } from "../../session/session";
 import type { OccurrenceView } from "../../shared/contracts";
 import { Card, Button, Label, colors, styles } from "../../shared/ui";
+const categoryIcons: Record<
+  string,
+  "color-palette-outline" | "briefcase-outline"
+> = {
+  c03: "color-palette-outline",
+  c04: "briefcase-outline",
+};
 export function QuestCard({ item }: { item: OccurrenceView }) {
   const { command } = useSessionActions();
   const { busy, pending } = useSessionStatus();
-  const { catalog } = useAccountSnapshot();
+  const { catalog, state } = useAccountSnapshot();
   const q = item.occurrence.quest;
+  const creative = q.categoryId === "c03";
+  const accent = creative ? "#BB91F4" : colors.gold;
+  const pendingStatus = item.pendingTimingVerification
+    ? "Timing unverified"
+    : "Pending sync";
   return (
-    <Card>
-      <Text selectable style={styles.muted}>
-        {catalog?.categories.find((c) => c.id === q.categoryId)?.name} ·{" "}
-        {item.status}
-      </Text>
+    <Card
+      style={{
+        borderColor: creative ? "#9274B9" : colors.line,
+        gap: 6,
+        padding: 12,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          flexWrap: "wrap",
+        }}
+      >
+        <Ionicons
+          name={categoryIcons[q.categoryId] ?? "compass-outline"}
+          size={20}
+          color={accent}
+          accessible={false}
+        />
+        <Text
+          selectable
+          style={[styles.muted, { color: accent, fontSize: 14 }]}
+        >
+          {catalog?.categories.find((c) => c.id === q.categoryId)?.name}
+        </Text>
+        <Text
+          style={[
+            styles.muted,
+            {
+              borderWidth: 1,
+              borderColor: accent,
+              borderRadius: 10,
+              paddingHorizontal: 8,
+              paddingVertical: 2,
+              fontSize: 12,
+            },
+          ]}
+        >
+          {item.pendingCompletion ? pendingStatus : item.status}
+        </Text>
+      </View>
       <Text accessibilityRole="header" selectable style={styles.subtitle}>
         {q.title}
       </Text>
-      <Text style={{ ...styles.muted, color: colors.gold }}>
-        {q.baseXp} base XP · Rank {q.rank} · {q.effort}
-      </Text>
+      <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+        <View style={{ flex: 1, gap: 8 }}>
+          <Text
+            style={[
+              styles.muted,
+              { color: colors.gold, fontSize: 13, lineHeight: 19 },
+            ]}
+          >
+            {q.baseXp} base XP · Rank {q.rank} · {q.effort}
+          </Text>
+          <Text
+            selectable
+            style={[styles.muted, { fontSize: 13, lineHeight: 19 }]}
+          >
+            {item.occurrence.dueDate
+              ? `Due ${item.occurrence.dueDate === state?.today ? "today" : item.occurrence.dueDate}`
+              : "Unscheduled"}
+            {item.occurrence.plannedTime
+              ? ` · Planned ${item.occurrence.plannedTime}`
+              : ""}
+          </Text>
+        </View>
+        <Image
+          source={creative ? journalArt.sketchbook : journalArt.work}
+          accessible={false}
+          resizeMode="contain"
+          style={{ width: 80, height: 52 }}
+        />
+      </View>
       {item.pendingCompletion && (
-        <Label>
-          {item.pendingTimingVerification
-            ? "Completion pending timing verification — rewards unconfirmed"
-            : "Completion awaiting sync · rewards unconfirmed"}
-        </Label>
+        <View
+          style={{
+            borderWidth: 1,
+            borderColor: colors.line,
+            borderRadius: 10,
+            padding: 10,
+          }}
+        >
+          <Label style={styles.muted}>
+            {item.pendingTimingVerification
+              ? "Completion pending timing verification — rewards unconfirmed"
+              : "Completion awaiting sync · rewards unconfirmed"}
+          </Label>
+        </View>
       )}
-      <Text selectable style={styles.muted}>
-        {item.occurrence.dueDate
-          ? `Due ${item.occurrence.dueDate}`
-          : "Unscheduled"}{" "}
-        {item.occurrence.plannedTime
-          ? ` at ${item.occurrence.plannedTime} (planned only)`
-          : ""}
-      </Text>
       <Link
         href={{ pathname: "/quest/[id]", params: { id: item.occurrence.id } }}
         accessibilityLabel={`View quest & rewards: ${q.title}`}
         style={[
           styles.text,
-          { color: colors.gold, paddingVertical: 12, minHeight: 48 },
+          {
+            color: accent,
+            paddingVertical: 12,
+            minHeight: 48,
+            borderTopWidth: 1,
+            borderTopColor: colors.line,
+            fontWeight: "600",
+          },
         ]}
       >
         View quest & rewards

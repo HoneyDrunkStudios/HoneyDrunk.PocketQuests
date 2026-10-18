@@ -1,5 +1,12 @@
 # Changelog
 
+## Illustrated adventure journal — October 18, 2026
+
+- Apply the approved navy, ivory and gold design with bundled lake scenery, a traveler portrait, serif headings and illustrated path rows.
+- Add native navigation icons, a compact expandable rank summary and refreshed quest cards while retaining real balances, details, pending warnings and Undo.
+- Keep due days separate from planned times, and preserve virtualized history and explicit recovery actions.
+
+
 ## Compact quest journal — October 18, 2026
 
 - Follow the approved prototype's compact Active/Completed cards, with named detail links, readable headings and one base-XP summary; retain schedules, frozen/pending warnings, accepted losses and current-completion Undo.
