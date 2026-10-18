@@ -13,6 +13,12 @@ export default function AvailableQuestScreen() {
   const back = () =>
     router.canGoBack() ? router.back() : router.replace("/(tabs)/board");
   if (!signedIn && !busy) return <Redirect href="/" />;
+  if (busy && (!state || !catalog))
+    return (
+      <Page>
+        <Label>Loading your quest.</Label>
+      </Page>
+    );
   const quest = availableQuests(catalog, state).find((item) => item.id === id);
   const invalidDate =
     date !== undefined && (typeof date !== "string" || !isCalendarDate(date));

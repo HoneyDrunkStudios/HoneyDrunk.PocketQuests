@@ -334,6 +334,37 @@ test("penalty consent is invalidated by changed terms, due dates and unscheduled
   }
 });
 
+test("cold detail routes wait for both account and catalog restoration before resolving the quest", async () => {
+  reset();
+  const loaded = { ...session };
+  session = {
+    ...loaded,
+    signedIn: false,
+    busy: true,
+    state: null,
+    catalog: null,
+  };
+  const view = await mount(AvailableQuestScreen);
+  try {
+    assert.match(view.element.textContent, /Loading your quest/);
+    assert.doesNotMatch(view.element.textContent, /Quest unavailable/);
+    assert.equal(view.button("Back to available quests"), undefined);
+    session = { ...loaded, busy: true, catalog: null };
+    await view.render();
+    assert.match(view.element.textContent, /Loading your quest/);
+    session = loaded;
+    await view.render();
+    assert.ok(view.button("Start: Practice"));
+    assert.doesNotMatch(
+      view.element.textContent,
+      /Loading your quest|Quest unavailable/,
+    );
+    assert.equal(sent.length, 0);
+  } finally {
+    await view.close();
+  }
+});
+
 test("detail routes reject invalid dates, missing or accepted quests and signed-out access", async () => {
   reset();
   const view = await mount(AvailableQuestScreen);
