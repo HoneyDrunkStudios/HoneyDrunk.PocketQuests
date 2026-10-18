@@ -10,17 +10,43 @@ function HomeIcon({ color, focused }: TabIconProps) {
       name={focused ? "home" : "home-outline"}
       color={color}
       size={26}
+      accessible={false}
+      aria-hidden
     />
   );
 }
 function QuestsIcon({ color }: TabIconProps) {
-  return <Ionicons name="compass-outline" color={color} size={28} />;
+  return (
+    <Ionicons
+      name="compass-outline"
+      color={color}
+      size={28}
+      accessible={false}
+      aria-hidden
+    />
+  );
 }
 function CalendarIcon({ color }: TabIconProps) {
-  return <Ionicons name="calendar-outline" color={color} size={26} />;
+  return (
+    <Ionicons
+      name="calendar-outline"
+      color={color}
+      size={26}
+      accessible={false}
+      aria-hidden
+    />
+  );
 }
 function ProgressIcon({ color }: TabIconProps) {
-  return <Ionicons name="stats-chart-outline" color={color} size={26} />;
+  return (
+    <Ionicons
+      name="stats-chart-outline"
+      color={color}
+      size={26}
+      accessible={false}
+      aria-hidden
+    />
+  );
 }
 export default function Layout() {
   const { signedIn } = useSession();
@@ -47,6 +73,7 @@ export default function Layout() {
         name="index"
         options={{
           title: "Home",
+          tabBarAccessibilityLabel: "Home",
           headerShown: false,
           tabBarIcon: HomeIcon,
         }}
@@ -55,6 +82,7 @@ export default function Layout() {
         name="board"
         options={{
           title: "Quests",
+          tabBarAccessibilityLabel: "Quests",
           headerShown: false,
           tabBarIcon: QuestsIcon,
         }}
@@ -63,6 +91,7 @@ export default function Layout() {
         name="calendar"
         options={{
           title: "Calendar",
+          tabBarAccessibilityLabel: "Calendar",
           tabBarIcon: CalendarIcon,
         }}
       />
@@ -70,6 +99,7 @@ export default function Layout() {
         name="profile"
         options={{
           title: "Progress",
+          tabBarAccessibilityLabel: "Progress",
           tabBarIcon: ProgressIcon,
         }}
       />
