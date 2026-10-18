@@ -7,6 +7,7 @@ import { ProgressRow, CategoryProgress } from "./character-tracks";
 import { RankProgress } from "./rank-progress";
 import { CharacterPortrait } from "../profile/character-portrait";
 import { LevelProgress } from "./level-progress-view";
+import { CharacterSection } from "./character-section";
 
 export function CharacterHome() {
   const { state, catalog } = useAccountSnapshot();
@@ -68,10 +69,11 @@ export function CharacterHome() {
         categories={state.categories}
         rules={catalog?.rules ?? []}
       />
-      <Text accessibilityRole="header" style={styles.subtitle}>
-        Ten paths · Categories
-      </Text>
-      <Card>
+      <CharacterSection
+        title="Categories"
+        description="The purpose of your adventures"
+        count={state.categories.length}
+      >
         {state.categories.map((item) => (
           <CategoryProgress
             key={item.id}
@@ -79,23 +81,25 @@ export function CharacterHome() {
             streak={state.streaks.find((s) => s.categoryId === item.id)}
           />
         ))}
-      </Card>
-      <Text accessibilityRole="header" style={styles.subtitle}>
-        Attributes
-      </Text>
-      <Card>
+      </CharacterSection>
+      <CharacterSection
+        title="Attributes"
+        description="Your core strengths"
+        count={state.attributes.length}
+      >
         {state.attributes.map((item) => (
           <ProgressRow key={item.id} item={item} track="attribute" />
         ))}
-      </Card>
-      <Text accessibilityRole="header" style={styles.subtitle}>
-        Skills
-      </Text>
-      <Card>
+      </CharacterSection>
+      <CharacterSection
+        title="Skills"
+        description="Your specific practices"
+        count={state.skills.length}
+      >
         {state.skills.map((item) => (
           <ProgressRow key={item.id} item={item} track="skill" />
         ))}
-      </Card>
+      </CharacterSection>
     </Page>
   );
 }

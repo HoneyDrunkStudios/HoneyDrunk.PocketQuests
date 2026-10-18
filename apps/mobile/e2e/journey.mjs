@@ -352,6 +352,23 @@ try {
   diagnostics.checkpoint("character");
   await expect(
     page.getByRole("progressbar", { name: / level progress$/ }),
+  ).toHaveCount(1);
+  for (const [title, items] of [
+    ["Categories", committed.categories],
+    ["Attributes", committed.attributes],
+    ["Skills", committed.skills],
+  ]) {
+    const section = page.getByRole("button", {
+      name: `${title}, ${items.length}`,
+      exact: true,
+    });
+    await expect(section).toHaveAttribute("aria-expanded", "false");
+    await section.focus();
+    await section.press(title === "Attributes" ? "Space" : "Enter");
+    await expect(section).toHaveAttribute("aria-expanded", "true");
+  }
+  await expect(
+    page.getByRole("progressbar", { name: / level progress$/ }),
   ).toHaveCount(
     1 +
       committed.categories.length +
@@ -399,6 +416,13 @@ try {
       exact: true,
     }),
   ).toBeVisible();
+  for (const title of ["Categories", "Attributes", "Skills"]) {
+    const section = page.getByRole("button", {
+      name: new RegExp(`^${title}, `),
+    });
+    await section.click();
+    await expect(section).toHaveAttribute("aria-expanded", "false");
+  }
   await page
     .getByRole("heading", { name: "Your character", exact: true })
     .scrollIntoViewIfNeeded();

@@ -1,5 +1,11 @@
 # PocketQuests dependency assessment
 
+## October 18 recheck
+
+GitHub still reports alerts #3 (`braces`, GHSA-vfj7-8cjw-p6xm) and #2 (`node-forge`, GHSA-86w9-cpqp-85rv) open, with no patched version listed. npm still publishes braces 3.0.3 and node-forge 1.4.0 as latest. Latest metro-file-map 0.87.1 still requires micromatch, and @expo/code-signing-certificates 0.0.7 still requires node-forge. Forge PR #1152 remains open and unmerged. No supported dependency upgrade found in this recheck closes either alert.
+
+A clean locked install and the explicit checked-in patches passed all seven dependency regression/patch-guard tests, including bounded parser/AST depth, malformed DigestAlgorithm rejection, valid signatures/certificates, tampering, unexpected versions and duplicate copies. The full audit still exits 1 with 18 high affected-package entries and zero critical findings. Package versions, lockfiles, alert visibility and the release audit remain unchanged. These local mitigations do not establish native signing or device acceptance.
+
 ## October 15 PKCS dependency remediation
 
 `Microsoft.Data.SqlClient` 6.1.6 introduces a lower bound of `System.Security.Cryptography.Pkcs` 9.0.11. The Data project now directly requires 9.0.21, the patched 9.x version for [GHSA-846f-f764-76mx](https://github.com/advisories/GHSA-846f-f764-76mx) and [GHSA-2fmv-rv2c-59x7](https://github.com/advisories/GHSA-2fmv-rv2c-59x7). The six consuming package-mode lockfiles are regenerated; audit checks and warning-as-error behavior remain enabled.

@@ -77,6 +77,9 @@ for (const extension of [".ts", ".tsx"])
     );
   };
 const { ThemeProvider } = require("@honeydrunk/ui-native");
+const {
+  CategoryProgress,
+} = require("../../src/features/progression/character-tracks.tsx");
 const { pocketQuestsTheme } = require("../../src/shared/theme.ts");
 const Home = require("../../src/app/(tabs)/index.tsx").default;
 const Quests = require("../../src/app/(tabs)/board.tsx").default;
@@ -233,7 +236,7 @@ test("timing-unverified actions are visible without promising reconnect will con
   unverified = [];
 });
 
-test("Home exposes the full character sheet with an accessible portrait and no Today quest actions", () => {
+test("Home exposes compact character sections with an accessible portrait and no Today quest actions", () => {
   state = {
     profile: { onboardingComplete: true },
     entitlements: [],
@@ -270,17 +273,29 @@ test("Home exposes the full character sheet with an accessible portrait and no T
   assert.match(html, /role="img"/);
   assert.match(html, /role="heading"/);
   assert.match(html, /Level 2/);
-  for (const name of ["Category 9", "Attribute 7", "Skill 17", "Global rank F"])
+  for (const name of [
+    "Categories, 10",
+    "Attributes, 8",
+    "Skills, 18",
+    "Global rank F",
+  ])
     assert.ok(html.includes(name));
+  assert.equal((html.match(/aria-expanded="false"/g) ?? []).length, 3);
+  assert.doesNotMatch(html, /Category 9|Attribute 7|Skill 17/);
   assert.doesNotMatch(html, /Complete:|Today quests|No quests planned/);
-  assert.match(html, /Category 0: 1 day in this streak\. Done today\./);
+  const category = () =>
+    render(CategoryProgress, {
+      item: state.categories[0],
+      streak: state.streaks[0],
+    });
+  assert.match(category(), /Category 0: 1 day in this streak\. Done today\./);
   state.streaks[0] = {
     categoryId: "c0",
     days: 20,
     qualifiedToday: false,
     rate: 19,
   };
-  const ongoing = render(Home);
+  const ongoing = category();
   assert.match(
     ongoing,
     /Category 0: 20 days in this streak\. Complete today to continue\./,
@@ -293,7 +308,7 @@ test("Home exposes the full character sheet with an accessible portrait and no T
     rate: 0,
   };
   assert.match(
-    render(Home),
+    category(),
     /Category 0: 0 days in this streak\. Complete a quest to start a streak\./,
   );
 });
