@@ -286,7 +286,9 @@ try {
       name: "Browser verified custom quest",
       exact: true,
     })
-    .evaluate((element) => element.scrollIntoView({ block: "start" }));
+    .evaluate((element) =>
+      element.parentElement.scrollIntoView({ block: "start" }),
+    );
   await page.screenshot({ path: path.join(artifacts, "available-quests.png") });
   await page
     .getByRole("button", {

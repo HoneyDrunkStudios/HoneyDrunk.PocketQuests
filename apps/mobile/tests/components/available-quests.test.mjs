@@ -267,6 +267,11 @@ test("details show actual reward pools and submit the reviewed plan without losi
   const view = await mount(AvailableQuestScreen);
   try {
     assert.match(view.element.textContent, /Overall \+10 XP/);
+    assert.ok(
+      view.element.textContent.includes(
+        "Available to pick up · Rank F · Small",
+      ),
+    );
     assert.match(view.element.textContent, /Strength \+10 XP/);
     assert.match(view.element.textContent, /Finish one practice/);
     assert.equal(

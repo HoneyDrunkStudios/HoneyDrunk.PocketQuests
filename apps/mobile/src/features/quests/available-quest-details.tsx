@@ -65,7 +65,7 @@ export function AvailableQuestDetails({
         {quest.title}
       </Text>
       <Label>
-        Available to pick up Â· Rank {quest.rank} Â· {quest.effort}
+        Available to pick up · Rank {quest.rank} · {quest.effort}
       </Label>
       <Card>
         <Text accessibilityRole="header" style={styles.subtitle}>
