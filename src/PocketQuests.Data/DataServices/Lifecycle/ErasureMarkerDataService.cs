@@ -7,13 +7,15 @@ namespace PocketQuests.Data.DataServices.Lifecycle;
 /// <param name="context">The scoped transaction context.</param>
 public sealed class ErasureMarkerDataService(AppDbContext context) : BaseDataService<ErasureMarkerEntity>(context), IErasureMarkerDataService
 {
+    private IQueryable<ErasureMarkerEntity> ErasureMarkers => DbSet;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<ErasureMarkerEntity>> GetByIdentityUserId(string identityUserId, CancellationToken cancellationToken = default) =>
-        await DbSet.Where(row => row.Id == identityUserId).ToListAsync(cancellationToken);
+        await ErasureMarkers.Where(row => row.Id == identityUserId).ToListAsync(cancellationToken);
 
     /// <inheritdoc />
     public async Task DeleteExpired(DateTimeOffset cutoff, CancellationToken token = default)
     {
-        await DbSet.Where(marker => marker.CreatedAt <= cutoff).ExecuteDeleteAsync(token);
+        await ErasureMarkers.Where(marker => marker.CreatedAt <= cutoff).ExecuteDeleteAsync(token);
     }
 }

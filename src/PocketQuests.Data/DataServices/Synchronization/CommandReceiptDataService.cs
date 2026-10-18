@@ -7,9 +7,11 @@ namespace PocketQuests.Data.DataServices.Synchronization;
 /// <param name="context">The scoped transaction context.</param>
 public sealed class CommandReceiptDataService(AppDbContext context) : BaseDataService<CommandReceiptEntity>(context), ICommandReceiptDataService
 {
+    private IQueryable<CommandReceiptEntity> CommandReceipts => DbSet;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<CommandReceiptEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
-        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
+        return await CommandReceipts.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 }

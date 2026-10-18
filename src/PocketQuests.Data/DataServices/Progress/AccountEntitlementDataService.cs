@@ -7,9 +7,11 @@ namespace PocketQuests.Data.DataServices.Progress;
 /// <param name="context">The scoped transaction context.</param>
 public sealed class AccountEntitlementDataService(AppDbContext context) : BaseDataService<AccountEntitlementEntity>(context), IAccountEntitlementDataService
 {
+    private IQueryable<AccountEntitlementEntity> AccountEntitlements => DbSet;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<AccountEntitlementEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
-        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
+        return await AccountEntitlements.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 }

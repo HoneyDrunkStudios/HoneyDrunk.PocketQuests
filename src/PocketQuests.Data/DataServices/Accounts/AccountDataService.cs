@@ -8,9 +8,11 @@ namespace PocketQuests.Data.DataServices.Accounts;
 /// <param name="context">The scoped transaction context.</param>
 public sealed partial class AccountDataService(AppDbContext context) : BaseDataService<AccountEntity>(context), IAccountDataService
 {
+    private IQueryable<AccountEntity> Accounts => DbSet;
+
     /// <inheritdoc />
     public Task<AccountEntity?> GetByIdentityUserId(string identityUserId, CancellationToken cancellationToken = default) =>
-        DbSet.SingleOrDefaultAsync(row => row.IdentityUserId == identityUserId, cancellationToken);
+        Accounts.SingleOrDefaultAsync(row => row.IdentityUserId == identityUserId, cancellationToken);
 
     /// <inheritdoc />
     public Task AcquireCommandLock(string identityUserId, CancellationToken token = default) => AccountQueries.AcquireLock(Context, identityUserId, token);
@@ -18,7 +20,7 @@ public sealed partial class AccountDataService(AppDbContext context) : BaseDataS
     /// <inheritdoc />
     public async Task<IReadOnlyList<AccountEntity>> GetReconciliationCandidates(DateTimeOffset now, DateTimeOffset? afterProjectionAt, Guid? afterAccountId, int maximumAccounts, string activeState, CancellationToken token = default)
     {
-        var query = DbSet.AsNoTracking().Where(account => account.ProjectionAsOfAt < now && account.MutationVersion > 0
+        var query = Accounts.AsNoTracking().Where(account => account.ProjectionAsOfAt < now && account.MutationVersion > 0
             && !Context.ErasureMarker.Any(marker => marker.Id == account.IdentityUserId)
             && !Context.AccountLifecycleState.Any(barrier => barrier.IdentityUserId == account.IdentityUserId && barrier.StateCode != activeState));
         if (afterProjectionAt is not null && afterAccountId is not null)
@@ -40,7 +42,7 @@ public sealed partial class AccountDataService(AppDbContext context) : BaseDataS
             throw new InvalidOperationException("Erasure requires an explicit verified lifecycle transaction.");
         if (Context.ChangeTracker.HasChanges())
             throw new InvalidOperationException("Erasure cannot discard staged changes from another operation.");
-        var accountId = await DbSet.AsNoTracking().Where(account => account.IdentityUserId == identityUserId).Select(account => (Guid?)account.Id).SingleOrDefaultAsync(token);
+        var accountId = await Accounts.AsNoTracking().Where(account => account.IdentityUserId == identityUserId).Select(account => (Guid?)account.Id).SingleOrDefaultAsync(token);
         var auditIds = await Context.AccountAuditRecord.Where(link => link.AccountId == accountId).Select(link => link.AuditRecordId).ToArrayAsync(token);
         await Context.AccountAuditRecord.Where(link => link.AccountId == accountId).ExecuteDeleteAsync(token);
         await Context.Set<HoneyDrunk.Audit.Data.AuditRecord>().Where(audit => auditIds.Contains(audit.Id)).ExecuteDeleteAsync(token);
@@ -72,7 +74,7 @@ public sealed partial class AccountDataService(AppDbContext context) : BaseDataS
         await Context.QuestSeries.Where(row => row.AccountId == accountId).ExecuteDeleteAsync(token);
         await Context.CommandReceipt.Where(row => row.AccountId == accountId).ExecuteDeleteAsync(token);
         await Context.QuestDefinition.Where(row => row.AccountId == accountId).ExecuteDeleteAsync(token);
-        await DbSet.Where(account => account.Id == accountId).ExecuteDeleteAsync(token);
+        await Accounts.Where(account => account.Id == accountId).ExecuteDeleteAsync(token);
 
         // Bulk erasure bypasses tracking. The precondition above guarantees this only drops
         // unchanged rows read by the erasure workflow, never another operation's staged work.

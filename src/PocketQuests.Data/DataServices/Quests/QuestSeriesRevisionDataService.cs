@@ -7,19 +7,21 @@ namespace PocketQuests.Data.DataServices.Quests;
 /// <param name="context">The scoped transaction context.</param>
 public sealed class QuestSeriesRevisionDataService(AppDbContext context) : BaseDataService<QuestSeriesRevisionEntity>(context), IQuestSeriesRevisionDataService
 {
+    private IQueryable<QuestSeriesRevisionEntity> QuestSeriesRevisions => DbSet;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestSeriesRevisionEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
-        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
+        return await QuestSeriesRevisions.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestSeriesRevisionEntity>> GetCommittedByAccountId(Guid accountId, CancellationToken token = default) =>
-        await DbSet.AsNoTracking().Where(row => row.AccountId == accountId).ToListAsync(token);
+        await QuestSeriesRevisions.AsNoTracking().Where(row => row.AccountId == accountId).ToListAsync(token);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestSeriesRevisionEntity>> GetSelected(Guid accountId, Guid[] ids, CancellationToken token = default)
     {
-        return await DbSet.AsNoTracking().Where(row => row.AccountId == accountId && ids.Contains(row.Id)).ToListAsync(token);
+        return await QuestSeriesRevisions.AsNoTracking().Where(row => row.AccountId == accountId && ids.Contains(row.Id)).ToListAsync(token);
     }
 }

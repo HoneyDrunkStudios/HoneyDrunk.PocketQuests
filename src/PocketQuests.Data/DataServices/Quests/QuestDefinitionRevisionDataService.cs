@@ -7,15 +7,17 @@ namespace PocketQuests.Data.DataServices.Quests;
 /// <param name="context">The scoped transaction context.</param>
 public sealed class QuestDefinitionRevisionDataService(AppDbContext context) : BaseDataService<QuestDefinitionRevisionEntity>(context), IQuestDefinitionRevisionDataService
 {
+    private IQueryable<QuestDefinitionRevisionEntity> QuestDefinitionRevisions => DbSet;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestDefinitionRevisionEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
-        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
+        return await QuestDefinitionRevisions.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestDefinitionRevisionEntity>> GetSelected(Guid accountId, Guid[] ids, CancellationToken token = default)
     {
-        return await DbSet.AsNoTracking().Where(row => row.AccountId == accountId && ids.Contains(row.Id)).ToListAsync(token);
+        return await QuestDefinitionRevisions.AsNoTracking().Where(row => row.AccountId == accountId && ids.Contains(row.Id)).ToListAsync(token);
     }
 }

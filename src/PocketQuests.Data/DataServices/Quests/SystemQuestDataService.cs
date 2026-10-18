@@ -7,7 +7,9 @@ namespace PocketQuests.Data.DataServices.Quests;
 /// <param name="context">The scoped transaction context.</param>
 public sealed class SystemQuestDataService(AppDbContext context) : BaseDataService<SystemQuestEntity>(context), ISystemQuestDataService
 {
+    private IQueryable<SystemQuestEntity> SystemQuests => DbSet;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<SystemQuestEntity>> GetCatalog(CancellationToken cancellationToken = default) =>
-        await DbSet.ToListAsync(cancellationToken);
+        await SystemQuests.ToListAsync(cancellationToken);
 }

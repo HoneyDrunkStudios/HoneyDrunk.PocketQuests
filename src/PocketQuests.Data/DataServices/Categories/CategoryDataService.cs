@@ -7,7 +7,9 @@ namespace PocketQuests.Data.DataServices.Categories;
 /// <param name="context">The scoped transaction context.</param>
 public sealed class CategoryDataService(AppDbContext context) : BaseDataService<CategoryEntity>(context), ICategoryDataService
 {
+    private IQueryable<CategoryEntity> Categories => DbSet;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<CategoryEntity>> GetCatalog(CancellationToken cancellationToken = default) =>
-        await DbSet.OrderBy(row => row.SortOrder).ToListAsync(cancellationToken);
+        await Categories.OrderBy(row => row.SortOrder).ToListAsync(cancellationToken);
 }
