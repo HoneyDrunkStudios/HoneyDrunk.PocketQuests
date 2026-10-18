@@ -250,6 +250,48 @@ try {
     .click();
   await page
     .getByRole("button", {
+      name: "View quest & rewards: Browser verified custom quest",
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Complete when", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Completion rewards", exact: true }),
+  ).toBeVisible();
+  await expect(
+    visibleText("I have delivered the working result", { exact: true }),
+  ).toBeVisible();
+  for (const width of [320, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({
+    path: path.join(artifacts, "available-quest-details.png"),
+  });
+  await page
+    .getByRole("button", { name: "Back to available quests", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Complete when", exact: true }),
+  ).toBeHidden();
+  await page
+    .getByRole("heading", {
+      name: "Browser verified custom quest",
+      exact: true,
+    })
+    .evaluate((element) =>
+      element.parentElement.scrollIntoView({ block: "start" }),
+    );
+  await page.screenshot({ path: path.join(artifacts, "available-quests.png") });
+  await page
+    .getByRole("button", {
       name: "Start: Browser verified custom quest",
       exact: true,
     })
@@ -662,6 +704,12 @@ try {
   await page
     .getByRole("button", { name: "Back to available quests", exact: true })
     .click();
+  await page
+    .getByRole("button", {
+      name: "View quest & rewards: Calendar planned quest",
+      exact: true,
+    })
+    .click();
   await expect(page.getByLabel("Due date in YYYY-MM-DD format")).toHaveValue(
     plannedDate,
   );
@@ -673,6 +721,9 @@ try {
   await expect(startCalendarQuest).toBeEnabled();
   await startCalendarQuest.click();
   await expect(startCalendarQuest).toBeHidden();
+  await page
+    .getByRole("button", { name: "Back to available quests", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "Back to calendar", exact: true })
     .click();

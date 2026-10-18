@@ -1,5 +1,11 @@
 # Changelog
 
+## Available quest details — October 18, 2026
+
+- Present available quests as compact cards with category, rank, effort and XP, following the approved prototype's list/detail flow.
+- Add a navigable quest-and-rewards screen for planning, explicit penalty consent, recurrence and custom-quest management; preserve calendar dates and editor drafts.
+- Resolve detail routes against current account data, retain quick Start for ordinary quests, and verify the flow through component regressions and the real browser/API/SQL journey.
+
 ## Security and reliability cleanup — October 13, 2026
 
 - Add hash-pinned local braces depth guards and forge DigestAlgorithm validation with failing-before/passing-after security regressions; retain upstream Dependabot alerts and release audit gates until compatible fixes ship.
