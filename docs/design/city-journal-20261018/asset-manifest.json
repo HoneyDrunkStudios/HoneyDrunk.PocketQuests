@@ -1,0 +1,98 @@
+[
+  {
+    "source": "landscape",
+    "sha256": "efca15febbc3d691b74307589f1aa605ed5a168fe668d82d1ac08f994d926dd9",
+    "variants": [
+      {
+        "file": "landscape.png",
+        "width": 390,
+        "height": 210,
+        "bytes": 48554
+      },
+      {
+        "file": "landscape@2x.png",
+        "width": 780,
+        "height": 420,
+        "bytes": 161727
+      },
+      {
+        "file": "landscape@3x.png",
+        "width": 1170,
+        "height": 630,
+        "bytes": 311512
+      }
+    ]
+  },
+  {
+    "source": "portrait",
+    "sha256": "3a538a5b79fea3592ef8095db8e53c355208c00d705c9abcbb8a180c58235de7",
+    "variants": [
+      {
+        "file": "traveler.png",
+        "width": 112,
+        "height": 112,
+        "bytes": 10351
+      },
+      {
+        "file": "traveler@2x.png",
+        "width": 224,
+        "height": 224,
+        "bytes": 30746
+      },
+      {
+        "file": "traveler@3x.png",
+        "width": 336,
+        "height": 336,
+        "bytes": 58134
+      }
+    ]
+  },
+  {
+    "source": "work",
+    "sha256": "12567eebf58c19f842c4c2d1c562fbe441301f8180a041a0259ae5614b12fd5b",
+    "variants": [
+      {
+        "file": "work-scene.png",
+        "width": 360,
+        "height": 180,
+        "bytes": 29650
+      },
+      {
+        "file": "work-scene@2x.png",
+        "width": 720,
+        "height": 360,
+        "bytes": 126711
+      },
+      {
+        "file": "work-scene@3x.png",
+        "width": 1080,
+        "height": 540,
+        "bytes": 281192
+      }
+    ]
+  },
+  {
+    "source": "sketch",
+    "sha256": "7d16908555368b42f8cbe4525d0d854d69c155c7822498af9c9a329b7218d65a",
+    "variants": [
+      {
+        "file": "sketch-scene.png",
+        "width": 360,
+        "height": 180,
+        "bytes": 34284
+      },
+      {
+        "file": "sketch-scene@2x.png",
+        "width": 720,
+        "height": 360,
+        "bytes": 141197
+      },
+      {
+        "file": "sketch-scene@3x.png",
+        "width": 1080,
+        "height": 540,
+        "bytes": 310617
+      }
+    ]
+  }
+]

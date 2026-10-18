@@ -6,5 +6,7 @@ export const journalArt = {
   books: require("../../assets/journal/books.png"),
   sketchbook: require("../../assets/journal/sketchbook.png"),
   work: require("../../assets/journal/work.png"),
+  workScene: require("../../assets/journal/work-scene.png"),
+  sketchScene: require("../../assets/journal/sketch-scene.png"),
   shield: require("../../assets/journal/rank-shield.png"),
 };
