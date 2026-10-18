@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { Text } from "react-native";
 import { Link } from "expo-router";
 import { questActions } from "./commands/quest-actions";
 import {
@@ -14,31 +14,17 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
   const { catalog } = useAccountSnapshot();
   const q = item.occurrence.quest;
   return (
-    <Card style={{ borderLeftWidth: 4, borderLeftColor: colors.green }}>
+    <Card>
       <Text selectable style={styles.muted}>
         {catalog?.categories.find((c) => c.id === q.categoryId)?.name} ·{" "}
         {item.status}
       </Text>
-      <Text selectable style={styles.subtitle}>
+      <Text accessibilityRole="header" selectable style={styles.subtitle}>
         {q.title}
       </Text>
-      <View
-        style={{
-          alignSelf: "flex-start",
-          borderColor: colors.gold,
-          borderWidth: 1,
-          borderRadius: 8,
-          paddingHorizontal: 10,
-          paddingVertical: 5,
-        }}
-      >
-        <Text
-          style={{ ...styles.muted, color: colors.gold, fontWeight: "700" }}
-        >
-          {q.baseXp} XP · RANK {q.rank}
-        </Text>
-      </View>
-      <Label>{q.criterion}</Label>
+      <Text style={{ ...styles.muted, color: colors.gold }}>
+        {q.baseXp} base XP · Rank {q.rank} · {q.effort}
+      </Text>
       {item.pendingCompletion && (
         <Label>
           {item.pendingTimingVerification
@@ -52,19 +38,22 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
           : "Unscheduled"}{" "}
         {item.occurrence.plannedTime
           ? ` at ${item.occurrence.plannedTime} (planned only)`
-          : ""}{" "}
-        · {q.baseXp} base XP
+          : ""}
       </Text>
       <Link
         href={{ pathname: "/quest/[id]", params: { id: item.occurrence.id } }}
-        style={styles.text}
+        accessibilityLabel={`View quest & rewards: ${q.title}`}
+        style={[
+          styles.text,
+          { color: colors.gold, paddingVertical: 12, minHeight: 48 },
+        ]}
       >
-        Open quest
+        View quest & rewards
       </Link>
       {item.occurrence.lifecycle?.lockedLoss != null && (
         <Label>
           Accepted loss: up to {item.occurrence.lifecycle.lockedLoss} category
-          XP. Reward: {q.baseXp} XP.
+          XP.
         </Label>
       )}
       {item.status === "Frozen" && (

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Link, Redirect, useLocalSearchParams } from "expo-router";
 import { Text } from "react-native";
 import { useSession } from "../../session/session";
-import { Button, Label, styles } from "../../shared/ui";
+import { Button, Card, Label, styles } from "../../shared/ui";
 import { QuestRewards } from "../../features/quests/quest-rewards";
 import { FocusTimer } from "../../features/quests/focus-timer";
 import { DefinitionManagement } from "../../features/quests/definition-management";
@@ -33,15 +33,29 @@ export default function QuestDetails() {
     );
   return (
     <Page>
+      <Text style={styles.muted}>
+        {
+          catalog?.categories.find(
+            (category) => category.id === item.occurrence.quest.categoryId,
+          )?.name
+        }
+      </Text>
       <Text accessibilityRole="header" style={styles.title}>
         {item.occurrence.quest.title}
       </Text>
-      <Label>{item.occurrence.quest.criterion}</Label>
-      <QuestRewards
-        quest={item.occurrence.quest}
-        catalog={catalog}
-        state={state}
-      />
+      <Label>
+        {item.status} · Rank {item.occurrence.quest.rank} ·{" "}
+        {item.occurrence.quest.effort}
+      </Label>
+      <Card>
+        <Text accessibilityRole="header" style={styles.subtitle}>
+          Complete when
+        </Text>
+        <Label>{item.occurrence.quest.criterion}</Label>
+        {item.occurrence.quest.description ? (
+          <Label>{item.occurrence.quest.description}</Label>
+        ) : null}
+      </Card>
       {item.status === "Active" && (
         <>
           <Button
@@ -51,6 +65,7 @@ export default function QuestDetails() {
               void command({ action: questActions.complete, occurrenceId: id })
             }
           />
+          <Label>Already done it? Log it here. No timer required.</Label>
           {(item.occurrence.quest.isCustom ||
             [
               "PQ-CAT-Q01",
@@ -80,9 +95,20 @@ export default function QuestDetails() {
             : "Recorded on this device. Rewards will be confirmed when synchronized."}
         </Label>
       )}
-      <Label>
-        {item.status} · {item.occurrence.quest.baseXp} XP
-      </Label>
+      <Card>
+        <Text accessibilityRole="header" style={styles.subtitle}>
+          Completion rewards
+        </Text>
+        <QuestRewards
+          quest={item.occurrence.quest}
+          catalog={catalog}
+          state={state}
+        />
+        <Label>
+          Separate progress pools, not extra overall XP. This is the base reward
+          preview; confirmed rewards appear after synchronization.
+        </Label>
+      </Card>
       {item.planned && (
         <Label>
           Planned: {item.planned.resolved}, {item.planned.instant}
@@ -199,7 +225,9 @@ export default function QuestDetails() {
         questId={item.occurrence.quest.id}
       />
       <QuestPlanEditor key={id} item={item} />
-      <Text style={styles.subtitle}>Linked goal and steps</Text>
+      <Text accessibilityRole="header" style={styles.subtitle}>
+        Linked goal and steps
+      </Text>
       {item.occurrence.parentId ? (
         <Link
           href={{
