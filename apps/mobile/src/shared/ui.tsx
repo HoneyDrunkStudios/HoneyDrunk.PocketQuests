@@ -13,4 +13,9 @@ export const colors = {
   onGold: pocketQuestsTheme.colors.onPrimary,
   danger: pocketQuestsTheme.colors.danger,
 };
-export const styles = StyleSheet.create(createStyles(pocketQuestsTheme));
+const base = createStyles(pocketQuestsTheme);
+export const styles = StyleSheet.create({
+  ...base,
+  title: { ...base.title, fontFamily: "JournalSerif", fontWeight: "700" },
+  subtitle: { ...base.subtitle, fontFamily: "JournalSerif", fontWeight: "700" },
+});

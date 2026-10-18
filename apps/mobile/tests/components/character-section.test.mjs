@@ -1,3 +1,4 @@
+import "./artwork-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import Module, { createRequire } from "node:module";

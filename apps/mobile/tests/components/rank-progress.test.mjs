@@ -1,3 +1,4 @@
+import "./artwork-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import Module, { createRequire } from "node:module";
@@ -159,6 +160,34 @@ test("highest rank has no invented next target and missing catalog stays recover
     await view.render(data);
     await view.click("See the rank ladder");
     assert.match(view.element.textContent, /Your starting rank/);
+  } finally {
+    await view.close();
+  }
+});
+
+test("compact Home rank summary opens and closes requirements without changing confirmed balances", async () => {
+  const data = { ...props(), compact: true };
+  const view = await mount(data);
+  try {
+    assert.equal(
+      view.element.querySelectorAll('[role="progressbar"]').length,
+      0,
+    );
+    await view.click("View rank progress");
+    assert.equal(
+      view.element.querySelectorAll('[role="progressbar"]').length,
+      2,
+    );
+    await view.click("See category requirements");
+    assert.match(view.element.textContent, /500 XP · Floor met/);
+    await view.click("Hide rank progress");
+    assert.equal(
+      view.element.querySelectorAll('[role="progressbar"]').length,
+      0,
+    );
+    await view.render({ ...data, rank: { ...data.rank, total: 570 } });
+    await view.click("View rank progress");
+    assert.match(view.element.textContent, /570\/300 XP/);
   } finally {
     await view.close();
   }

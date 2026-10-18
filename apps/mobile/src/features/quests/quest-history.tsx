@@ -15,13 +15,16 @@ export type QuestHistorySection = {
 export function QuestHistory({
   sections,
   children,
+  header,
 }: Readonly<{
   sections: QuestHistorySection[];
   children: React.ReactNode;
+  header?: React.ReactNode;
 }>) {
   const insets = useSafeAreaInsets();
   return (
     <SectionList
+      showsVerticalScrollIndicator={false}
       sections={sections}
       keyExtractor={(item) => item.occurrence.id}
       renderItem={({ item }) => <QuestCard item={item} />}
@@ -40,17 +43,19 @@ export function QuestHistory({
         </View>
       )}
       ListHeaderComponent={
-        <View style={{ gap: 20 }}>
+        <View style={{ gap: header ? 12 : 20 }}>
+          {header}
           <SessionRecovery />
           {children}
         </View>
       }
-      contentInsetAdjustmentBehavior="automatic"
+      contentInsetAdjustmentBehavior={header ? "never" : "automatic"}
       style={{ flex: 1, backgroundColor: colors.paper }}
       contentContainerStyle={{
-        padding: 20,
+        padding: 16,
+        paddingTop: header ? 0 : 20,
         paddingBottom: Math.max(insets.bottom, 20) + 24,
-        gap: 20,
+        gap: header ? 12 : 20,
         width: "100%",
         maxWidth: 780,
         alignSelf: "center",

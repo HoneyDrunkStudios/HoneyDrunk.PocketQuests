@@ -1,3 +1,4 @@
+import "./artwork-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import Module, { createRequire } from "node:module";
@@ -175,12 +176,9 @@ test("compact journal exposes a unique detail link and heading without repeating
         .getAttribute("href"),
       "/quest/o",
     );
-    assert.match(view.element.textContent, /Health · Active/);
+    assert.match(view.element.textContent, /Health.*Active/);
     assert.match(view.element.textContent, /10 base XP · Rank F · Small/);
-    assert.match(
-      view.element.textContent,
-      /Due 2026-10-18.*09:30 \(planned only\)/,
-    );
+    assert.match(view.element.textContent, /Due today.*Planned 09:30/);
     assert.doesNotMatch(
       view.element.textContent,
       /Finish one practice|Take a deliberate break|Complete:/,
@@ -223,6 +221,8 @@ test("compact cards retain frozen, accepted-loss and unconfirmed-completion warn
       view.element.textContent,
       /Completion pending timing verification — rewards unconfirmed/,
     );
+    assert.match(view.element.textContent, /Timing unverified/);
+    assert.doesNotMatch(view.element.textContent, /Pending sync/);
     assert.equal(view.button("Complete: Practice"), undefined);
   } finally {
     await view.close();

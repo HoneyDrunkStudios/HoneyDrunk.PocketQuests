@@ -1,42 +1,20 @@
-import { View } from "react-native";
+import { Image } from "react-native";
 import { colors } from "../../shared/ui";
+import { journalArt } from "../../shared/journal-art";
 export function CharacterPortrait() {
   return (
-    <View
+    <Image
+      source={journalArt.traveler}
       accessible
       accessibilityRole="image"
-      accessibilityLabel="Character portrait silhouette"
+      accessibilityLabel="Illustrated traveler character portrait"
       style={{
         width: 112,
-        minHeight: 144,
+        height: 112,
+        borderRadius: 56,
         borderWidth: 2,
         borderColor: colors.gold,
-        borderRadius: 56,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: colors.paper,
       }}
-    >
-      <View
-        accessible={false}
-        style={{
-          width: 38,
-          height: 38,
-          borderRadius: 19,
-          backgroundColor: colors.ink,
-        }}
-      />
-      <View
-        accessible={false}
-        style={{
-          width: 64,
-          height: 56,
-          borderTopLeftRadius: 32,
-          borderTopRightRadius: 32,
-          marginTop: 8,
-          backgroundColor: colors.ink,
-        }}
-      />
-    </View>
+    />
   );
 }

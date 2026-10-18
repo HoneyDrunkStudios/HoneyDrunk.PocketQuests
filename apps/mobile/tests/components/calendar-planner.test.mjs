@@ -1,3 +1,4 @@
+import "./artwork-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import Module, { createRequire } from "node:module";
@@ -51,6 +52,9 @@ const quest = {
   baseXp: 10,
 };
 Module._load = function (name, ...rest) {
+  if (name.endsWith("/shared/journal-heading"))
+    return { JournalHeading: () => null };
+  if (name === "@honeydrunk/ui-native") return { ThemeProvider: container };
   if (name === "react-native")
     return {
       Text: container,

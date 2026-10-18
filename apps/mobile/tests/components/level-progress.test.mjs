@@ -159,3 +159,36 @@ test("accessible progress reflects confirmed completion, level-up and Undo witho
     element.remove();
   }
 });
+
+test("compact overall progress announces the same curve and updates after Undo", async () => {
+  const element = document.createElement("div");
+  const root = createRoot(element);
+  try {
+    for (const [xp, level, now, text] of [
+      [1240, 4, 49, "340/700 XP toward level 5"],
+      [90, 1, 90, "90/100 XP toward level 2"],
+    ]) {
+      await act(async () =>
+        root.render(
+          React.createElement(
+            ThemeProvider,
+            { theme: pocketQuestsTheme },
+            React.createElement(LevelProgress, {
+              name: "Overall",
+              track: "overall",
+              xp,
+              level,
+              compact: true,
+            }),
+          ),
+        ),
+      );
+      const bar = element.querySelector('[role="progressbar"]');
+      assert.equal(bar.getAttribute("aria-valuetext"), text);
+      assert.equal(bar.getAttribute("aria-valuenow"), String(now));
+      assert.equal(bar.getAttribute("aria-valuemax"), "100");
+    }
+  } finally {
+    await act(async () => root.unmount());
+  }
+});

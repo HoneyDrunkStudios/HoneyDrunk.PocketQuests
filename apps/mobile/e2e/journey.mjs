@@ -423,9 +423,7 @@ try {
     .click();
   await page.getByRole("link", { name: "Back to Home", exact: true }).click();
   await expect(visibleText("Your character", { exact: true })).toBeVisible();
-  await expect(
-    visibleText("280 overall XP earned", { exact: true }),
-  ).toBeVisible();
+  await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
   console.log("Verified completion response-loss retry and character totals.");
   diagnostics.checkpoint("character");
   await expect(
@@ -456,6 +454,9 @@ try {
       committed.attributes.length +
       committed.skills.length,
   );
+  await page
+    .getByRole("button", { name: "View rank progress", exact: true })
+    .click();
   const rankBars = page.getByRole("progressbar", {
     name: /^(Qualifying categories|Combined category XP)$/,
   });
@@ -491,6 +492,9 @@ try {
   await page
     .getByRole("button", { name: "Hide category requirements", exact: true })
     .click();
+  await page
+    .getByRole("button", { name: "Hide rank progress", exact: true })
+    .click();
   await expect(page.getByRole("button", { name: /^Complete:/ })).toHaveCount(0);
   await expect(
     visibleText("Work & Purpose: 1 day in this streak. Done today.", {
@@ -516,14 +520,19 @@ try {
   await page.screenshot({ path: path.join(artifacts, "character-narrow.png") });
   await page.setViewportSize({ width: 390, height: 844 });
   const portrait = await page
-    .getByRole("img", { name: "Character portrait silhouette", exact: true })
+    .getByRole("img", {
+      name: "Illustrated traveler character portrait",
+      exact: true,
+    })
+    // RN Web also emits an inner accessibility img. Measure the visible wrapper.
+    .and(page.locator('[role="img"]'))
     .boundingBox();
   const overallBar = await page
     .getByRole("progressbar", { name: "Overall level progress", exact: true })
     .boundingBox();
   expect(portrait).not.toBeNull();
   expect(overallBar).not.toBeNull();
-  expect(overallBar.x + overallBar.width).toBeLessThanOrEqual(portrait.x);
+  expect(portrait.x + portrait.width).toBeLessThanOrEqual(overallBar.x);
   await page
     .getByRole("heading", { name: "Categories", exact: true })
     .evaluate((element) => element.scrollIntoView({ block: "start" }));
@@ -706,9 +715,7 @@ try {
   // Fresh adapter session, same isolated test account: verifies server persistence.
   await expect(signIn).toBeEnabled();
   await signIn.click();
-  await expect(
-    visibleText("280 overall XP earned", { exact: true }),
-  ).toBeVisible();
+  await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "Quests", exact: true }).click();
   await page.getByRole("tab", { name: "Active", exact: true }).click();
   await page.getByRole("link", { name: /^View quest & rewards:/ }).click();
@@ -892,9 +899,23 @@ try {
     [430, 932],
   ]) {
     await page.setViewportSize({ width, height });
-    await expect(
-      visibleText("280 overall XP earned", { exact: true }),
-    ).toBeVisible();
+    await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
+    // Bundled images have intrinsic dimensions; artwork must fit its dynamic container.
+    for (const name of ["heading", "rank"]) {
+      const background = page
+        .getByTestId(`journal-background-${name}`)
+        .filter({ visible: true });
+      const bounds = await background.evaluate((element) => {
+        const image = element.getBoundingClientRect();
+        const container = element.parentElement.getBoundingClientRect();
+        return {
+          widthDifference: Math.abs(image.width - container.width),
+          heightDifference: Math.abs(image.height - container.height),
+        };
+      });
+      expect(bounds.widthDifference).toBeLessThanOrEqual(1);
+      expect(bounds.heightDifference).toBeLessThanOrEqual(1);
+    }
     await page.screenshot({
       path: path.join(artifacts, `home-${width}.png`),
     });
