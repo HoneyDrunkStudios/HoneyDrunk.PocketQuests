@@ -105,8 +105,10 @@ export default function QuestDetails() {
           state={state}
         />
         <Label>
-          Separate progress pools, not extra overall XP. This is the base reward
-          preview; confirmed rewards appear after synchronization.
+          Separate progress pools, not extra overall XP. Base reward preview.{" "}
+          {item.pendingTimingVerification
+            ? "Timing verification is still required; reconnecting alone cannot confirm rewards."
+            : "Confirmed rewards require a verified completion."}
         </Label>
       </Card>
       {item.planned && (

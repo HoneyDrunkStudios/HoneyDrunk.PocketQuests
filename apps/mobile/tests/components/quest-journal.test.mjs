@@ -299,3 +299,40 @@ test("active details put the criterion and explicit completion before base rewar
     await view.close();
   }
 });
+
+test("timing-unverified details keep reward guidance consistent with recovery warnings", async () => {
+  reset();
+  item.status = "Completed";
+  item.pendingCompletion = true;
+  item.pendingTimingVerification = true;
+  session.pending = true;
+  const view = await mount(QuestDetails);
+  try {
+    assert.match(
+      view.element.textContent,
+      /Reconnecting alone cannot confirm this completion or its rewards/,
+    );
+    assert.match(
+      view.element.textContent,
+      /Timing verification is still required; reconnecting alone cannot confirm rewards/,
+    );
+    assert.doesNotMatch(
+      view.element.textContent,
+      /confirmed rewards appear after synchronization/,
+    );
+    assert.equal(view.button("Complete: Practice"), undefined);
+    item.pendingTimingVerification = false;
+    await view.render();
+    assert.match(
+      view.element.textContent,
+      /Confirmed rewards require a verified completion/,
+    );
+    assert.doesNotMatch(
+      view.element.textContent,
+      /Timing verification is still required/,
+    );
+    assert.deepEqual(sent, []);
+  } finally {
+    await view.close();
+  }
+});
