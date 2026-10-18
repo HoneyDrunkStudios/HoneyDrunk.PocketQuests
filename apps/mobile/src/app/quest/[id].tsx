@@ -4,16 +4,18 @@ import { useState } from "react";
 import { Link, Redirect, useLocalSearchParams } from "expo-router";
 import { Text } from "react-native";
 import { useSession } from "../../session/session";
-import { Button, Card, Label, styles } from "../../shared/ui";
-import { QuestRewards } from "../../features/quests/quest-rewards";
-import { FocusTimer } from "../../features/quests/focus-timer";
+import { Button, Label, styles } from "../../shared/ui";
+import {
+  QuestCompletionActions,
+  QuestCompletionCriterion,
+  QuestOccurrenceRewards,
+} from "../../features/quests/quest-detail-content";
 import { DefinitionManagement } from "../../features/quests/definition-management";
 import { QuestPlanEditor } from "../../features/quests/quest-plan-editor";
 export default function QuestDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { state, catalog, command, busy, pending, signedIn } = useSession();
   const [confirmLoss, setConfirmLoss] = useState(false);
-  const [focus, setFocus] = useState(false);
   const item = state?.occurrences.find((o) => o.occurrence.id === id);
   if (!signedIn && !busy) return <Redirect href="/" />;
   if (!state && busy)
@@ -47,47 +49,8 @@ export default function QuestDetails() {
         {item.status} · Rank {item.occurrence.quest.rank} ·{" "}
         {item.occurrence.quest.effort}
       </Label>
-      <Card>
-        <Text accessibilityRole="header" style={styles.subtitle}>
-          Complete when
-        </Text>
-        <Label>{item.occurrence.quest.criterion}</Label>
-        {item.occurrence.quest.description ? (
-          <Label>{item.occurrence.quest.description}</Label>
-        ) : null}
-      </Card>
-      {item.status === "Active" && (
-        <>
-          <Button
-            title={`Complete: ${item.occurrence.quest.title}`}
-            disabled={busy || pending}
-            onPress={() =>
-              void command({ action: questActions.complete, occurrenceId: id })
-            }
-          />
-          <Label>Already done it? Log it here. No timer required.</Label>
-          {(item.occurrence.quest.isCustom ||
-            [
-              "PQ-CAT-Q01",
-              "PQ-CAT-Q02",
-              "PQ-CAT-Q03",
-              "PQ-CAT-Q04",
-              "PQ-CAT-Q07",
-              "PQ-CAT-Q08",
-            ].includes(item.occurrence.quest.id)) && (
-            <>
-              <Button
-                title={
-                  focus ? "Close focus timer" : "Do Now with an optional timer"
-                }
-                secondary
-                onPress={() => setFocus(!focus)}
-              />
-              {focus && <FocusTimer key={id} />}
-            </>
-          )}
-        </>
-      )}
+      <QuestCompletionCriterion quest={item.occurrence.quest} />
+      <QuestCompletionActions key={`completion:${id}`} item={item} />
       {item.pendingCompletion && (
         <Label>
           {item.pendingTimingVerification
@@ -95,22 +58,7 @@ export default function QuestDetails() {
             : "Recorded on this device. Rewards will be confirmed when synchronized."}
         </Label>
       )}
-      <Card>
-        <Text accessibilityRole="header" style={styles.subtitle}>
-          Completion rewards
-        </Text>
-        <QuestRewards
-          quest={item.occurrence.quest}
-          catalog={catalog}
-          state={state}
-        />
-        <Label>
-          Separate progress pools, not extra overall XP. Base reward preview.{" "}
-          {item.pendingCompletion && item.pendingTimingVerification
-            ? "Timing verification is still required; reconnecting alone cannot confirm rewards."
-            : "Confirmed rewards require a verified completion."}
-        </Label>
-      </Card>
+      <QuestOccurrenceRewards item={item} catalog={catalog} state={state} />
       {item.planned && (
         <Label>
           Planned: {item.planned.resolved}, {item.planned.instant}

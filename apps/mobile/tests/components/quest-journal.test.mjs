@@ -14,7 +14,7 @@ const React = require("react"),
 const { createRoot } = require("react-dom/client");
 const nativeWeb = require("react-native-web");
 const ts = require("typescript");
-let session, item, sent;
+let session, item, sent, currentId;
 const load = Module._load;
 Module._load = function (name, ...rest) {
   if (name === "react-native") return nativeWeb;
@@ -45,7 +45,7 @@ Module._load = function (name, ...rest) {
           },
           children,
         ),
-      useLocalSearchParams: () => ({ id: "o" }),
+      useLocalSearchParams: () => ({ id: currentId }),
       useFocusEffect: () => {},
       Redirect: ({ href }) =>
         React.createElement("span", { "data-redirect": href }),
@@ -74,6 +74,7 @@ const QuestDetails = require("../../src/app/quest/[id].tsx").default;
 const { SessionRecovery } = require("../../src/session/session-recovery.tsx");
 function reset() {
   sent = [];
+  currentId = "o";
   item = {
     occurrence: {
       id: "o",
@@ -371,6 +372,34 @@ test("an in-flight command disables destructive sign-out when its recovery panel
     session.busy = false;
     await view.render();
     assert.notEqual(view.button(label).getAttribute("aria-disabled"), "true");
+  } finally {
+    await view.close();
+  }
+});
+
+test("changing detail occurrences resets optional focus and targets the current occurrence", async () => {
+  reset();
+  const view = await mount(QuestDetails);
+  try {
+    await view.click("Do Now with an optional timer");
+    assert.ok(view.button("Start focus timer"));
+    const next = {
+      ...item,
+      occurrence: { ...item.occurrence, quest: { ...item.occurrence.quest } },
+    };
+    next.occurrence.id = "next";
+    next.occurrence.quest.id = "PQ-CAT-Q01";
+    next.occurrence.quest.isCustom = false;
+    session.state.occurrences.push(next);
+    currentId = "next";
+    await view.render();
+    assert.equal(view.button("Start focus timer"), undefined);
+    assert.ok(view.button("Do Now with an optional timer"));
+    await view.click("Complete: Practice");
+    assert.deepEqual(sent, [{ action: "complete", occurrenceId: "next" }]);
+    next.occurrence.quest.id = "quest-without-focus";
+    await view.render();
+    assert.equal(view.button("Do Now with an optional timer"), undefined);
   } finally {
     await view.close();
   }
