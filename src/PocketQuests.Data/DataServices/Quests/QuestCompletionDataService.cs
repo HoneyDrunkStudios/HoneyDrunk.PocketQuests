@@ -7,15 +7,17 @@ namespace PocketQuests.Data.DataServices.Quests;
 /// <param name="context">The scoped transaction context.</param>
 public sealed class QuestCompletionDataService(AppDbContext context) : BaseDataService<QuestCompletionEntity>(context), IQuestCompletionDataService
 {
+    private IQueryable<QuestCompletionEntity> QuestCompletions => DbSet;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestCompletionEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
-        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
+        return await QuestCompletions.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestCompletionEntity>> GetCurrentForOccurrences(Guid accountId, Guid[] ids, DateTimeOffset at, CancellationToken token = default)
     {
-        return await DbSet.AsNoTracking().Where(row => row.AccountId == accountId && ids.Contains(row.QuestOccurrenceId) && row.UndoneAt == null && row.RecordedAt <= at).ToListAsync(token);
+        return await QuestCompletions.AsNoTracking().Where(row => row.AccountId == accountId && ids.Contains(row.QuestOccurrenceId) && row.UndoneAt == null && row.RecordedAt <= at).ToListAsync(token);
     }
 }

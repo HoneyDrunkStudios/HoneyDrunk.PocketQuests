@@ -7,15 +7,17 @@ namespace PocketQuests.Data.DataServices.Quests;
 /// <param name="context">The scoped transaction context.</param>
 public sealed class QuestDefinitionSkillAllocationDataService(AppDbContext context) : BaseDataService<QuestDefinitionSkillAllocationEntity>(context), IQuestDefinitionSkillAllocationDataService
 {
+    private IQueryable<QuestDefinitionSkillAllocationEntity> QuestDefinitionSkillAllocations => DbSet;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestDefinitionSkillAllocationEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
-        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
+        return await QuestDefinitionSkillAllocations.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestDefinitionSkillAllocationEntity>> GetSelected(Guid accountId, Guid[] ids, CancellationToken token = default)
     {
-        return await DbSet.AsNoTracking().Where(row => row.AccountId == accountId && ids.Contains(row.QuestDefinitionRevisionId)).ToListAsync(token);
+        return await QuestDefinitionSkillAllocations.AsNoTracking().Where(row => row.AccountId == accountId && ids.Contains(row.QuestDefinitionRevisionId)).ToListAsync(token);
     }
 }

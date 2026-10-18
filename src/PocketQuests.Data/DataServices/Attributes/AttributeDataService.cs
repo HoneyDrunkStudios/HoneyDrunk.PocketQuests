@@ -7,7 +7,9 @@ namespace PocketQuests.Data.DataServices.Attributes;
 /// <param name="context">The scoped transaction context.</param>
 public sealed class AttributeDataService(AppDbContext context) : BaseDataService<AttributeEntity>(context), IAttributeDataService
 {
+    private IQueryable<AttributeEntity> Attributes => DbSet;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<AttributeEntity>> GetCatalog(CancellationToken cancellationToken = default) =>
-        await DbSet.OrderBy(row => row.SortOrder).ToListAsync(cancellationToken);
+        await Attributes.OrderBy(row => row.SortOrder).ToListAsync(cancellationToken);
 }

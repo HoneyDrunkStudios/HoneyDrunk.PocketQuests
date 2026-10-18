@@ -7,7 +7,9 @@ namespace PocketQuests.Data.DataServices.Progress;
 /// <param name="context">The scoped transaction context.</param>
 public sealed class ProfileRewardDataService(AppDbContext context) : BaseDataService<ProfileRewardEntity>(context), IProfileRewardDataService
 {
+    private IQueryable<ProfileRewardEntity> ProfileRewards => DbSet;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<ProfileRewardEntity>> GetCatalog(CancellationToken cancellationToken = default) =>
-        await DbSet.ToListAsync(cancellationToken);
+        await ProfileRewards.ToListAsync(cancellationToken);
 }

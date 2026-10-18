@@ -7,9 +7,11 @@ namespace PocketQuests.Data.DataServices.Quests;
 /// <param name="context">The scoped transaction context.</param>
 public sealed class QuestOccurrenceEventDataService(AppDbContext context) : BaseDataService<QuestOccurrenceEventEntity>(context), IQuestOccurrenceEventDataService
 {
+    private IQueryable<QuestOccurrenceEventEntity> QuestOccurrenceEvents => DbSet;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestOccurrenceEventEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
-        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
+        return await QuestOccurrenceEvents.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 }

@@ -7,9 +7,11 @@ namespace PocketQuests.Data.DataServices.Progress;
 /// <param name="context">The scoped transaction context.</param>
 public sealed class XpBalanceDataService(AppDbContext context) : BaseDataService<XpBalanceEntity>(context), IXpBalanceDataService
 {
+    private IQueryable<XpBalanceEntity> XpBalances => DbSet;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<XpBalanceEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
-        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
+        return await XpBalances.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 }

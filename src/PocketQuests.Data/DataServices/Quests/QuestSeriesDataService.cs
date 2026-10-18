@@ -7,9 +7,11 @@ namespace PocketQuests.Data.DataServices.Quests;
 /// <param name="context">The scoped transaction context.</param>
 public sealed class QuestSeriesDataService(AppDbContext context) : BaseDataService<QuestSeriesEntity>(context), IQuestSeriesDataService
 {
+    private IQueryable<QuestSeriesEntity> QuestSeries => DbSet;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<QuestSeriesEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
-        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
+        return await QuestSeries.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 }

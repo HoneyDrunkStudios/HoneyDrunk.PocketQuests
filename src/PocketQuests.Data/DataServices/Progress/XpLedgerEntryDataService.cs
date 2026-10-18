@@ -7,9 +7,11 @@ namespace PocketQuests.Data.DataServices.Progress;
 /// <param name="context">The scoped transaction context.</param>
 public sealed class XpLedgerEntryDataService(AppDbContext context) : BaseDataService<XpLedgerEntryEntity>(context), IXpLedgerEntryDataService
 {
+    private IQueryable<XpLedgerEntryEntity> XpLedgerEntries => DbSet;
+
     /// <inheritdoc />
     public async Task<IReadOnlyList<XpLedgerEntryEntity>> GetByAccountId(Guid accountId, CancellationToken cancellationToken = default)
     {
-        return await DbSet.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
+        return await XpLedgerEntries.Where(row => row.AccountId == accountId).ToListAsync(cancellationToken);
     }
 }
