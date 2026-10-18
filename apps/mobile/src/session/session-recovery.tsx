@@ -113,6 +113,7 @@ export function SessionRecovery() {
               <Button
                 title="Discard pending changes and sign out"
                 secondary
+                disabled={busy && !recoveryRequired}
                 onPress={() => void signOut(true)}
               />
             </>

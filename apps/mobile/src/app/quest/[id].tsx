@@ -5,15 +5,17 @@ import { Link, Redirect, useLocalSearchParams } from "expo-router";
 import { Text } from "react-native";
 import { useSession } from "../../session/session";
 import { Button, Label, styles } from "../../shared/ui";
-import { QuestRewards } from "../../features/quests/quest-rewards";
-import { FocusTimer } from "../../features/quests/focus-timer";
+import {
+  QuestCompletionActions,
+  QuestCompletionCriterion,
+  QuestOccurrenceRewards,
+} from "../../features/quests/quest-detail-content";
 import { DefinitionManagement } from "../../features/quests/definition-management";
 import { QuestPlanEditor } from "../../features/quests/quest-plan-editor";
 export default function QuestDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { state, catalog, command, busy, pending, signedIn } = useSession();
   const [confirmLoss, setConfirmLoss] = useState(false);
-  const [focus, setFocus] = useState(false);
   const item = state?.occurrences.find((o) => o.occurrence.id === id);
   if (!signedIn && !busy) return <Redirect href="/" />;
   if (!state && busy)
@@ -33,46 +35,22 @@ export default function QuestDetails() {
     );
   return (
     <Page>
+      <Text style={styles.muted}>
+        {
+          catalog?.categories.find(
+            (category) => category.id === item.occurrence.quest.categoryId,
+          )?.name
+        }
+      </Text>
       <Text accessibilityRole="header" style={styles.title}>
         {item.occurrence.quest.title}
       </Text>
-      <Label>{item.occurrence.quest.criterion}</Label>
-      <QuestRewards
-        quest={item.occurrence.quest}
-        catalog={catalog}
-        state={state}
-      />
-      {item.status === "Active" && (
-        <>
-          <Button
-            title={`Complete: ${item.occurrence.quest.title}`}
-            disabled={busy || pending}
-            onPress={() =>
-              void command({ action: questActions.complete, occurrenceId: id })
-            }
-          />
-          {(item.occurrence.quest.isCustom ||
-            [
-              "PQ-CAT-Q01",
-              "PQ-CAT-Q02",
-              "PQ-CAT-Q03",
-              "PQ-CAT-Q04",
-              "PQ-CAT-Q07",
-              "PQ-CAT-Q08",
-            ].includes(item.occurrence.quest.id)) && (
-            <>
-              <Button
-                title={
-                  focus ? "Close focus timer" : "Do Now with an optional timer"
-                }
-                secondary
-                onPress={() => setFocus(!focus)}
-              />
-              {focus && <FocusTimer key={id} />}
-            </>
-          )}
-        </>
-      )}
+      <Label>
+        {item.status} · Rank {item.occurrence.quest.rank} ·{" "}
+        {item.occurrence.quest.effort}
+      </Label>
+      <QuestCompletionCriterion quest={item.occurrence.quest} />
+      <QuestCompletionActions key={`completion:${id}`} item={item} />
       {item.pendingCompletion && (
         <Label>
           {item.pendingTimingVerification
@@ -80,9 +58,7 @@ export default function QuestDetails() {
             : "Recorded on this device. Rewards will be confirmed when synchronized."}
         </Label>
       )}
-      <Label>
-        {item.status} · {item.occurrence.quest.baseXp} XP
-      </Label>
+      <QuestOccurrenceRewards item={item} catalog={catalog} state={state} />
       {item.planned && (
         <Label>
           Planned: {item.planned.resolved}, {item.planned.instant}
@@ -199,7 +175,9 @@ export default function QuestDetails() {
         questId={item.occurrence.quest.id}
       />
       <QuestPlanEditor key={id} item={item} />
-      <Text style={styles.subtitle}>Linked goal and steps</Text>
+      <Text accessibilityRole="header" style={styles.subtitle}>
+        Linked goal and steps
+      </Text>
       {item.occurrence.parentId ? (
         <Link
           href={{

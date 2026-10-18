@@ -1,5 +1,12 @@
 # Changelog
 
+## Compact quest journal — October 18, 2026
+
+- Follow the approved prototype's compact Active/Completed cards, with named detail links, readable headings and one base-XP summary; retain schedules, frozen/pending warnings, accepted losses and current-completion Undo.
+- Put the completion criterion and explicit completion action before the reward preview in quest details, preserving optional focus time and existing commands.
+- Verify navigation, command guards and warnings in rendered component tests and retain synthetic browser evidence of Active, Completed and detail views.
+- Keep timing-unverified completion guidance distinct from other pending actions, and disable destructive recovery sign-out during ordinary in-flight writes while retaining the unreadable-cache recovery escape.
+
 ## Available quest details — October 18, 2026
 
 - Present available quests as compact cards with category, rank, effort and XP, following the approved prototype's list/detail flow.

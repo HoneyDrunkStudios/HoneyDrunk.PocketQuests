@@ -43,7 +43,12 @@ Module._load = function (name, ...rest) {
     return {
       Redirect: ({ href }) =>
         React.createElement("span", { "data-redirect": href }),
-      Link: ({ children }) => React.createElement("a", null, children),
+      Link: ({ children, accessibilityLabel }) =>
+        React.createElement(
+          "a",
+          { "aria-label": accessibilityLabel },
+          children,
+        ),
       useLocalSearchParams: () => ({ id: "o" }),
       useFocusEffect: () => {},
     };
@@ -140,7 +145,8 @@ test("large history initially mounts a bounded SectionList window with accessibl
   assert.match(html, /Unscheduled history/);
   assert.match(html, /History item 0/);
   assert.doesNotMatch(html, /History item 999/);
-  assert.ok((html.match(/Open quest/g) ?? []).length <= 20);
+  const detailLinks = html.match(/aria-label="View quest &amp; rewards:/g) ?? [];
+  assert.ok(detailLinks.length > 0 && detailLinks.length <= 20);
 });
 
 test("empty calendar sections render their planning actions in the existing list", () => {

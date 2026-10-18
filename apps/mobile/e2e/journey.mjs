@@ -297,7 +297,43 @@ try {
     })
     .click();
   await page.getByRole("tab", { name: "Active", exact: true }).click();
-  await page.getByRole("link", { name: "Open quest", exact: true }).click();
+  const activeQuestLink = page.getByRole("link", {
+    name: "View quest & rewards: Browser verified custom quest",
+    exact: true,
+  });
+  await expect(activeQuestLink).toBeVisible();
+  await expect(
+    visibleText("I have delivered the working result", { exact: true }),
+  ).toHaveCount(0);
+  await activeQuestLink.evaluate((element) =>
+    element.parentElement.scrollIntoView({ block: "start" }),
+  );
+  for (const width of [320, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: path.join(artifacts, "active-quests.png") });
+  await page.getByRole("link", { name: /^View quest & rewards:/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "Complete when", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", {
+      name: "Complete: Browser verified custom quest",
+      exact: true,
+    }),
+  ).toBeEnabled();
+  await expect(
+    page.getByRole("heading", { name: "Completion rewards", exact: true }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: path.join(artifacts, "active-quest-details.png"),
+  });
   diagnostics.checkpoint("definition-edit");
   await page
     .getByRole("button", {
@@ -525,6 +561,21 @@ try {
   await page.getByRole("tab", { name: "Quests", exact: true }).click();
   await page.getByRole("tab", { name: "Completed", exact: true }).click();
   await expect(
+    page.getByRole("link", {
+      name: "View quest & rewards: Browser verified custom quest",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page
+    .getByRole("heading", {
+      name: "Browser verified custom quest",
+      exact: true,
+    })
+    .evaluate((element) =>
+      element.parentElement.scrollIntoView({ block: "start" }),
+    );
+  await page.screenshot({ path: path.join(artifacts, "completed-quests.png") });
+  await expect(
     visibleText("Browser verified custom quest", { exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: /^Complete:/ })).toHaveCount(0);
@@ -533,7 +584,7 @@ try {
     .getByRole("button", { name: "Start: Enjoy some downtime", exact: true })
     .click();
   await page.getByRole("tab", { name: "Active", exact: true }).click();
-  await page.getByRole("link", { name: "Open quest", exact: true }).click();
+  await page.getByRole("link", { name: /^View quest & rewards:/ }).click();
   await page
     .getByRole("button", { name: "Do Now with an optional timer", exact: true })
     .click();
@@ -660,7 +711,7 @@ try {
   ).toBeVisible();
   await page.getByRole("tab", { name: "Quests", exact: true }).click();
   await page.getByRole("tab", { name: "Active", exact: true }).click();
-  await page.getByRole("link", { name: "Open quest", exact: true }).click();
+  await page.getByRole("link", { name: /^View quest & rewards:/ }).click();
   await expect(
     page.getByRole("button", {
       name: "Complete: Enjoy some downtime",
@@ -767,7 +818,7 @@ try {
   ).toBeVisible();
   await page.screenshot({ path: path.join(artifacts, "active-planning.png") });
   await page
-    .getByRole("link", { name: "Open quest", exact: true })
+    .getByRole("link", { name: /^View quest & rewards:/ })
     .and(page.locator(`a[href="/quest/${calendarQuest.occurrence.id}"]`))
     .click();
   diagnostics.checkpoint("plan-edit");

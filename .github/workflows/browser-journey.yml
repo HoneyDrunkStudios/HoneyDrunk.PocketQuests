@@ -74,6 +74,9 @@ jobs:
             product/artifacts/browser-journey/character-home.png
             product/artifacts/browser-journey/available-quests.png
             product/artifacts/browser-journey/available-quest-details.png
+            product/artifacts/browser-journey/active-quests.png
+            product/artifacts/browser-journey/active-quest-details.png
+            product/artifacts/browser-journey/completed-quests.png
             product/artifacts/browser-journey/home-320.png
             product/artifacts/browser-journey/home-430.png
             product/artifacts/browser-journey/browser-failure.png
