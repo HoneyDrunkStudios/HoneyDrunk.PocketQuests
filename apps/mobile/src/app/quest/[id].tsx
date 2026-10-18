@@ -106,7 +106,7 @@ export default function QuestDetails() {
         />
         <Label>
           Separate progress pools, not extra overall XP. Base reward preview.{" "}
-          {item.pendingTimingVerification
+          {item.pendingCompletion && item.pendingTimingVerification
             ? "Timing verification is still required; reconnecting alone cannot confirm rewards."
             : "Confirmed rewards require a verified completion."}
         </Label>

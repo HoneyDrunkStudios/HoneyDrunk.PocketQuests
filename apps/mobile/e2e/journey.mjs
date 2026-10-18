@@ -327,7 +327,7 @@ try {
       name: "Complete: Browser verified custom quest",
       exact: true,
     }),
-  ).toBeVisible();
+  ).toBeEnabled();
   await expect(
     page.getByRole("heading", { name: "Completion rewards", exact: true }),
   ).toBeVisible();

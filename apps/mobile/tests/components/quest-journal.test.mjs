@@ -71,6 +71,7 @@ const { ThemeProvider } = require("@honeydrunk/ui-native");
 const { pocketQuestsTheme } = require("../../src/shared/theme.ts");
 const { QuestCard } = require("../../src/features/quests/quest-card.tsx");
 const QuestDetails = require("../../src/app/quest/[id].tsx").default;
+const { SessionRecovery } = require("../../src/session/session-recovery.tsx");
 function reset() {
   sent = [];
   item = {
@@ -331,7 +332,45 @@ test("timing-unverified details keep reward guidance consistent with recovery wa
       view.element.textContent,
       /Timing verification is still required/,
     );
+    item.pendingTimingVerification = true;
+    item.pendingCompletion = false;
+    item.status = "Active";
+    await view.render();
+    assert.match(
+      view.element.textContent,
+      /Confirmed rewards require a verified completion/,
+    );
+    assert.doesNotMatch(
+      view.element.textContent,
+      /Timing verification is still required|Reconnecting alone cannot confirm this completion/,
+    );
     assert.deepEqual(sent, []);
+  } finally {
+    await view.close();
+  }
+});
+
+test("an in-flight command disables destructive sign-out when its recovery panel appears, while quarantine keeps its escape", async () => {
+  reset();
+  session.queuedCount = 1;
+  session.busy = true;
+  session.recoveryRequired = false;
+  session.signOut = async (discard) => sent.push({ signOut: discard });
+  const view = await mount(SessionRecovery);
+  try {
+    const label = "Discard pending changes and sign out";
+    assert.equal(view.button(label).getAttribute("aria-disabled"), "true");
+    await view.click(label);
+    assert.deepEqual(sent, []);
+    session.recoveryRequired = true;
+    await view.render();
+    assert.notEqual(view.button(label).getAttribute("aria-disabled"), "true");
+    await view.click(label);
+    assert.deepEqual(sent, [{ signOut: true }]);
+    session.recoveryRequired = false;
+    session.busy = false;
+    await view.render();
+    assert.notEqual(view.button(label).getAttribute("aria-disabled"), "true");
   } finally {
     await view.close();
   }
