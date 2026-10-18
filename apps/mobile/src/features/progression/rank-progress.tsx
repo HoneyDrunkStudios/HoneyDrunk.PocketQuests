@@ -29,8 +29,14 @@ export function RankProgress({
           style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0 }}
         >
           <ImageBackground
+            testID="journal-background-rank"
             source={journalArt.landscape}
-            imageStyle={{ opacity: 0.25, borderRadius: 14 }}
+            imageStyle={{
+              width: "100%",
+              height: "100%",
+              opacity: 0.25,
+              borderRadius: 14,
+            }}
             style={{ flex: 1 }}
           />
         </View>

@@ -12,8 +12,10 @@ export function JournalHeading({
   const insets = useSafeAreaInsets();
   return (
     <ImageBackground
+      testID="journal-background-heading"
       source={journalArt.landscape}
       resizeMode="cover"
+      imageStyle={{ width: "100%", height: "100%" }}
       style={{
         marginHorizontal: -16,
         paddingHorizontal: 26,

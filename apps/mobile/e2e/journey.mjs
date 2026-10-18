@@ -524,6 +524,8 @@ try {
       name: "Illustrated traveler character portrait",
       exact: true,
     })
+    // RN Web also emits an inner accessibility img. Measure the visible wrapper.
+    .and(page.locator('[role="img"]'))
     .boundingBox();
   const overallBar = await page
     .getByRole("progressbar", { name: "Overall level progress", exact: true })
@@ -898,6 +900,22 @@ try {
   ]) {
     await page.setViewportSize({ width, height });
     await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
+    // Bundled images have intrinsic dimensions; artwork must fit its dynamic container.
+    for (const name of ["heading", "rank"]) {
+      const background = page
+        .getByTestId(`journal-background-${name}`)
+        .filter({ visible: true });
+      const bounds = await background.evaluate((element) => {
+        const image = element.getBoundingClientRect();
+        const container = element.parentElement.getBoundingClientRect();
+        return {
+          widthDifference: Math.abs(image.width - container.width),
+          heightDifference: Math.abs(image.height - container.height),
+        };
+      });
+      expect(bounds.widthDifference).toBeLessThanOrEqual(1);
+      expect(bounds.heightDifference).toBeLessThanOrEqual(1);
+    }
     await page.screenshot({
       path: path.join(artifacts, `home-${width}.png`),
     });

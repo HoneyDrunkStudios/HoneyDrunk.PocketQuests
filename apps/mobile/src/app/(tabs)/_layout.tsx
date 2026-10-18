@@ -1,7 +1,27 @@
 import { Redirect, Tabs } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import type { ColorValue } from "react-native";
 import { useSession } from "../../session/session";
 import { colors } from "../../shared/ui";
+type TabIconProps = Readonly<{ color: ColorValue; focused: boolean }>;
+function HomeIcon({ color, focused }: TabIconProps) {
+  return (
+    <Ionicons
+      name={focused ? "home" : "home-outline"}
+      color={color}
+      size={26}
+    />
+  );
+}
+function QuestsIcon({ color }: TabIconProps) {
+  return <Ionicons name="compass-outline" color={color} size={28} />;
+}
+function CalendarIcon({ color }: TabIconProps) {
+  return <Ionicons name="calendar-outline" color={color} size={26} />;
+}
+function ProgressIcon({ color }: TabIconProps) {
+  return <Ionicons name="stats-chart-outline" color={color} size={26} />;
+}
 export default function Layout() {
   const { signedIn } = useSession();
   if (!signedIn) return <Redirect href="/" />;
@@ -28,13 +48,7 @@ export default function Layout() {
         options={{
           title: "Home",
           headerShown: false,
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "home" : "home-outline"}
-              color={color}
-              size={26}
-            />
-          ),
+          tabBarIcon: HomeIcon,
         }}
       />
       <Tabs.Screen
@@ -42,27 +56,21 @@ export default function Layout() {
         options={{
           title: "Quests",
           headerShown: false,
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="compass-outline" color={color} size={28} />
-          ),
+          tabBarIcon: QuestsIcon,
         }}
       />
       <Tabs.Screen
         name="calendar"
         options={{
           title: "Calendar",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="calendar-outline" color={color} size={26} />
-          ),
+          tabBarIcon: CalendarIcon,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Progress",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="stats-chart-outline" color={color} size={26} />
-          ),
+          tabBarIcon: ProgressIcon,
         }}
       />
     </Tabs>

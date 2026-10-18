@@ -24,6 +24,10 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
   const q = item.occurrence.quest;
   const creative = q.categoryId === "c03";
   const accent = creative ? "#BB91F4" : colors.gold;
+  const dueDate =
+    item.occurrence.dueDate === state?.today
+      ? "today"
+      : item.occurrence.dueDate;
   const pendingStatus = item.pendingTimingVerification
     ? "Timing unverified"
     : "Pending sync";
@@ -88,9 +92,7 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
             selectable
             style={[styles.muted, { fontSize: 13, lineHeight: 19 }]}
           >
-            {item.occurrence.dueDate
-              ? `Due ${item.occurrence.dueDate === state?.today ? "today" : item.occurrence.dueDate}`
-              : "Unscheduled"}
+            {dueDate ? `Due ${dueDate}` : "Unscheduled"}
             {item.occurrence.plannedTime
               ? ` · Planned ${item.occurrence.plannedTime}`
               : ""}

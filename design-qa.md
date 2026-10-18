@@ -46,3 +46,12 @@ Evidence is saved in [docs/design/journal-20261018](docs/design/journal-20261018
 - P3: further art crop/size tuning after a native walkthrough. Preserve readable text and dynamic sizing when tuning.
 
 No actionable P0/P1/P2 visual or component findings remain in the verified scope. Device acceptance remains open.
+
+## PR #28 review follow-up
+
+- The real browser journey exposed a strict selector failure: React Native Web renders both a labeled portrait wrapper and an inner accessibility image. The geometry assertion now selects the explicit image-role wrapper and still checks that the portrait sits to the left of the XP bar.
+- Repeating the visual fixture with actual PNG dimensions exposed landscape overflow that the original URI-only fixture missed. Header and rank backgrounds now explicitly fill their dynamic containers; the browser journey checks their image/container bounds at 320 and 430 pixels. Local browser reproduction verified the before/after bounds and character expansion/collapse sequence.
+- The decorative assets now ship 1x/2x/3x density variants, reducing the total raster payload by 73%. See [asset sizes and provenance](apps/mobile/assets/journal/README.md). This addresses the automated review's asset-budget finding; representative-device memory/scrolling remains deferred by the user.
+- The tab icon renderers now have stable module-level identities, and the quest due-date label no longer nests conditionals. These address the five reported Sonar findings without changing navigation or date semantics.
+
+The original scaled preview captures above document the approved composition. They are not proof of Metro asset sizing or the final API/SQL journey; the latest exact-head hosted browser artifact and checks supply that separate evidence.
