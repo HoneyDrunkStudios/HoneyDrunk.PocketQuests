@@ -91,7 +91,15 @@ Module._load = function (name, ...rest) {
     };
   if (name.endsWith("/session-page")) return { Page: container };
   if (name.endsWith("/shared/ui"))
-    return { Button, Input, Label: container, colors: {}, styles: {} };
+    return {
+      Button,
+      Input,
+      Card: container,
+      Label: container,
+      colors: {},
+      styles: {},
+    };
+  if (name === "expo-router") return { useRouter: () => ({ push: () => {} }) };
   if (name === "./quest-history")
     return {
       QuestHistory: ({ children, sections }) =>
@@ -291,11 +299,9 @@ test("empty-day choose and create keep the selected due date through the real ac
         assert.match(view.element.textContent, /Custom quest editor/);
         await view.click("Return to available");
       }
-      assert.equal(
-        view.element.querySelector(
-          '[aria-label="Due date in YYYY-MM-DD format"]',
-        ).value,
-        "2026-10-15",
+      assert.match(
+        view.element.textContent,
+        /Start plans a quest for 2026-10-15/,
       );
       await view.click("Start: Practice");
       assert.equal(sent.length, 1);

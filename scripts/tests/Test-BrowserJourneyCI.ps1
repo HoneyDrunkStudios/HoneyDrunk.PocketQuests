@@ -5,7 +5,7 @@ $workflow = Get-Content (Join-Path $PSScriptRoot '../../.github/workflows/browse
 $uploadBlock = [regex]::Match($workflow, '(?m)^          path: \|\r?\n(?<paths>(?: {12}[^\r\n]+(?:\r?\n|$))+)')
 if (!$uploadBlock.Success) { throw 'Missing explicit browser upload block.' }
 $uploaded = @($uploadBlock.Groups['paths'].Value.Trim() -split '\r?\n' | ForEach-Object { $_.Trim() })
-$allowed = @('run.json', 'completion-celebration.png', 'character-home.png', 'home-320.png', 'home-430.png', 'browser-failure.png')
+$allowed = @('run.json', 'completion-celebration.png', 'character-home.png', 'available-quests.png', 'available-quest-details.png', 'home-320.png', 'home-430.png', 'browser-failure.png')
 $allowed = @($allowed | ForEach-Object { 'product/artifacts/browser-journey/' + $_ })
 if (Compare-Object $allowed $uploaded) { throw 'Browser artifact allowlist changed; explicitly review its data boundary.' }
 Write-Output 'Explicit browser artifact allowlist passed.'
