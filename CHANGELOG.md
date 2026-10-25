@@ -1,5 +1,12 @@
 # Changelog
 
+## Guided onboarding and journal entry — October 25, 2026
+
+- Add an illustrated welcome and dedicated three-step onboarding flow with local interest drafts saved once on Continue.
+- Route incomplete profiles into onboarding and completed profiles into the app with explicit, cycle-free route guards.
+- Bundle the licensed renamed bold serif face, improve small-screen journal/card readability, and keep sign-in forms above the iOS keyboard.
+- Keep provider setup/recovery failures readable without echoing private authentication errors, and document remaining native/provider acceptance.
+
 ## Expo SDK 58 compatibility — October 25, 2026
 
 - Align the mobile client to Expo SDK 58, React 19.3 and React Native 0.88 for the current iPhone Expo Go host.

@@ -4,12 +4,11 @@ import { Text, View } from "react-native";
 import { useSession } from "../../session/session";
 import { Button, Label, styles } from "../../shared/ui";
 import { QuestEditor } from "./quest-editor";
-import { ProfileEditor } from "../profile/profile-editor";
 import { eligible } from "./quest-rules";
 import { SeriesEditor } from "./series-editor";
 import { AvailableQuestCard } from "./available-quest-card";
 import { availableQuests } from "./quest-availability";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import type { Quest, Series, Definition } from "../../shared/contracts";
 
 export function AvailableQuests({
@@ -26,7 +25,8 @@ export function AvailableQuests({
   );
   const [category, setCategory] = useState<string | null>(null);
   const router = useRouter();
-  if (state && !state.profile.onboardingComplete) return <ProfileEditor />;
+  if (state && !state.profile.onboardingComplete)
+    return <Redirect href="/onboarding" />;
   if (editing)
     return (
       <QuestEditor

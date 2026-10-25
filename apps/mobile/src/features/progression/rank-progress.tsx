@@ -21,7 +21,7 @@ export function RankProgress({
   const [showProgress, setShowProgress] = useState(false);
   return (
     <Card
-      style={{ gap: 12, borderColor: colors.line, padding: compact ? 10 : 16 }}
+      style={{ gap: 12, borderColor: colors.line, padding: compact ? 6 : 16 }}
     >
       {compact && (
         <View

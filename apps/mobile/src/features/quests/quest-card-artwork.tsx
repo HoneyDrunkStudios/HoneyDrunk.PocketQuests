@@ -26,8 +26,9 @@ export function QuestCardArtwork({
         resizeMode="cover"
         style={{
           position: "absolute",
-          bottom: 0,
-          width: "100%",
+          top: -30,
+          right: 0,
+          width: "140%",
           aspectRatio: 2,
         }}
       />

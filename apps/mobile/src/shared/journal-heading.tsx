@@ -1,4 +1,4 @@
-import { ImageBackground, Text, View } from "react-native";
+import { ImageBackground, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Link } from "expo-router";
@@ -10,53 +10,78 @@ export function JournalHeading({
   title,
   description,
   compact = false,
-}: Readonly<{ title: string; description?: string; compact?: boolean }>) {
+  showSettings = true,
+}: Readonly<{
+  title: string;
+  description?: string;
+  compact?: boolean;
+  showSettings?: boolean;
+}>) {
   const insets = useSafeAreaInsets();
   return (
-    <ImageBackground
-      testID="journal-background-heading"
-      source={journalArt.landscape}
-      resizeMode="cover"
-      imageStyle={{ width: "100%", height: "100%" }}
-      style={{
-        marginHorizontal: -16,
-        paddingHorizontal: 24,
-        paddingTop: insets.top + 16,
-        paddingBottom: 12,
-        minHeight: (compact ? 178 : 220) + insets.top,
-        justifyContent: "space-between",
-      }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <Ionicons
-          name="compass-outline"
-          size={32}
-          color={colors.gold}
-          accessible={false}
-          aria-hidden
-        />
-        <Text style={[styles.subtitle, { fontSize: 24, flex: 1 }]}>
-          Pocket Quests
-        </Text>
-        <Link
-          href="/(tabs)/profile"
-          accessibilityLabel="Settings and profile"
+    <View style={{ marginHorizontal: -16, backgroundColor: colors.paper }}>
+      <ImageBackground
+        testID="journal-background-heading"
+        source={journalArt.landscape}
+        resizeMode="contain"
+        imageStyle={{ width: "100%", height: "100%" }}
+        style={{ width: "100%", aspectRatio: 390 / 210 }}
+      >
+        <View
           style={{
-            padding: 10,
-            minWidth: 48,
-            minHeight: 48,
-            color: colors.ink,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            paddingHorizontal: 20,
+            paddingTop: insets.top + 12,
           }}
         >
           <Ionicons
-            name="settings-outline"
-            size={26}
+            name="compass-outline"
+            size={32}
+            color={colors.gold}
             accessible={false}
             aria-hidden
           />
-        </Link>
-      </View>
-      <View style={{ gap: 6, paddingTop: compact ? 42 : 64 }}>
+          <Text style={[styles.subtitle, { fontSize: 23, flex: 1 }]}>
+            Pocket Quests
+          </Text>
+          {showSettings && (
+            <Link href="/(tabs)/profile" asChild>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Settings and profile"
+                style={{
+                  padding: 10,
+                  minWidth: 48,
+                  minHeight: 48,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "#091A29CC",
+                  borderRadius: 24,
+                }}
+              >
+                <Ionicons
+                  name="settings-outline"
+                  size={26}
+                  color={colors.ink}
+                  accessible={false}
+                  aria-hidden
+                />
+              </Pressable>
+            </Link>
+          )}
+        </View>
+      </ImageBackground>
+      <View
+        style={{
+          gap: 6,
+          marginTop: -24,
+          paddingHorizontal: 24,
+          paddingTop: compact ? 0 : 4,
+          paddingBottom: 0,
+        }}
+      >
         <Text accessibilityRole="header" style={styles.title}>
           {title}
         </Text>
@@ -64,6 +89,6 @@ export function JournalHeading({
           <Text style={[styles.muted, { fontSize: 15 }]}>{description}</Text>
         )}
       </View>
-    </ImageBackground>
+    </View>
   );
 }

@@ -5,7 +5,7 @@ import { JournalHeading } from "../../shared/journal-heading";
 import { useAccountSnapshot } from "../../session/session";
 import { Button, Label } from "../../shared/ui";
 import { AvailableQuests } from "./available-quests";
-import { ProfileEditor } from "../profile/profile-editor";
+import { Redirect } from "expo-router";
 import { activePlan } from "./active-plan";
 import { QuestViewTabs } from "./quest-view-tabs";
 
@@ -27,11 +27,7 @@ export function QuestBoard() {
       </Page>
     );
   if (state && !state.profile.onboardingComplete)
-    return (
-      <Page header={<JournalHeading title="Your quests" compact />}>
-        <ProfileEditor />
-      </Page>
-    );
+    return <Redirect href="/onboarding" />;
   const items = state.occurrences.filter((o) => {
     if (section === "Completed") return o.status === "Completed";
     if (section === "Active") return ["Active", "Frozen"].includes(o.status);

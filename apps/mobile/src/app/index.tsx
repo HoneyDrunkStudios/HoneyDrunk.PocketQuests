@@ -1,4 +1,5 @@
-import { Page } from "../session/session-page";
+import { JournalEntry } from "../shared/journal-entry";
+import { SessionRecovery } from "../session/session-recovery";
 import {
   providerScopes,
   providerCredentials,
@@ -11,12 +12,11 @@ import { Loading } from "@honeydrunk/ui-native";
 import { signInRedirect } from "../config/client";
 import { useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
-import { Redirect } from "expo-router";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { useSession } from "../session/session";
 import { RecoveryPanel } from "../features/profile/account-settings";
-import { Button, Label, Card, colors, styles } from "../shared/ui";
+import { Button, Label, styles } from "../shared/ui";
 WebBrowser.maybeCompleteAuthSession();
 function SignIn({ config, discovery }: Readonly<ProviderSetup>) {
   const { connect, busy } = useSession();
@@ -86,54 +86,20 @@ function SignIn({ config, discovery }: Readonly<ProviderSetup>) {
 export default function Welcome() {
   const { signedIn, busy } = useSession();
   const { setup, error, retry } = useProviderSetup();
-  if (signedIn) return <Redirect href="/(tabs)" />;
+  // The root protected stack selects onboarding or the app after sign-in.
+  if (signedIn) return null;
   return (
-    <Page>
-      <View
-        style={{
-          gap: 14,
-          borderLeftWidth: 4,
-          borderLeftColor: colors.gold,
-          paddingLeft: 18,
-          paddingVertical: 12,
-        }}
-      >
-        <Text
-          style={{
-            ...styles.muted,
-            color: colors.gold,
-            letterSpacing: 3,
-            fontWeight: "700",
-          }}
-        >
-          YOUR EVERYDAY ADVENTURE
+    <JournalEntry>
+      <View style={{ gap: 12 }}>
+        <Text style={[styles.subtitle, { textAlign: "center", fontSize: 22 }]}>
+          A little progress. Every day.
         </Text>
-        <Text selectable style={styles.title}>
-          Small actions. A growing story.
-        </Text>
-        <Label>
-          Choose what matters to you. Make room for work, discovery, rest, and
-          everything in between.
+        <Label style={{ textAlign: "center" }}>
+          Turn things you care about into quests. Watch your character grow with
+          you.
         </Label>
-      </View>
-      <RecoveryPanel />
-      <Card style={{ borderTopWidth: 3, borderTopColor: colors.green }}>
-        <Text
-          style={{
-            ...styles.muted,
-            color: colors.green,
-            letterSpacing: 2,
-            fontWeight: "700",
-          }}
-        >
-          PLAYER JOURNAL / PRIVATE
-        </Text>
-        <Text selectable style={styles.subtitle}>
-          Your progress stays yours
-        </Text>
-        <Label>
-          Private quests, meaningful progress, and room to begin again.
-        </Label>
+        <SessionRecovery />
+        <RecoveryPanel />
         {busy && <Loading label="Restoring session" />}
         {setup ? (
           <SignIn {...setup} />
@@ -147,7 +113,16 @@ export default function Welcome() {
             )}
           </>
         )}
-      </Card>
-    </Page>
+        <Text
+          style={[
+            styles.muted,
+            { textAlign: "center", fontSize: 13, lineHeight: 19 },
+          ]}
+        >
+          New here? The same button creates your account. Available sign-in
+          methods are shown in your browser.
+        </Text>
+      </View>
+    </JournalEntry>
   );
 }

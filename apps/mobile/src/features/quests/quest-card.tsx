@@ -70,13 +70,26 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
               paddingHorizontal: 8,
               paddingVertical: 2,
               fontSize: 12,
+              backgroundColor: "#091A29E6",
             },
           ]}
         >
           {item.pendingCompletion ? pendingStatus : item.status}
         </Text>
       </View>
-      <Text accessibilityRole="header" selectable style={styles.subtitle}>
+      <Text
+        accessibilityRole="header"
+        selectable
+        style={[
+          styles.subtitle,
+          {
+            alignSelf: "flex-start",
+            backgroundColor: "#091A29E6",
+            borderRadius: 4,
+            paddingRight: 4,
+          },
+        ]}
+      >
         {q.title}
       </Text>
       <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
@@ -84,14 +97,28 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
           <Text
             style={[
               styles.muted,
-              { color: colors.gold, fontSize: 13, lineHeight: 19 },
+              {
+                color: colors.gold,
+                fontSize: 13,
+                lineHeight: 19,
+                backgroundColor: "#091A29E6",
+                alignSelf: "flex-start",
+              },
             ]}
           >
             {q.baseXp} base XP · Rank {q.rank} · {q.effort}
           </Text>
           <Text
             selectable
-            style={[styles.muted, { fontSize: 13, lineHeight: 19 }]}
+            style={[
+              styles.muted,
+              {
+                fontSize: 13,
+                lineHeight: 19,
+                backgroundColor: "#091A29E6",
+                alignSelf: "flex-start",
+              },
+            ]}
           >
             {dueDate ? `Due ${dueDate}` : "Unscheduled"}
             {item.occurrence.plannedTime

@@ -116,28 +116,38 @@ try {
   await expect(signIn).toBeEnabled({ timeout: 90000 });
   await signIn.click();
   await expect(
-    visibleText("Your interests and experience", { exact: true }),
+    visibleText("Your adventure starts here", { exact: true }),
   ).toBeVisible({ timeout: 30000 });
   diagnostics.checkpoint("onboarding");
+  await page.getByRole("button", { name: "Let’s begin", exact: true }).click();
   await page
-    .getByRole("button", { name: "Choose: Work & Purpose", exact: true })
+    .getByRole("checkbox", { name: "Work & Purpose", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Selected: Work & Purpose", exact: true }),
-  ).toBeEnabled();
+    page.getByRole("checkbox", { name: "Work & Purpose", exact: true }),
+  ).toBeChecked();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  diagnostics.checkpoint("onboarding-save");
+  await page
+    .getByRole("button", {
+      name: "Choose my first quest",
+      exact: true,
+    })
+    .click();
+  // Experience is optional profile editing, outside the first-run journey.
+  await page
+    .getByRole("button", { name: "Settings and profile", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "Programming: Expert", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Confirm experience correction", exact: true })
     .click();
   await expect(
     visibleText("Current assessment: Expert", { exact: true }),
   ).toBeVisible();
-  diagnostics.checkpoint("onboarding-save");
-  await page
-    .getByRole("button", {
-      name: "Save setup and choose my first quest",
-      exact: true,
-    })
-    .click();
+  await page.getByRole("tab", { name: "Quests", exact: true }).click();
   diagnostics.checkpoint("custom-quest");
   await page
     .getByRole("button", { name: "Create a custom quest", exact: true })
@@ -543,7 +553,7 @@ try {
   diagnostics.checkpoint("export-timer");
   // The overlaid gear must remain reachable above the decorative heading art.
   await page
-    .getByRole("link", { name: "Settings and profile", exact: true })
+    .getByRole("button", { name: "Settings and profile", exact: true })
     .click();
   await expect(
     visibleText("280 base XP earned", { exact: true }),

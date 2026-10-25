@@ -328,7 +328,7 @@ test("quest sections expose selected tab semantics and onboarding remains reacha
   assert.match(html, /aria-selected="true"/);
   assert.match(html, /Available quest content/);
   state.profile.onboardingComplete = false;
-  assert.match(render(Quests), /Onboarding/);
+  assert.match(render(Quests), /data-redirect="\/onboarding"/);
 });
 test("celebration renders named rewards and explicit level-ups after brief Undo expires", () => {
   const html = render(CompletionCelebration, {
