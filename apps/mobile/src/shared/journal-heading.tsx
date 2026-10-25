@@ -10,60 +10,81 @@ export function JournalHeading({
   title,
   description,
   compact = false,
-}: Readonly<{ title: string; description?: string; compact?: boolean }>) {
+  showSettings = true,
+}: Readonly<{
+  title: string;
+  description?: string;
+  compact?: boolean;
+  showSettings?: boolean;
+}>) {
   const insets = useSafeAreaInsets();
   return (
-    <View
-      style={{
-        marginHorizontal: -16,
-        paddingHorizontal: 24,
-        paddingTop: insets.top + 16,
-        paddingBottom: 12,
-        minHeight: (compact ? 178 : 220) + insets.top,
-        justifyContent: "space-between",
-      }}
-    >
-      <View pointerEvents="none" style={{ position: "absolute", inset: 0 }}>
-        <Image
-          testID="journal-background-heading"
-          source={journalArt.landscape}
-          resizeMode="cover"
-          style={{ width: "100%", height: "100%" }}
-          accessible={false}
-        />
+    <View style={{ marginHorizontal: -16, backgroundColor: colors.paper }}>
+      <View style={{ width: "100%", aspectRatio: 390 / 210 }}>
+        <View pointerEvents="none" style={{ position: "absolute", inset: 0 }}>
+          <Image
+            testID="journal-background-heading"
+            source={journalArt.landscape}
+            resizeMode="contain"
+            style={{ width: "100%", height: "100%" }}
+            accessible={false}
+          />
+        </View>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            paddingHorizontal: 20,
+            paddingTop: insets.top + 12,
+          }}
+        >
+          <Ionicons
+            name="compass-outline"
+            size={32}
+            color={colors.gold}
+            accessible={false}
+            aria-hidden
+          />
+          <Text style={[styles.subtitle, { fontSize: 23, flex: 1 }]}>
+            Pocket Quests
+          </Text>
+          {showSettings && (
+            <Link href="/(tabs)/profile" asChild>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Settings and profile"
+                style={{
+                  padding: 10,
+                  minWidth: 48,
+                  minHeight: 48,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "#091A29CC",
+                  borderRadius: 24,
+                }}
+              >
+                <Ionicons
+                  name="settings-outline"
+                  size={26}
+                  color={colors.ink}
+                  accessible={false}
+                  aria-hidden
+                />
+              </Pressable>
+            </Link>
+          )}
+        </View>
       </View>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <Ionicons
-          name="compass-outline"
-          size={32}
-          color={colors.gold}
-          accessible={false}
-          aria-hidden
-        />
-        <Text style={[styles.subtitle, { fontSize: 24, flex: 1 }]}>
-          Pocket Quests
-        </Text>
-        <Link href="/(tabs)/profile" asChild>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Settings and profile"
-            style={{
-              padding: 10,
-              minWidth: 48,
-              minHeight: 48,
-            }}
-          >
-            <Ionicons
-              name="settings-outline"
-              size={26}
-              color={colors.ink}
-              accessible={false}
-              aria-hidden
-            />
-          </Pressable>
-        </Link>
-      </View>
-      <View style={{ gap: 6, paddingTop: compact ? 42 : 64 }}>
+      <View
+        style={{
+          gap: 6,
+          marginTop: -24,
+          paddingHorizontal: 24,
+          paddingTop: compact ? 0 : 4,
+          paddingBottom: 0,
+        }}
+      >
         <Text accessibilityRole="header" style={styles.title}>
           {title}
         </Text>

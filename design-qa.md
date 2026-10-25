@@ -1,3 +1,10 @@
+# October 22, 2026 current visual QA
+
+final result: passed
+
+The current scoped result is recorded in [welcome and onboarding QA](docs/design/onboarding-20261022/README.md), with reference/implementation comparisons, native onboarding evidence, fixed findings and explicit unrun acceptance lanes. Changes remain local. The October 18 reports below are retained as history.
+
+---
 # Illustrated journal visual QA — October 18, 2026
 
 Current approved city revision: [city journal visual QA](docs/design/city-journal-20261018/README.md), including same-viewport reference/implementation comparisons and narrow pending-card evidence. The remainder of this file records the earlier lake-style implementation and PR #28 follow-up; it is retained as historical evidence.

@@ -1,0 +1,5 @@
+{
+  "publicClient": {
+    "redirectUris": ["pocketquests://callback"]
+  }
+}

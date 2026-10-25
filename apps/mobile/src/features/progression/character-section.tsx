@@ -41,7 +41,7 @@ export function CharacterSection({
         <Image
           source={path.image}
           accessible={false}
-          style={{ width: 72, height: 48 }}
+          style={{ width: 88, height: 58 }}
           resizeMode="contain"
         />
         <View style={{ flex: 1, gap: 3 }}>

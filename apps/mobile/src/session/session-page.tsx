@@ -19,7 +19,7 @@ export function Page({
         padding: 16,
         paddingTop: header ? 0 : 20,
         paddingBottom: Math.max(insets.bottom, 20) + 24,
-        gap: header ? 8 : 10,
+        gap: header ? 6 : 10,
         width: "100%",
         maxWidth: 780,
         alignSelf: "center",

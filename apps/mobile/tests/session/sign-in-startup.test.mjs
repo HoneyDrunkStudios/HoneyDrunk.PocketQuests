@@ -22,7 +22,7 @@ const discovery = {
   authorizationEndpoint: "https://issuer.example.test/authorize",
   tokenEndpoint: "https://issuer.example.test/token",
 };
-let discover, prompt, promptCalls, response;
+let discover, prompt, promptCalls, response, exchange;
 const request = { codeVerifier: "test-verifier" };
 const connect = async () => {};
 const container = ({ children }) => React.createElement("div", null, children);
@@ -30,6 +30,7 @@ Module._load = function (name, ...rest) {
   if (name === "expo-auth-session")
     return {
       fetchDiscoveryAsync: (...args) => discover(...args),
+      exchangeCodeAsync: (...args) => exchange(...args),
       useAuthRequest: () => [
         request,
         response,
@@ -47,6 +48,9 @@ Module._load = function (name, ...rest) {
   if (name === "../session/session")
     return { useSession: () => ({ busy: false, signedIn: false, connect }) };
   if (name === "../session/session-page") return { Page: container };
+  if (name === "../shared/journal-entry") return { JournalEntry: container };
+  if (name === "../session/session-recovery")
+    return { SessionRecovery: () => null };
   if (name === "../features/profile/account-settings")
     return { RecoveryPanel: () => null };
   if (name === "@honeydrunk/ui-native") return { Loading: () => null };
@@ -77,6 +81,7 @@ function reset() {
   prompt = async () => ({ type: "cancel" });
   promptCalls = 0;
   response = null;
+  exchange = async () => ({ accessToken: "test-access-token" });
   global.fetch = async () => ({ ok: true, json: async () => config });
 }
 async function mount(Component, strict = false) {
@@ -270,6 +275,57 @@ test("welcome handles browser rejection and cancellation and blocks a second pro
     prompt = async () => ({ type: "error" });
     await view.click(button);
     assert.match(view.element.textContent, /Sign-in did not finish/);
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("account verification shows provider rejection and allows another attempt", async () => {
+  reset();
+  prompt = async () => ({
+    type: "error",
+    params: { error_description: "private provider details" },
+  });
+  const view = await mount(() =>
+    React.createElement(ProviderSignIn, {
+      title: "Verify account",
+      onToken: connect,
+    }),
+  );
+  try {
+    await view.click(view.button("Verify account"));
+    assert.match(view.element.textContent, /Sign-in did not finish/);
+    assert.doesNotMatch(view.element.textContent, /private provider/);
+    assert.equal(view.button("Verify account").disabled, false);
+    prompt = async () => ({ type: "cancel" });
+    await view.click(view.button("Verify account"));
+    assert.doesNotMatch(view.element.textContent, /Sign-in did not finish/);
+    assert.equal(view.button("Verify account").disabled, false);
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("account verification hides exchange details and does not submit a failed proof", async () => {
+  reset();
+  response = { type: "success", params: { code: "test-code" } };
+  exchange = async () => {
+    throw new Error("private exchange token or endpoint");
+  };
+  let proofs = 0;
+  const view = await mount(() =>
+    React.createElement(ProviderSignIn, {
+      title: "Verify account",
+      onToken: async () => {
+        proofs++;
+      },
+    }),
+  );
+  try {
+    assert.match(view.element.textContent, /Sign-in did not finish/);
+    assert.doesNotMatch(view.element.textContent, /private exchange/);
+    assert.equal(proofs, 0);
+    assert.equal(view.button("Verify account").disabled, false);
   } finally {
     await view.unmount();
   }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ImageBackground, Text, View } from "react-native";
+import { Image, Text, View } from "react-native";
 import { journalArt } from "../../shared/journal-art";
 import { RankSummary } from "./rank-summary";
 import { RankRequirements } from "./rank-requirements";
@@ -21,23 +21,24 @@ export function RankProgress({
   const [showProgress, setShowProgress] = useState(false);
   return (
     <Card
-      style={{ gap: 12, borderColor: colors.line, padding: compact ? 10 : 16 }}
+      style={{ gap: 12, borderColor: colors.line, padding: compact ? 6 : 16 }}
     >
       {compact && (
         <View
           pointerEvents="none"
           style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0 }}
         >
-          <ImageBackground
+          <Image
             testID="journal-background-rank"
             source={journalArt.landscape}
-            imageStyle={{
+            accessible={false}
+            resizeMode="cover"
+            style={{
               width: "100%",
               height: "100%",
               opacity: 0.25,
               borderRadius: 14,
             }}
-            style={{ flex: 1 }}
           />
         </View>
       )}

@@ -18,8 +18,7 @@ export function CharacterHome() {
         <Label>Loading your character.</Label>
       </Page>
     );
-  if (!state.profile.onboardingComplete)
-    return <Redirect href="/(tabs)/board" />;
+  if (!state.profile.onboardingComplete) return <Redirect href="/onboarding" />;
   const badge = state.entitlements.find(
     (e) => e.id === state.profile.badgeId && e.earned,
   );
@@ -34,7 +33,7 @@ export function CharacterHome() {
     >
       <Card
         testID="character-sheet"
-        style={{ gap: 12, padding: 12, borderColor: colors.gold }}
+        style={{ gap: 12, padding: 8, borderColor: colors.gold }}
       >
         <View
           style={{
@@ -80,7 +79,7 @@ export function CharacterHome() {
         categories={state.categories}
         rules={catalog?.rules ?? []}
       />
-      <View style={{ gap: 6, paddingHorizontal: 10, paddingTop: 8 }}>
+      <View style={{ gap: 2, paddingHorizontal: 10, paddingTop: 0 }}>
         <Text
           accessibilityRole="header"
           style={[styles.title, { fontSize: 26 }]}

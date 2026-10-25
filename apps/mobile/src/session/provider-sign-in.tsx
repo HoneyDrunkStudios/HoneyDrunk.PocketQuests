@@ -88,13 +88,7 @@ function LoadedProof({
       discovery,
     )
       .then((tokens) => onToken(tokens.accessToken))
-      .catch((value) =>
-        setError(
-          value instanceof Error
-            ? value.message
-            : "Sign-in did not finish. Try again.",
-        ),
-      )
+      .catch(() => setError("Sign-in did not finish. Try again."))
       .finally(() => setWorking(false));
   }, [
     response,
@@ -115,6 +109,8 @@ function LoadedProof({
           void prompt()
             .then((result) => {
               if (result.type !== "success") setWorking(false);
+              if (result.type === "error")
+                setError("Sign-in did not finish. Try again.");
             })
             .catch(() => {
               setWorking(false);

@@ -16,6 +16,16 @@ export const colors = {
 const base = createStyles(pocketQuestsTheme);
 export const styles = StyleSheet.create({
   ...base,
-  title: { ...base.title, fontFamily: "JournalSerif", fontWeight: "700" },
-  subtitle: { ...base.subtitle, fontFamily: "JournalSerif", fontWeight: "700" },
+  // Expo registers a runtime face in Android's normal slot. Asking for a bold
+  // weight selects an unregistered variant and falls back to the system font.
+  title: {
+    ...base.title,
+    fontFamily: "JournalSerifBold",
+    fontWeight: "normal",
+  },
+  subtitle: {
+    ...base.subtitle,
+    fontFamily: "JournalSerifBold",
+    fontWeight: "normal",
+  },
 });

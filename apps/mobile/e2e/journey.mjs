@@ -116,30 +116,42 @@ try {
   await expect(signIn).toBeEnabled({ timeout: 90000 });
   await signIn.click();
   await expect(
-    visibleText("Your interests and experience", { exact: true }),
+    visibleText("Your adventure starts here", { exact: true }),
   ).toBeVisible({ timeout: 30000 });
   diagnostics.checkpoint("onboarding");
+  await page.getByRole("button", { name: "Let’s begin", exact: true }).click();
   await page
-    .getByRole("button", { name: "Choose: Work & Purpose", exact: true })
+    .getByRole("checkbox", { name: "Work & Purpose", exact: true })
     .click();
-  // This legacy setup saves each choice through the API. Keep the assertion
-  // bounded by the same 15-second budget as actions, rather than the 5s default.
   await expect(
-    page.getByRole("button", { name: "Selected: Work & Purpose", exact: true }),
-  ).toBeEnabled({ timeout: 15000 });
+    page.getByRole("checkbox", { name: "Work & Purpose", exact: true }),
+  ).toBeChecked();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  diagnostics.checkpoint("onboarding-save");
+  await page
+    .getByRole("button", {
+      name: "Choose my first quest",
+      exact: true,
+    })
+    .click();
+  await expect(page).toHaveURL("http://localhost:8081/board");
+  await expect(
+    page.getByRole("heading", { name: "Pick your next quest", exact: true }),
+  ).toBeVisible();
+  // Experience is optional profile editing, outside the first-run journey.
+  await page
+    .getByRole("link", { name: "Settings and profile", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "Programming: Expert", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Confirm experience correction", exact: true })
     .click();
   await expect(
     visibleText("Current assessment: Expert", { exact: true }),
   ).toBeVisible({ timeout: 15000 });
-  diagnostics.checkpoint("onboarding-save");
-  await page
-    .getByRole("button", {
-      name: "Save setup and choose my first quest",
-      exact: true,
-    })
-    .click();
+  await page.getByRole("tab", { name: "Quests", exact: true }).click();
   diagnostics.checkpoint("custom-quest");
   await page
     .getByRole("button", { name: "Create a custom quest", exact: true })

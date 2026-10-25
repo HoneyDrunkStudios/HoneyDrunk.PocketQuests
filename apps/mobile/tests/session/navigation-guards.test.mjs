@@ -20,7 +20,7 @@ Module._load = function (name, ...rest) {
   if (name === "expo-router") return { Stack };
   if (name === "expo-font") return { useFonts: () => [true, null] };
   if (name === "@expo/vector-icons/Ionicons") return { font: {} };
-  if (name.endsWith("LibreBaskerville.ttf")) return "font";
+  if (name.endsWith("JournalSerifBold.ttf")) return "font";
   if (name === "expo-status-bar") return { StatusBar: "StatusBar" };
   if (name === "../session/session")
     return {
@@ -74,22 +74,38 @@ function destination(policy, route) {
     visited.add(route);
     const href = policy.get(route).redirect;
     assert.ok(href, `Blocked ${route} must have an explicit destination`);
-    route = href === "/" ? "index" : href.slice(1);
+    const target = href === "/" ? "index" : href.slice(1);
+    route = policy.has(target) ? target : target.split("/")[0];
     assert.ok(policy.has(route), `Unknown destination ${href}`);
+    if (policy.get(route).allowed) return target;
   }
   return route;
 }
 
-test("sign-in removes welcome and callback from the stack so account updates cannot redirect an app screen", () => {
+test("newly signed-in accounts enter onboarding from welcome, callback and app links", () => {
   const policy = routePolicy(true, false);
+  for (const route of ["index", "callback", "(tabs)", "quest/[id]"])
+    assert.equal(destination(policy, route), "onboarding");
+  assert.equal(policy.get("callback").allowed, false);
+});
+
+test("restoring an account cannot open the app before its profile is available", () => {
+  const policy = routePolicy(true, null);
+  assert.equal(destination(policy, "index"), "onboarding");
+  assert.equal(destination(policy, "(tabs)"), "onboarding");
+});
+
+test("confirmed onboarding completion opens the app and removes onboarding and callback", () => {
+  const policy = routePolicy(true, true);
   for (const route of ["index", "callback"])
     assert.equal(destination(policy, route), "(tabs)");
+  assert.equal(destination(policy, "onboarding"), "(tabs)/board");
   assert.equal(policy.get("quest/[id]").allowed, true);
-  assert.equal(policy.get("(tabs)").allowed, true);
 });
-test("signed-out deep links return to welcome and OAuth callbacks remain available", () => {
-  const policy = routePolicy(false, null);
-  for (const route of ["(tabs)", "quest/[id]", "quest/available/[id]"])
+
+test("sign-out returns protected app and onboarding links to welcome while allowing OAuth callback", () => {
+  const policy = routePolicy(false, false);
+  for (const route of ["(tabs)", "quest/[id]", "onboarding"])
     assert.equal(destination(policy, route), "index");
   assert.equal(policy.get("callback").allowed, true);
 });

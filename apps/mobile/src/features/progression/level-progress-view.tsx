@@ -38,7 +38,7 @@ export function LevelProgress({
           aria-valuenow={Math.round(
             (progress.earned / progress.required) * 100,
           )}
-          style={styles.progressTrack}
+          style={[styles.progressTrack, { height: 16 }]}
         >
           <View
             style={[

@@ -1,5 +1,13 @@
 # Changelog
 
+## Guided onboarding and journal entry — October 25, 2026
+
+- Compose rank decorations with supported Image/View primitives while preserving the shield, backdrop and disclosure control.
+- Add an illustrated welcome and dedicated three-step onboarding flow with local interest drafts saved once on Continue.
+- Route incomplete profiles into onboarding and completed profiles into the app with explicit, cycle-free route guards.
+- Bundle the licensed renamed bold serif face, improve small-screen journal/card readability, and keep sign-in forms above the iOS keyboard.
+- Keep provider setup/recovery failures readable without echoing private authentication errors, and document remaining native/provider acceptance.
+
 ## Expo SDK 58 compatibility — October 25, 2026
 
 - Install the declared .NET SDK baseline in CI and allow the legacy onboarding save assertions the same bounded wait as browser actions.
