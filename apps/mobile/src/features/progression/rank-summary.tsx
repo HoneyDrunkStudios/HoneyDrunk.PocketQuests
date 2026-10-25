@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ImageBackground, Pressable, Text, View } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { focusAppearance } from "@honeydrunk/ui-native";
 import { journalArt } from "../../shared/journal-art";
@@ -13,9 +13,7 @@ export function RankSummary({
   const [focused, setFocused] = useState(false);
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-      <ImageBackground
-        source={journalArt.shield}
-        resizeMode="contain"
+      <View
         style={{
           width: 64,
           height: 80,
@@ -23,10 +21,18 @@ export function RankSummary({
           justifyContent: "center",
         }}
       >
+        <View pointerEvents="none" style={{ position: "absolute", inset: 0 }}>
+          <Image
+            source={journalArt.shield}
+            resizeMode="contain"
+            accessible={false}
+            style={{ width: "100%", height: "100%" }}
+          />
+        </View>
         <Text accessible={false} style={[styles.title, { fontSize: 32 }]}>
           {rank}
         </Text>
-      </ImageBackground>
+      </View>
       <View style={{ flex: 1, gap: 4 }}>
         <Text accessibilityRole="header" style={styles.subtitle}>
           Global rank {rank}

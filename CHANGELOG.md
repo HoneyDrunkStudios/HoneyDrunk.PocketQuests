@@ -2,6 +2,7 @@
 
 ## Guided onboarding and journal entry — October 25, 2026
 
+- Compose rank decorations with supported Image/View primitives while preserving the shield, backdrop and disclosure control.
 - Add an illustrated welcome and dedicated three-step onboarding flow with local interest drafts saved once on Continue.
 - Route incomplete profiles into onboarding and completed profiles into the app with explicit, cycle-free route guards.
 - Bundle the licensed renamed bold serif face, improve small-screen journal/card readability, and keep sign-in forms above the iOS keyboard.
