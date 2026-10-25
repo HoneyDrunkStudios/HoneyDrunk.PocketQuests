@@ -11,7 +11,6 @@ import { Loading } from "@honeydrunk/ui-native";
 import { signInRedirect } from "../config/client";
 import { useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
-import { Redirect } from "expo-router";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { useSession } from "../session/session";
@@ -86,7 +85,9 @@ function SignIn({ config, discovery }: Readonly<ProviderSetup>) {
 export default function Welcome() {
   const { signedIn, busy } = useSession();
   const { setup, error, retry } = useProviderSetup();
-  if (signedIn) return <Redirect href="/(tabs)" />;
+  // The protected root stack owns the transition; a mounted welcome route must
+  // not redirect again when account updates arrive during app navigation.
+  if (signedIn) return null;
   return (
     <Page>
       <View

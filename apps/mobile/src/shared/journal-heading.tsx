@@ -1,4 +1,4 @@
-import { ImageBackground, Text, View } from "react-native";
+import { ImageBackground, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Link } from "expo-router";
@@ -38,22 +38,24 @@ export function JournalHeading({
         <Text style={[styles.subtitle, { fontSize: 24, flex: 1 }]}>
           Pocket Quests
         </Text>
-        <Link
-          href="/(tabs)/profile"
-          accessibilityLabel="Settings and profile"
-          style={{
-            padding: 10,
-            minWidth: 48,
-            minHeight: 48,
-            color: colors.ink,
-          }}
-        >
-          <Ionicons
-            name="settings-outline"
-            size={26}
-            accessible={false}
-            aria-hidden
-          />
+        <Link href="/(tabs)/profile" asChild>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Settings and profile"
+            style={{
+              padding: 10,
+              minWidth: 48,
+              minHeight: 48,
+            }}
+          >
+            <Ionicons
+              name="settings-outline"
+              size={26}
+              color={colors.ink}
+              accessible={false}
+              aria-hidden
+            />
+          </Pressable>
         </Link>
       </View>
       <View style={{ gap: 6, paddingTop: compact ? 42 : 64 }}>
