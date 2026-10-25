@@ -13,9 +13,11 @@ import { colors } from "../shared/ui";
 import { CompletionOverlay } from "../features/progression/completion-overlay";
 export { AppErrorBoundary as ErrorBoundary } from "../shared/error-boundary";
 function SessionNavigator() {
-  const { signedIn } = useSessionStatus();
+  const { signedIn, busy } = useSessionStatus();
   const { state } = useAccountSnapshot();
   const canEnterApp = signedIn && state?.profile.onboardingComplete === true;
+  // Do not reject a cold-launch deep link while saved credentials are restoring.
+  if (!signedIn && busy) return null;
   return (
     <Stack
       screenOptions={{
