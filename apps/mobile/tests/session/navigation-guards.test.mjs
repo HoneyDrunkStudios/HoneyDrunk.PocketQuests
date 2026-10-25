@@ -5,6 +5,7 @@ const require = createRequire(import.meta.url);
 require("./provider-harness.cjs");
 const load = Module._load;
 let signedIn = false;
+let busy = false;
 let state = null;
 const Stack = Object.assign(() => null, {
   Protected: "Protected",
@@ -23,7 +24,7 @@ Module._load = function (name, ...rest) {
   if (name === "../session/session")
     return {
       SessionProvider: "SessionProvider",
-      useSessionStatus: () => ({ signedIn }),
+      useSessionStatus: () => ({ signedIn, busy }),
       useAccountSnapshot: () => ({ state }),
     };
   if (name === "@honeydrunk/ui-native") return { ThemeProvider: "Theme" };
@@ -36,8 +37,9 @@ Module._load = function (name, ...rest) {
 };
 const Layout = require("../../src/app/_layout.tsx").default;
 
-function routePolicy(authenticated, onboardingComplete) {
+function routePolicy(authenticated, onboardingComplete, restoring = false) {
   signedIn = authenticated;
+  busy = restoring;
   state =
     onboardingComplete === null ? null : { profile: { onboardingComplete } };
   const provider = Layout().props.children.find(
@@ -45,6 +47,7 @@ function routePolicy(authenticated, onboardingComplete) {
   );
   const navigator = provider.props.children[0];
   const stack = navigator.type(navigator.props);
+  if (stack === null) return null;
   return new Map(
     stack.props.children.flatMap((group) =>
       [group.props.children]
@@ -82,4 +85,13 @@ test("signed-out deep links return to welcome and OAuth callbacks remain availab
   for (const route of ["(tabs)", "quest/[id]", "quest/available/[id]"])
     assert.equal(destination(policy, route), "index");
   assert.equal(policy.get("callback").allowed, true);
+});
+
+test("cold quest deep links are not rejected while a saved session restores", () => {
+  assert.equal(routePolicy(false, null, true), null);
+  const restored = routePolicy(true, true, false);
+  for (const route of ["quest/[id]", "quest/available/[id]"])
+    assert.equal(restored.get(route).allowed, true);
+  const signedOut = routePolicy(false, null, false);
+  assert.equal(destination(signedOut, "quest/[id]"), "index");
 });
