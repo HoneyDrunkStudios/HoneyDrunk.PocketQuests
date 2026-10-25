@@ -81,6 +81,29 @@ async function mount(host, { strict = false } = {}) {
   };
 }
 
+test("restoration stays explicit after credentials publish and until the account is ready", async () => {
+  const host = createHarness();
+  const gate = deferred();
+  host.beforeLoad = () => gate.promise;
+  const view = await mount(host);
+  try {
+    assert.equal(view.current.signedIn, true);
+    assert.equal(view.current.state, null);
+    assert.equal(view.current.restoring, true);
+    await act(async () => {
+      gate.resolve();
+      await tick();
+      await tick();
+    });
+    await view.settle();
+    assert.equal(view.current.restoring, false);
+    assert.ok(view.current.state);
+  } finally {
+    gate.resolve();
+    await view.unmount();
+  }
+});
+
 test("Strict Mode boots once, keeps actions stable, isolates status renders and cleans up native/web subscriptions", async () => {
   const host = createHarness();
   host.platform = "web";

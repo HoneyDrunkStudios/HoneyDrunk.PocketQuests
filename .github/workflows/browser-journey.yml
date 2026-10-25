@@ -21,9 +21,15 @@ jobs:
           repository: HoneyDrunkStudios/HoneyDrunk.Identity
           ref: 5cfc1da16f075b566e845df8ba81de5f0e4347a8
           path: identity
+      - name: Read the declared SDK baseline
+        id: dotnet_version
+        shell: pwsh
+        run: '"version=$((Get-Content product/global.json -Raw | ConvertFrom-Json).sdk.version)" >> $env:GITHUB_OUTPUT'
       - uses: actions/setup-dotnet@v5
         with:
-          global-json-file: product/global.json
+          # Install the declared baseline, not an unrelated latest-channel download.
+          # The repository retains its normal latestPatch build resolution.
+          dotnet-version: ${{ steps.dotnet_version.outputs.version }}
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
@@ -51,7 +57,6 @@ jobs:
         run: |
           $PSNativeCommandUseErrorActionPreference = $true
           npm ci --ignore-scripts
-          node scripts/patch-query-decoder.cjs
           node scripts/patch-dependencies.cjs
           node node_modules/@playwright/test/cli.js install chromium
       - name: Verify actual browser journey and disposable cleanup
