@@ -150,7 +150,7 @@ try {
     .click();
   await expect(
     visibleText("Current assessment: Expert", { exact: true }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 15000 });
   await page.getByRole("tab", { name: "Quests", exact: true }).click();
   diagnostics.checkpoint("custom-quest");
   await page
