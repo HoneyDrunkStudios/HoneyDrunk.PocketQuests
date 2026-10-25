@@ -48,12 +48,13 @@ function ProgressIcon({ color }: TabIconProps) {
     />
   );
 }
-export const unstable_settings = { initialRouteName: "index" };
+export const unstable_settings = { anchor: "index" };
 export default function Layout() {
   const { signedIn } = useSession();
   if (!signedIn) return <Redirect href="/" />;
   return (
     <Tabs
+      backBehavior="initialRoute"
       screenOptions={{
         tabBarActiveTintColor: colors.green,
         tabBarInactiveTintColor: colors.muted,
