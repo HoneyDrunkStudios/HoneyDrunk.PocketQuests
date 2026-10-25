@@ -255,9 +255,7 @@ try {
   await expect(
     page.getByLabel("Completion criterion", { exact: true }),
   ).toHaveValue("I have delivered the working result");
-  await page
-    .getByRole("button", { name: "Retry pending action", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Try again", exact: true }).click();
   await expect(visibleText(/Saved revision 1/)).toBeVisible();
   await page
     .getByRole("button", { name: "Back to available quests", exact: true })
@@ -404,9 +402,7 @@ try {
       exact: true,
     })
     .click({ clickCount: 2 });
-  await expect(
-    visibleText(/Offline.*showing your private device cache/),
-  ).toBeVisible();
+  await expect(visibleText(/You’re offline.*saved progress/)).toBeVisible();
   await expect(visibleText("Quest complete!", { exact: true })).toHaveCount(0);
   const committed = await (
     await context.request.get("http://localhost:5217/api/state", {
@@ -420,7 +416,7 @@ try {
       response.request().method() === "POST",
   );
   await page
-    .getByRole("button", { name: "Synchronize recorded changes", exact: true })
+    .getByRole("button", { name: "Try saving again", exact: true })
     .click();
   expect((await synchronized).ok()).toBe(true);
   await expect(visibleText("Quest complete!", { exact: true })).toBeVisible();
@@ -642,9 +638,7 @@ try {
   await page
     .getByRole("button", { name: "Complete: Enjoy some downtime", exact: true })
     .click();
-  await expect(
-    visibleText(/Offline.*showing your private device cache/),
-  ).toBeVisible();
+  await expect(visibleText(/You’re offline.*saved progress/)).toBeVisible();
   await expect(visibleText("Quest complete!", { exact: true })).toHaveCount(0);
   // The web adapter intentionally uses memory-only storage. Native process-death
   // persistence must be tested on a native development build, not inferred here.
@@ -697,12 +691,12 @@ try {
     .click();
   await expect(
     page.getByRole("button", {
-      name: "Synchronize recorded changes",
+      name: "Try saving again",
       exact: true,
     }),
   ).toBeEnabled();
   await page
-    .getByRole("button", { name: "Synchronize recorded changes", exact: true })
+    .getByRole("button", { name: "Try saving again", exact: true })
     .click();
   const completeAgain = page.getByRole("button", {
     name: "Complete: Enjoy some downtime",

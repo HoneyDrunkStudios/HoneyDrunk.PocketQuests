@@ -174,15 +174,17 @@ test("quarantine-only recovery displays labeled discard controls even with zero 
   recoveryRequired = true;
   busy = true;
   const html = render(Page);
-  assert.match(html, /unreadable recovery copy/);
-  assert.match(html, /Discard pending changes and sign out/);
+  assert.match(html, /Some changes on this device need attention/);
+  assert.match(html, /Those changes can’t be restored here/);
+  assert.match(html, /Progress already saved to your account won’t be undone/);
+  assert.match(html, /Discard changes and sign out/);
   const buttons =
     html.match(/<button\b[^>]*>[\s\S]*?<\/button>/g) ??
     html.match(/<div[^>]*role="button"[\s\S]*?<\/div>/g);
   assert.ok(
     buttons?.some(
       (button) =>
-        button.includes("Discard pending changes and sign out") &&
+        button.includes("Discard changes and sign out") &&
         !button.includes('aria-disabled="true"'),
     ),
   );
@@ -206,24 +208,25 @@ test("sync recovery shows each retained action and reason with individual discar
     {
       command: { operationId: "bad-id" },
       kind: "rejected",
-      label: "complete: Practice",
+      label: "Complete quest: Practice",
       reason: "Deadline passed",
     },
     {
       command: { operationId: "undo-id" },
       kind: "blocked",
-      label: "undo: Practice",
+      label: "Undo completion: Practice",
       reason: "Earlier completion rejected",
       blockedBy: ["bad-id"],
     },
   ];
   const html = render(Page);
-  assert.match(html, /Rejected: complete: Practice/);
+  assert.match(html, /Couldn’t save: Complete quest: Practice/);
   assert.match(html, /Deadline passed/);
-  assert.match(html, /Blocked: undo: Practice/);
-  assert.match(html, /Discard this action: complete: Practice/);
-  assert.match(html, /Discard this action: undo: Practice/);
-  assert.match(html, /Related action IDs: bad-id/);
+  assert.match(html, /Waiting on another change: Undo completion: Practice/);
+  assert.match(html, /Discard change: Complete quest: Practice/);
+  assert.match(html, /Discard change: Undo completion: Practice/);
+  assert.match(html, /Discarding the earlier change won’t save this one/);
+  assert.doesNotMatch(html, /bad-id|undo-id|Action ID|server-confirmed/);
   rejected = [];
 });
 
@@ -231,16 +234,18 @@ test("timing-unverified actions are visible without promising reconnect will con
   unverified = [
     {
       command: { operationId: "unverified-id" },
-      label: "complete: Practice",
+      label: "Complete quest: Practice",
       reason: "Device time could not be verified",
       blockedBy: [],
     },
   ];
   const html = render(Page);
-  assert.match(html, /Pending timing verification: complete: Practice/);
-  assert.match(html, /Device time could not be verified/);
-  assert.match(html, /Reconnecting alone cannot verify/);
-  assert.match(html, /Discard this unverified action: complete: Practice/);
+  assert.match(html, /Needs review: Complete quest: Practice/);
+  assert.match(html, /We couldn’t check when this activity happened/);
+  assert.match(html, /hasn’t changed your XP/);
+  assert.match(html, /Reconnecting won’t resolve this/);
+  assert.match(html, /Discard activity: Complete quest: Practice/);
+  assert.doesNotMatch(html, /Device time could not be verified|unverified-id/);
   unverified = [];
 });
 

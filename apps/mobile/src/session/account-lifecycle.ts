@@ -216,7 +216,7 @@ export function createAccountLifecycle({
         });
       await releaseCleanupOwner(epoch);
       setError(
-        "Pending changes discarded. Refresh to establish a new clock baseline.",
+        "Changes on this device were discarded. Refresh before recording new activities.",
       );
     } catch (value) {
       failure(value);
