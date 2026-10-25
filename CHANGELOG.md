@@ -8,6 +8,7 @@
 - Give the protected root stack sole ownership of sign-in transitions and a real touch target to the settings shortcut, retaining stable navigation through account updates on SDK 58.
 - Wait for the complete saved-profile restoration before applying route guards; configure the Home tab anchor using SDK 58 layout settings and retain paused quest routes when opening Home.
 - Render the journal's decorative background with supported Image/View primitives instead of deprecated ImageBackground.
+- Keep web routes synchronous so development navigation can read the Home anchor; native route loading defaults stay intact.
 
 ## Illustrated adventure journal — October 18, 2026
 
