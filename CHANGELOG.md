@@ -1,5 +1,11 @@
 # Changelog
 
+## Optional Expo Go development pairing — October 25, 2026
+
+- Add an explicitly enabled local development host for the actual Identity/API services and dedicated retained SQL databases, with a six-digit pairing code and restart-scoped signing keys.
+- Gate the mobile development screen behind a development build and explicit flag; preserve provider sign-in for ordinary and release builds.
+- Add a launcher and disposable SQL verification for startup gates, invalid/forged credentials, rate limits and progress retained across backend restart; run that verification in hosted browser CI.
+
 ## Quest discovery — October 25, 2026
 
 - Search available quests by title, topic, category, criterion, attribute and built-in or custom skill, with case and accent matching.

@@ -60,6 +60,10 @@ jobs:
           PQ_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
           PQ_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: ./product/scripts/Test-BrowserJourneyCI.ps1
+      - name: Verify opt-in Expo Go pairing and saved SQL progress
+        timeout-minutes: 10
+        shell: pwsh
+        run: ./product/scripts/Test-ExpoGo.ps1 -EvidenceDirectory product/artifacts/expo-go
       - name: Retain only allowlisted browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -68,6 +72,7 @@ jobs:
           retention-days: 7
           if-no-files-found: warn
           path: |
+            product/artifacts/expo-go/checks.json
             product/artifacts/browser-journey/run.json
             product/artifacts/browser-journey/completion-celebration.png
             product/artifacts/browser-journey/character-home.png

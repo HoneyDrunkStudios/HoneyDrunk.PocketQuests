@@ -16,6 +16,8 @@ For Android use the installed development build/emulator with a reachable Metro 
 
 ## Terminal alternative
 
+For Expo Go on a physical iPhone, follow [development pairing](expo-go-development.md). Stop the existing AppHost before using its launcher so it can own Metro 8081 and the opt-in backend. Normal startup does not reset its dedicated saved-progress databases.
+
 From the Pocket Quests repository root:
 
 ```powershell
