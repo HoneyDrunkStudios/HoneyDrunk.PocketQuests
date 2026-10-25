@@ -27,6 +27,7 @@ export type SessionContext = {
   state: State | null;
   catalog: Catalog | null;
   signedIn: boolean;
+  restoring: boolean;
   busy: boolean;
   error: string | null;
   pending: boolean;

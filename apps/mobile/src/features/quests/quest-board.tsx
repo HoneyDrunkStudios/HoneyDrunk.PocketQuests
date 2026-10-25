@@ -33,6 +33,10 @@ export function QuestBoard() {
     if (section === "Active") return ["Active", "Frozen"].includes(o.status);
     return o.status === "Offered";
   });
+  const offeredTitle =
+    section === "Available" && items.length > 0
+      ? "Recurring quest offers"
+      : undefined;
   const sections: QuestHistorySection[] =
     section === "Active"
       ? [
@@ -67,10 +71,7 @@ export function QuestBoard() {
       : [
           {
             key: section,
-            title:
-              section === "Available" && items.length > 0
-                ? "Recurring quest offers"
-                : undefined,
+            title: offeredTitle,
             data: items,
           },
         ];

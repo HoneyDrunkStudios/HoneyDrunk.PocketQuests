@@ -12,7 +12,7 @@ Module._load = function (name, ...rest) {
   }
   if (name === "react-native")
     return {
-      ImageBackground: "ImageBackground",
+      Image: "Image",
       KeyboardAvoidingView: "KeyboardAvoidingView",
       ScrollView: "ScrollView",
       Text: "Text",

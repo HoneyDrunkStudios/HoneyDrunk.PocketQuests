@@ -8,7 +8,7 @@ import {
 import { Button, Label, styles } from "../../shared/ui";
 import { questActions } from "../quests/commands/quest-actions";
 
-function RewardChoice({ kind }: { kind: "Badge" | "Frame" }) {
+function RewardChoice({ kind }: Readonly<{ kind: "Badge" | "Frame" }>) {
   const { state } = useAccountSnapshot();
   const { busy, pending, offline, queuedCount } = useSessionStatus();
   const { command } = useSessionActions();
