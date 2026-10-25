@@ -1,13 +1,15 @@
 import { questLimits } from "../quests/quest-rules";
 import { questActions } from "../quests/commands/quest-actions";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import * as Crypto from "expo-crypto";
 import { Text, View } from "react-native";
 import { useSession } from "../../session/session";
 import { Button, Input, Label, styles } from "../../shared/ui";
 import type { Experience } from "../../shared/contracts";
+import { ProfileInterests } from "./profile-interests";
 export function ProfileEditor() {
-  const { state, catalog, command, busy, pending } = useSession();
+  const { state, catalog, command, busy, pending, offline, queuedCount } =
+    useSession();
   const [skillName, setSkillName] = useState("");
   const [editingSkill, setEditingSkill] = useState<string | null>(null);
   const [placement, setPlacement] = useState<{
@@ -15,6 +17,9 @@ export function ProfileEditor() {
     name: string;
     experience: Experience;
   } | null>(null);
+  const [savingPlacement, setSavingPlacement] = useState(false);
+  const [placementError, setPlacementError] = useState("");
+  const submittingPlacement = useRef(false);
   if (!state || !catalog) return null;
   const skills = [
     ...catalog.skills,
@@ -23,39 +28,18 @@ export function ProfileEditor() {
   const existing = state.profile.customSkills?.find(
     (s) => s.id === editingSkill,
   );
-  const disabled = busy || pending;
+  const disabled = busy || pending || offline || savingPlacement;
+  if (
+    placement &&
+    queuedCount === 0 &&
+    !savingPlacement &&
+    (state.profile.assessments[placement.id] ?? "New") === placement.experience
+  )
+    setPlacement(null);
   return (
     <View style={{ gap: 16 }}>
       <Text style={styles.subtitle}>Your interests and experience</Text>
-      <Label>
-        Interests put suggestions first. Every category stays available, and
-        nothing repeats automatically. Each choice is saved as you go.
-      </Label>
-      {!state.profile.onboardingComplete && (
-        <Button
-          title="Continue with these choices"
-          disabled={disabled}
-          onPress={() =>
-            void command({ action: questActions.finishOnboarding })
-          }
-        />
-      )}
-      {catalog.categories.map((c) => (
-        <Button
-          key={c.id}
-          title={`${state.profile.interests.includes(c.id) ? "Selected: " : "Choose: "}${c.name}`}
-          secondary={!state.profile.interests.includes(c.id)}
-          disabled={disabled}
-          onPress={() =>
-            void command({
-              action: questActions.interests,
-              interests: state.profile.interests.includes(c.id)
-                ? state.profile.interests.filter((id) => id !== c.id)
-                : [...state.profile.interests, c.id],
-            })
-          }
-        />
-      ))}
+      <ProfileInterests />
       <Label>
         Assess any relevant skill now or later. New: level 1, practiced: 10,
         experienced: 35, expert: 50. A correction replaces your starting XP and
@@ -139,20 +123,35 @@ export function ProfileEditor() {
           <Button
             title="Confirm experience correction"
             disabled={disabled}
+            loading={savingPlacement}
             onPress={() => {
+              if (submittingPlacement.current) return;
+              submittingPlacement.current = true;
+              setSavingPlacement(true);
+              setPlacementError("");
               void command({
                 action: questActions.assessSkill,
                 skillId: placement.id,
                 experience: placement.experience,
-              });
-              setPlacement(null);
+              })
+                .catch(() =>
+                  setPlacementError(
+                    "We couldn’t save this experience change. Please try again.",
+                  ),
+                )
+                .finally(() => {
+                  submittingPlacement.current = false;
+                  setSavingPlacement(false);
+                });
             }}
           />
           <Button
             title="Keep current experience"
             secondary
+            disabled={savingPlacement || queuedCount > 0}
             onPress={() => setPlacement(null)}
           />
+          {!!placementError && <Label>{placementError}</Label>}
         </View>
       )}
       {skills.map((skill) => (
@@ -171,34 +170,20 @@ export function ProfileEditor() {
                 secondary={
                   (state.profile.assessments[skill.id] ?? "New") !== experience
                 }
-                disabled={disabled}
-                onPress={() =>
-                  state.profile.onboardingComplete
-                    ? setPlacement({
-                        id: skill.id,
-                        name: skill.name,
-                        experience,
-                      })
-                    : void command({
-                        action: questActions.assessSkill,
-                        skillId: skill.id,
-                        experience,
-                      })
-                }
+                disabled={savingPlacement}
+                onPress={() => {
+                  setPlacementError("");
+                  setPlacement({
+                    id: skill.id,
+                    name: skill.name,
+                    experience,
+                  });
+                }}
               />
             ))}
           </View>
         </View>
       ))}
-      {!state.profile.onboardingComplete && (
-        <Button
-          title="Save setup and choose my first quest"
-          disabled={disabled}
-          onPress={() =>
-            void command({ action: questActions.finishOnboarding })
-          }
-        />
-      )}
     </View>
   );
 }

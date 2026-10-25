@@ -1,5 +1,11 @@
 # Changelog
 
+## Profile preference drafts — October 25, 2026
+
+- Let interest, badge and frame choices stay local until their Save button is pressed; reset drafts without sending a command.
+- Keep choices responsive offline, retain failed saves for retry and preserve newer edits when an earlier queued save is confirmed.
+- Keep skill correction confirmation open until the matching account update arrives.
+
 ## Quiet saves and understandable recovery — October 25, 2026
 
 - Keep ordinary queued saves quiet; show recovery only when offline or changes need review, recovery or an explicit retry.

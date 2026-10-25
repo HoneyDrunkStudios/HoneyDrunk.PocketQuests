@@ -6,6 +6,7 @@ import { Button, Label, Card, colors, styles } from "../../shared/ui";
 import { SettingsEditor } from "../../features/profile/settings-editor";
 import { AccountSettings } from "../../features/profile/account-settings";
 import { ProfileEditor } from "../../features/profile/profile-editor";
+import { AppearanceEditor } from "../../features/profile/appearance-editor";
 export default function Profile() {
   const { state, signOut, refresh, busy, pending, command, exportData } =
     useSession();
@@ -84,31 +85,7 @@ export default function Profile() {
       <Text selectable style={styles.subtitle}>
         Achievements and profile rewards
       </Text>
-      <Label>
-        Selected badge:{" "}
-        {state.entitlements.find((e) => e.id === state.profile.badgeId)?.name ??
-          "None"}
-        . Frame:{" "}
-        {state.entitlements.find((e) => e.id === state.profile.frameId)?.name ??
-          "Default"}
-        .
-      </Label>
-      <Button
-        title="Use default frame"
-        secondary
-        disabled={busy || pending}
-        onPress={() =>
-          void command({ action: questActions.selectFrame, rewardId: null })
-        }
-      />
-      <Button
-        title="Remove selected badge"
-        secondary
-        disabled={busy || pending}
-        onPress={() =>
-          void command({ action: questActions.selectBadge, rewardId: null })
-        }
-      />
+      <AppearanceEditor />
       {state.entitlements.map((e) => (
         <View key={e.id} style={styles.card}>
           <Text selectable style={styles.subtitle}>
@@ -118,21 +95,6 @@ export default function Profile() {
             {e.kind} Â· {e.earned ? "Earned" : "Still growing"} Â· {e.count}/
             {e.requiredCount}
           </Label>
-          {e.earned && e.kind !== "Achievement" && (
-            <Button
-              title={`Select ${e.name}`}
-              disabled={busy || pending}
-              onPress={() =>
-                void command({
-                  action:
-                    e.kind === "Badge"
-                      ? questActions.selectBadge
-                      : questActions.selectFrame,
-                  rewardId: e.id,
-                })
-              }
-            />
-          )}
           {e.requiredRank !== "F" && (
             <Text selectable style={styles.muted}>
               Requires current rank {e.requiredRank} or higher.
@@ -202,11 +164,7 @@ export default function Profile() {
         secondary
         disabled={busy}
       />
-      <Button
-        title="Sign out"
-        onPress={() => void signOut()}
-        secondary
-      />
+      <Button title="Sign out" onPress={() => void signOut()} secondary />
     </Page>
   );
 }
