@@ -4,6 +4,7 @@ param(
     [switch]$NoBuild
 )
 $ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSScriptRoot 'development-process.psm1')
 $repo = Split-Path $PSScriptRoot -Parent
 if (-not $BackendUrl.IsAbsoluteUri -or $BackendUrl.Scheme -ne 'https' -or
     $BackendUrl.UserInfo -or $BackendUrl.Query -or $BackendUrl.Fragment -or $BackendUrl.AbsolutePath -ne '/') {
@@ -39,7 +40,7 @@ $variables = @('EXPO_PUBLIC_API_URL', 'EXPO_PUBLIC_IDENTITY_URL', 'EXPO_PUBLIC_D
 $saved = @{}
 foreach ($name in $variables) { $saved[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
 try {
-    $hostProcess = [Diagnostics.Process]::Start($start)
+    $hostProcess = Start-DevelopmentProcess -StartInfo $start
     $ready = $false
     for ($attempt = 0; $attempt -lt 120; $attempt++) {
         if ($hostProcess.HasExited) { throw 'Development host exited before it became ready.' }
@@ -64,7 +65,10 @@ try {
     }
     finally { Pop-Location }
 } finally {
-    foreach ($name in $variables) { [Environment]::SetEnvironmentVariable($name, $saved[$name], 'Process') }
+    foreach ($name in $variables) {
+        if ($null -eq $saved[$name]) { Remove-Item -LiteralPath "Env:$name" -ErrorAction SilentlyContinue }
+        else { [Environment]::SetEnvironmentVariable($name, $saved[$name], 'Process') }
+    }
     if ($hostProcess -and -not $hostProcess.HasExited) { $hostProcess.Kill($true); $hostProcess.WaitForExit() }
     if ($hostProcess) { $hostProcess.Dispose() }
 }

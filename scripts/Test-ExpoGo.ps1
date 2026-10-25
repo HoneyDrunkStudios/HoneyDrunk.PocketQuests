@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param([switch]$NoBuild, [string]$EvidenceDirectory)
 $ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSScriptRoot 'development-process.psm1')
 $PSNativeCommandUseErrorActionPreference = $false
 $repo = Split-Path $PSScriptRoot -Parent
 if (-not $EvidenceDirectory) { $EvidenceDirectory = Join-Path $repo ('artifacts/expo-go-' + [guid]::NewGuid().ToString('N')) }
@@ -31,7 +32,7 @@ function Start-HostProcess([string]$environment, [string]$enabled, [string]$name
     $start.Environment['DevelopmentSignIn__SqlInstance'] = $instance
     $start.RedirectStandardOutput = $true
     $start.RedirectStandardError = $true
-    $child = [Diagnostics.Process]::Start($start)
+    $child = Start-DevelopmentProcess -StartInfo $start
     # Drain both streams asynchronously so a verbose startup cannot deadlock.
     $script:outRead = $child.StandardOutput.ReadToEndAsync()
     $script:errRead = $child.StandardError.ReadToEndAsync()

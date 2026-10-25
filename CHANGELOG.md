@@ -5,6 +5,7 @@
 - Add an explicitly enabled local development host for the actual Identity/API services and dedicated retained SQL databases, with a six-digit pairing code and restart-scoped signing keys.
 - Gate the mobile development screen behind a development build and explicit flag; preserve provider sign-in for ordinary and release builds.
 - Add a launcher and disposable SQL verification for startup gates, invalid/forged credentials, rate limits and progress retained across backend restart; run that verification in hosted browser CI.
+- Cover launcher and cleanup failure paths with measured PowerShell tests, restore absent environment variables correctly, and keep uploaded pairing evidence limited to the safe check summary.
 
 ## Quest discovery — October 25, 2026
 

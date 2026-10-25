@@ -22,6 +22,14 @@ jobs:
       - name: Verify explicit Identity initialization modes
         shell: pwsh
         run: ./product/scripts/tests/Test-InitializeLocal.ps1
+      - name: Measure development launcher and cleanup coverage without SQL
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $modules = Join-Path $env:RUNNER_TEMP 'pocketquests-test-modules'
+          $null = New-Item -ItemType Directory -Force -Path $modules
+          Save-PSResource -Name Pester -Version 6.2.0 -Repository PSGallery -Path $modules -TrustRepository
+          ./product/scripts/tests/Invoke-DevelopmentToolingTests.ps1 -PesterModulePath "$modules/Pester/6.2.0/Pester.psd1"
       - uses: actions/checkout@v5
         with:
           repository: HoneyDrunkStudios/HoneyDrunk.Identity
@@ -68,6 +76,7 @@ jobs:
             /d:sonar.cs.opencover.reportsPaths="artifacts/identity-validation/**/coverage.opencover.xml" `
             /d:sonar.javascript.lcov.reportPaths="apps/mobile/coverage/lcov.info" `
             /d:sonar.python.coverage.reportPaths="artifacts/python-coverage.xml" `
+            /d:sonar.coverageReportPaths="artifacts/development-tooling/sonar-coverage.xml" `
             /d:sonar.qualitygate.wait=true /d:sonar.qualitygate.timeout=300
       - name: Build solution and DACPACs
         # MSBuild must discover the same .sonarqube directory as begin/end.

@@ -7,6 +7,7 @@ if (!$uploadBlock.Success) { throw 'Missing explicit browser upload block.' }
 $uploaded = @($uploadBlock.Groups['paths'].Value.Trim() -split '\r?\n' | ForEach-Object { $_.Trim() })
 $allowed = @('run.json', 'completion-celebration.png', 'character-home.png', 'available-quests.png', 'available-quest-details.png', 'active-quests.png', 'active-quest-details.png', 'completed-quests.png', 'home-320.png', 'home-430.png', 'browser-failure.png')
 $allowed = @($allowed | ForEach-Object { 'product/artifacts/browser-journey/' + $_ })
+$allowed += 'product/artifacts/expo-go/checks.json'
 if (Compare-Object $allowed $uploaded) { throw 'Browser artifact allowlist changed; explicitly review its data boundary.' }
 Write-Output 'Explicit browser artifact allowlist passed.'
 $fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ('pq-browser-contract-' + [guid]::NewGuid().ToString('N'))
