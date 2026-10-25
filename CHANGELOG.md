@@ -12,6 +12,7 @@
 - Align the mobile client to Expo SDK 58, React 19.3 and React Native 0.88 for the current iPhone Expo Go host.
 - Import the exact reviewed shared UI revision that retains React Native 0.86 support and permits 0.88 hosts.
 - Exercise Router's current query parser and retire the decoder dependency/patch it no longer uses; retain the other dependency mitigations and release audit.
+- Give the protected root stack sole ownership of sign-in transitions and a real touch target to the settings shortcut, retaining stable navigation through account updates on SDK 58.
 
 ## Illustrated adventure journal — October 18, 2026
 
