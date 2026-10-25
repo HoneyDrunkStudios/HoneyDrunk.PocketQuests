@@ -4,6 +4,8 @@ The optional `tools/PocketQuests.DevelopmentHost` runs the actual Pocket Quests 
 
 The provider has one fixed issuer/subject. Identity maps it to a stable `usr_` account in `PocketQuests_ExpoGo_Identity`; the product uses `PocketQuests_ExpoGo`. Both are dedicated databases on `(localdb)\PocketQuests`. First startup deploys the existing DACPACs only if these databases do not exist. Shutdown never removes databases or saved progress; subsequent startup neither resets nor upgrades them. Schema upgrades need an explicit reviewed deployment. These records are development data and are separate from any real provider account.
 
+The normal recurring-quest maintenance worker remains enabled. It advances overdue deliveries for retained accounts, including backlogs too large for one foreground request; pairing again does not discard or reset that progress.
+
 ## First run on an iPhone
 
 1. Use PowerShell 7, the supported .NET/Node versions, SQL Server LocalDB with the existing `PocketQuests` instance, and a configured local Identity source checkout. Install mobile dependencies with `npm ci` if needed. No schema changes or Apple signing are performed by this workflow.

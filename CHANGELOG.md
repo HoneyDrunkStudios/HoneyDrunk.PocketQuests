@@ -6,6 +6,7 @@
 - Gate the mobile development screen behind a development build and explicit flag; preserve provider sign-in for ordinary and release builds.
 - Add a launcher and disposable SQL verification for startup gates, invalid/forged credentials, rate limits and progress retained across backend restart; run that verification in hosted browser CI.
 - Cover launcher and cleanup failure paths with measured PowerShell tests, restore absent environment variables correctly, and keep uploaded pairing evidence limited to the safe check summary.
+- Keep recurring-quest maintenance enabled so retained development accounts can recover a large delivery backlog.
 
 ## Quest discovery — October 25, 2026
 
@@ -34,6 +35,7 @@
 
 ## Expo SDK 58 compatibility — October 25, 2026
 
+- Install the declared .NET SDK baseline in CI and allow the legacy onboarding save assertions the same bounded wait as browser actions.
 - Align the mobile client to Expo SDK 58, React 19.3 and React Native 0.88 for the current iPhone Expo Go host.
 - Import the exact reviewed shared UI revision that retains React Native 0.86 support and permits 0.88 hosts.
 - Exercise Router's current query parser and retire the decoder dependency/patch it no longer uses; retain the other dependency mitigations and release audit.

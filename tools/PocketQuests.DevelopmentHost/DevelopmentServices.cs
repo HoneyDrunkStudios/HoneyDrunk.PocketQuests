@@ -56,12 +56,14 @@ internal sealed class DevelopmentServices(string questsConnection, string identi
             builder.UseContentRoot(AppContext.BaseDirectory);
             builder.UseEnvironment("Testing");
             builder.UseSetting("ConnectionStrings:quests", connection);
-            builder.UseSetting("Persistence:ReconciliationEnabled", "false");
+
+            // Retained accounts need the normal worker to drain recurrence backlogs.
+            builder.UseSetting("Persistence:ReconciliationEnabled", "true");
             builder.UseSetting("Lifecycle:ServiceBusNamespace", string.Empty);
             builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:quests"] = connection,
-                ["Persistence:ReconciliationEnabled"] = "false",
+                ["Persistence:ReconciliationEnabled"] = "true",
                 ["Lifecycle:ServiceBusNamespace"] = null,
             }));
             builder.ConfigureLogging(logging => logging.ClearProviders());

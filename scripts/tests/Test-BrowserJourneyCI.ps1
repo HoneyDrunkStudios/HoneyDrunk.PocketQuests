@@ -93,7 +93,7 @@ function Start-Process {
     }
     return $process
 }
-$checkpointCases = @('setup', 'sign-in', 'onboarding', 'onboarding-save', 'custom-quest', 'save-retry', 'definition-edit', 'completion-response-loss', 'character', 'export-timer', 'offline-undo', 'clock-undo-retry', 'fresh-session', 'calendar-planning', 'plan-edit', 'viewports', 'page-errors', 'complete') | ForEach-Object { 'diagnostics-checkpoint-' + $_ }
+$checkpointCases = @('setup', 'sign-in', 'onboarding', 'onboarding-save', 'custom-quest', 'save-retry', 'definition-edit', 'completion-response-loss', 'character', 'export-timer', 'quest-discovery', 'offline-undo', 'clock-undo-retry', 'fresh-session', 'calendar-planning', 'plan-edit', 'viewports', 'page-errors', 'complete') | ForEach-Object { 'diagnostics-checkpoint-' + $_ }
 try {
     foreach ($case in @('success', 'journey-failed', 'journey-timeout', 'expo-exited', 'start-failed', 'partial-create', 'database-remains', 'delete-failed', 'delete-unconfirmed', 'process-cleanup-failed', 'stop-failed', 'occupied', 'wrong-head', 'stale', 'diagnostics-extra', 'diagnostics-enum', 'diagnostics-type', 'diagnostics-case', 'diagnostics-key-case', 'diagnostics-malformed', 'diagnostics-large', 'diagnostics-null', 'diagnostics-array', 'diagnostics-missing', 'diagnostics-none-failed', 'diagnostics-extra-failed', 'diagnostics-timeout') + $checkpointCases) {
         $root = Join-Path $fixtureRoot $case
