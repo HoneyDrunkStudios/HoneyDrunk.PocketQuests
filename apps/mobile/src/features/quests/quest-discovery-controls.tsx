@@ -4,17 +4,28 @@ import type { Catalog } from "../../shared/contracts";
 import { Button, Input, Label, colors, styles } from "../../shared/ui";
 import { discoveryFilterCount, type DiscoveryFilters } from "./quest-discovery";
 
+const sourceLabels = {
+  all: null,
+  starter: "Starter quests",
+  custom: "Custom quests",
+} as const;
+const sortLabels = {
+  recommended: null,
+  xp: "Most XP first",
+  title: "Title A–Z",
+} as const;
+
 function Choice({
   title,
   selected,
   checkbox = false,
   onPress,
-}: {
+}: Readonly<{
   title: string;
   selected: boolean;
   checkbox?: boolean;
   onPress(): void;
-}) {
+}>) {
   return (
     <Pressable
       accessibilityRole={checkbox ? "checkbox" : "radio"}
@@ -48,31 +59,23 @@ export function QuestDiscoveryControls({
   shownCount,
   onChange,
   onReset,
-}: {
+}: Readonly<{
   categories: Catalog["categories"];
   filters: DiscoveryFilters;
   resultCount: number;
   shownCount: number;
   onChange(change: Partial<DiscoveryFilters>): void;
   onReset(): void;
-}) {
+}>) {
   const [expanded, setExpanded] = useState(false);
   const count = discoveryFilterCount(filters);
   const summary = [
     categories.find((item) => item.id === filters.categoryId)?.name,
     filters.effort && `${filters.effort} effort`,
-    filters.source === "starter"
-      ? "Starter quests"
-      : filters.source === "custom"
-        ? "Custom quests"
-        : null,
+    sourceLabels[filters.source],
     filters.readyOnly && "Ready to start",
     filters.penaltyFreeOnly && "No XP penalties",
-    filters.sort === "xp"
-      ? "Most XP first"
-      : filters.sort === "title"
-        ? "Title A–Z"
-        : null,
+    sortLabels[filters.sort],
   ]
     .filter(Boolean)
     .join(" · ");

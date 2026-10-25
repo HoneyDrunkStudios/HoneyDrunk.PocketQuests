@@ -69,6 +69,7 @@ export function SessionProvider({
     needsSignIn,
     offline,
     busy,
+    restoring,
     error,
   } = snapshot;
   const state = useMemo(
@@ -115,6 +116,7 @@ export function SessionProvider({
     () => ({
       signedIn: !!session && !needsSignIn,
       busy,
+      restoring,
       error: error ?? recoveryNotice,
       pending: !!local?.queue.length && !offline,
       offline,
@@ -127,6 +129,7 @@ export function SessionProvider({
       session,
       needsSignIn,
       busy,
+      restoring,
       error,
       recoveryNotice,
       local?.queue.length,
