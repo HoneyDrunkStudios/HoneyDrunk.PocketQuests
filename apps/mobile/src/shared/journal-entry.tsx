@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import {
-  ImageBackground,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -15,12 +15,15 @@ import { colors, styles } from "./ui";
 export function JournalEntry({ children }: Readonly<{ children: ReactNode }>) {
   const insets = useSafeAreaInsets();
   return (
-    <ImageBackground
-      source={require("../../assets/journal/signin-background.jpg")}
-      resizeMode="cover"
-      imageStyle={{ width: "100%", height: "100%" }}
-      style={{ flex: 1, backgroundColor: colors.paper }}
-    >
+    <View style={{ flex: 1, backgroundColor: colors.paper }}>
+      <View pointerEvents="none" style={{ position: "absolute", inset: 0 }}>
+        <Image
+          source={require("../../assets/journal/signin-background.jpg")}
+          resizeMode="cover"
+          style={{ width: "100%", height: "100%" }}
+          accessible={false}
+        />
+      </View>
       <View
         pointerEvents="none"
         style={{ position: "absolute", inset: 0, backgroundColor: "#091A2933" }}
@@ -90,6 +93,6 @@ export function JournalEntry({ children }: Readonly<{ children: ReactNode }>) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </ImageBackground>
+    </View>
   );
 }

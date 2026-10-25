@@ -6,6 +6,7 @@ require("./provider-harness.cjs");
 const load = Module._load;
 let signedIn = false;
 let busy = false;
+let restoring = false;
 let state = null;
 const Stack = Object.assign(() => null, {
   Protected: "Protected",
@@ -24,7 +25,7 @@ Module._load = function (name, ...rest) {
   if (name === "../session/session")
     return {
       SessionProvider: "SessionProvider",
-      useSessionStatus: () => ({ signedIn, busy }),
+      useSessionStatus: () => ({ signedIn, busy, restoring }),
       useAccountSnapshot: () => ({ state }),
     };
   if (name === "@honeydrunk/ui-native") return { ThemeProvider: "Theme" };
@@ -37,9 +38,15 @@ Module._load = function (name, ...rest) {
 };
 const Layout = require("../../src/app/_layout.tsx").default;
 
-function routePolicy(authenticated, onboardingComplete, restoring = false) {
+function routePolicy(
+  authenticated,
+  onboardingComplete,
+  booting = false,
+  working = false,
+) {
   signedIn = authenticated;
-  busy = restoring;
+  busy = working;
+  restoring = booting;
   state =
     onboardingComplete === null ? null : { profile: { onboardingComplete } };
   const provider = Layout().props.children.find(
@@ -102,9 +109,15 @@ test("sign-out returns protected app and onboarding links to welcome while allow
 
 test("cold quest deep links are not rejected while a saved session restores", () => {
   assert.equal(routePolicy(false, null, true), null);
+  assert.equal(routePolicy(true, null, true), null);
   const restored = routePolicy(true, true, false);
   for (const route of ["quest/[id]", "quest/available/[id]"])
     assert.equal(restored.get(route).allowed, true);
   const signedOut = routePolicy(false, null, false);
   assert.equal(destination(signedOut, "quest/[id]"), "index");
+});
+
+test("ordinary signed-in work does not unmount the navigator after restoration", () => {
+  const policy = routePolicy(true, true, false, true);
+  assert.equal(policy.get("quest/[id]").allowed, true);
 });

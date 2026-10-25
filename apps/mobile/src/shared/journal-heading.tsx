@@ -1,4 +1,4 @@
-import { ImageBackground, Pressable, Text, View } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Link } from "expo-router";
@@ -20,13 +20,16 @@ export function JournalHeading({
   const insets = useSafeAreaInsets();
   return (
     <View style={{ marginHorizontal: -16, backgroundColor: colors.paper }}>
-      <ImageBackground
-        testID="journal-background-heading"
-        source={journalArt.landscape}
-        resizeMode="contain"
-        imageStyle={{ width: "100%", height: "100%" }}
-        style={{ width: "100%", aspectRatio: 390 / 210 }}
-      >
+      <View style={{ width: "100%", aspectRatio: 390 / 210 }}>
+        <View pointerEvents="none" style={{ position: "absolute", inset: 0 }}>
+          <Image
+            testID="journal-background-heading"
+            source={journalArt.landscape}
+            resizeMode="contain"
+            style={{ width: "100%", height: "100%" }}
+            accessible={false}
+          />
+        </View>
         <View
           style={{
             flexDirection: "row",
@@ -72,7 +75,7 @@ export function JournalHeading({
             </Link>
           )}
         </View>
-      </ImageBackground>
+      </View>
       <View
         style={{
           gap: 6,
