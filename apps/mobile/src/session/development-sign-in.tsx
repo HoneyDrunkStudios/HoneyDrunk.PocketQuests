@@ -27,11 +27,11 @@ export function DevelopmentSignIn() {
       if (attempt.current !== current) return;
       setPairingCode("");
       await connect(credentials);
-    } catch (value) {
+    } catch (error_) {
       if (attempt.current === current)
         setError(
-          value instanceof Error
-            ? value.message
+          error_ instanceof Error
+            ? error_.message
             : "Development sign-in failed. Try again.",
         );
     } finally {
@@ -49,7 +49,7 @@ export function DevelopmentSignIn() {
         placeholder="6-digit pairing code"
         value={pairingCode}
         onChangeText={(value) =>
-          setPairingCode(value.replace(/[^0-9]/g, "").slice(0, 6))
+          setPairingCode(value.replace(/\D/g, "").slice(0, 6))
         }
         keyboardType="number-pad"
         maxLength={6}

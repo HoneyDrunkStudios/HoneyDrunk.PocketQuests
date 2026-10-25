@@ -5,6 +5,11 @@ import {
   requestTimeoutMs,
 } from "../config/client";
 import { RequestError } from "./request-error";
+
+const developmentSignInMessages: Readonly<Partial<Record<number, string>>> = {
+  401: "The pairing code was not accepted. Check the code on your computer.",
+  429: "Too many pairing attempts. Wait a minute and try again.",
+};
 export async function identityRequest<T>(
   path: string,
   token: string,
@@ -59,11 +64,8 @@ export async function requestDevelopmentSession(pairingCode: string) {
   });
   if (!response.ok)
     throw new Error(
-      response.status === 401
-        ? "The pairing code was not accepted. Check the code on your computer."
-        : response.status === 429
-          ? "Too many pairing attempts. Wait a minute and try again."
-          : "The development backend is unavailable. Check its address and try again.",
+      developmentSignInMessages[response.status] ??
+        "The development backend is unavailable. Check its address and try again.",
     );
   const value: unknown = await response.json();
   if (
