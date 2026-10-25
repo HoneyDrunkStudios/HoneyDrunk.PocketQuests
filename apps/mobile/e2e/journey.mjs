@@ -620,6 +620,8 @@ try {
   expect(duringTimer.overallXp).toBe(280);
   console.log("Verified completed list, export, and timer without XP award.");
   await page.getByRole("link", { name: "Back to Home", exact: true }).click();
+  await expect(visibleText("Your character", { exact: true })).toBeVisible();
+  await expect(page).toHaveURL("http://localhost:8081/");
   await page.goBack();
   await expect(
     page.getByRole("button", { name: "Resume focus timer", exact: true }),
