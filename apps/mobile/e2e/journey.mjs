@@ -136,7 +136,7 @@ try {
     .click();
   // Experience is optional profile editing, outside the first-run journey.
   await page
-    .getByRole("button", { name: "Settings and profile", exact: true })
+    .getByRole("link", { name: "Settings and profile", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Programming: Expert", exact: true })
@@ -553,7 +553,7 @@ try {
   diagnostics.checkpoint("export-timer");
   // The overlaid gear must remain reachable above the decorative heading art.
   await page
-    .getByRole("button", { name: "Settings and profile", exact: true })
+    .getByRole("link", { name: "Settings and profile", exact: true })
     .click();
   await expect(
     visibleText("280 base XP earned", { exact: true }),
