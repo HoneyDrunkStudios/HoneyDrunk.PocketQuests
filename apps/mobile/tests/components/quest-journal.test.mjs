@@ -373,18 +373,24 @@ test("normal online saves stay quiet while queued, in flight and confirmed", asy
   }
 });
 
-test("a failed online save still explains the error and offers a working retry", async () => {
+test("a failed online save offers retry and escape without waiting for the server", async () => {
   reset();
   session.queuedCount = 1;
   session.pending = true;
   session.error = "This change could not be saved. Try again.";
   session.retry = async () => sent.push("retry");
+  session.discardPending = async () => sent.push("discard");
+  session.signOut = async (discard) => sent.push({ signOut: discard });
   const view = await mount(SessionRecovery);
   try {
     assert.match(view.element.textContent, /This change could not be saved/);
-    assert.doesNotMatch(view.element.textContent, /Displayed XP|Discard/);
+    assert.doesNotMatch(view.element.textContent, /Displayed XP/);
+    assert.match(view.element.textContent, /discard them to continue/);
     await view.click("Try again");
     assert.deepEqual(sent, ["retry"]);
+    await view.click("Discard these changes");
+    await view.click("Discard changes and sign out");
+    assert.deepEqual(sent, ["retry", "discard", { signOut: true }]);
   } finally {
     await view.close();
   }
