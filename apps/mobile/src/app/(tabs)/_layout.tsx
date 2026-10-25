@@ -8,7 +8,7 @@ function HomeIcon({ color, focused }: TabIconProps) {
   return (
     <Ionicons
       name={focused ? "home" : "home-outline"}
-      color={color}
+      color={typeof color === "string" ? color : colors.muted}
       size={26}
       accessible={false}
       aria-hidden
@@ -19,7 +19,7 @@ function QuestsIcon({ color }: TabIconProps) {
   return (
     <Ionicons
       name="compass-outline"
-      color={color}
+      color={typeof color === "string" ? color : colors.muted}
       size={28}
       accessible={false}
       aria-hidden
@@ -30,7 +30,7 @@ function CalendarIcon({ color }: TabIconProps) {
   return (
     <Ionicons
       name="calendar-outline"
-      color={color}
+      color={typeof color === "string" ? color : colors.muted}
       size={26}
       accessible={false}
       aria-hidden
@@ -41,7 +41,7 @@ function ProgressIcon({ color }: TabIconProps) {
   return (
     <Ionicons
       name="stats-chart-outline"
-      color={color}
+      color={typeof color === "string" ? color : colors.muted}
       size={26}
       accessible={false}
       aria-hidden

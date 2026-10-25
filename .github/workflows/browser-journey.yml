@@ -51,7 +51,6 @@ jobs:
         run: |
           $PSNativeCommandUseErrorActionPreference = $true
           npm ci --ignore-scripts
-          node scripts/patch-query-decoder.cjs
           node scripts/patch-dependencies.cjs
           node node_modules/@playwright/test/cli.js install chromium
       - name: Verify actual browser journey and disposable cleanup

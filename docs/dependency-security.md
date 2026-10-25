@@ -1,5 +1,22 @@
 # PocketQuests dependency assessment
 
+## October 25 publication preflight
+
+The SDK 58 slice pins shared UI revision `956bc95ec8b6f6b0170ee1b74b54aec1bc71339b` from [UI PR #7](https://github.com/HoneyDrunkStudios/HoneyDrunk.UI/pull/7), based on current UI main. This preserves the owner's later security, coverage and package-boundary updates. The October 24 local-only pin below is historical.
+
+The fresh lockfile audit reports five high affected-package entries and no critical findings. [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5) requires Zod 4.6.6 or later. The root resolves 4.6.7, but Expo CLI 58.1.15 requires `^3.25.76` and installs a separate 3.25.76 copy. Current main's CLI 57.0.27 also requires and resolves 3.25.76. The installed CLI constraint is not compatible with the published patched major; no unsupported major override or Expo 54 downgrade is applied. This inherited tooling finding remains open.
+
+The latest node-forge remains 1.4.0, and [GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv) still lists no patched release. The existing source-hash-pinned malformed-DigestAlgorithm mitigation and regression checks remain enabled; npm audit does not infer remediation from a local source patch. Neither this mitigation nor functional SDK validation is a clean audit or native-signing acceptance. Release audit gates and advisory visibility are unchanged.
+
+## October 24 SDK 58 compatibility
+
+The iPhone's Expo Go installation requires SDK 58. Pocket Quests now aligns to Expo SDK 58, React 19.3 and React Native 0.88. The shared native UI snapshot is imported from reviewed local owner commit `d684cf2346af7ba2a28ae3f87b803c446aed4b01`; its peer range retains 0.86 support and permits 0.88. No generic component source changed. That owner commit is local and has not been pushed.
+
+Expo Router 58 removes both `query-string` and `decode-uri-component` from the installed lockfile graph. The obsolete decoder override, compatibility patch and CI invocations were removed. Regression tests now exercise SDK 58 Router's actual query parser for callback values, Unicode, repeated parameters and bounded malformed-percent input, and reject reintroduction of the old decoder dependencies. The braces and node-forge source-hash guards and release audit remain enabled.
+
+Clean `npm ci` applied the remaining mitigations. Verification passed 315 mobile tests, 36 shared UI contract tests with both the previous and SDK 58 dependency installations, TypeScript, lint, UI/API and security-patch checks, 20/20 Expo Doctor checks, workflow actionlint and an iOS development bundle export. These are local compatibility checks; physical iPhone sign-in and saved-progress acceptance remain user-run.
+
+The full npm audit still exits nonzero with five high affected-package entries and zero critical findings. This is not a clean security audit or release approval. The earlier SDK 57 assessments below remain dated evidence.
 ## October 18 recheck
 
 GitHub still reports alerts #3 (`braces`, GHSA-vfj7-8cjw-p6xm) and #2 (`node-forge`, GHSA-86w9-cpqp-85rv) open, with no patched version listed. npm still publishes braces 3.0.3 and node-forge 1.4.0 as latest. Latest metro-file-map 0.87.1 still requires micromatch, and @expo/code-signing-certificates 0.0.7 still requires node-forge. Forge PR #1152 remains open and unmerged. No supported dependency upgrade found in this recheck closes either alert.

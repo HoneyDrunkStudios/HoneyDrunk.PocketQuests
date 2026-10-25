@@ -1,5 +1,11 @@
 # Changelog
 
+## Expo SDK 58 compatibility — October 25, 2026
+
+- Align the mobile client to Expo SDK 58, React 19.3 and React Native 0.88 for the current iPhone Expo Go host.
+- Import the exact reviewed shared UI revision that retains React Native 0.86 support and permits 0.88 hosts.
+- Exercise Router's current query parser and retire the decoder dependency/patch it no longer uses; retain the other dependency mitigations and release audit.
+
 ## Illustrated adventure journal — October 18, 2026
 
 - Apply the approved navy, ivory and gold design with bundled lake scenery, a traveler portrait, serif headings and illustrated path rows.
