@@ -108,7 +108,7 @@ finally {
         $file = Get-Item -LiteralPath $diagnosticsPath -ErrorAction Stop
         if ($file.Length -gt 4096) { throw 'Oversized diagnostic record.' }
         $diagnostics = Get-Content -LiteralPath $diagnosticsPath -Raw | ConvertFrom-Json -AsHashtable -NoEnumerate
-        $checkpoints = @('setup', 'sign-in', 'onboarding', 'onboarding-save', 'custom-quest', 'save-retry', 'definition-edit', 'completion-response-loss', 'character', 'export-timer', 'offline-undo', 'clock-undo-retry', 'fresh-session', 'calendar-planning', 'plan-edit', 'viewports', 'page-errors', 'complete')
+        $checkpoints = @('setup', 'sign-in', 'onboarding', 'onboarding-save', 'custom-quest', 'save-retry', 'definition-edit', 'completion-response-loss', 'character', 'export-timer', 'quest-discovery', 'offline-undo', 'clock-undo-retry', 'fresh-session', 'calendar-planning', 'plan-edit', 'viewports', 'page-errors', 'complete')
         $categories = @('none', 'timeout', 'assertion', 'unknown')
         if ($diagnostics -isnot [System.Collections.IDictionary] -or $diagnostics.Count -ne 2 -or
             @($diagnostics.Keys | Where-Object { $_ -cnotin @('checkpoint', 'errorCategory') }).Count -ne 0 -or
