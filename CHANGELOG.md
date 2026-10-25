@@ -1,5 +1,11 @@
 # Changelog
 
+## Quiet saves and understandable recovery — October 25, 2026
+
+- Keep ordinary queued saves quiet; show recovery only when offline or changes need review, recovery or an explicit retry.
+- Explain unsaved and timing-unverified activities in plain language, with clear discard consequences and optional support details.
+- Use readable action names while preserving retry, rejection, dependency and saved-progress behavior.
+
 ## Guided onboarding and journal entry — October 25, 2026
 
 - Add an illustrated welcome and dedicated three-step onboarding flow with local interest drafts saved once on Continue.

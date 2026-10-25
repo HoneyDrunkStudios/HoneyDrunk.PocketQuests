@@ -351,15 +351,110 @@ test("timing-unverified details keep reward guidance consistent with recovery wa
   }
 });
 
+test("normal online saves stay quiet while queued, in flight and confirmed", async () => {
+  reset();
+  const view = await mount(SessionRecovery);
+  try {
+    for (const busy of [true, false]) {
+      session.queuedCount = 1;
+      session.pending = true;
+      session.busy = busy;
+      await view.render();
+      assert.equal(view.element.textContent, "");
+      assert.equal(view.element.querySelector("[aria-live]"), null);
+      assert.equal(view.button("Try saving again"), undefined);
+    }
+    session.queuedCount = 0;
+    session.pending = false;
+    await view.render();
+    assert.equal(view.element.textContent, "");
+  } finally {
+    await view.close();
+  }
+});
+
+test("a failed online save still explains the error and offers a working retry", async () => {
+  reset();
+  session.queuedCount = 1;
+  session.pending = true;
+  session.error = "This change could not be saved. Try again.";
+  session.retry = async () => sent.push("retry");
+  const view = await mount(SessionRecovery);
+  try {
+    assert.match(view.element.textContent, /This change could not be saved/);
+    assert.doesNotMatch(view.element.textContent, /Displayed XP|Discard/);
+    await view.click("Try again");
+    assert.deepEqual(sent, ["retry"]);
+  } finally {
+    await view.close();
+  }
+});
+
+test("offline, rejected and unverified changes retain their recovery controls", async () => {
+  const entry = {
+    command: { operationId: "saved-action" },
+    label: "Choose interests",
+    reason: "Review this saved change.",
+    blockedBy: [],
+  };
+  for (const attention of [
+    { offline: true },
+    { rejected: [{ ...entry, kind: "rejected" }] },
+    { unverified: [entry] },
+  ]) {
+    reset();
+    Object.assign(session, attention, {
+      queuedCount: 1,
+      error: attention.unverified?.[0]?.reason ?? null,
+      retry: async () => sent.push("retry"),
+      discardRejected: async (id) => sent.push({ rejected: id }),
+      discardUnverified: async (id) => sent.push({ unverified: id }),
+    });
+    const view = await mount(SessionRecovery);
+    try {
+      assert.ok(view.button("Discard these changes"));
+      await view.click("Try saving again");
+      assert.deepEqual(sent, ["retry"]);
+      if (attention.rejected || attention.unverified) {
+        assert.doesNotMatch(view.element.textContent, /saved-action/);
+        if (attention.unverified)
+          assert.doesNotMatch(
+            view.element.textContent,
+            /Review this saved change/,
+          );
+        await view.click("Show details");
+        assert.match(
+          view.element.textContent,
+          /Support reference: saved-action/,
+        );
+        if (attention.unverified)
+          assert.match(view.element.textContent, /Review this saved change/);
+        await view.click("Hide details");
+        assert.doesNotMatch(view.element.textContent, /saved-action/);
+        const unverified = !!attention.unverified;
+        await view.click(
+          `${unverified ? "Discard activity" : "Discard change"}: Choose interests`,
+        );
+        assert.deepEqual(sent[1], {
+          [unverified ? "unverified" : "rejected"]: "saved-action",
+        });
+      }
+    } finally {
+      await view.close();
+    }
+  }
+});
+
 test("an in-flight command disables destructive sign-out when its recovery panel appears, while quarantine keeps its escape", async () => {
   reset();
   session.queuedCount = 1;
   session.busy = true;
+  session.offline = true;
   session.recoveryRequired = false;
   session.signOut = async (discard) => sent.push({ signOut: discard });
   const view = await mount(SessionRecovery);
   try {
-    const label = "Discard pending changes and sign out";
+    const label = "Discard changes and sign out";
     assert.equal(view.button(label).getAttribute("aria-disabled"), "true");
     await view.click(label);
     assert.deepEqual(sent, []);

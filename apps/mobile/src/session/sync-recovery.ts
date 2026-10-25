@@ -84,8 +84,32 @@ export function rejectedActionLabel(
     state.definitions.find((item) => item.quest.id === command.questId)?.quest
       .title ??
     catalog.quests.find((quest) => quest.id === command.questId)?.title ??
-    command.occurrenceId ??
-    command.questId ??
-    "Account";
-  return `${command.action}: ${title}`;
+    (command.occurrenceId || command.questId ? "Quest" : "Your account");
+  return `${actionLabels[command.action]}: ${title}`;
 }
+
+const actionLabels: Record<Command["action"], string> = {
+  accept: "Start quest",
+  complete: "Complete quest",
+  undo: "Undo completion",
+  "save-definition": "Save quest",
+  "archive-definition": "Archive quest",
+  "assess-skill": "Update skill level",
+  "save-skill": "Save skill",
+  "archive-skill": "Archive skill",
+  interests: "Choose interests",
+  "finish-onboarding": "Finish setup",
+  plan: "Plan quest",
+  zone: "Change time zone",
+  "expiry-warnings": "Change reminders",
+  link: "Link quests",
+  "select-badge": "Choose badge",
+  "select-frame": "Choose portrait frame",
+  "save-series": "Save repeating quest",
+  "stop-series": "Stop repeating quest",
+  pause: "Pause quest",
+  resume: "Resume quest",
+  "resume-occurrence": "Resume quest",
+  abandon: "Abandon quest",
+  "accept-offer": "Accept offer",
+};
