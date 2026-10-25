@@ -104,7 +104,10 @@ test("cold quest deep links are not rejected while a saved session restores", ()
   assert.equal(destination(signedOut, "quest/[id]"), "index");
 });
 
-test("ordinary signed-in work does not unmount the navigator after restoration", () => {
+test("ordinary account work keeps signed-out recovery and signed-in routes mounted after restoration", () => {
+  const recovering = routePolicy(false, null, false, true);
+  assert.equal(recovering.get("index").allowed, true);
+  assert.equal(recovering.get("callback").allowed, true);
   const policy = routePolicy(true, true, false, true);
   assert.equal(policy.get("quest/[id]").allowed, true);
 });
