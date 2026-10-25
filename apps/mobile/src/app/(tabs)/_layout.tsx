@@ -48,6 +48,7 @@ function ProgressIcon({ color }: TabIconProps) {
     />
   );
 }
+export const unstable_settings = { initialRouteName: "index" };
 export default function Layout() {
   const { signedIn } = useSession();
   if (!signedIn) return <Redirect href="/" />;

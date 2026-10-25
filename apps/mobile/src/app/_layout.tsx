@@ -9,9 +9,9 @@ import { colors } from "../shared/ui";
 import { CompletionOverlay } from "../features/progression/completion-overlay";
 export { AppErrorBoundary as ErrorBoundary } from "../shared/error-boundary";
 function SessionNavigator() {
-  const { signedIn, busy } = useSessionStatus();
-  // Do not reject a cold-launch deep link while saved credentials are restoring.
-  if (!signedIn && busy) return null;
+  const { signedIn, restoring } = useSessionStatus();
+  // Saved credentials can be published before their account has loaded.
+  if (restoring) return null;
   return (
     <Stack
       screenOptions={{
