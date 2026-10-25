@@ -8,11 +8,11 @@ function RecoveryDetails({
   reference,
   label,
   reason,
-}: {
+}: Readonly<{
   reference: string;
   label: string;
   reason?: string;
-}) {
+}>) {
   const [expanded, setExpanded] = useState(false);
   return (
     <>
@@ -32,6 +32,21 @@ function RecoveryDetails({
       )}
     </>
   );
+}
+
+function recoveryMessage(
+  recoveryRequired: boolean,
+  offline: boolean,
+  rejected: number,
+  unverified: number,
+) {
+  if (recoveryRequired)
+    return "Some changes on this device need attention. They may not have been saved. Try again, or discard them to continue.";
+  if (offline) return "You’re offline. You can still see your saved progress.";
+  if (rejected > 0) return "Some changes couldn’t be saved. Review them below.";
+  if (unverified > 0)
+    return "Some activities need your attention before they can count toward your progress.";
+  return "Some changes couldn’t be saved. Try again, or discard them to continue.";
 }
 
 export function SessionRecovery() {
@@ -63,15 +78,12 @@ export function SessionRecovery() {
         unverified.length > 0) && (
         <View style={styles.card} accessibilityLiveRegion="polite">
           <Label>
-            {recoveryRequired
-              ? "Some changes on this device need attention. They may not have been saved. Try again, or discard them to continue."
-              : offline
-                ? "You’re offline. You can still see your saved progress."
-                : rejected.length > 0
-                  ? "Some changes couldn’t be saved. Review them below."
-                  : unverified.length > 0
-                    ? "Some activities need your attention before they can count toward your progress."
-                    : "Some changes couldn’t be saved. Try again, or discard them to continue."}
+            {recoveryMessage(
+              recoveryRequired,
+              offline,
+              rejected.length,
+              unverified.length,
+            )}
           </Label>
           {queuedCount > 0 && (
             <Label>

@@ -230,7 +230,7 @@ export default function QuestDetails() {
         Steps and Large goals each need their own completion. A link never
         grants XP or automatically completes a parent.
       </Label>
-      <Link href="/(tabs)" style={styles.text}>
+      <Link href="/(tabs)" push style={styles.text}>
         Back to Home
       </Link>
     </Page>

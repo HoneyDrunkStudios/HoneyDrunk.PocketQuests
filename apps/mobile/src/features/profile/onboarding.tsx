@@ -10,6 +10,11 @@ import { Button, Card, Label, colors, styles } from "../../shared/ui";
 import { questActions } from "../quests/commands/quest-actions";
 
 const steps = ["Welcome", "Your interests", "Your first quest"] as const;
+const stepActions = [
+  "Let’s begin",
+  "Continue",
+  "Choose my first quest",
+] as const;
 const categoryIcons = [
   "fitness-outline",
   "book-outline",
@@ -27,7 +32,7 @@ const categoryIcons = [
 export function Onboarding() {
   const { state, catalog, busy, pending, offline, command, signOut } =
     useSession();
-  const [currentStep, setStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
   const [interests, setInterests] = useState<string[] | null>(null);
   const [interestSave, setInterestSave] = useState<{
     interests: string[];
@@ -53,7 +58,7 @@ export function Onboarding() {
   async function continueWithInterests() {
     if (disabled || savingInterests.current || !state) return;
     if (sameInterests(choices, state.profile.interests)) {
-      setStep(2);
+      setCurrentStep(2);
       return;
     }
     savingInterests.current = true;
@@ -67,6 +72,17 @@ export function Onboarding() {
       setInterestSave({ interests: choices, finished: true });
       savingInterests.current = false;
     }
+  }
+  function advance() {
+    if (step === 0) {
+      setCurrentStep(1);
+      return;
+    }
+    if (step === 1) {
+      void continueWithInterests();
+      return;
+    }
+    void command({ action: questActions.finishOnboarding });
   }
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
@@ -187,7 +203,7 @@ export function Onboarding() {
                           borderRadius: 14,
                           borderColor: selected ? colors.gold : colors.line,
                           backgroundColor: selected ? "#243444" : colors.card,
-                          opacity: choiceDisabled ? 0.6 : pressed ? 0.8 : 1,
+                          opacity: choiceOpacity(choiceDisabled, pressed),
                         })}
                       >
                         <View
@@ -275,23 +291,9 @@ export function Onboarding() {
         }}
       >
         <Button
-          title={
-            isSavingInterests
-              ? "Saving choices…"
-              : step === 2
-                ? "Choose my first quest"
-                : step === 0
-                  ? "Let’s begin"
-                  : "Continue"
-          }
+          title={isSavingInterests ? "Saving choices…" : stepActions[step]}
           disabled={disabled}
-          onPress={() =>
-            step === 0
-              ? setStep(1)
-              : step === 1
-                ? void continueWithInterests()
-                : void command({ action: questActions.finishOnboarding })
-          }
+          onPress={advance}
         />
         {step > 0 ? (
           <Button
@@ -300,7 +302,7 @@ export function Onboarding() {
             disabled={busy || pending || isSavingInterests}
             onPress={() => {
               setInterestSave(null);
-              setStep(step - 1);
+              setCurrentStep(step - 1);
             }}
           />
         ) : (
@@ -318,6 +320,11 @@ export function Onboarding() {
 
 function sameInterests(left: string[], right: string[]) {
   return left.length === right.length && left.every((id) => right.includes(id));
+}
+
+function choiceOpacity(disabled: boolean, pressed: boolean) {
+  if (disabled) return 0.6;
+  return pressed ? 0.8 : 1;
 }
 
 function Intro({

@@ -27,6 +27,7 @@ export type SessionSnapshot = {
   cleanupOwner: string | null;
   local: LocalAccount | null;
   busy: boolean;
+  restoring: boolean;
   error: string | null;
   offline: boolean;
   needsSignIn: boolean;
@@ -92,6 +93,7 @@ export function createSessionRuntime(clockSource: ClockSource) {
     cleanupOwner: null,
     local: null,
     busy: true,
+    restoring: true,
     error: null,
     offline: false,
     needsSignIn: false,
@@ -115,7 +117,8 @@ export function createSessionRuntime(clockSource: ClockSource) {
     setBusy = setter("busy"),
     setError = setter("error"),
     setOffline = setter("offline"),
-    setNeedsSignIn = setter("needsSignIn");
+    setNeedsSignIn = setter("needsSignIn"),
+    setRestoring = setter("restoring");
   const inFlight = { current: false },
     signingOut = { current: false },
     idleWaiters: Cell<(() => void)[]> = { current: [] };
@@ -219,10 +222,16 @@ export function createSessionRuntime(clockSource: ClockSource) {
         listeners.delete(notify);
       };
     },
-    restore: (isCurrent: () => boolean) =>
-      restoreSession(dependencies, isCurrent),
+    restore: async (isCurrent: () => boolean) => {
+      try {
+        await restoreSession(dependencies, isCurrent);
+      } finally {
+        if (isCurrent()) setRestoring(false);
+      }
+    },
     mount: () => {
       base.mounted.current = true;
+      setRestoring(true);
       setBusy(true);
       return storage.activate(() => {
         base.mounted.current = false;
