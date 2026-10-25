@@ -1,5 +1,11 @@
 # Changelog
 
+## Quest discovery — October 25, 2026
+
+- Search available quests by title, topic, category, criterion, attribute and built-in or custom skill, with case and accent matching.
+- Combine category, effort, starter/custom, readiness and penalty-free filters; sort by recommendations, XP or title and clear filters in one action.
+- Index results locally and show 20 cards at a time, keeping search responsive without network writes and preserving existing start/reward gates.
+
 ## Profile preference drafts — October 25, 2026
 
 - Let interest, badge and frame choices stay local until their Save button is pressed; reset drafts without sending a command.

@@ -64,7 +64,16 @@ export function QuestBoard() {
             ? [{ key: "past", title: "Past commitments", data: plan.past }]
             : []),
         ]
-      : [{ key: section, data: items }];
+      : [
+          {
+            key: section,
+            title:
+              section === "Available" && items.length > 0
+                ? "Recurring quest offers"
+                : undefined,
+            data: items,
+          },
+        ];
   return (
     <QuestHistory
       sections={sections}
