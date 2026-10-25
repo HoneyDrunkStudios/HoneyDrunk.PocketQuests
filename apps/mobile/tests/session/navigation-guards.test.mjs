@@ -74,8 +74,10 @@ function destination(policy, route) {
     visited.add(route);
     const href = policy.get(route).redirect;
     assert.ok(href, `Blocked ${route} must have an explicit destination`);
-    route = href === "/" ? "index" : href.slice(1);
+    const target = href === "/" ? "index" : href.slice(1);
+    route = policy.has(target) ? target : target.split("/")[0];
     assert.ok(policy.has(route), `Unknown destination ${href}`);
+    if (policy.get(route).allowed) return target;
   }
   return route;
 }
@@ -95,8 +97,9 @@ test("restoring an account cannot open the app before its profile is available",
 
 test("confirmed onboarding completion opens the app and removes onboarding and callback", () => {
   const policy = routePolicy(true, true);
-  for (const route of ["index", "callback", "onboarding"])
+  for (const route of ["index", "callback"])
     assert.equal(destination(policy, route), "(tabs)");
+  assert.equal(destination(policy, "onboarding"), "(tabs)/board");
   assert.equal(policy.get("quest/[id]").allowed, true);
 });
 

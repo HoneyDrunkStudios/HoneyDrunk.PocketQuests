@@ -134,6 +134,10 @@ try {
       exact: true,
     })
     .click();
+  await expect(page).toHaveURL("http://localhost:8081/board");
+  await expect(
+    page.getByRole("heading", { name: "Pick your next quest", exact: true }),
+  ).toBeVisible();
   // Experience is optional profile editing, outside the first-run journey.
   await page
     .getByRole("link", { name: "Settings and profile", exact: true })
