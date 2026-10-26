@@ -7,27 +7,59 @@ import { Button, Label } from "../../shared/ui";
 import { AvailableQuests } from "./available-quests";
 import { Redirect } from "expo-router";
 import { activePlan } from "./active-plan";
+import type { Catalog, State } from "../../shared/contracts";
+import { QuestHistoryControls } from "./quest-history-controls";
+import { indexQuestHistory, questHistoryMatcher } from "./quest-history-search";
+import {
+  defaultQuestSearchFilters,
+  type QuestSearchFilters,
+} from "./quest-search";
 import { QuestViewTabs } from "./quest-view-tabs";
 
 const boardViews = ["Available", "Active", "Completed"] as const;
 type BoardView = (typeof boardViews)[number];
 
 export function QuestBoard() {
-  const { state } = useAccountSnapshot();
-  const [section, setSection] = useState<BoardView>("Available");
-  const [showPast, setShowPast] = useState(false);
-  const plan = useMemo(
-    () => activePlan(state?.occurrences ?? [], state?.today ?? ""),
-    [state?.occurrences, state?.today],
-  );
+  const { state, catalog } = useAccountSnapshot();
   if (!state)
     return (
       <Page header={<JournalHeading title="Your quests" compact />}>
         <Label>Loading your quests.</Label>
       </Page>
     );
-  if (state && !state.profile.onboardingComplete)
-    return <Redirect href="/onboarding" />;
+  if (!state.profile.onboardingComplete) return <Redirect href="/onboarding" />;
+  return <QuestBoardContent state={state} catalog={catalog} />;
+}
+
+function QuestBoardContent({
+  state,
+  catalog,
+}: Readonly<{ state: State; catalog: Catalog | null }>) {
+  const [filters, setFilters] = useState<QuestSearchFilters>(
+    defaultQuestSearchFilters,
+  );
+  const [section, setSection] = useState<BoardView>("Available");
+  const [showPast, setShowPast] = useState(false);
+  const plan = useMemo(
+    () => activePlan(state.occurrences, state.today),
+    [state.occurrences, state.today],
+  );
+  const index = useMemo(
+    () => indexQuestHistory(state.occurrences, catalog?.categories ?? []),
+    [state.occurrences, catalog?.categories],
+  );
+  const matches = useMemo(
+    () => questHistoryMatcher(index, filters),
+    [index, filters],
+  );
+  const filtering =
+    !!filters.query.trim() || !!filters.categoryId || !!filters.effort;
+  const selectView = (view: BoardView) => {
+    if (view === section) return;
+    setSection(view);
+    setFilters(defaultQuestSearchFilters);
+    setShowPast(false);
+  };
   const items = state.occurrences.filter((o) => {
     if (section === "Completed") return o.status === "Completed";
     if (section === "Active") return ["Active", "Frozen"].includes(o.status);
@@ -75,15 +107,29 @@ export function QuestBoard() {
             data: items,
           },
         ];
+  const visibleSections =
+    section === "Available"
+      ? sections
+      : sections
+          .map((group) => ({ ...group, data: group.data.filter(matches) }))
+          .filter((group) => !filtering || group.data.length > 0);
+  const totalCount = sections.reduce(
+    (total, group) => total + group.data.length,
+    0,
+  );
+  const resultCount = visibleSections.reduce(
+    (total, group) => total + group.data.length,
+    0,
+  );
   return (
     <QuestHistory
-      sections={sections}
+      sections={visibleSections}
       header={<JournalHeading title="Your quests" compact />}
     >
       <QuestViewTabs<BoardView>
         options={boardViews}
         selected={section}
-        onSelect={setSection}
+        onSelect={selectView}
       />
       {section === "Available" && (
         <>
@@ -93,6 +139,19 @@ export function QuestBoard() {
           </Label>
           <AvailableQuests />
         </>
+      )}
+      {section !== "Available" && (
+        <QuestHistoryControls
+          key={section}
+          view={section}
+          categories={catalog?.categories ?? []}
+          filters={filters}
+          resultCount={resultCount}
+          onChange={(change) =>
+            setFilters((current) => ({ ...current, ...change }))
+          }
+          onReset={() => setFilters(defaultQuestSearchFilters)}
+        />
       )}
       {section === "Active" && (
         <>
@@ -109,11 +168,14 @@ export function QuestBoard() {
           )}
           <Button
             title="Choose another quest"
-            onPress={() => setSection("Available")}
+            onPress={() => selectView("Available")}
           />
         </>
       )}
-      {section !== "Available" && items.length === 0 && (
+      {section !== "Available" && totalCount > 0 && resultCount === 0 && (
+        <Label>No quests match your search and filters.</Label>
+      )}
+      {section !== "Available" && totalCount === 0 && (
         <Label>
           {section === "Active"
             ? "No active quests yet. Choose one from Available."
