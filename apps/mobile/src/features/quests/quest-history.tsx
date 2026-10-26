@@ -24,6 +24,8 @@ export function QuestHistory({
   const insets = useSafeAreaInsets();
   return (
     <SectionList
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       showsVerticalScrollIndicator={false}
       sections={sections}
       keyExtractor={(item) => item.occurrence.id}

@@ -16,7 +16,7 @@ const nativeWeb = require("react-native-web");
 const ts = require("typescript");
 let session, sent, navigation, params, canGoBack;
 const load = Module._load;
-const editor = ({ onClose, closeLabel }) =>
+const editor = ({ onClose, closeLabel = "Back to available quests" }) =>
   React.createElement("button", { onClick: onClose }, closeLabel);
 Module._load = function (name, ...rest) {
   if (name === "react-native") return nativeWeb;
@@ -123,6 +123,9 @@ async function mount(Component = AvailableQuests, props = {}) {
   const view = {
     element,
     async render() {
+      // Real account/catalog publications replace their outer snapshot objects.
+      if (session.state) session.state = { ...session.state };
+      if (session.catalog) session.catalog = { ...session.catalog };
       await act(async () =>
         root.render(
           React.createElement(
@@ -134,9 +137,11 @@ async function mount(Component = AvailableQuests, props = {}) {
       );
     },
     button(name) {
-      return [...element.querySelectorAll('[role="button"],button')].find(
-        (item) => item.textContent === name,
-      );
+      return [
+        ...element.querySelectorAll(
+          '[role="button"],button,[role="radio"],[role="checkbox"]',
+        ),
+      ].find((item) => item.textContent === name);
     },
     async click(name) {
       const button = view.button(name);
@@ -210,14 +215,109 @@ test("compact cards keep interest order, filter unavailable definitions, and ope
     await view.click("Start: Practice");
     assert.equal(sent[0].dueDate, "2026-10-21");
     assert.equal(sent[0].plannedTime, null);
+    await view.click("Show filters");
     await view.click("Recreation");
     assert.equal(view.button("Start: Practice"), undefined);
     session.state.definitions[0].archived = true;
     await view.render();
     assert.match(
       view.element.textContent,
-      /No available quests in this selection/,
+      /No quests match this search and filter combination/,
     );
+  } finally {
+    await view.close();
+  }
+});
+
+test("quest search combines local filters, exposes selected controls and clears without sending commands", async () => {
+  reset();
+  session.catalog.quests.push(
+    {
+      ...basic,
+      id: "medium",
+      title: "Long practice",
+      effort: "Medium",
+      baseXp: 80,
+    },
+    { ...basic, id: "locked", title: "Advanced practice", rank: "E" },
+    {
+      ...basic,
+      id: "penalty",
+      title: "Practice with stakes",
+      penaltyPercent: 25,
+    },
+  );
+  session.state.definitions = [
+    {
+      quest: {
+        ...basic,
+        id: "custom",
+        title: "Rest with a book",
+        criterion: "Read one chapter",
+        categoryId: "c02",
+        isCustom: true,
+      },
+      archived: false,
+    },
+  ];
+  const view = await mount();
+  try {
+    await view.fill("Search quests", "  STRENGTH practice  ");
+    assert.ok(!view.button("Start: Rest with a book"));
+    assert.ok(view.button("Start: Long practice"));
+    await view.click("Show filters");
+    await view.click("Small");
+    await view.click("Ready to start");
+    await view.click("No XP penalties");
+    assert.ok(view.button("Start: Practice"));
+    assert.ok(!view.button("Start: Long practice"));
+    assert.ok(!view.button("Start: Advanced practice"));
+    assert.ok(!view.button("Review before starting: Practice with stakes"));
+    assert.equal(view.field("Small").getAttribute("aria-checked"), "true");
+    assert.equal(
+      view.field("Ready to start").getAttribute("aria-checked"),
+      "true",
+    );
+    assert.match(view.element.textContent, /1 quest found/);
+    await view.click("Custom quests");
+    assert.match(view.element.textContent, /No quests match/);
+    await view.click("Clear search and filters");
+    assert.equal(view.field("Search quests").value, "");
+    assert.ok(view.button("Start: Rest with a book"));
+    assert.ok(view.button("Start: Long practice"));
+    assert.deepEqual(sent, []);
+    assert.deepEqual(navigation, []);
+  } finally {
+    await view.close();
+  }
+});
+
+test("discovery bounds mounted cards, paginates, resets on search and preserves discovery when an editor closes", async () => {
+  reset();
+  session.catalog.quests = Array.from({ length: 45 }, (_, i) => ({
+    ...basic,
+    id: `q-${i}`,
+    title: `Practice ${String(i).padStart(2, "0")}`,
+  }));
+  const view = await mount();
+  try {
+    const starts = () =>
+      [...view.element.querySelectorAll('[role="button"]')].filter((item) =>
+        item.textContent.startsWith("Start:"),
+      );
+    assert.equal(starts().length, 20);
+    assert.match(view.element.textContent, /45 quests found/);
+    await view.click("Show more quests");
+    assert.equal(starts().length, 40);
+    await view.fill("Search quests", "Practice 44");
+    assert.equal(starts().length, 1);
+    assert.ok(view.button("Start: Practice 44"));
+    await view.click("Create a custom quest");
+    await view.click("Back to available quests");
+    assert.equal(view.field("Search quests").value, "Practice 44");
+    await view.click("Clear search and filters");
+    assert.equal(starts().length, 20);
+    assert.deepEqual(sent, []);
   } finally {
     await view.close();
   }

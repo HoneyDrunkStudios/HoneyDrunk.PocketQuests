@@ -12,6 +12,7 @@ export const checkpoints = Object.freeze([
   "completion-response-loss",
   "character",
   "export-timer",
+  "quest-discovery",
   "offline-undo",
   "clock-undo-retry",
   "fresh-session",

@@ -27,10 +27,13 @@ Module._load = function (name, ...rest) {
     return { useSafeAreaInsets: () => ({ top: 24, bottom: 34 }) };
   if (name === "@expo/vector-icons/Ionicons") return "Icon";
   if (name.endsWith("signin-background.jpg")) return "illustration";
-  if (name === "./ui") return { colors: {}, styles: {} };
+  if (name === "./ui" || name === "../shared/ui")
+    return { colors: {}, styles: {} };
+  if (name === "./session-recovery") return { SessionRecovery: "Recovery" };
   return load.call(this, name, ...rest);
 };
 const { JournalEntry } = require("../../src/shared/journal-entry.tsx");
+const { Page } = require("../../src/session/session-page.tsx");
 function descendants(element, type) {
   if (!element || typeof element !== "object") return [];
   const children = [element.props?.children].flat();
@@ -61,6 +64,14 @@ test("sign-in scroll owner passes button taps through while the keyboard is open
   const [scroll] = descendants(JournalEntry({ children: null }), "ScrollView");
   assert.equal(scroll.props.keyboardShouldPersistTaps, "handled");
   assert.equal(scroll.props.keyboardDismissMode, "interactive");
+});
+
+test("calendar discovery's Page scroll owner keeps search result and filter taps reachable", () => {
+  const discovery = { type: "AvailableQuests", props: {} };
+  const [scroll] = descendants(Page({ children: discovery }), "ScrollView");
+  assert.equal(descendants(scroll, "AvailableQuests")[0], discovery);
+  assert.equal(scroll.props.keyboardShouldPersistTaps, "handled");
+  assert.equal(scroll.props.keyboardDismissMode, "on-drag");
 });
 
 test("Android and web keep their existing viewport sizing instead of adding iOS keyboard padding", () => {

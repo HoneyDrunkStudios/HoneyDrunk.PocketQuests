@@ -602,6 +602,81 @@ try {
   ).toBeVisible();
   await expect(page.getByRole("button", { name: /^Complete:/ })).toHaveCount(0);
   await page.getByRole("tab", { name: "Available", exact: true }).click();
+  diagnostics.checkpoint("quest-discovery");
+  const beforeDiscovery = await (
+    await context.request.get("http://localhost:5217/api/state", {
+      headers: { Authorization: `Bearer ${fixture.token}` },
+    })
+  ).json();
+  let discoveryWrites = 0;
+  const recordDiscoveryWrite = (request) => {
+    if (
+      request.method() === "POST" &&
+      request.url() === "http://localhost:5217/api/commands"
+    )
+      discoveryWrites++;
+  };
+  page.on("request", recordDiscoveryWrite);
+  try {
+    const search = page.getByRole("textbox", {
+      name: "Search quests",
+      exact: true,
+    });
+    const downtime = page.getByRole("button", {
+      name: "Start: Enjoy some downtime",
+      exact: true,
+    });
+    await search.fill("no-matching-quest-for-this-search");
+    await expect(
+      visibleText(/No quests match this search and filter combination/),
+    ).toBeVisible();
+    await expect(downtime).toHaveCount(0);
+    await search.fill("ENJOY downtime");
+    await expect(downtime).toBeVisible();
+    await page
+      .getByRole("button", { name: "Show quest filters", exact: true })
+      .click();
+    await page
+      .getByRole("radio", { name: "Custom quests", exact: true })
+      .click();
+    await expect(downtime).toHaveCount(0);
+    await page
+      .getByRole("radio", { name: "Starter quests", exact: true })
+      .click();
+    await page.getByRole("radio", { name: "Small", exact: true }).click();
+    await page
+      .getByRole("checkbox", { name: "Ready to start", exact: true })
+      .click();
+    await page
+      .getByRole("checkbox", { name: "No XP penalties", exact: true })
+      .click();
+    await expect(downtime).toBeVisible();
+    await page
+      .getByRole("button", { name: "Clear search and filters", exact: true })
+      .click();
+    await expect(search).toHaveValue("");
+    await expect(
+      page.getByRole("radio", { name: "All quests", exact: true }),
+    ).toBeChecked();
+    await expect(
+      page.getByRole("radio", { name: "Any effort", exact: true }),
+    ).toBeChecked();
+    await expect(
+      page.getByRole("checkbox", { name: "Ready to start", exact: true }),
+    ).not.toBeChecked();
+    await expect(downtime).toBeVisible();
+    const afterDiscovery = await (
+      await context.request.get("http://localhost:5217/api/state", {
+        headers: { Authorization: `Bearer ${fixture.token}` },
+      })
+    ).json();
+    expect(afterDiscovery.overallXp).toBe(beforeDiscovery.overallXp);
+    expect(afterDiscovery.occurrences).toEqual(beforeDiscovery.occurrences);
+    expect(afterDiscovery.ledger).toEqual(beforeDiscovery.ledger);
+    expect(discoveryWrites).toBe(0);
+  } finally {
+    page.off("request", recordDiscoveryWrite);
+  }
   await page
     .getByRole("button", { name: "Start: Enjoy some downtime", exact: true })
     .click();

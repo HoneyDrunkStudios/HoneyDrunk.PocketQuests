@@ -12,6 +12,8 @@ export function Page({
   const insets = useSafeAreaInsets();
   return (
     <ScrollView
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       showsVerticalScrollIndicator={false}
       contentInsetAdjustmentBehavior={header ? "never" : "automatic"}
       style={{ flex: 1, backgroundColor: colors.paper }}
