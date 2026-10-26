@@ -7,6 +7,8 @@ Open `HoneyDrunk.PocketQuests.slnx` from the repository root. Production project
 
 A self-improvement app with an Expo/React Native client, .NET 10 API and SQL Server persistence. This is an implementation foundation under review, not a completed or production-deployed product.
 
+See the [October 26 progress checkpoint](docs/progress-2026-10-26.md) for the merged phone-testing, onboarding, saving and quest-search slices, the remaining development sign-in PR, and the evidence and release gates.
+
 ## Structure
 
 Mobile source is grouped by quest, progression and profile features, with separate session, shared contracts/theme and configuration folders. Expo routes remain in `apps/mobile/src/app`; mobile tests mirror their responsibilities. See the [repository structure guide](docs/repository-structure.md) for source, test, documentation and tooling locations.
@@ -51,7 +53,7 @@ dotnet run --project src/PocketQuests.AppHost
 
 Edit `apps/mobile` in VS Code if preferred. Do not start a second Expo server while Aspire owns port 8081. See [local run guide](docs/local-run.md) and [environment configuration](docs/environments.md).
 
-Live sign-in requires your own Entra customer tenant/user flow, API scope and client redirects; no credentials or tenant configuration ship with the repository. Identity returns 503 for missing public sign-in configuration and rejects unauthorized API access. Local account creation was exercised, but the full signed-in quest flow after the schema upgrade remains unverified.
+Live sign-in requires your own Entra customer tenant/user flow, API scope and client redirects; no credentials or tenant configuration ship with the repository. Identity returns 503 for missing public sign-in configuration and rejects unauthorized API access. Automated browser journeys exercise the signed-in quest flow against real API/Identity services and disposable SQL with a test OIDC provider. Real-provider and installed-device acceptance remain separate; see the [progress checkpoint](docs/progress-2026-10-26.md).
 
 ## Validate
 
@@ -72,4 +74,4 @@ SQL tests create isolated temporary databases and deploy the actual DACPAC, incl
 
 ## Remaining release gates
 
-Production hosting, authenticated end-to-end browser testing, native iPhone/Android development builds, real-device notification/offline recovery, social-provider enrollment, production account erasure/transport, backups/retention, scaling and operational checks remain. Repository publication does not publish a mobile app, package or service. The dependency advisory recorded in the review document is a release blocker.
+Production hosting, real-provider end-to-end acceptance, installed iPhone/Android validation, real-device notification/offline recovery, social-provider enrollment, production account erasure/transport, backups/retention, scaling and operational checks remain. Repository publication does not publish a mobile app, package or service. The unresolved advisories in the [dated dependency assessment](docs/dependency-security.md) remain release blockers; the [progress checkpoint](docs/progress-2026-10-26.md) distinguishes completed browser checks from these open gates.
