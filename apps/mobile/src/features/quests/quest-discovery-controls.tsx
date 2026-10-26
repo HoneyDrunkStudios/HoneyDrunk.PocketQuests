@@ -1,7 +1,10 @@
+import { QuestFilterToggle } from "./quest-filter-toggle";
+import { QuestFilterChoice as Choice } from "./quest-filter-choice";
+import { QuestCategoryEffortFilters } from "./quest-category-effort-filters";
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import type { Catalog } from "../../shared/contracts";
-import { Button, Input, Label, colors, styles } from "../../shared/ui";
+import { Button, Input, Label, styles } from "../../shared/ui";
 import { discoveryFilterCount, type DiscoveryFilters } from "./quest-discovery";
 
 const sourceLabels = {
@@ -14,43 +17,6 @@ const sortLabels = {
   xp: "Most XP first",
   title: "Title A–Z",
 } as const;
-
-function Choice({
-  title,
-  selected,
-  checkbox = false,
-  onPress,
-}: Readonly<{
-  title: string;
-  selected: boolean;
-  checkbox?: boolean;
-  onPress(): void;
-}>) {
-  return (
-    <Pressable
-      accessibilityRole={checkbox ? "checkbox" : "radio"}
-      accessibilityLabel={title}
-      accessibilityState={{ checked: selected }}
-      aria-checked={selected}
-      onPress={onPress}
-      style={{
-        minHeight: 48,
-        flexShrink: 1,
-        padding: 12,
-        borderWidth: 1,
-        borderColor: colors.gold,
-        borderRadius: 10,
-        backgroundColor: selected ? colors.gold : colors.card,
-      }}
-    >
-      <Text
-        style={[styles.text, { color: selected ? colors.onGold : colors.gold }]}
-      >
-        {title}
-      </Text>
-    </Pressable>
-  );
-}
 
 export function QuestDiscoveryControls({
   categories,
@@ -97,70 +63,19 @@ export function QuestDiscoveryControls({
         {resultCount} {resultCount === 1 ? "quest" : "quests"} found.
         {resultCount > shownCount ? ` Showing the first ${shownCount}.` : ""}
       </Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ expanded }}
-        accessibilityLabel={
-          expanded ? "Hide quest filters" : "Show quest filters"
-        }
-        aria-expanded={expanded}
+      <QuestFilterToggle
+        expanded={expanded}
+        count={count}
         onPress={() => setExpanded((value) => !value)}
-        style={{
-          minHeight: 48,
-          padding: 12,
-          borderWidth: 1,
-          borderColor: colors.line,
-          borderRadius: 10,
-        }}
-      >
-        <Text style={styles.text}>
-          {expanded ? "Hide filters" : "Show filters"}
-          {count ? ` (${count})` : ""}
-        </Text>
-      </Pressable>
+      />
       {!!summary && <Label>{summary}</Label>}
       {expanded && (
         <View style={{ gap: 12 }}>
-          <Label>Category</Label>
-          <View
-            accessibilityRole="radiogroup"
-            accessibilityLabel="Quest category"
-            style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}
-          >
-            <Choice
-              title="All categories"
-              selected={!filters.categoryId}
-              onPress={() => onChange({ categoryId: null })}
-            />
-            {categories.map((item) => (
-              <Choice
-                key={item.id}
-                title={item.name}
-                selected={filters.categoryId === item.id}
-                onPress={() => onChange({ categoryId: item.id })}
-              />
-            ))}
-          </View>
-          <Label>Effort</Label>
-          <View
-            accessibilityRole="radiogroup"
-            accessibilityLabel="Quest effort"
-            style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}
-          >
-            <Choice
-              title="Any effort"
-              selected={!filters.effort}
-              onPress={() => onChange({ effort: null })}
-            />
-            {(["Small", "Medium", "Large"] as const).map((effort) => (
-              <Choice
-                key={effort}
-                title={effort}
-                selected={filters.effort === effort}
-                onPress={() => onChange({ effort })}
-              />
-            ))}
-          </View>
+          <QuestCategoryEffortFilters
+            categories={categories}
+            filters={filters}
+            onChange={onChange}
+          />
           <Label>Quest type</Label>
           <View
             accessibilityRole="radiogroup"
