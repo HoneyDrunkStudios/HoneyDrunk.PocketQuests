@@ -107,6 +107,78 @@ await context.route("https://identity.test/**", async (route) => {
   }
   return route.abort();
 });
+// Search is view state: every result comes from the loaded occurrence snapshots.
+async function verifyHistorySearch(view) {
+  const readState = async () =>
+    (
+      await context.request.get("http://localhost:5217/api/state", {
+        headers: { Authorization: `Bearer ${fixture.token}` },
+      })
+    ).json();
+  // The previous Start may still be committing after its local projection appears.
+  await expect
+    .poll(
+      async () =>
+        (await readState()).occurrences.some(
+          (item) =>
+            item.status === view &&
+            item.occurrence.quest.title === "Browser verified custom quest",
+        ),
+      { timeout: 15000 },
+    )
+    .toBe(true);
+  const before = await readState();
+  const writes = [];
+  const observe = (request) => {
+    if (
+      request.method() === "POST" &&
+      request.url().startsWith("http://localhost:5217/api/commands")
+    )
+      writes.push(request.url());
+  };
+  page.on("request", observe);
+  try {
+    const search = page.getByRole("textbox", {
+      name: `Search ${view.toLowerCase()} quests`,
+      exact: true,
+    });
+    const link = page.getByRole("link", {
+      name: "View quest & rewards: Browser verified custom quest",
+      exact: true,
+    });
+    await search.fill("browser delivered");
+    await expect(link).toBeVisible();
+    await page
+      .getByRole("button", { name: "Show quest filters", exact: true })
+      .click();
+    await page
+      .getByRole("radio", { name: "Work & Purpose", exact: true })
+      .click();
+    await page.getByRole("radio", { name: "Medium", exact: true }).click();
+    await expect(link).toBeVisible();
+    await page.getByRole("radio", { name: "Small", exact: true }).click();
+    await expect(link).toHaveCount(0);
+    await expect(
+      visibleText("No quests match your search and filters.", { exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Clear search and filters", exact: true })
+      .click();
+    await expect(link).toBeVisible();
+    await expect(search).toHaveValue("");
+    await page
+      .getByRole("button", { name: "Hide quest filters", exact: true })
+      .click();
+    const after = await readState();
+    expect(writes).toHaveLength(0);
+    expect(after.overallXp).toBe(before.overallXp);
+    expect(after.occurrences).toEqual(before.occurrences);
+    expect(after.ledger).toEqual(before.ledger);
+  } finally {
+    page.off("request", observe);
+  }
+}
+
 try {
   diagnostics.checkpoint("sign-in");
   await page.goto("http://localhost:8081");
@@ -314,6 +386,7 @@ try {
     exact: true,
   });
   await expect(activeQuestLink).toBeVisible();
+  await verifyHistorySearch("Active");
   await expect(
     visibleText("I have delivered the working result", { exact: true }),
   ).toHaveCount(0);
@@ -582,6 +655,7 @@ try {
   );
   await page.getByRole("tab", { name: "Quests", exact: true }).click();
   await page.getByRole("tab", { name: "Completed", exact: true }).click();
+  await verifyHistorySearch("Completed");
   await expect(
     page.getByRole("link", {
       name: "View quest & rewards: Browser verified custom quest",

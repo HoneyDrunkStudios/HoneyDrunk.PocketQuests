@@ -1,10 +1,8 @@
+import { searchable, type QuestSearchFilters } from "./quest-search";
 import type { Catalog, Quest, State } from "../../shared/contracts";
 import { eligible } from "./quest-rules";
 
-export type DiscoveryFilters = {
-  query: string;
-  categoryId: string | null;
-  effort: Quest["effort"] | null;
+export type DiscoveryFilters = QuestSearchFilters & {
   source: "all" | "starter" | "custom";
   readyOnly: boolean;
   penaltyFreeOnly: boolean;
@@ -25,13 +23,6 @@ export type DiscoveryQuest = {
   ready: boolean;
   searchText: string;
 };
-
-function searchable(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-}
 
 /** Index the current available pool once; typing never asks the API for results. */
 export function indexDiscoveryQuests(
