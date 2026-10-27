@@ -4,6 +4,13 @@ export const apiUrl =
 export const identityUrl =
   process.env.EXPO_PUBLIC_IDENTITY_URL ?? "http://localhost:5218";
 
+// A public flag selects UI only; credentials are entered locally and the
+// separate development host enforces authentication. Release bundles ignore it.
+export const developmentSignInEnabled =
+  typeof __DEV__ !== "undefined" &&
+  __DEV__ &&
+  process.env.EXPO_PUBLIC_DEVELOPMENT_SIGN_IN === "1";
+
 export const requestTimeoutMs = {
   signInConfiguration: 10_000,
   renewal: 15_000,

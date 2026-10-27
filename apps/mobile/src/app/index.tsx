@@ -1,4 +1,5 @@
 import { JournalEntry } from "../shared/journal-entry";
+import { DevelopmentSignIn } from "../session/development-sign-in";
 import { SessionRecovery } from "../session/session-recovery";
 import {
   providerScopes,
@@ -9,7 +10,7 @@ import {
   type ProviderSetup,
 } from "../session/use-provider-setup";
 import { Loading } from "@honeydrunk/ui-native";
-import { signInRedirect } from "../config/client";
+import { developmentSignInEnabled, signInRedirect } from "../config/client";
 import { useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import * as AuthSession from "expo-auth-session";
@@ -83,7 +84,7 @@ function SignIn({ config, discovery }: Readonly<ProviderSetup>) {
     </>
   );
 }
-export default function Welcome() {
+function ProviderWelcome() {
   const { signedIn, busy } = useSession();
   const { setup, error, retry } = useProviderSetup();
   // The root protected stack selects onboarding or the app after sign-in.
@@ -123,6 +124,20 @@ export default function Welcome() {
           methods are shown in your browser.
         </Text>
       </View>
+    </JournalEntry>
+  );
+}
+
+export default function Welcome() {
+  const { signedIn, busy } = useSession();
+  if (!developmentSignInEnabled) return <ProviderWelcome />;
+  if (signedIn) return null;
+  return (
+    <JournalEntry>
+      <SessionRecovery />
+      <RecoveryPanel />
+      {busy && <Loading label="Restoring session" />}
+      <DevelopmentSignIn />
     </JournalEntry>
   );
 }

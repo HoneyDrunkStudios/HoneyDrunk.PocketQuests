@@ -1,10 +1,18 @@
 # Changelog
 
-## Active and completed quest search � October 26, 2026
+## Active and completed quest search — October 26, 2026
 
 - Search accepted quest titles, descriptions, completion goals and categories, including archived quests in completed history.
 - Combine category and effort filters locally without sending save requests or changing XP; clear filters in one tap and reset them when switching views.
 - Preserve Active date groups, optional past commitments and the virtualized history list.
+
+## Optional Expo Go development pairing — October 25, 2026
+
+- Add an explicitly enabled local development host for the actual Identity/API services and dedicated retained SQL databases, with a six-digit pairing code and restart-scoped signing keys.
+- Gate the mobile development screen behind a development build and explicit flag; preserve provider sign-in for ordinary and release builds.
+- Add a launcher and disposable SQL verification for startup gates, invalid/forged credentials, rate limits and progress retained across backend restart; run that verification in hosted browser CI.
+- Cover launcher and cleanup failure paths with measured PowerShell tests, restore absent environment variables correctly, and keep uploaded pairing evidence limited to the safe check summary.
+- Keep recurring-quest maintenance enabled so retained development accounts can recover a large delivery backlog.
 
 ## Quest discovery — October 25, 2026
 

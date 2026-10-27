@@ -21,7 +21,9 @@ The application implements the starter catalog, custom quests and revisions, XP/
 
 ## First setup on Windows
 
-Requirements: .NET SDK 10.0.401, Node compatible with Expo SDK 57, SQL Server LocalDB and a matching [Identity source checkout](https://github.com/HoneyDrunkStudios/HoneyDrunk.Identity). CI pins an exact reviewed Identity revision in [validate.yml](.github/workflows/validate.yml).
+Requirements: .NET SDK 10.0.401, Node compatible with Expo SDK 58, SQL Server LocalDB and a matching [Identity source checkout](https://github.com/HoneyDrunkStudios/HoneyDrunk.Identity). CI pins an exact reviewed Identity revision in [validate.yml](.github/workflows/validate.yml).
+
+For an iPhone Expo Go walkthrough with the real backend and saved progress, use the optional [development pairing guide](docs/expo-go-development.md). It uses dedicated retained databases and a separate opt-in local executable; production APIs keep their existing provider authentication.
 
 From the repository root:
 
