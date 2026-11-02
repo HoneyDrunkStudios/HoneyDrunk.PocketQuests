@@ -8,6 +8,8 @@ JSON binding rejects missing/null required constructor values and invalid JSON w
 
 Request records retain the Web JSON convention that accepts numbers or numeric strings. `QuestInput` and `ShareInput` keep that input behavior separate from the corresponding response records. Response records use strict numeric metadata and required constructor properties: numeric outputs are JSON numbers, and response properties are always present, including explicit null/default values. Optional request defaults remain optional. The actual Program HTTP tests assert these values and presence rules; endpoint-derived schema tests enforce the matching directional contracts. Incoming quest `baseXp` remains ignored because domain rules compute it.
 
+The additive profile fields `characterName`, `portraitId` and `avatarCode` are optional nullable exceptions: they are omitted until configured. This keeps existing encrypted cached states valid. Configured values are returned through the ordinary profile/export mapping; current receipt replay retains its original command version and fields.
+
 ## HTTP configuration
 
 Configuration section `Api:Http`:

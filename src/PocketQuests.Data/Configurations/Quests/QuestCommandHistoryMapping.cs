@@ -18,8 +18,14 @@ public sealed class QuestCommandHistoryMapping : IEntityTypeConfiguration<QuestC
     {
         entity.ToTable("QuestCommandHistory", "pocketquests", table =>
         {
+            table.HasCheckConstraint("CK_QuestCommandHistory_AvatarAction", "([ActionCode]='save-avatar' AND [AvatarCode] IS NOT NULL) OR ([ActionCode]<>'save-avatar' AND [AvatarCode] IS NULL)");
+            table.HasCheckConstraint("CK_QuestCommandHistory_AvatarCode", "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]')");
             table.HasComment("One row is one immutable, typed successful action input and its replay clocks, never a serialized command or account snapshot. Classification: Restricted. History: immutable. Erase with its account; no age cutoff on replay history.");
-            table.HasCheckConstraint("CK_QuestCommandHistory_Action", "[ActionCode] IN ('accept','complete','undo','save-definition','archive-definition','assess-skill','save-skill','archive-skill','interests','finish-onboarding','plan','zone','expiry-warnings','link','select-badge','select-frame','save-series','stop-series','pause','resume','resume-occurrence','abandon','accept-offer','$reconcile','$lifecycle-pause')");
+            table.HasCheckConstraint("CK_QuestCommandHistory_CharacterName", "[CharacterName] IS NULL OR (LEN(LTRIM(RTRIM([CharacterName]))) BETWEEN 1 AND 40 AND DATALENGTH([CharacterName])<=80)");
+            table.HasCheckConstraint("CK_QuestCommandHistory_PortraitId", "[PortraitId] IS NULL OR [PortraitId] IN ('portrait-1','portrait-2','portrait-3','portrait-4','portrait-5','portrait-6')");
+            table.HasCheckConstraint("CK_QuestCommandHistory_CharacterPair", "([CharacterName] IS NULL AND [PortraitId] IS NULL) OR ([CharacterName] IS NOT NULL AND [PortraitId] IS NOT NULL)");
+            table.HasCheckConstraint("CK_QuestCommandHistory_CharacterAction", "([ActionCode]='save-character' AND [CharacterName] IS NOT NULL AND [PortraitId] IS NOT NULL) OR ([ActionCode]<>'save-character' AND [CharacterName] IS NULL AND [PortraitId] IS NULL)");
+            table.HasCheckConstraint("CK_QuestCommandHistory_Action", "[ActionCode] IN ('accept','complete','undo','save-definition','archive-definition','assess-skill','save-skill','archive-skill','interests','finish-onboarding','save-character','save-avatar','plan','zone','expiry-warnings','link','select-badge','select-frame','save-series','stop-series','pause','resume','resume-occurrence','abandon','accept-offer','$reconcile','$lifecycle-pause')");
             table.HasCheckConstraint("CK_QuestCommandHistory_Version", "[AccountMutationVersion]>0 AND ([ExpectedRevision] IS NULL OR [ExpectedRevision]>=0)");
             table.HasCheckConstraint("CK_QuestCommandHistory_SkillTarget", "[SystemSkillId] IS NULL OR [CustomSkillId] IS NULL");
             table.HasCheckConstraint("CK_QuestCommandHistory_Receipt", "([ActionCode] IN ('$reconcile','$lifecycle-pause') AND [CommandReceiptId] IS NULL) OR ([ActionCode]<>'$reconcile' AND [ActionCode]<>'$lifecycle-pause' AND [CommandReceiptId] IS NOT NULL AND [CommandReceiptId]=[Id])");
@@ -34,9 +40,12 @@ public sealed class QuestCommandHistoryMapping : IEntityTypeConfiguration<QuestC
             table.HasCheckConstraint("CK_QuestCommandHistory_ReconciliationLimit", "[ReconciliationLimit]>=0");
             table.HasCheckConstraint("CK_QuestCommandHistory_ActionReconciliationLimit", "[ActionReconciliationLimit]>=0");
         });
+        entity.Property(row => row.AvatarCode).HasComment("Original validated avatar appearance for save-avatar; null for other commands. Immutable private account history, erased with its owner.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(16).IsUnicode(false).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
         entity.HasKey(row => row.Id).HasName("PK_QuestCommandHistory").IsClustered();
         entity.HasAlternateKey(row => new { row.AccountId, row.Id }).HasName("UQ_QuestCommandHistory_Account_Id");
         entity.HasIndex(row => new { row.AccountId, row.AccountMutationVersion }, "UQ_QuestCommandHistory_Account_Version").IsUnique().HasFilter(null);
+        entity.Property(row => row.CharacterName).HasComment("Immutable submitted Player-chosen character display name, 1 to 40 UTF-16 code units; null means the player has not chosen a character. Restricted account data; erase with the account.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(40).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.PortraitId).HasComment("Immutable submitted Bundled portrait code portrait-1 through portrait-6; null means the player has not chosen a character. No remote URL or upload; erase with the account.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(16).IsUnicode(false).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
         entity.Property(row => row.Id).HasComment("Stable transition UUID, equal to the operation UUID for a client command.").ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
         entity.Property(row => row.AccountId).HasComment("Owning personal account; all references use this same ownership boundary.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
         entity.Property(row => row.CommandReceiptId).HasComment("Receipt for a client command; null for an internal reconciliation or lifecycle transition. Null means not applicable to this transition.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);

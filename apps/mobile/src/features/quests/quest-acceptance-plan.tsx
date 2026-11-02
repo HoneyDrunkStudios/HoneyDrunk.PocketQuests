@@ -1,5 +1,5 @@
-import { Text, TextInput } from "react-native";
-import { Button, Card, Label, styles } from "../../shared/ui";
+import { Text } from "react-native";
+import { Button, Card, Input, Label, styles } from "../../shared/ui";
 import { PlannedPreview } from "./planned-preview";
 
 export type AcceptancePlan = {
@@ -11,7 +11,6 @@ export type AcceptancePlan = {
 export function QuestAcceptancePlan({
   plan,
   today,
-  zone,
   onChange,
 }: Readonly<{
   plan: AcceptancePlan;
@@ -24,7 +23,8 @@ export function QuestAcceptancePlan({
       <Text accessibilityRole="header" style={styles.subtitle}>
         Plan before accepting
       </Text>
-      <TextInput
+      <Label>Due date</Label>
+      <Input
         accessibilityLabel="Due date in YYYY-MM-DD format"
         placeholder={today || "YYYY-MM-DD"}
         value={plan.date}
@@ -34,7 +34,8 @@ export function QuestAcceptancePlan({
       />
       {!plan.unscheduled && (
         <>
-          <TextInput
+          <Label>Planned time (optional)</Label>
+          <Input
             accessibilityLabel="Optional planned time HH:mm"
             placeholder="Planned time HH:mm (optional)"
             value={plan.time}
@@ -56,7 +57,7 @@ export function QuestAcceptancePlan({
       <Label>
         {plan.unscheduled
           ? "No deadline."
-          : `Due at the end of ${plan.date || today} in ${zone}.`}{" "}
+          : `Due by the end of ${plan.date || today}.`}{" "}
         Recurrence requires a separate opt-in below.
       </Label>
     </Card>

@@ -28,9 +28,10 @@ internal static class DevelopmentDatabase
         if (await check.ExecuteScalarAsync() is not DBNull)
             return;
         using var package = DacPackage.Load(Path.Combine(AppContext.BaseDirectory, dacpac + ".dacpac"));
-        var service = new DacServices(masterConnection.ConnectionString);
+        var service = new DacServices(new SqlConnectionStringBuilder(masterConnection.ConnectionString) { Pooling = false }.ConnectionString);
         service.Deploy(package, database, upgradeExisting: false, options: new DacDeployOptions
         {
+            CommandTimeout = 300,
             BlockOnPossibleDataLoss = true,
             DropObjectsNotInSource = false,
             ScriptDatabaseOptions = false,

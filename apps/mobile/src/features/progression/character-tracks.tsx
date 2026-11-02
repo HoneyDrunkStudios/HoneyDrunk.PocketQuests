@@ -1,5 +1,5 @@
 import { View } from "react-native";
-import { Label } from "../../shared/ui";
+import { Label, colors, styles } from "../../shared/ui";
 import type { Balance, State } from "../../shared/contracts";
 import { LevelProgress } from "./level-progress-view";
 import type { ProgressionTrack } from "./level-progress";
@@ -8,22 +8,29 @@ export function ProgressRow({
   track,
 }: Readonly<{ item: Balance; track: ProgressionTrack }>) {
   return (
-    <View style={{ gap: 4, paddingBottom: 12 }}>
+    <View
+      style={{
+        gap: 8,
+        paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.line,
+      }}
+    >
       <View
         style={{
-          paddingVertical: 8,
           flexDirection: "row",
           flexWrap: "wrap",
           justifyContent: "space-between",
           gap: 8,
         }}
       >
-        <Label>{item.name}</Label>
+        <Label style={{ fontWeight: "600", flexShrink: 1 }}>{item.name}</Label>
         <Label>
           Level {item.level} · {item.xp} XP
         </Label>
       </View>
       <LevelProgress
+        compact
         name={item.name}
         track={track}
         xp={item.xp}
@@ -43,12 +50,12 @@ export function CategoryProgress({
   if (streak?.qualifiedToday) guidance = "Done today.";
   else if (streak && streak.days > 0) guidance = "Complete today to continue.";
   return (
-    <View style={{ gap: 4, paddingBottom: 12 }}>
+    <View style={{ gap: 4, paddingBottom: 8 }}>
       <ProgressRow item={item} track="category" />
       {streak && (
-        <Label>
-          {item.name}: {streak.days} {streak.days === 1 ? "day" : "days"} in
-          this streak. {guidance}
+        <Label style={[styles.muted, { fontSize: 13, lineHeight: 19 }]}>
+          {streak.days > 0 ? `${streak.days}-day streak. ` : ""}
+          {guidance}
         </Label>
       )}
     </View>

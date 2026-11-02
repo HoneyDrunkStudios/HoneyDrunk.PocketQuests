@@ -172,6 +172,10 @@ public sealed class RelationalSchemaTests(SchemaFixture fixture) : IClassFixture
             Assert.Equal(Text(table, "description"), entity.GetComment());
             Assert.Equal(table.GetProperty("columns").GetArrayLength(), entity.GetProperties().Count());
             Assert.Equal(Join(table.GetProperty("primary_key"), "columns"), string.Join(',', entity.FindPrimaryKey()!.Properties.Select(p => p.Name)));
+            var checks = entity.GetCheckConstraints().ToDictionary(check => Assert.IsType<string>(check.Name));
+            Assert.Equal(table.GetProperty("checks").GetArrayLength(), checks.Count);
+            foreach (var check in table.GetProperty("checks").EnumerateArray())
+                Assert.Equal(Text(check, "expression"), checks[Text(check, "name")].Sql);
             foreach (var column in table.GetProperty("columns").EnumerateArray())
             {
                 var property = entity.FindProperty(Text(column, "name"))!;
@@ -305,6 +309,7 @@ public sealed class RelationalSchemaTests(SchemaFixture fixture) : IClassFixture
         {
             "timestamp" => "rowversion",
             "float" => "float(53)",
+            "decimal" or "numeric" => name + "(" + row["precision"] + "," + row["scale"] + ")",
             "varchar" or "nvarchar" or "char" or "binary" => name + "(" + ((short)row["max_length"] == -1 ? "max" : ((short)row["max_length"] / (name == "nvarchar" ? 2 : 1)).ToString(System.Globalization.CultureInfo.InvariantCulture)) + ")",
             "time" or "datetimeoffset" => name + "(" + row["scale"] + ")",
             _ => name,

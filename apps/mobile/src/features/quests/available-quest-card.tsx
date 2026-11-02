@@ -1,13 +1,13 @@
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import type { Quest } from "../../shared/contracts";
-import { Button, Card, Label, colors, styles } from "../../shared/ui";
+import { Card, Label, colors, styles } from "../../shared/ui";
+import { QuestCardArtwork } from "./quest-card-artwork";
 
 export function AvailableQuestCard({
   quest,
   categoryName,
-  disabled,
   locked,
-  onStart,
   onDetails,
 }: Readonly<{
   quest: Quest;
@@ -19,39 +19,75 @@ export function AvailableQuestCard({
 }>) {
   const hasPenalty = (quest.penaltyPercent ?? 0) > 0;
   return (
-    <Card style={{ gap: 12 }}>
-      <Text style={styles.muted}>{categoryName}</Text>
-      <Text accessibilityRole="header" style={styles.subtitle}>
-        {quest.title}
-      </Text>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-        <Text style={[styles.text, { color: colors.gold, fontWeight: "700" }]}>
-          +{quest.baseXp} XP
-        </Text>
-        <Text style={styles.muted}>
-          Rank {quest.rank} · {quest.effort}
-        </Text>
-      </View>
-      {locked && (
-        <Label>Requires higher progression. View details to review.</Label>
-      )}
-      {hasPenalty && (
-        <Label>Penalty quest · review and confirm terms before starting.</Label>
-      )}
-      <Button
-        title={
-          hasPenalty
-            ? `Review before starting: ${quest.title}`
-            : `Start: ${quest.title}`
-        }
-        disabled={disabled || locked}
-        onPress={hasPenalty ? onDetails : onStart}
-      />
-      <Button
-        title={`View quest & rewards: ${quest.title}`}
-        secondary
+    <Card style={{ padding: 0 }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Quest details: ${quest.title}`}
+        accessibilityHint="Read the quest and plan your next step"
         onPress={onDetails}
-      />
+        style={({ pressed }) => ({
+          padding: 16,
+          gap: 12,
+          opacity: pressed ? 0.8 : 1,
+        })}
+      >
+        <View
+          style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}
+        >
+          <View style={{ flex: 1, gap: 8 }}>
+            <Text style={[styles.muted, { color: colors.gold, fontSize: 13 }]}>
+              {categoryName}
+            </Text>
+            <Text accessibilityRole="header" style={styles.subtitle}>
+              {quest.title}
+            </Text>
+          </View>
+          <QuestCardArtwork categoryId={quest.categoryId} />
+        </View>
+        <Text numberOfLines={2} style={styles.muted}>
+          {quest.criterion}
+        </Text>
+        <View
+          style={{
+            flexDirection: "row",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <Text
+            style={[styles.text, { color: colors.gold, fontWeight: "700" }]}
+          >
+            +{quest.baseXp} XP
+          </Text>
+          <Text style={styles.muted}>
+            Rank {quest.rank} · {quest.effort}
+          </Text>
+        </View>
+        {locked && <Label>Requires higher progression. Open to review.</Label>}
+        {hasPenalty && (
+          <Label>
+            Penalty quest · review and confirm terms before starting.
+          </Label>
+        )}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Text style={[styles.muted, { fontSize: 13 }]}>
+            Plan your next step
+          </Text>
+          <Ionicons
+            name="arrow-forward"
+            size={20}
+            color={colors.gold}
+            accessible={false}
+          />
+        </View>
+      </Pressable>
     </Card>
   );
 }

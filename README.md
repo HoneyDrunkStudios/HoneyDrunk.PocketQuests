@@ -19,6 +19,10 @@ Open `HoneyDrunk.PocketQuests.slnx` in Visual Studio. Projects are peers beside 
 
 The application implements the starter catalog, custom quests and revisions, XP/rank/skill progression, completion-specific Undo, planning/recurrence, onboarding, profile rewards, pause/resume rules, local notification planning, bounded offline command replay, export and account lifecycle integration. APIs own mutation validation, time reconciliation and progression. SQL locks, transactional receipts and canonical audit records protect replay and concurrency. Native behavior and production operations still need verification.
 
+The [full-body avatar creator](docs/avatars.md) supports faces, builds, skin tones, hair, starter looks, and reward-gated clothing/accessories. Onboarding includes the creator after naming; returning players can open it from Home, Progress or Settings. Appearance saves preserve existing quest progress and XP.
+
+Home includes today's planned quests, confirmed completion counts and small quest ideas. The [reward journal](docs/reward-journal.md) explains milestone and wardrobe unlocks, while the [activity recap](docs/activity-recap.md) shows confirmed progress over 7 or 30 days. [Explore](docs/nearby-discovery.md) supports deliberate area searches and an account-owned [saved-place journal](docs/saved-discoveries.md) with notes, visit status and accepted-quest links. Location is requested only from the explicit location button; saved places do not grant XP.
+
 ## First setup on Windows
 
 Requirements: .NET SDK 10.0.401, Node compatible with Expo SDK 58, SQL Server LocalDB and a matching [Identity source checkout](https://github.com/HoneyDrunkStudios/HoneyDrunk.Identity). CI pins an exact reviewed Identity revision in [validate.yml](.github/workflows/validate.yml).

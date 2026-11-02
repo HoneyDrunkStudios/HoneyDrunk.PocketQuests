@@ -1,3 +1,4 @@
+import "./artwork-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import Module, { createRequire } from "node:module";
@@ -141,7 +142,10 @@ async function mount(Component = AvailableQuests, props = {}) {
         ...element.querySelectorAll(
           '[role="button"],button,[role="radio"],[role="checkbox"]',
         ),
-      ].find((item) => item.textContent === name);
+      ].find(
+        (item) =>
+          item.getAttribute("aria-label") === name || item.textContent === name,
+      );
     },
     async click(name) {
       const button = view.button(name);
@@ -202,9 +206,9 @@ test("compact cards keep interest order, filter unavailable definitions, and ope
     );
     assert.doesNotMatch(
       view.element.textContent,
-      /Archived|Active elsewhere|Frozen elsewhere|Finish one practice|Attribute pool|Plan before accepting/,
+      /Archived|Active elsewhere|Frozen elsewhere|Attribute pool|Plan before accepting/,
     );
-    await view.click("View quest & rewards: Practice");
+    await view.click("Quest details: Practice");
     assert.deepEqual(navigation, [
       {
         pathname: "/quest/available/[id]",
@@ -212,12 +216,9 @@ test("compact cards keep interest order, filter unavailable definitions, and ope
       },
     ]);
     assert.equal(sent.length, 0);
-    await view.click("Start: Practice");
-    assert.equal(sent[0].dueDate, "2026-10-21");
-    assert.equal(sent[0].plannedTime, null);
     await view.click("Show filters");
     await view.click("Recreation");
-    assert.equal(view.button("Start: Practice"), undefined);
+    assert.equal(view.button("Quest details: Practice"), undefined);
     session.state.definitions[0].archived = true;
     await view.render();
     assert.match(
@@ -263,16 +264,16 @@ test("quest search combines local filters, exposes selected controls and clears 
   const view = await mount();
   try {
     await view.fill("Search quests", "  STRENGTH practice  ");
-    assert.ok(!view.button("Start: Rest with a book"));
-    assert.ok(view.button("Start: Long practice"));
+    assert.ok(!view.button("Quest details: Rest with a book"));
+    assert.ok(view.button("Quest details: Long practice"));
     await view.click("Show filters");
     await view.click("Small");
     await view.click("Ready to start");
     await view.click("No XP penalties");
-    assert.ok(view.button("Start: Practice"));
-    assert.ok(!view.button("Start: Long practice"));
-    assert.ok(!view.button("Start: Advanced practice"));
-    assert.ok(!view.button("Review before starting: Practice with stakes"));
+    assert.ok(view.button("Quest details: Practice"));
+    assert.ok(!view.button("Quest details: Long practice"));
+    assert.ok(!view.button("Quest details: Advanced practice"));
+    assert.ok(!view.button("Quest details: Practice with stakes"));
     assert.equal(view.field("Small").getAttribute("aria-checked"), "true");
     assert.equal(
       view.field("Ready to start").getAttribute("aria-checked"),
@@ -283,8 +284,8 @@ test("quest search combines local filters, exposes selected controls and clears 
     assert.match(view.element.textContent, /No quests match/);
     await view.click("Clear search and filters");
     assert.equal(view.field("Search quests").value, "");
-    assert.ok(view.button("Start: Rest with a book"));
-    assert.ok(view.button("Start: Long practice"));
+    assert.ok(view.button("Quest details: Rest with a book"));
+    assert.ok(view.button("Quest details: Long practice"));
     assert.deepEqual(sent, []);
     assert.deepEqual(navigation, []);
   } finally {
@@ -303,7 +304,7 @@ test("discovery bounds mounted cards, paginates, resets on search and preserves 
   try {
     const starts = () =>
       [...view.element.querySelectorAll('[role="button"]')].filter((item) =>
-        item.textContent.startsWith("Start:"),
+        item.getAttribute("aria-label")?.startsWith("Quest details:"),
       );
     assert.equal(starts().length, 20);
     assert.match(view.element.textContent, /45 quests found/);
@@ -311,7 +312,7 @@ test("discovery bounds mounted cards, paginates, resets on search and preserves 
     assert.equal(starts().length, 40);
     await view.fill("Search quests", "Practice 44");
     assert.equal(starts().length, 1);
-    assert.ok(view.button("Start: Practice 44"));
+    assert.ok(view.button("Quest details: Practice 44"));
     await view.click("Create a custom quest");
     await view.click("Back to available quests");
     assert.equal(view.field("Search quests").value, "Practice 44");
@@ -323,9 +324,9 @@ test("discovery bounds mounted cards, paginates, resets on search and preserves 
   }
 });
 
-test("quick start uses today, respects pending and rank gates, and penalty cards require details", async () => {
+test("starting from details uses today and respects pending, rank and penalty consent gates", async () => {
   reset();
-  const view = await mount();
+  const view = await mount(AvailableQuestScreen);
   try {
     await view.click("Start: Practice");
     assert.equal(sent[0].dueDate, session.state.today);
@@ -344,14 +345,16 @@ test("quick start uses today, respects pending and rank gates, and penalty cards
       view.button("Start: Practice").getAttribute("aria-disabled"),
       "true",
     );
-    assert.ok(view.button("View quest & rewards: Practice"));
+
     session.catalog.quests[0].rank = "F";
     session.catalog.quests[0].penaltyPercent = 25;
     await view.render();
-    assert.equal(view.button("Start: Practice"), undefined);
-    await view.click("Review before starting: Practice");
+    assert.equal(
+      view.button("Start: Practice").getAttribute("aria-disabled"),
+      "true",
+    );
+    assert.ok(view.button("Confirm penalty terms: Practice"));
     assert.equal(sent.length, 1);
-    assert.equal(navigation.length, 1);
   } finally {
     await view.close();
   }
@@ -470,16 +473,22 @@ test("cold detail routes wait for both account and catalog restoration before re
   }
 });
 
-test("detail routes reject invalid dates, missing or accepted quests and signed-out access", async () => {
+test("detail routes open active quests and reject invalid dates, missing quests and signed-out access", async () => {
   reset();
   const view = await mount(AvailableQuestScreen);
   try {
     session.state.occurrences = [
-      { status: "Active", occurrence: { quest: basic } },
+      { status: "Active", occurrence: { id: "accepted", quest: basic } },
     ];
     await view.render();
-    assert.match(view.element.textContent, /Quest unavailable/);
+    assert.match(view.element.textContent, /Practice is active/);
+    assert.doesNotMatch(view.element.textContent, /Quest unavailable/);
     assert.equal(view.button("Start: Practice"), undefined);
+    await view.click("Open active quest");
+    assert.deepEqual(navigation.pop(), {
+      pathname: "/quest/[id]",
+      params: { id: "accepted" },
+    });
     session.state.occurrences = [];
     params.date = "2026-02-30";
     await view.render();

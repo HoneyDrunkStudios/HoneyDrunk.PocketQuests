@@ -22,6 +22,30 @@ export default function AvailableQuestScreen() {
   const quest = availableQuests(catalog, state).find((item) => item.id === id);
   const invalidDate =
     date !== undefined && (typeof date !== "string" || !isCalendarDate(date));
+  const commitment = state?.occurrences.find(
+    (item) =>
+      item.occurrence.quest.id === id &&
+      ["Active", "Frozen"].includes(item.status),
+  );
+  if (commitment && !invalidDate && state?.profile.onboardingComplete)
+    return (
+      <Page>
+        <Label>
+          {commitment.occurrence.quest.title} is{" "}
+          {commitment.status.toLowerCase()}.
+        </Label>
+        <Button
+          title="Open active quest"
+          onPress={() =>
+            router.replace({
+              pathname: "/quest/[id]",
+              params: { id: commitment.occurrence.id },
+            })
+          }
+        />
+        <Button title="Back to available quests" secondary onPress={back} />
+      </Page>
+    );
   if (!quest || invalidDate || !state?.profile.onboardingComplete)
     return (
       <Page>

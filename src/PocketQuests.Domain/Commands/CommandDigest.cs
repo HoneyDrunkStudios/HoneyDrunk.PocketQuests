@@ -11,13 +11,40 @@ namespace PocketQuests.Domain.Commands;
 // Adding a field, changing normalization or supported wire meanings requires a new digest version.
 internal static class CommandDigest
 {
-    internal static byte[] Compute(QuestCommand command)
+    internal static short Version(QuestCommand command) => command.Action switch
     {
+        QuestActions.SaveAvatar => 3,
+        QuestActions.SaveCharacter => 2,
+        _ => 1,
+    };
+
+    internal static byte[] Compute(QuestCommand command) => ComputeCore(command, Version(command));
+
+    // The earlier avatar implementation issued v2 receipts with one avatar field.
+    // Character v2 receipts have two identity fields; their action disambiguates the tuple.
+    internal static byte[] ComputeLegacyAvatar(QuestCommand command)
+    {
+        if (command.Action != QuestActions.SaveAvatar)
+            throw new QuestValidationException("Only avatar commands have legacy avatar receipts.");
+        return ComputeCore(command, 2);
+    }
+
+    private static byte[] ComputeCore(QuestCommand command, short version)
+    {
+        if (command.Action != QuestActions.SaveCharacter && (command.CharacterName is not null || command.PortraitId is not null))
+            throw new QuestValidationException("Character fields require the save-character action.");
+        if (command.Action != QuestActions.SaveAvatar && command.AvatarCode is not null)
+            throw new QuestValidationException("Avatar appearance requires the save-avatar action.");
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream))
         {
             writer.WriteStartArray();
-            writer.WriteStringValue("pocketquests-command/api-1/digest-1");
+            writer.WriteStringValue(version switch
+            {
+                1 => "pocketquests-command/api-1/digest-1",
+                2 => "pocketquests-command/api-1/digest-2",
+                _ => "pocketquests-command/api-1/digest-3",
+            });
             Text(command.OperationId.ToString("D"));
             Text(command.Action);
             Text(command.OccurrenceId?.ToString("D"));
@@ -75,6 +102,15 @@ internal static class CommandDigest
                 writer.WriteBooleanValue(warnings);
             else
                 writer.WriteNullValue();
+            if (command.Action == QuestActions.SaveCharacter)
+            {
+                Text(command.CharacterName);
+                Text(command.PortraitId);
+            }
+
+            if (command.Action == QuestActions.SaveAvatar)
+                Text(command.AvatarCode);
+
             writer.WriteEndArray();
 
             void Text(string? value) => writer.WriteStringValue(value);

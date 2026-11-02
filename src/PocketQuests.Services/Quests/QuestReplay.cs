@@ -69,7 +69,7 @@ internal static class QuestReplay
     }
 
     private static QuestAggregate RetainProjectedProfile(QuestAggregate aggregate, PlayerProfile profile) =>
-        aggregate.Profile.BadgeId == profile.BadgeId && aggregate.Profile.FrameId == profile.FrameId
+        aggregate.Profile.BadgeId == profile.BadgeId && aggregate.Profile.FrameId == profile.FrameId && aggregate.Profile.AvatarCode == profile.AvatarCode
             ? aggregate
             : new(aggregate.Zone, aggregate.Occurrences, aggregate.Completions, aggregate.Undos, aggregate.Definitions, profile, aggregate.Schedule);
 }

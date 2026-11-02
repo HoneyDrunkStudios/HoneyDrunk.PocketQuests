@@ -23,6 +23,7 @@ function SessionNavigator() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.paper },
         headerTintColor: colors.ink,
+        headerBackButtonDisplayMode: "minimal",
       }}
     >
       <Stack.Protected
@@ -37,7 +38,15 @@ function SessionNavigator() {
         redirectTo={signedIn ? "/onboarding" : "/"}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="avatar" options={{ title: "Your traveler" }} />
+        <Stack.Screen name="rewards" options={{ title: "Rewards" }} />
+        <Stack.Screen name="settings" options={{ title: "Settings" }} />
+        <Stack.Screen name="character-setup" options={{ headerShown: false }} />
         <Stack.Screen name="quest/[id]" options={{ title: "Quest" }} />
+        <Stack.Screen
+          name="quest/discover/[categoryId]"
+          options={{ title: "Quest ideas" }}
+        />
         <Stack.Screen
           name="quest/available/[id]"
           options={{ title: "Quest details" }}

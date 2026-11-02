@@ -56,6 +56,7 @@ public static class DataServiceRegistration
         services.AddScoped<IAccountAuditRecordDataService, AccountAuditRecordDataService>();
         services.AddScoped<IQuestCommandHistoryDataService, QuestCommandHistoryDataService>();
         services.AddScoped<IQuestCommandInterestDataService, QuestCommandInterestDataService>();
+        services.AddScoped<PocketQuests.Data.DataServices.Discoveries.ISavedPlaceDataService, PocketQuests.Data.DataServices.Discoveries.SavedPlaceDataService>();
         return services;
     }
 }

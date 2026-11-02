@@ -97,5 +97,54 @@ export function createSessionRequests({
       setBusy(false);
     }
   }
-  return { refresh, previewZone, previewClock, exportData };
+  async function discoveryRequest<T>(
+    mutation: boolean,
+    request: () => Promise<T>,
+  ): Promise<T> {
+    if (!auth.session || signingOut.current)
+      throw new Error("Connect to use your saved places.");
+    if (mutation && inFlight.current)
+      throw new Error("Wait for the current action to finish.");
+    const epoch = auth.epoch;
+    if (mutation) {
+      inFlight.current = true;
+      setBusy(true);
+    }
+    try {
+      const result = await request();
+      if (auth.epoch !== epoch || !mounted.current)
+        throw new Error("This account session changed.");
+      return result;
+    } finally {
+      if (mutation) {
+        finishWork();
+        if (mounted.current) setBusy(false);
+      }
+    }
+  }
+  const readDiscoveries = () =>
+    discoveryRequest(false, () =>
+      client("GET /api/discoveries", undefined, undefined),
+    );
+  const saveDiscovery = (
+    request: import("../api/generated").SavePlaceRequest,
+  ) =>
+    discoveryRequest(true, () =>
+      client("POST /api/discoveries/save", request, undefined),
+    );
+  const removeDiscovery = (
+    request: import("../api/generated").RemovePlaceRequest,
+  ) =>
+    discoveryRequest(true, () =>
+      client("POST /api/discoveries/remove", request, undefined),
+    );
+  return {
+    refresh,
+    previewZone,
+    previewClock,
+    exportData,
+    readDiscoveries,
+    saveDiscovery,
+    removeDiscovery,
+  };
 }

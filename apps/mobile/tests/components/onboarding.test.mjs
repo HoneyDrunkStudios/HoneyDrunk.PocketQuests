@@ -27,8 +27,49 @@ Module._load = function (name, ...rest) {
     };
   if (name === "react-native-safe-area-context")
     return { useSafeAreaInsets: () => ({ top: 24, bottom: 24 }) };
+  if (name === "./character-editor")
+    return {
+      CharacterEditor: ({ onContinue }) =>
+        React.createElement(
+          "button",
+          {
+            role: "button",
+            "aria-disabled":
+              !session.state ||
+              session.busy ||
+              session.pending ||
+              session.offline,
+            disabled:
+              !session.state ||
+              session.busy ||
+              session.pending ||
+              session.offline,
+            onClick: onContinue,
+          },
+          "Continue with character",
+        ),
+    };
+  if (name === "./avatar-editor")
+    return {
+      AvatarEditor: ({ onContinue }) =>
+        React.createElement(
+          "button",
+          { role: "button", onClick: onContinue },
+          "Continue with avatar",
+        ),
+    };
+  if (name === "./starting-skills")
+    return {
+      StartingSkills: ({ onContinue }) =>
+        React.createElement(
+          "button",
+          { role: "button", onClick: onContinue },
+          "Continue with these skills",
+        ),
+    };
   if (name === "expo-router")
     return {
+      useRouter: () => ({ replace() {} }),
       Redirect: ({ href }) =>
         React.createElement("span", { "data-redirect": href }),
       Link: ({ children }) => children,
@@ -56,8 +97,22 @@ const { Onboarding } = require("../../src/features/profile/onboarding.tsx");
 function reset() {
   sent = [];
   session = {
-    state: { profile: { onboardingComplete: false, interests: ["work"] } },
+    state: {
+      overallXp: 42,
+      profile: {
+        onboardingComplete: false,
+        interests: ["work"],
+        assessments: {},
+        characterName: null,
+        portraitId: null,
+      },
+    },
+    queuedCount: 0,
     catalog: {
+      skills: [
+        { id: "s07", name: "Programming" },
+        { id: "s01", name: "Strength Training" },
+      ],
       categories: [
         { id: "work", name: "Work & Purpose" },
         { id: "rest", name: "Rest & Recreation" },
@@ -77,7 +132,7 @@ function reset() {
     signOut: async () => {},
   };
 }
-async function mount() {
+async function mount(Component = Onboarding, props = {}) {
   const element = document.createElement("div");
   document.body.append(element);
   const root = createRoot(element);
@@ -89,7 +144,7 @@ async function mount() {
           React.createElement(
             ThemeProvider,
             { theme: pocketQuestsTheme },
-            React.createElement(Onboarding),
+            React.createElement(Component, props),
           ),
         ),
       );
@@ -104,6 +159,16 @@ async function mount() {
       assert.ok(button, name);
       await act(async () => button.click());
     },
+    async fill(label, value) {
+      await act(async () => {
+        const input = element.querySelector(`[aria-label="${label}"]`);
+        Object.getOwnPropertyDescriptor(
+          dom.window.HTMLInputElement.prototype,
+          "value",
+        ).set.call(input, value);
+        input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+      });
+    },
     async unmount() {
       await act(async () => root.unmount());
       element.remove();
@@ -116,7 +181,7 @@ test("first-run is a guided flow without profile editing or navigation controls"
   reset();
   const view = await mount();
   try {
-    assert.match(view.element.textContent, /Your adventure starts here/);
+    assert.match(view.element.textContent, /Create your character/);
     assert.doesNotMatch(
       view.element.textContent,
       /Custom skill name|Current assessment|Your quests/,
@@ -126,7 +191,9 @@ test("first-run is a guided flow without profile editing or navigation controls"
       null,
     );
     assert.equal(view.element.querySelector('[role="tablist"]'), null);
-    await view.click("Let’s begin");
+    await view.click("Continue with character");
+    if (view.element.textContent.includes("Continue with avatar"))
+      await view.click("Continue with avatar");
     const selected = view.element.querySelector(
       '[aria-label="Work & Purpose"]',
     );
@@ -146,9 +213,9 @@ test("first-run is a guided flow without profile editing or navigation controls"
     );
     await view.click("Continue");
     assert.deepEqual(sent, [{ action: "interests", interests: [] }]);
-    assert.match(view.element.textContent, /Start with one small quest/);
+    assert.match(view.element.textContent, /Starting skills/);
     await view.click("Back");
-    assert.match(view.element.textContent, /What matters to you/);
+    assert.match(view.element.textContent, /Your interests/);
     assert.equal(sent.length, 1);
   } finally {
     await view.unmount();
@@ -169,7 +236,9 @@ test("multiple interest taps stay local and Continue submits their final selecti
   };
   const view = await mount();
   try {
-    await view.click("Let’s begin");
+    await view.click("Continue with character");
+    if (view.element.textContent.includes("Continue with avatar"))
+      await view.click("Continue with avatar");
     const work = view.element.querySelector('[aria-label="Work & Purpose"]');
     const rest = view.element.querySelector('[aria-label="Rest & Recreation"]');
     await act(async () => {
@@ -189,15 +258,48 @@ test("multiple interest taps stay local and Continue submits their final selecti
     assert.deepEqual(sent, [
       { action: "interests", interests: ["rest", "work"] },
     ]);
-    assert.match(view.element.textContent, /What matters to you/);
+    assert.match(view.element.textContent, /Your interests/);
     assert.equal(
       view.button("Saving choices…").getAttribute("aria-disabled"),
       "true",
     );
     await act(async () => finish());
-    assert.match(view.element.textContent, /Start with one small quest/);
+    assert.match(view.element.textContent, /Starting skills/);
     await view.click("Back");
     await view.click("Continue");
+    assert.equal(sent.length, 1);
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("confirmed interests advance permanently while a later skill command is pending", async () => {
+  reset();
+  const view = await mount();
+  try {
+    await view.click("Continue with character");
+    await view.click("Continue with avatar");
+    await act(async () =>
+      view.element.querySelector('[aria-label="Rest & Recreation"]').click(),
+    );
+    await view.click("Continue");
+    assert.match(view.element.textContent, /Starting skills/);
+    session.busy = true;
+    session.pending = true;
+    session.queuedCount = 1;
+    await view.render();
+    assert.match(view.element.textContent, /Starting skills/);
+    assert.ok(view.button("Continue with these skills"));
+    assert.equal(
+      view.element.querySelector('[aria-label="Rest & Recreation"]'),
+      null,
+    );
+    session.busy = false;
+    session.pending = false;
+    session.queuedCount = 0;
+    await view.render();
+    await view.click("Continue with these skills");
+    assert.ok(view.button("Choose my first quest"));
     assert.equal(sent.length, 1);
   } finally {
     await view.unmount();
@@ -212,12 +314,14 @@ test("failed interest saves retain the draft and stay on the selection step for 
   };
   const view = await mount();
   try {
-    await view.click("Let’s begin");
+    await view.click("Continue with character");
+    if (view.element.textContent.includes("Continue with avatar"))
+      await view.click("Continue with avatar");
     await act(async () =>
       view.element.querySelector('[aria-label="Work & Purpose"]').click(),
     );
     await view.click("Continue");
-    assert.match(view.element.textContent, /What matters to you/);
+    assert.match(view.element.textContent, /Your interests/);
     assert.match(view.element.textContent, /Please try saving again/);
     assert.equal(
       view.element
@@ -234,7 +338,7 @@ test("failed interest saves retain the draft and stay on the selection step for 
     await view.click("Continue");
     assert.equal(sent.length, 2);
     assert.deepEqual(sent[1], { action: "interests", interests: [] });
-    assert.match(view.element.textContent, /Start with one small quest/);
+    assert.match(view.element.textContent, /Starting skills/);
   } finally {
     await view.unmount();
   }
@@ -249,7 +353,9 @@ test("editing after a failed save cannot advance when an older selection is late
   };
   const view = await mount();
   try {
-    await view.click("Let’s begin");
+    await view.click("Continue with character");
+    if (view.element.textContent.includes("Continue with avatar"))
+      await view.click("Continue with avatar");
     await act(async () =>
       view.element.querySelector('[aria-label="Rest & Recreation"]').click(),
     );
@@ -265,7 +371,7 @@ test("editing after a failed save cannot advance when an older selection is late
       session.state.profile.interests = input.interests;
     };
     await view.render();
-    assert.match(view.element.textContent, /What matters to you/);
+    assert.match(view.element.textContent, /Your interests/);
     assert.equal(
       view.element
         .querySelector('[aria-label="Work & Purpose"]')
@@ -274,7 +380,7 @@ test("editing after a failed save cannot advance when an older selection is late
     );
     await view.click("Continue");
     assert.deepEqual(sent[1], { action: "interests", interests: ["rest"] });
-    assert.match(view.element.textContent, /Start with one small quest/);
+    assert.match(view.element.textContent, /Starting skills/);
   } finally {
     await view.unmount();
   }
@@ -288,13 +394,18 @@ test("choices remain local across Back and loading account data seeds untouched 
   try {
     session.state = loadedState;
     await view.render();
-    await view.click("Let’s begin");
+    await view.click("Continue with character");
+    if (view.element.textContent.includes("Continue with avatar"))
+      await view.click("Continue with avatar");
     const work = () =>
       view.element.querySelector('[aria-label="Work & Purpose"]');
     assert.equal(work().getAttribute("aria-checked"), "true");
     await act(async () => work().click());
     await view.click("Back");
-    await view.click("Let’s begin");
+    await view.click("Back");
+    await view.click("Continue with character");
+    if (view.element.textContent.includes("Continue with avatar"))
+      await view.click("Continue with avatar");
     assert.equal(work().getAttribute("aria-checked"), "false");
     assert.deepEqual(sent, []);
   } finally {
@@ -305,8 +416,11 @@ test("finishing waits for confirmed onboarding; errors stay visible and retry re
   reset();
   const view = await mount();
   try {
-    await view.click("Let’s begin");
+    await view.click("Continue with character");
+    if (view.element.textContent.includes("Continue with avatar"))
+      await view.click("Continue with avatar");
     await view.click("Continue");
+    await view.click("Continue with these skills");
     await view.click("Choose my first quest");
     assert.deepEqual(sent, [{ action: "finish-onboarding" }]);
     assert.equal(view.element.querySelector("[data-redirect]"), null);
@@ -347,12 +461,19 @@ test("offline, missing account data and in-flight saves cannot complete setup", 
     Object.assign(session, override);
     const view = await mount();
     try {
+      if (!session.state || !session.catalog) {
+        assert.match(view.element.textContent, /Loading your journal/);
+        assert.equal(sent.length, 0);
+        continue;
+      }
       assert.equal(
-        view.button("Let’s begin").getAttribute("aria-disabled"),
+        view.button("Continue with character").getAttribute("aria-disabled"),
         "true",
       );
-      await view.click("Let’s begin");
-      assert.match(view.element.textContent, /Your adventure starts here/);
+      await view.click("Continue with character");
+      if (view.element.textContent.includes("Continue with avatar"))
+        await view.click("Continue with avatar");
+      assert.match(view.element.textContent, /Create your character/);
       assert.equal(sent.length, 0);
     } finally {
       await view.unmount();
@@ -371,6 +492,118 @@ test("returning accounts bypass setup without issuing commands", async () => {
       "/(tabs)/board",
     );
     assert.equal(sent.length, 0);
+  } finally {
+    await view.unmount();
+  }
+});
+
+const {
+  CharacterEditor,
+} = require("../../src/features/profile/character-editor.tsx");
+const {
+  StartingSkills,
+} = require("../../src/features/profile/starting-skills.tsx");
+
+test("character creation waits for confirmation and preserves a failed name/portrait draft", async () => {
+  reset();
+  let advanced = 0;
+  session.command = async (input) => {
+    sent.push(input);
+    session.error = "Connection interrupted";
+  };
+  const view = await mount(CharacterEditor, { onContinue: () => advanced++ });
+  try {
+    await view.fill("Character name", "Rowan");
+    await view.click("Save name and continue");
+    assert.equal(advanced, 0);
+    assert.equal(session.state.profile.characterName, null);
+    assert.equal(
+      view.element.querySelector('[aria-label="Character name"]').value,
+      "Rowan",
+    );
+    assert.deepEqual(sent[0], {
+      action: "save-character",
+      characterName: "Rowan",
+      portraitId: "portrait-1",
+    });
+    session.command = async (input) => {
+      sent.push(input);
+      session.state.profile.characterName = input.characterName;
+      session.state.profile.portraitId = input.portraitId;
+      session.error = null;
+    };
+    await view.render();
+    await view.click("Save name and continue");
+    await view.render();
+    assert.equal(advanced, 1);
+    assert.equal(session.state.overallXp, 42);
+    await view.render();
+    assert.equal(advanced, 1);
+  } finally {
+    await view.unmount();
+  }
+});
+
+test("starting-skill choices remain drafts and save only changed assessments in confirmed order", async () => {
+  reset();
+  const renderErrors = [];
+  const originalError = console.error;
+  console.error = (...args) => renderErrors.push(args.join(" "));
+  let advanced = 0;
+  session.command = async (input) => {
+    sent.push(input);
+    session.state.profile.assessments[input.skillId] = input.experience;
+  };
+  const view = await mount(StartingSkills, { onContinue: () => advanced++ });
+  try {
+    await act(async () =>
+      view.element
+        .querySelector('[aria-label="Programming: Practiced"]')
+        .click(),
+    );
+    await act(async () =>
+      view.element
+        .querySelector('[aria-label="Strength Training: Experienced"]')
+        .click(),
+    );
+    assert.deepEqual(sent, []);
+    await view.click("Continue with these skills");
+    await view.render();
+    await view.render();
+    assert.deepEqual(
+      sent.map((entry) => entry.skillId),
+      ["s07", "s01"],
+    );
+    assert.equal(advanced, 1);
+    assert.equal(session.state.overallXp, 42);
+    assert.deepEqual(renderErrors, []);
+  } finally {
+    console.error = originalError;
+    await view.unmount();
+  }
+});
+
+test("an older character confirmation cannot advance a newer edited draft", async () => {
+  reset();
+  let advanced = 0;
+  session.command = async (input) => {
+    sent.push(input);
+    session.error = "Save delayed";
+  };
+  const view = await mount(CharacterEditor, { onContinue: () => advanced++ });
+  try {
+    await view.fill("Character name", "Rowan");
+    await view.click("Save name and continue");
+    await view.fill("Character name", "Juniper");
+    session.state.profile.characterName = "Rowan";
+    session.state.profile.portraitId = "portrait-1";
+    await view.render();
+    assert.equal(advanced, 0);
+    assert.equal(
+      view.element.querySelector('[aria-label="Character name"]').value,
+      "Juniper",
+    );
+    assert.equal(sent.length, 1);
   } finally {
     await view.unmount();
   }

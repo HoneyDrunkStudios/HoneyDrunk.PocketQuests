@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Redirect } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -8,14 +8,19 @@ import { SessionRecovery } from "../../session/session-recovery";
 import { JournalHeading } from "../../shared/journal-heading";
 import { Button, Card, Label, colors, styles } from "../../shared/ui";
 import { questActions } from "../quests/commands/quest-actions";
+import { CharacterEditor } from "./character-editor";
+import { CharacterPortrait } from "./character-portrait";
+import { AvatarEditor } from "./avatar-editor";
+import { StartingSkills } from "./starting-skills";
 
-const steps = ["Welcome", "Your interests", "Your first quest"] as const;
-const stepActions = [
-  "Let’s begin",
-  "Continue",
-  "Choose my first quest",
+const steps = [
+  "Your name",
+  "Your traveler",
+  "Your interests",
+  "Starting skills",
+  "Your first quest",
 ] as const;
-const categoryIcons = [
+const icons = [
   "fitness-outline",
   "book-outline",
   "color-palette-outline",
@@ -27,41 +32,59 @@ const categoryIcons = [
   "wallet-outline",
   "compass-outline",
 ] as const;
+function sameInterests(left: string[], right: string[]) {
+  return left.length === right.length && left.every((id) => right.includes(id));
+}
 
-/** Setup has its own route; only a confirmed account update unlocks the app. */
-export function Onboarding() {
-  const { state, catalog, busy, pending, offline, command, signOut } =
-    useSession();
+export function Onboarding({
+  editExisting = false,
+}: Readonly<{ editExisting?: boolean }>) {
+  const {
+    state,
+    catalog,
+    busy,
+    pending,
+    offline,
+    queuedCount,
+    command,
+    signOut,
+  } = useSession();
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [interests, setInterests] = useState<string[] | null>(null);
   const [interestSave, setInterestSave] = useState<{
     interests: string[];
     finished: boolean;
   } | null>(null);
-  const savingInterests = useRef(false);
+  const submitting = useRef(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
   const isSavingInterests = !!interestSave && !interestSave.finished;
-  // Interest commands do not project onto the profile before confirmation.
-  const step =
-    currentStep === 1 &&
+  const interestsConfirmed =
+    currentStep === 2 &&
     interestSave?.finished &&
     state &&
-    sameInterests(interestSave.interests, state.profile.interests)
-      ? 2
-      : currentStep;
-  if (state?.profile.onboardingComplete)
+    !busy &&
+    !pending &&
+    queuedCount === 0 &&
+    sameInterests(interestSave.interests, state.profile.interests);
+  if (interestsConfirmed) {
+    setCurrentStep(3);
+    setInterestSave(null);
+  }
+  const step = currentStep;
+  if (state?.profile.onboardingComplete && !editExisting)
     return <Redirect href="/(tabs)/board" />;
   const disabled =
     busy || pending || offline || !state || !catalog || isSavingInterests;
   const choices = interests ?? state?.profile.interests ?? [];
   async function continueWithInterests() {
-    if (disabled || savingInterests.current || !state) return;
+    if (disabled || submitting.current || !state) return;
     if (sameInterests(choices, state.profile.interests)) {
-      setCurrentStep(2);
+      setCurrentStep(3);
       return;
     }
-    savingInterests.current = true;
+    submitting.current = true;
     setSaveError(null);
     setInterestSave({ interests: choices, finished: false });
     try {
@@ -70,24 +93,15 @@ export function Onboarding() {
       setSaveError("We couldn’t save your choices. Please try again.");
     } finally {
       setInterestSave({ interests: choices, finished: true });
-      savingInterests.current = false;
+      submitting.current = false;
     }
-  }
-  function advance() {
-    if (step === 0) {
-      setCurrentStep(1);
-      return;
-    }
-    if (step === 1) {
-      void continueWithInterests();
-      return;
-    }
-    void command({ action: questActions.finishOnboarding });
   }
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <ScrollView
         key={step}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={{
@@ -103,8 +117,8 @@ export function Onboarding() {
         {step === 0 ? (
           <JournalHeading
             showSettings={false}
-            title="Your adventure starts here"
-            description="Small moments. Real progress. A story that’s yours."
+            title="Create your character"
+            description="A name. A face. A story that’s yours."
           />
         ) : (
           <View style={{ paddingTop: insets.top + 24, gap: 10 }}>
@@ -114,18 +128,16 @@ export function Onboarding() {
               POCKET QUESTS
             </Text>
             <Text accessibilityRole="header" style={styles.title}>
-              {step === 1
-                ? "What matters to you?"
-                : "Start with one small quest"}
+              {steps[step]}
             </Text>
           </View>
         )}
         <View
-          accessibilityLabel={`Step ${step + 1} of 3: ${steps[step]}`}
+          accessibilityLabel={`Step ${step + 1} of 5: ${steps[step]}`}
           style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
         >
           <Text style={[styles.muted, { color: colors.gold }]}>
-            0{step + 1} / 03
+            0{step + 1} / 05
           </Text>
           <Text style={styles.muted}>{steps[step]}</Text>
         </View>
@@ -136,32 +148,12 @@ export function Onboarding() {
         ) : (
           <>
             {step === 0 && (
-              <>
-                <Card
-                  style={{ borderColor: colors.gold, gap: 18, padding: 20 }}
-                >
-                  <Intro
-                    icon="compass-outline"
-                    title="Choose a little adventure"
-                    description="Make space for learning, creativity, movement or rest."
-                  />
-                  <Intro
-                    icon="sparkles-outline"
-                    title="See yourself grow"
-                    description="Finish real-world quests to earn XP and grow your character."
-                  />
-                  <Intro
-                    icon="time-outline"
-                    title="Make it your own"
-                    description="Start small. Choose your pace. Change your interests any time."
-                  />
-                </Card>
-                <Label style={styles.muted}>
-                  Let’s find a starting point. No skill assessments needed.
-                </Label>
-              </>
+              <CharacterEditor onContinue={() => setCurrentStep(1)} />
             )}
             {step === 1 && (
+              <AvatarEditor onContinue={() => setCurrentStep(2)} />
+            )}
+            {step === 2 && (
               <>
                 <Label>
                   Pick the paths you’d like to explore. We’ll show those
@@ -172,7 +164,6 @@ export function Onboarding() {
                 >
                   {catalog.categories.map((category, index) => {
                     const selected = choices.includes(category.id);
-                    const choiceDisabled = isSavingInterests;
                     return (
                       <Pressable
                         key={category.id}
@@ -180,10 +171,10 @@ export function Onboarding() {
                         accessibilityLabel={category.name}
                         accessibilityState={{
                           checked: selected,
-                          disabled: choiceDisabled,
+                          disabled: isSavingInterests,
                         }}
                         aria-checked={selected}
-                        disabled={choiceDisabled}
+                        disabled={isSavingInterests}
                         onPress={() => {
                           setInterestSave(null);
                           setInterests((draft) => {
@@ -203,30 +194,15 @@ export function Onboarding() {
                           borderRadius: 14,
                           borderColor: selected ? colors.gold : colors.line,
                           backgroundColor: selected ? "#243444" : colors.card,
-                          opacity: choiceOpacity(choiceDisabled, pressed),
+                          opacity: isSavingInterests ? 0.6 : pressed ? 0.8 : 1,
                         })}
                       >
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                          }}
-                        >
-                          <Ionicons
-                            name={categoryIcons[index % categoryIcons.length]}
-                            size={24}
-                            color={colors.gold}
-                            accessible={false}
-                          />
-                          {selected && (
-                            <Ionicons
-                              name="checkmark-circle"
-                              size={22}
-                              color={colors.gold}
-                              accessible={false}
-                            />
-                          )}
-                        </View>
+                        <Ionicons
+                          name={icons[index % icons.length]}
+                          size={24}
+                          color={colors.gold}
+                          accessible={false}
+                        />
                         <Text
                           style={[
                             styles.text,
@@ -234,44 +210,41 @@ export function Onboarding() {
                           ]}
                         >
                           {category.name}
+                          {selected ? " ✓" : ""}
                         </Text>
                       </Pressable>
                     );
                   })}
                 </View>
                 <Label style={styles.muted}>
-                  Optional. You can continue without choosing, and update these
-                  later in your profile. Your choices are saved when you
-                  continue.
+                  Optional. Your choices stay here until you continue. You can
+                  change them later.
                 </Label>
               </>
             )}
-            {step === 2 && (
-              <>
-                <Card
-                  style={{ borderColor: colors.gold, padding: 22, gap: 20 }}
-                >
-                  <Intro
-                    icon="compass-outline"
-                    title="Find something that fits today"
-                    description="Explore Available quests and open one to see what it involves."
-                  />
-                  <Intro
-                    icon="add-circle-outline"
-                    title="Start when you’re ready"
-                    description="Starting a quest adds it to Active. Nothing repeats automatically."
-                  />
-                  <Intro
-                    icon="checkmark-circle-outline"
-                    title="Do it in the real world"
-                    description="Mark it complete when you’re done. Your journal records your progress."
-                  />
-                </Card>
-                <Label style={styles.muted}>
-                  Your character starts at level 1. You can add skills and
-                  experience in your profile whenever you like.
+            {step === 3 && (
+              <StartingSkills onContinue={() => setCurrentStep(4)} />
+            )}
+            {step === 4 && (
+              <Card style={{ borderColor: colors.gold, padding: 22, gap: 18 }}>
+                <CharacterPortrait
+                  portraitId={state.profile.portraitId}
+                  avatarCode={state.profile.avatarCode}
+                />
+                <Text accessibilityRole="header" style={styles.title}>
+                  {state.profile.characterName
+                    ? `Ready, ${state.profile.characterName}?`
+                    : "Your journal is ready"}
+                </Text>
+                <Label>
+                  Choose a quest that fits today. Open its card, plan your next
+                  step, and start when you’re ready.
                 </Label>
-              </>
+                <Label>
+                  Do it in the real world, then mark it complete to watch your
+                  character grow.
+                </Label>
+              </Card>
             )}
           </>
         )}
@@ -290,11 +263,25 @@ export function Onboarding() {
           backgroundColor: colors.paper,
         }}
       >
-        <Button
-          title={isSavingInterests ? "Saving choices…" : stepActions[step]}
-          disabled={disabled}
-          onPress={advance}
-        />
+        {step === 2 && (
+          <Button
+            title={isSavingInterests ? "Saving choices…" : "Continue"}
+            disabled={disabled}
+            onPress={() => void continueWithInterests()}
+          />
+        )}
+        {step === 4 && (
+          <Button
+            title={editExisting ? "Return to Home" : "Choose my first quest"}
+            disabled={disabled}
+            loading={busy}
+            onPress={() =>
+              editExisting
+                ? router.replace("/(tabs)")
+                : void command({ action: questActions.finishOnboarding })
+            }
+          />
+        )}
         {step > 0 ? (
           <Button
             title="Back"
@@ -307,45 +294,14 @@ export function Onboarding() {
           />
         ) : (
           <Button
-            title="Sign out"
+            title={editExisting ? "Return to Home" : "Sign out"}
             secondary
             disabled={busy || pending}
-            onPress={() => void signOut()}
+            onPress={() =>
+              editExisting ? router.replace("/(tabs)") : void signOut()
+            }
           />
         )}
-      </View>
-    </View>
-  );
-}
-
-function sameInterests(left: string[], right: string[]) {
-  return left.length === right.length && left.every((id) => right.includes(id));
-}
-
-function choiceOpacity(disabled: boolean, pressed: boolean) {
-  if (disabled) return 0.6;
-  return pressed ? 0.8 : 1;
-}
-
-function Intro({
-  icon,
-  title,
-  description,
-}: Readonly<{
-  icon: React.ComponentProps<typeof Ionicons>["name"];
-  title: string;
-  description: string;
-}>) {
-  return (
-    <View style={{ flexDirection: "row", gap: 14 }}>
-      <Ionicons name={icon} size={26} color={colors.gold} accessible={false} />
-      <View style={{ flex: 1, gap: 6 }}>
-        <Text style={[styles.subtitle, { fontSize: 17, lineHeight: 24 }]}>
-          {title}
-        </Text>
-        <Text style={[styles.muted, { fontSize: 14, lineHeight: 21 }]}>
-          {description}
-        </Text>
       </View>
     </View>
   );

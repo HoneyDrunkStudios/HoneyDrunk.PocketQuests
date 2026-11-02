@@ -19,7 +19,14 @@ public sealed class ApiContractPrecisionTests
         {
             var schema = schemas[name]!;
             var required = schema["required"]!.AsArray().Select(value => value!.GetValue<string>()).ToHashSet(StringComparer.Ordinal);
-            Assert.All(schema["properties"]!.AsObject(), property => Assert.Contains(property.Key, required));
+            foreach (var property in schema["properties"]!.AsObject())
+            {
+                // New character identity is omitted until configured so pre-character device caches remain valid.
+                if (name == "PlayerProfile" && property.Key is "characterName" or "portraitId" or "avatarCode")
+                    Assert.DoesNotContain(property.Key, required);
+                else
+                    Assert.Contains(property.Key, required);
+            }
         }
 
         foreach (var (schema, property) in new[] { ("QuestState", "overallXp"), ("QuestState", "overallLevel"), ("Balance", "xp"), ("Balance", "level"), ("QuestDefinition", "revision"), ("Quest", "baseXp"), ("Quest", "penaltyPercent"), ("Share", "basisPoints"), ("QuestExport", "schemaVersion") })

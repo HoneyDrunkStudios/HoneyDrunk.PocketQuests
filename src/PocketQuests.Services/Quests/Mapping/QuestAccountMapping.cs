@@ -14,6 +14,9 @@ internal static class QuestAccountMapping
         account.IsAccountPaused = change.Aggregate.Schedule.AccountPaused;
         account.SelectedBadgeId = change.State.Profile.BadgeId;
         account.SelectedFrameId = change.State.Profile.FrameId;
+        account.CharacterName = change.State.Profile.CharacterName;
+        account.PortraitId = change.State.Profile.PortraitId;
+        account.AvatarCode = change.State.Profile.AvatarCode;
         account.MutationVersion = change.Version;
         account.ProjectionVersion = change.Version;
         account.ProjectionAsOfAt = projectionAsOf;

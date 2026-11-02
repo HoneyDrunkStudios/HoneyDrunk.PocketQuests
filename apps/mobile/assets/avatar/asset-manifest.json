@@ -1,0 +1,49 @@
+{
+  "created": "2026-10-27",
+  "generator": "built-in image-generation tool",
+  "rasterModifications": "none; runtime SVG atlas cropping/composition only",
+  "assets": [
+    {
+      "asset": "faces-expanded.png",
+      "sourceGeneration": "exec-4de8b899-f26b-4075-8e2d-8ddca419a5f7.png",
+      "bytes": 1496748,
+      "sha256": "5f1d9d79728fdba6f2d9193b47a93436f54f13aae61ff27b7d1ebb0184f68924"
+    },
+    {
+      "asset": "outfits-builds.png",
+      "sourceGeneration": "exec-a8771d21-9c82-4000-b56c-3d7573599965.png",
+      "bytes": 1705864,
+      "sha256": "69b7448164baf9c5915eb514b246159c1d4ea5ef444ad34d7875c7f2559bb041"
+    },
+    {
+      "asset": "outfits-starters.png",
+      "sourceGeneration": "exec-c15bbf79-f9fa-4325-ab3c-82f805ad2e20.png",
+      "bytes": 2139667,
+      "sha256": "9b34b3dae18fde5b3801d07161b08456ba2a797596ba0028e24da2b2b6443fec"
+    },
+    {
+      "asset": "hair-expanded.png",
+      "sourceGeneration": "exec-c407c838-d34c-42d0-aec3-cfbcbf5b99ee.png",
+      "bytes": 1786014,
+      "sha256": "02c4dba0910ff397850aef7730955989c94d210a1a0daea67d7dcfe36966f227"
+    },
+    {
+      "asset": "accessories-starters.png",
+      "sourceGeneration": "exec-48f1ecdf-bce4-4749-8db0-9b6d005c9184.png",
+      "bytes": 1168529,
+      "sha256": "15aa39f31b6167d8f168e60e609baa3249d282ff2cef8601e463c71f9f2f1dd0"
+    },
+    {
+      "asset": "faces-east.png",
+      "sourceGeneration": "exec-29d0878d-0c9f-4d4f-bfd8-b8b3b40dcdf5.png",
+      "bytes": 1409792,
+      "sha256": "ac1e99028a6c1aba951d4128d9d7e54407240f4bd86e246627697faaee04673e"
+    },
+    {
+      "asset": "faces-south.png",
+      "sourceGeneration": "exec-9775ccc2-d8a8-409a-9969-5d6296764447.png",
+      "bytes": 1447433,
+      "sha256": "0cb983825bb310d4fd62a9d29a39315d2f5595a4f1d5174df40871f4c6dbb8ff"
+    }
+  ]
+}

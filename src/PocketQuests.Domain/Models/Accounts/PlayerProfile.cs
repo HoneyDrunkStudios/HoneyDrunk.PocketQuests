@@ -6,7 +6,7 @@ namespace PocketQuests.Domain.Models.Accounts;
 
 /// <summary>Durable preferences and replaceable assessment components, never earned XP.</summary>
 public record PlayerProfile(ImmutableArray<string> Interests, ImmutableDictionary<string, Experience> Assessments,
-    bool OnboardingComplete = false, string? BadgeId = null, string? FrameId = null, ImmutableList<CustomSkill>? CustomSkills = null, ImmutableList<SkillAssessment>? AssessmentHistory = null, ImmutableList<ZoneChange>? ZoneHistory = null, bool ExpiryWarnings = false)
+    bool OnboardingComplete = false, string? BadgeId = null, string? FrameId = null, ImmutableList<CustomSkill>? CustomSkills = null, ImmutableList<SkillAssessment>? AssessmentHistory = null, ImmutableList<ZoneChange>? ZoneHistory = null, bool ExpiryWarnings = false, [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? CharacterName = null, [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? PortraitId = null, [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? AvatarCode = null)
 {
     /// <summary>Gets the initial profile without selected interests or assessed experience.</summary>
     public static PlayerProfile Empty { get; } = new([], ImmutableDictionary<string, Experience>.Empty);

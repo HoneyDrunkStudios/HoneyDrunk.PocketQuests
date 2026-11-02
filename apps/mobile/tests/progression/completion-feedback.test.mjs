@@ -1,13 +1,14 @@
 import test from "node:test";
 import { strict as assert } from "node:assert";
 import {
-  completionFeedback,
-  completionAnnouncement,
-  survivingFeedback,
-} from "../../src/features/progression/completion-feedback.ts";
-import { rewardPreview, allocatedPreview } from "../../src/features/quests/reward-preview.ts";
+  rewardPreview,
+  allocatedPreview,
+} from "../../src/features/quests/reward-preview.ts";
 import { createRequire } from "node:module";
-import { remainingFocus, pauseFocus } from "../../src/features/quests/focus-clock.ts";
+import {
+  remainingFocus,
+  pauseFocus,
+} from "../../src/features/quests/focus-clock.ts";
 const require = createRequire(import.meta.url);
 const ts = require("typescript");
 require.extensions[".ts"] = (module, file) =>
@@ -23,7 +24,14 @@ require.extensions[".ts"] = (module, file) =>
     }).outputText,
     file,
   );
-const { pendingProjection } = require("../../src/session/offline-projection.ts");
+const {
+  pendingProjection,
+} = require("../../src/session/offline-projection.ts");
+const {
+  completionFeedback,
+  completionAnnouncement,
+  survivingFeedback,
+} = require("../../src/features/progression/completion-feedback.ts");
 
 const quest = {
   id: "q",
@@ -232,6 +240,18 @@ test("lost-response acknowledgement retains exact level changes despite an alrea
   );
   assert.equal(legacy.rewards[0].xp, 10);
   assert.deepEqual(legacy.levelUps, []);
+});
+
+test("a confirmed milestone celebrates its exact wardrobe unlock without changing rewards", () => {
+  const state = confirmed();
+  state.completionOutcome.unlocks = [
+    { id: "PQ-CAT-A01", name: "A Quest of My Own" },
+  ];
+  const snapshot = structuredClone(state);
+  const feedback = completionFeedback(before(), state, command);
+  assert.deepEqual(feedback.unlocks, ["A Quest of My Own", "Maker’s vest"]);
+  assert.match(completionAnnouncement(feedback), /Maker’s vest unlocked/);
+  assert.deepEqual(state, snapshot);
 });
 test("acknowledgements are deduplicated, ordered, and suppressed after matching Undo or recompletion", () => {
   const state = confirmed();

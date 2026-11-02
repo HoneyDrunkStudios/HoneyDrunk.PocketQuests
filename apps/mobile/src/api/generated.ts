@@ -147,6 +147,9 @@ export type PlayerProfile = {
   "assessmentHistory": (SkillAssessment)[] | null;
   "zoneHistory": (ZoneChange)[] | null;
   "expiryWarnings": boolean;
+  "characterName"?: string | null;
+  "portraitId"?: string | null;
+  "avatarCode"?: string | null;
 };
 
 export type ProblemDetails = {
@@ -200,6 +203,9 @@ export type QuestCommand = {
   "expectedZone"?: string | null;
   "confirmZoneChange"?: boolean;
   "expiryWarnings"?: boolean | null;
+  "characterName"?: string | null;
+  "portraitId"?: string | null;
+  "avatarCode"?: string | null;
 };
 
 export type QuestDefinition = {
@@ -218,6 +224,7 @@ export type QuestExport = {
   "completions": (Completion)[];
   "undos": (UndoEvent)[];
   "notice": string;
+  "savedPlaces": (SavedPlace)[];
 };
 
 export type QuestInput = {
@@ -297,6 +304,45 @@ export type RecordedActionTime = {
   "deviceUtc": string;
 };
 
+export type RemovalResult = {
+  "removed": boolean;
+};
+
+export type RemovePlaceRequest = {
+  "id": string;
+  "expectedRevision": number | string;
+};
+
+export type SavedPlace = {
+  "id": string;
+  "placeKey": string;
+  "name": string;
+  "kind": string;
+  "categoryId": string;
+  "latitude": number;
+  "longitude": number;
+  "notes": string;
+  "visitedAt": string | null;
+  "questOccurrenceId": string | null;
+  "revision": number;
+  "createdAt": string;
+  "modifiedAt": string;
+};
+
+export type SavePlaceRequest = {
+  "id": string;
+  "placeKey": string;
+  "name": string;
+  "kind": string;
+  "categoryId": string;
+  "latitude": number | string;
+  "longitude": number | string;
+  "notes": string;
+  "visited": boolean;
+  "questOccurrenceId": string | null;
+  "expectedRevision": number | string;
+};
+
 export type ScheduleState = {
   "series": (QuestSeries)[];
   "pauses": (PauseWindow)[];
@@ -371,4 +417,7 @@ export type ApiOperations = {
   "POST /api/commands": { body: QuestCommand; query: undefined; response: QuestState };
   "GET /api/planning/clock": { body: undefined; query: { "date": string; "time": string; "zone": string }; response: PlannedMoment };
   "GET /api/planning/zone": { body: undefined; query: { "zone": string }; response: ZonePreview };
+  "GET /api/discoveries": { body: undefined; query: undefined; response: (SavedPlace)[] };
+  "POST /api/discoveries/save": { body: SavePlaceRequest; query: undefined; response: SavedPlace };
+  "POST /api/discoveries/remove": { body: RemovePlaceRequest; query: undefined; response: RemovalResult };
 };

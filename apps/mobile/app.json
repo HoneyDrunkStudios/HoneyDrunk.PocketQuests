@@ -24,7 +24,14 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      ["expo-router", { "asyncRoutes": { "web": false } }],
+      [
+        "expo-router",
+        {
+          "asyncRoutes": {
+            "web": false
+          }
+        }
+      ],
       "expo-secure-store",
       "expo-web-browser",
       "expo-sharing",
@@ -33,6 +40,19 @@
         "expo-dev-client",
         {
           "defaultLaunchURL": "http://localhost:8081"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Find places to explore near you when you choose Use my location.",
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": false,
+          "locationAlwaysPermission": false,
+          "locationAlwaysAndWhenInUsePermission": false,
+          "motionUsagePermission": false,
+          "isAndroidMotionActivityEnabled": false
         }
       ]
     ],

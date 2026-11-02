@@ -23,6 +23,9 @@ internal static class QuestProfileMapping
             rows.Skills.Count == 0 ? null : [.. rows.Skills.Select(row => new CustomSkill(keys[row.Id], row.Name, row.Revision, row.ArchivedAt is not null))],
             history.Count == 0 ? null : history,
             rows.Zones.Count == 0 ? null : [.. rows.Zones.Select(row => new ZoneChange(row.FromTimeZoneId, row.ToTimeZoneId, row.EffectiveAt))],
-            account.HasExpiryWarnings);
+            account.HasExpiryWarnings,
+            account.CharacterName,
+            account.PortraitId,
+            account.AvatarCode);
     }
 }

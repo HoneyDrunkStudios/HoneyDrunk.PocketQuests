@@ -800,6 +800,36 @@
           "external_source": null,
           "computed": null,
           "collation": null
+        },
+        {
+          "name": "CharacterName",
+          "type": "nvarchar(40)",
+          "nullable": true,
+          "default": null,
+          "description": "Player-chosen character display name, 1 to 40 UTF-16 code units; null means the player has not chosen a character. Restricted account data; erase with the account.",
+          "external_source": null,
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
+          "name": "PortraitId",
+          "type": "varchar(16)",
+          "nullable": true,
+          "default": null,
+          "description": "Bundled portrait code portrait-1 through portrait-6; null means the player has not chosen a character. No remote URL or upload; erase with the account.",
+          "external_source": "Pocket Quests bundled portrait catalog, portrait-1 through portrait-6; constrained by the table CHECK.",
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
+          "name": "AvatarCode",
+          "type": "varchar(16)",
+          "nullable": true,
+          "default": null,
+          "description": "Versioned full-body appearance: v1 stores skin, hair color, hairstyle, outfit and accessory; v2 appends face and build with expanded bounded choices. Null means starter appearance. Private account preference, erased with account history.",
+          "external_source": null,
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
         }
       ],
       "primary_key": {
@@ -868,6 +898,26 @@
           "name": "CK_Account_ModificationClock",
           "expression": "[ModifiedAt]>=[CreatedAt]",
           "purpose": "Persistence modification time cannot precede insertion time."
+        },
+        {
+          "name": "CK_Account_CharacterName",
+          "expression": "[CharacterName] IS NULL OR (LEN(LTRIM(RTRIM([CharacterName]))) BETWEEN 1 AND 40 AND DATALENGTH([CharacterName])<=80)",
+          "purpose": "A chosen character has a bounded nonblank Unicode name."
+        },
+        {
+          "name": "CK_Account_PortraitId",
+          "expression": "[PortraitId] IS NULL OR [PortraitId] IN ('portrait-1','portrait-2','portrait-3','portrait-4','portrait-5','portrait-6')",
+          "purpose": "Only the six bundled portrait codes may be selected."
+        },
+        {
+          "name": "CK_Account_CharacterPair",
+          "expression": "([CharacterName] IS NULL AND [PortraitId] IS NULL) OR ([CharacterName] IS NOT NULL AND [PortraitId] IS NOT NULL)",
+          "purpose": "Character name and portrait are chosen together; existing profiles remain unset."
+        },
+        {
+          "name": "CK_Account_AvatarCode",
+          "expression": "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]')",
+          "purpose": "Constrain the versioned avatar selection to supported appearance and cosmetic slots."
         }
       ],
       "foreign_keys": [
@@ -7490,6 +7540,36 @@
           "external_source": null,
           "computed": null,
           "collation": null
+        },
+        {
+          "name": "CharacterName",
+          "type": "nvarchar(40)",
+          "nullable": true,
+          "default": null,
+          "description": "Immutable submitted Player-chosen character display name, 1 to 40 UTF-16 code units; null means the player has not chosen a character. Restricted account data; erase with the account.",
+          "external_source": null,
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
+          "name": "PortraitId",
+          "type": "varchar(16)",
+          "nullable": true,
+          "default": null,
+          "description": "Immutable submitted Bundled portrait code portrait-1 through portrait-6; null means the player has not chosen a character. No remote URL or upload; erase with the account.",
+          "external_source": "Pocket Quests bundled portrait catalog, portrait-1 through portrait-6; constrained by the table CHECK.",
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
+          "name": "AvatarCode",
+          "type": "varchar(16)",
+          "nullable": true,
+          "default": null,
+          "description": "Original validated avatar appearance for save-avatar; null for other commands. Immutable private account history, erased with its owner.",
+          "external_source": null,
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
         }
       ],
       "primary_key": {
@@ -7517,7 +7597,7 @@
       "checks": [
         {
           "name": "CK_QuestCommandHistory_Action",
-          "expression": "[ActionCode] IN ('accept','complete','undo','save-definition','archive-definition','assess-skill','save-skill','archive-skill','interests','finish-onboarding','plan','zone','expiry-warnings','link','select-badge','select-frame','save-series','stop-series','pause','resume','resume-occurrence','abandon','accept-offer','$reconcile','$lifecycle-pause')",
+          "expression": "[ActionCode] IN ('accept','complete','undo','save-definition','archive-definition','assess-skill','save-skill','archive-skill','interests','finish-onboarding','save-character','save-avatar','plan','zone','expiry-warnings','link','select-badge','select-frame','save-series','stop-series','pause','resume','resume-occurrence','abandon','accept-offer','$reconcile','$lifecycle-pause')",
           "purpose": "Only implemented user and internal transitions can enter replay history."
         },
         {
@@ -7584,6 +7664,36 @@
           "name": "CK_QuestCommandHistory_ActionReconciliationLimit",
           "expression": "[ActionReconciliationLimit]>=0",
           "purpose": "An action may defer newly due deliveries with a zero budget but never discard them."
+        },
+        {
+          "name": "CK_QuestCommandHistory_CharacterName",
+          "expression": "[CharacterName] IS NULL OR (LEN(LTRIM(RTRIM([CharacterName]))) BETWEEN 1 AND 40 AND DATALENGTH([CharacterName])<=80)",
+          "purpose": "A chosen character has a bounded nonblank Unicode name."
+        },
+        {
+          "name": "CK_QuestCommandHistory_PortraitId",
+          "expression": "[PortraitId] IS NULL OR [PortraitId] IN ('portrait-1','portrait-2','portrait-3','portrait-4','portrait-5','portrait-6')",
+          "purpose": "Only the six bundled portrait codes may be selected."
+        },
+        {
+          "name": "CK_QuestCommandHistory_CharacterPair",
+          "expression": "([CharacterName] IS NULL AND [PortraitId] IS NULL) OR ([CharacterName] IS NOT NULL AND [PortraitId] IS NOT NULL)",
+          "purpose": "Character name and portrait are chosen together; existing profiles remain unset."
+        },
+        {
+          "name": "CK_QuestCommandHistory_CharacterAction",
+          "expression": "([ActionCode]='save-character' AND [CharacterName] IS NOT NULL AND [PortraitId] IS NOT NULL) OR ([ActionCode]<>'save-character' AND [CharacterName] IS NULL AND [PortraitId] IS NULL)",
+          "purpose": "Only character commands retain character payloads; replay never invents them."
+        },
+        {
+          "name": "CK_QuestCommandHistory_AvatarCode",
+          "expression": "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]')",
+          "purpose": "Constrain the versioned avatar selection to supported appearance and cosmetic slots."
+        },
+        {
+          "name": "CK_QuestCommandHistory_AvatarAction",
+          "expression": "([ActionCode]='save-avatar' AND [AvatarCode] IS NOT NULL) OR ([ActionCode]<>'save-avatar' AND [AvatarCode] IS NULL)",
+          "purpose": "Require an avatar payload only for an immutable save-avatar command."
         }
       ],
       "foreign_keys": [
@@ -8025,6 +8135,301 @@
         }
       ],
       "notes": []
+    },
+    {
+      "schema": "pocketquests",
+      "name": "SavedPlace",
+      "description": "One row is one private place saved by an account. Classification: Restricted. History: mutable current record with creation/modification stamps and rowversion; action audit contains no notes or coordinates. At most 100 per account enforced under the account lock; delete on removal or final account erasure. No old note copies or location tracking.",
+      "kind": "mutable",
+      "retention": "Current records only, at most 100 per account. Explicit removal and account erasure delete them; shared audit ownership is erased with the account.",
+      "classification": "Restricted",
+      "columns": [
+        {
+          "name": "Id",
+          "type": "uniqueidentifier",
+          "nullable": false,
+          "default": null,
+          "description": "Application-generated stable identifier for this saved place.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "AccountId",
+          "type": "uniqueidentifier",
+          "nullable": false,
+          "default": null,
+          "description": "Product account that owns the private discovery; supplied only by trusted server context.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "PlaceKey",
+          "type": "varchar(80)",
+          "nullable": false,
+          "default": null,
+          "description": "OpenStreetMap element key, node/number, way/number or relation/number; external identifier, not a product foreign key.",
+          "external_source": "OpenStreetMap element type and numeric identifier",
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
+          "name": "Name",
+          "type": "nvarchar(180)",
+          "nullable": false,
+          "default": null,
+          "description": "Player-visible place name captured when saved; not an assurance of current provider accuracy.",
+          "external_source": null,
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
+          "name": "Kind",
+          "type": "varchar(24)",
+          "nullable": false,
+          "default": null,
+          "description": "Supported place category label: Parks, Gardens, Libraries, Museums, Art, Community, Markets or Viewpoints.",
+          "external_source": null,
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
+          "name": "CategoryId",
+          "type": "varchar(40)",
+          "nullable": false,
+          "default": null,
+          "description": "Quest category associated with this type of place; grants no progress.",
+          "external_source": null,
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
+          "name": "Latitude",
+          "type": "decimal(9,6)",
+          "nullable": false,
+          "default": null,
+          "description": "Saved place latitude in degrees, between minus 85 and 85; not a player movement history.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "Longitude",
+          "type": "decimal(9,6)",
+          "nullable": false,
+          "default": null,
+          "description": "Saved place longitude in degrees, between minus 180 and 180.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "Notes",
+          "type": "nvarchar(1000)",
+          "nullable": false,
+          "default": null,
+          "description": "Private player-authored discovery notes; empty string means no notes.",
+          "external_source": null,
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
+          "name": "VisitedAt",
+          "type": "datetimeoffset(7)",
+          "nullable": true,
+          "default": null,
+          "description": "Server UTC instant when the player marked this place visited; null means want to visit. Self-report, not GPS proof.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "QuestOccurrenceId",
+          "type": "uniqueidentifier",
+          "nullable": true,
+          "default": null,
+          "description": "Optional accepted quest owned by the same account; null means no linked quest. Completion remains explicit.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "Revision",
+          "type": "int",
+          "nullable": false,
+          "default": null,
+          "description": "Positive optimistic edit revision; stale writes must reload rather than replace newer edits.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "CreatedAt",
+          "type": "datetimeoffset(7)",
+          "nullable": false,
+          "default": null,
+          "description": "Server UTC instant when this saved-place record was inserted.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "ModifiedAt",
+          "type": "datetimeoffset(7)",
+          "nullable": false,
+          "default": null,
+          "description": "Server UTC instant of the most recent saved-place edit; never before CreatedAt.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "RowVersion",
+          "type": "rowversion",
+          "nullable": false,
+          "default": null,
+          "description": "SQL Server optimistic concurrency token; not a timestamp.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        }
+      ],
+      "primary_key": {
+        "name": "PK_SavedPlace",
+        "columns": [
+          "Id"
+        ]
+      },
+      "unique_keys": [
+        {
+          "name": "UQ_SavedPlace_AccountId_Id",
+          "columns": [
+            "AccountId",
+            "Id"
+          ]
+        },
+        {
+          "name": "UQ_SavedPlace_AccountId_PlaceKey",
+          "columns": [
+            "AccountId",
+            "PlaceKey"
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "name": "CK_SavedPlace_Coordinates",
+          "expression": "[Latitude] BETWEEN -85 AND 85 AND [Longitude] BETWEEN -180 AND 180",
+          "purpose": "Enforce saved-place domain bounds and coherent UTC metadata."
+        },
+        {
+          "name": "CK_SavedPlace_Revision",
+          "expression": "[Revision] >= 1",
+          "purpose": "Enforce saved-place domain bounds and coherent UTC metadata."
+        },
+        {
+          "name": "CK_SavedPlace_Name",
+          "expression": "LEN(LTRIM(RTRIM([Name]))) > 0",
+          "purpose": "Enforce saved-place domain bounds and coherent UTC metadata."
+        },
+        {
+          "name": "CK_SavedPlace_PlaceKey",
+          "expression": "([PlaceKey] LIKE 'node/[1-9]%' AND SUBSTRING([PlaceKey],6,80) NOT LIKE '%[^0-9]%') OR ([PlaceKey] LIKE 'way/[1-9]%' AND SUBSTRING([PlaceKey],5,80) NOT LIKE '%[^0-9]%') OR ([PlaceKey] LIKE 'relation/[1-9]%' AND SUBSTRING([PlaceKey],10,80) NOT LIKE '%[^0-9]%')",
+          "purpose": "Enforce saved-place domain bounds and coherent UTC metadata."
+        },
+        {
+          "name": "CK_SavedPlace_KindCategory",
+          "expression": "([Kind] IN ('Parks','Gardens') AND [CategoryId]='c07') OR ([Kind] IN ('Libraries','Museums') AND [CategoryId]='c02') OR ([Kind]='Art' AND [CategoryId]='c03') OR ([Kind]='Community' AND [CategoryId]='c05') OR ([Kind]='Markets' AND [CategoryId]='c06') OR ([Kind]='Viewpoints' AND [CategoryId]='c10')",
+          "purpose": "Enforce saved-place domain bounds and coherent UTC metadata."
+        },
+        {
+          "name": "CK_SavedPlace_CreatedAtUtc",
+          "expression": "DATEPART(TZOFFSET,[CreatedAt])=0",
+          "purpose": "Enforce saved-place domain bounds and coherent UTC metadata."
+        },
+        {
+          "name": "CK_SavedPlace_ModifiedAtUtc",
+          "expression": "DATEPART(TZOFFSET,[ModifiedAt])=0",
+          "purpose": "Enforce saved-place domain bounds and coherent UTC metadata."
+        },
+        {
+          "name": "CK_SavedPlace_VisitedAtUtc",
+          "expression": "[VisitedAt] IS NULL OR DATEPART(TZOFFSET,[VisitedAt])=0",
+          "purpose": "Enforce saved-place domain bounds and coherent UTC metadata."
+        },
+        {
+          "name": "CK_SavedPlace_ModificationClock",
+          "expression": "[ModifiedAt]>=[CreatedAt]",
+          "purpose": "Enforce saved-place domain bounds and coherent UTC metadata."
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "FK_SavedPlace_Account",
+          "columns": [
+            "AccountId"
+          ],
+          "referenced_schema": "pocketquests",
+          "referenced_table": "Account",
+          "referenced_columns": [
+            "Id"
+          ],
+          "delete_action": "NO ACTION"
+        },
+        {
+          "name": "FK_SavedPlace_Category",
+          "columns": [
+            "CategoryId"
+          ],
+          "referenced_schema": "pocketquests",
+          "referenced_table": "Category",
+          "referenced_columns": [
+            "Id"
+          ],
+          "delete_action": "NO ACTION"
+        },
+        {
+          "name": "FK_SavedPlace_QuestOccurrence",
+          "columns": [
+            "AccountId",
+            "QuestOccurrenceId"
+          ],
+          "referenced_schema": "pocketquests",
+          "referenced_table": "QuestOccurrence",
+          "referenced_columns": [
+            "AccountId",
+            "Id"
+          ],
+          "delete_action": "NO ACTION"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "IX_SavedPlace_CategoryId",
+          "columns": [
+            "CategoryId"
+          ],
+          "unique": false,
+          "filter": null,
+          "include": [],
+          "purpose": "Supports category foreign-key checks."
+        },
+        {
+          "name": "IX_SavedPlace_AccountId_QuestOccurrenceId",
+          "columns": [
+            "AccountId",
+            "QuestOccurrenceId"
+          ],
+          "unique": false,
+          "filter": null,
+          "include": [],
+          "purpose": "Supports same-owner quest linkage and foreign-key checks."
+        }
+      ],
+      "notes": [
+        "Account-prefixed unique keys serve bounded account reads and place deduplication; sort at most 100 account rows by ModifiedAt."
+      ]
     }
   ],
   "external_tables": [
@@ -8212,6 +8617,20 @@
       "reason": "Exact preservation of the existing API v1 finite IEEE-754 double monotonic proof. float(53) round-trips that representation; it is never XP/money. Integer storage would truncate valid proofs. No other approximate column is permitted.",
       "source": "S2 compatibility review against SYNC02 head 7de99e6, 2026-10-04",
       "review_status": "Local S2 review; API wire unchanged."
+    },
+    {
+      "rule": "K03",
+      "object": "pocketquests.Account.PortraitId",
+      "reason": "Bundled illustrated portrait catalog code portrait-1 through portrait-6, enforced by a CHECK constraint. This is a packaged asset selector, not a reference to a relational row or remote URL.",
+      "source": "User-approved character storage design, 2026-11-01",
+      "review_status": "Locally reviewed against the six bundled portraits and invalid-payload API regression; owning-repository CI review still required."
+    },
+    {
+      "rule": "K03",
+      "object": "pocketquests.QuestCommandHistory.PortraitId",
+      "reason": "Bundled illustrated portrait catalog code portrait-1 through portrait-6, enforced by a CHECK constraint. This is a packaged asset selector, not a reference to a relational row or remote URL.",
+      "source": "User-approved character storage design, 2026-11-01",
+      "review_status": "Locally reviewed against the six bundled portraits and invalid-payload API regression; owning-repository CI review still required."
     }
   ]
 }

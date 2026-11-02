@@ -14,7 +14,7 @@ const { createRoot } = require("react-dom/client");
 process.env.PQ_REAL_REACT = "1";
 require("../session/provider-harness.cjs");
 const originalLoad = Module._load;
-let state, sent, inputHandlers, busy, pending, queuedCount;
+let state, sent, inputHandlers, busy, pending, queuedCount, navigation;
 const container = ({ children, accessibilityRole }) =>
   React.createElement("div", { role: accessibilityRole }, children);
 const Button = ({ title, onPress, disabled }) =>
@@ -59,18 +59,22 @@ Module._load = function (name, ...rest) {
     return {
       Text: container,
       View: container,
+      Image: container,
+      ScrollView: container,
       TextInput: Input,
       Pressable: ({
         children,
         onPress,
         accessibilityRole,
         accessibilityState,
+        accessibilityLabel,
       }) =>
         React.createElement(
           "button",
           {
             onClick: onPress,
             role: accessibilityRole,
+            "aria-label": accessibilityLabel,
             "aria-selected": accessibilityState?.selected,
           },
           children,
@@ -103,7 +107,8 @@ Module._load = function (name, ...rest) {
       colors: {},
       styles: {},
     };
-  if (name === "expo-router") return { useRouter: () => ({ push: () => {} }) };
+  if (name === "expo-router")
+    return { useRouter: () => ({ push: (href) => navigation.push(href) }) };
   if (name === "./quest-history")
     return {
       QuestHistory: ({ children, sections }) =>
@@ -149,6 +154,9 @@ Module._load = function (name, ...rest) {
 const {
   CalendarPlanner,
 } = require("../../src/features/quests/calendar-planner.tsx");
+const {
+  AvailableQuestDetails,
+} = require("../../src/features/quests/available-quest-details.tsx");
 const { QuestBoard } = require("../../src/features/quests/quest-board.tsx");
 const {
   QuestPlanEditor,
@@ -166,6 +174,7 @@ function reset() {
     skills: [],
   };
   sent = [];
+  navigation = [];
   busy = false;
   pending = false;
   inputHandlers = new Map();
@@ -307,7 +316,22 @@ test("empty-day choose and create keep the selected due date through the real ac
         view.element.textContent,
         /Start plans a quest for 2026-10-15/,
       );
-      await view.click("Start: Practice");
+      const card = view.element.querySelector(
+        '[aria-label="Quest details: Practice"]',
+      );
+      assert.ok(card);
+      await act(async () => card.click());
+      assert.equal(sent.length, 0);
+      const details = await mount(AvailableQuestDetails, {
+        quest,
+        initialDate: navigation.at(-1).params.date,
+        onBack() {},
+      });
+      try {
+        await details.click("Start: Practice");
+      } finally {
+        await details.unmount();
+      }
       assert.equal(sent.length, 1);
       assert.equal(sent[0].dueDate, "2026-10-15");
       assert.equal(sent[0].questId, "q");
@@ -680,7 +704,20 @@ test("populated week days retain one date-specific planning entry point", async 
       );
     }
     await view.click("Choose a quest for 2026-10-15");
-    await view.click("Start: Practice");
+    const card = view.element.querySelector(
+      '[aria-label="Quest details: Practice"]',
+    );
+    await act(async () => card.click());
+    const details = await mount(AvailableQuestDetails, {
+      quest,
+      initialDate: navigation.at(-1).params.date,
+      onBack() {},
+    });
+    try {
+      await details.click("Start: Practice");
+    } finally {
+      await details.unmount();
+    }
     assert.equal(sent[0].dueDate, "2026-10-15");
     await view.click("Back to calendar");
     await view.fill("Calendar date YYYY-MM-DD", "2026-10-11");

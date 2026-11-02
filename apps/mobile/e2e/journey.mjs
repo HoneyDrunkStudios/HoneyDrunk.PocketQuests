@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import { createDiagnostics } from "./safe-diagnostics.mjs";
+import { verifyNextFeatures } from "./next-features.mjs";
 const diagnostics = createDiagnostics(
   process.env.POCKETQUESTS_JOURNEY_DIAGNOSTICS,
 );
@@ -43,8 +44,8 @@ const cors = {
   "access-control-allow-headers": "*",
   "access-control-allow-methods": "GET, POST, OPTIONS",
 };
-// Only the external OIDC provider is a test double. Identity validates the signed
-// token, and every product request reaches the actual API and isolated SQL databases.
+// External OIDC and public map responses are test fixtures. Identity validates
+// the signed token; product requests reach the actual API and isolated SQL.
 await context.route("http://localhost:5218/client-configuration", (route) =>
   route.fulfill({
     json: {
@@ -143,7 +144,7 @@ async function verifyHistorySearch(view) {
       exact: true,
     });
     const link = page.getByRole("link", {
-      name: "View quest & rewards: Browser verified custom quest",
+      name: "Quest details: Browser verified custom quest",
       exact: true,
     });
     await search.fill("browser delivered");
@@ -188,10 +189,35 @@ try {
   await expect(signIn).toBeEnabled({ timeout: 90000 });
   await signIn.click();
   await expect(
-    visibleText("Your adventure starts here", { exact: true }),
+    visibleText("Create your character", { exact: true }),
   ).toBeVisible({ timeout: 30000 });
   diagnostics.checkpoint("onboarding");
-  await page.getByRole("button", { name: "Let’s begin", exact: true }).click();
+  await page
+    .getByRole("textbox", { name: "Character name", exact: true })
+    .fill("Browser adventurer");
+  await page
+    .getByRole("button", { name: "Save name and continue", exact: true })
+    .click();
+  await page.getByRole("radio", { name: "Face: Oval", exact: true }).click();
+  await page
+    .getByRole("radio", { name: "Skin tone: Tone 6", exact: true })
+    .click();
+  await page.getByRole("tab", { name: "Hair", exact: true }).click();
+  await page
+    .getByRole("radio", { name: "Hair color: Silver", exact: true })
+    .click();
+  await page.getByRole("tab", { name: "Clothing", exact: true }).click();
+  await page.getByRole("button", { name: "Field shirt", exact: true }).click();
+  await page.getByRole("button", { name: "Save avatar", exact: true }).click();
+  await expect(
+    page.getByRole("button", {
+      name: "Continue with this avatar",
+      exact: true,
+    }),
+  ).toBeEnabled();
+  await page
+    .getByRole("button", { name: "Continue with this avatar", exact: true })
+    .click();
   await page
     .getByRole("checkbox", { name: "Work & Purpose", exact: true })
     .click();
@@ -199,6 +225,12 @@ try {
     page.getByRole("checkbox", { name: "Work & Purpose", exact: true }),
   ).toBeChecked();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page
+    .getByRole("radio", { name: "Programming: Expert", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Continue with these skills", exact: true })
+    .click();
   diagnostics.checkpoint("onboarding-save");
   await page
     .getByRole("button", {
@@ -210,20 +242,17 @@ try {
   await expect(
     page.getByRole("heading", { name: "Pick your next quest", exact: true }),
   ).toBeVisible();
-  // Experience is optional profile editing, outside the first-run journey.
-  await page
-    .getByRole("link", { name: "Settings and profile", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Programming: Expert", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Confirm experience correction", exact: true })
-    .click();
-  await expect(
-    visibleText("Current assessment: Expert", { exact: true }),
-  ).toBeVisible({ timeout: 15000 });
-  await page.getByRole("tab", { name: "Quests", exact: true }).click();
+  const initialCharacter = await (
+    await context.request.get("http://localhost:5217/api/state", {
+      headers: { Authorization: `Bearer ${fixture.token}` },
+    })
+  ).json();
+  expect(initialCharacter.profile.characterName).toBe("Browser adventurer");
+  expect(initialCharacter.profile.portraitId).toBe("portrait-1");
+  expect(initialCharacter.profile.avatarCode).toBe("v2:5:3:0:4:0:6:0");
+  expect(initialCharacter.skills.find((skill) => skill.id === "s07").xp).toBe(
+    12005,
+  );
   diagnostics.checkpoint("custom-quest");
   await page
     .getByRole("button", { name: "Create a custom quest", exact: true })
@@ -334,7 +363,7 @@ try {
     .click();
   await page
     .getByRole("button", {
-      name: "View quest & rewards: Browser verified custom quest",
+      name: "Quest details: Browser verified custom quest",
       exact: true,
     })
     .click();
@@ -376,20 +405,32 @@ try {
   await page.screenshot({ path: path.join(artifacts, "available-quests.png") });
   await page
     .getByRole("button", {
+      name: "Quest details: Browser verified custom quest",
+      exact: true,
+    })
+    .click();
+  await page
+    .getByRole("button", {
       name: "Start: Browser verified custom quest",
       exact: true,
     })
     .click();
+  await expect(
+    page.getByRole("button", { name: "Open active quest", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Back to available quests", exact: true })
+    .click();
   await page.getByRole("tab", { name: "Active", exact: true }).click();
   const activeQuestLink = page.getByRole("link", {
-    name: "View quest & rewards: Browser verified custom quest",
+    name: "Quest details: Browser verified custom quest",
     exact: true,
   });
   await expect(activeQuestLink).toBeVisible();
   await verifyHistorySearch("Active");
   await expect(
     visibleText("I have delivered the working result", { exact: true }),
-  ).toHaveCount(0);
+  ).toHaveCount(1);
   await activeQuestLink.evaluate((element) =>
     element.parentElement.scrollIntoView({ block: "start" }),
   );
@@ -403,7 +444,7 @@ try {
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: path.join(artifacts, "active-quests.png") });
-  await page.getByRole("link", { name: /^View quest & rewards:/ }).click();
+  await page.getByRole("link", { name: /^Quest details:/ }).click();
   await expect(
     page.getByRole("heading", { name: "Complete when", exact: true }),
   ).toBeVisible();
@@ -505,7 +546,9 @@ try {
     .getByRole("button", { name: "Keep adventuring", exact: true })
     .click();
   await page.getByRole("link", { name: "Back to Home", exact: true }).click();
-  await expect(visibleText("Your character", { exact: true })).toBeVisible();
+  await expect(
+    visibleText("Browser adventurer", { exact: true }),
+  ).toBeVisible();
   await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
   console.log("Verified completion response-loss retry and character totals.");
   diagnostics.checkpoint("character");
@@ -580,7 +623,7 @@ try {
     .click();
   await expect(page.getByRole("button", { name: /^Complete:/ })).toHaveCount(0);
   await expect(
-    visibleText("Work & Purpose: 1 day in this streak. Done today.", {
+    visibleText("1-day streak. Done today.", {
       exact: true,
     }),
   ).toBeVisible();
@@ -592,7 +635,7 @@ try {
     await expect(section).toHaveAttribute("aria-expanded", "false");
   }
   await page
-    .getByRole("heading", { name: "Your character", exact: true })
+    .getByRole("heading", { name: "Browser adventurer", exact: true })
     .scrollIntoViewIfNeeded();
   await page.setViewportSize({ width: 320, height: 844 });
   expect(
@@ -604,7 +647,7 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   const portrait = await page
     .getByRole("img", {
-      name: "Illustrated traveler character portrait",
+      name: "Your customizable traveler avatar",
       exact: true,
     })
     // RN Web also emits an inner accessibility img. Measure the visible wrapper.
@@ -629,7 +672,7 @@ try {
     .getByRole("link", { name: "Settings and profile", exact: true })
     .click();
   await expect(
-    visibleText("280 base XP earned", { exact: true }),
+    visibleText("Your interests and experience", { exact: true }),
   ).toBeVisible();
   const response = await context.request.get(
     "http://localhost:5217/api/state",
@@ -650,15 +693,19 @@ try {
   const download = await downloadEvent;
   const exported = JSON.parse(await fs.readFile(await download.path(), "utf8"));
   expect(exported.state.overallXp).toBe(280);
+  expect(exported.state.profile.avatarCode).toBe(
+    initialCharacter.profile.avatarCode,
+  );
   expect(exported.completions[0].snapshot.title).toBe(
     "Browser verified custom quest",
   );
+  await page.goBack();
   await page.getByRole("tab", { name: "Quests", exact: true }).click();
   await page.getByRole("tab", { name: "Completed", exact: true }).click();
   await verifyHistorySearch("Completed");
   await expect(
     page.getByRole("link", {
-      name: "View quest & rewards: Browser verified custom quest",
+      name: "Quest details: Browser verified custom quest",
       exact: true,
     }),
   ).toBeVisible();
@@ -697,7 +744,7 @@ try {
       exact: true,
     });
     const downtime = page.getByRole("button", {
-      name: "Start: Enjoy some downtime",
+      name: "Quest details: Enjoy some downtime",
       exact: true,
     });
     await search.fill("no-matching-quest-for-this-search");
@@ -752,10 +799,22 @@ try {
     page.off("request", recordDiscoveryWrite);
   }
   await page
+    .getByRole("button", {
+      name: "Quest details: Enjoy some downtime",
+      exact: true,
+    })
+    .click();
+  await page
     .getByRole("button", { name: "Start: Enjoy some downtime", exact: true })
     .click();
+  await expect(
+    page.getByRole("button", { name: "Open active quest", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Back to available quests", exact: true })
+    .click();
   await page.getByRole("tab", { name: "Active", exact: true }).click();
-  await page.getByRole("link", { name: /^View quest & rewards:/ }).click();
+  await page.getByRole("link", { name: /^Quest details:/ }).click();
   await page
     .getByRole("button", { name: "Do Now with an optional timer", exact: true })
     .click();
@@ -773,7 +832,9 @@ try {
   expect(duringTimer.overallXp).toBe(280);
   console.log("Verified completed list, export, and timer without XP award.");
   await page.getByRole("link", { name: "Back to Home", exact: true }).click();
-  await expect(visibleText("Your character", { exact: true })).toBeVisible();
+  await expect(
+    visibleText("Browser adventurer", { exact: true }),
+  ).toBeVisible();
   await expect(page).toHaveURL("http://localhost:8081/");
   await page.goBack();
   await expect(
@@ -880,7 +941,7 @@ try {
   await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "Quests", exact: true }).click();
   await page.getByRole("tab", { name: "Active", exact: true }).click();
-  await page.getByRole("link", { name: /^View quest & rewards:/ }).click();
+  await page.getByRole("link", { name: /^Quest details:/ }).click();
   await expect(
     page.getByRole("button", {
       name: "Complete: Enjoy some downtime",
@@ -926,7 +987,7 @@ try {
     .click();
   await page
     .getByRole("button", {
-      name: "View quest & rewards: Calendar planned quest",
+      name: "Quest details: Calendar planned quest",
       exact: true,
     })
     .click();
@@ -987,7 +1048,7 @@ try {
   ).toBeVisible();
   await page.screenshot({ path: path.join(artifacts, "active-planning.png") });
   await page
-    .getByRole("link", { name: /^View quest & rewards:/ })
+    .getByRole("link", { name: /^Quest details:/ })
     .and(page.locator(`a[href="/quest/${calendarQuest.occurrence.id}"]`))
     .click();
   diagnostics.checkpoint("plan-edit");
@@ -1056,6 +1117,7 @@ try {
     "Quest plan editing rejected invalid dates, persisted unscheduled date/time removal and today's timed plan, and preserved XP.",
   );
   diagnostics.checkpoint("viewports");
+  await verifyNextFeatures({ page, context, fixture, artifacts, visibleText });
   for (const [width, height] of [
     [320, 720],
     [430, 932],
@@ -1066,6 +1128,7 @@ try {
     for (const name of ["heading", "rank"]) {
       const background = page
         .getByTestId(`journal-background-${name}`)
+        .and(page.locator(':not([aria-hidden="true"], [aria-hidden="true"] *)'))
         .filter({ visible: true });
       const bounds = await background.evaluate((element) => {
         const image = element.getBoundingClientRect();

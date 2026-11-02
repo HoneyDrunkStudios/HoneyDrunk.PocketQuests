@@ -40,7 +40,17 @@ const {
 } = require("../../src/features/progression/level-progress-view.tsx");
 const {
   levelProgress,
+  rewardProgressStart,
 } = require("../../src/features/progression/level-progress.ts");
+
+test("confirmed reward animation starts at the previous level fill when crossing a boundary", () => {
+  const previous = rewardProgressStart("overall", 110, 20);
+  assert.equal(previous.earned / previous.required, 0.9);
+  const next = levelProgress("overall", 110, 2);
+  assert.equal(next.earned / next.required, 10 / 300);
+  assert.equal(rewardProgressStart("skill", 6, 2).earned, 4);
+  assert.equal(rewardProgressStart("overall", 10, 11), null);
+});
 
 test("same-named categories and attributes expose distinct accessible progress names", () => {
   const { renderToStaticMarkup } = require("react-dom/server");

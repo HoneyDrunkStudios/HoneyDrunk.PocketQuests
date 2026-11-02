@@ -40,6 +40,9 @@ internal static class QuestCommandMapping
                 row.NewTimeZone,
                 row.ExpectedTimeZone,
                 row.ConfirmZoneChange,
-                row.HasExpiryWarnings);
+                row.HasExpiryWarnings,
+                row.CharacterName,
+                row.PortraitId,
+                row.AvatarCode);
     }
 }

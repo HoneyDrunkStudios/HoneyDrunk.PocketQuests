@@ -51,6 +51,7 @@ public static class ServiceRegistration
         services.AddScoped<OccurrenceReadService>();
         services.AddScoped<LifecycleService>();
         services.AddScoped<ILifecycleService>(provider => provider.GetRequiredService<LifecycleService>());
+        services.AddScoped<PocketQuests.Services.Discoveries.ISavedPlaceService, PocketQuests.Services.Discoveries.SavedPlaceService>();
         services.AddScoped<ICatalogService, CatalogService>();
         services.AddScoped<IPlanningService, PlanningService>();
         return services;

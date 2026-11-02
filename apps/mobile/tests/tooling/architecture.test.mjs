@@ -8,6 +8,13 @@ const root = fileURLToPath(new URL("../..", import.meta.url));
 const eslint = new ESLint({ cwd: root });
 const component = "src/features/quests/new-screen.tsx";
 const invalid = [
+  [component, 'import * as Location from "expo-location";', "platform"],
+  ["src/api/places-copy.ts", 'fetch("https://example.com");', "http"],
+  [
+    "src/features/progression/new-screen.tsx",
+    'import { dailyPlan } from "../quests/daily-plan";',
+    "feature",
+  ],
   [component, 'globalThis[`fetch`]("/x");', "http"],
   [component, '(globalThis as typeof globalThis).fetch("/x");', "http"],
   [component, 'let send; ({ fetch: send } = globalThis); send("/x");', "http"],
@@ -69,6 +76,19 @@ const invalid = [
   [component, 'await import("@/features/profile/settings-editor");', "feature"],
 ];
 const valid = [
+  ["src/api/places-client.ts", 'fetch("https://example.com");'],
+  [
+    "src/features/progression/map-location.ts",
+    'import * as Location from "expo-location";',
+  ],
+  [
+    "src/features/progression/character-home.tsx",
+    'import { TodayQuests } from "../quests/today-quests";',
+  ],
+  [
+    "src/features/progression/reward-journal.tsx",
+    'import { rewardCosmetics } from "../profile/avatar-look";',
+  ],
   ["src/api/client.ts", 'fetch("/api/state");'],
   ["src/session/identity-client.ts", 'globalThis.fetch("/users/me");'],
   ["src/session/storage.ts", 'import * as Store from "expo-secure-store";'],

@@ -25,6 +25,7 @@ export function QuestFilterToggle({
         borderWidth: 1,
         borderColor: colors.line,
         borderRadius: 10,
+        alignSelf: "flex-start",
       }}
     >
       <Text style={styles.text}>

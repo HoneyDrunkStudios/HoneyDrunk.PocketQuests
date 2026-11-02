@@ -9,6 +9,8 @@ export const questActions = {
   saveSkill: "save-skill",
   archiveSkill: "archive-skill",
   interests: "interests",
+  saveCharacter: "save-character",
+  saveAvatar: "save-avatar",
   finishOnboarding: "finish-onboarding",
   plan: "plan",
   zone: "zone",

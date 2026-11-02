@@ -98,6 +98,8 @@ const actionLabels: Record<Command["action"], string> = {
   "save-skill": "Save skill",
   "archive-skill": "Archive skill",
   interests: "Choose interests",
+  "save-character": "Save character",
+  "save-avatar": "Save traveler appearance",
   "finish-onboarding": "Finish setup",
   plan: "Plan quest",
   zone: "Change time zone",

@@ -6,4 +6,8 @@ namespace PocketQuests.Domain.Models.Accounts;
 /// <summary>A consistent private snapshot; credentials, operation payloads and other accounts are excluded.</summary>
 public record QuestExport(int SchemaVersion, DateTimeOffset GeneratedAt, DateTimeOffset SnapshotCutoff, Guid AccountId,
     QuestState State, ImmutableArray<QuestDefinition> DefinitionRevisions, ImmutableArray<Completion> Completions,
-    ImmutableArray<UndoEvent> Undos, string Notice = "Only server-confirmed data at the snapshot cutoff is included. Unsynced device changes are excluded.");
+    ImmutableArray<UndoEvent> Undos, string Notice = "Only server-confirmed data at the snapshot cutoff is included. Unsynced device changes are excluded.")
+{
+    /// <summary>Gets saved places from the same private export transaction.</summary>
+    public ImmutableArray<PocketQuests.Domain.Models.Discoveries.SavedPlace> SavedPlaces { get; init; } = [];
+}

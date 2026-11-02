@@ -48,6 +48,17 @@ function ProgressIcon({ color }: TabIconProps) {
     />
   );
 }
+function ExploreIcon({ color }: TabIconProps) {
+  return (
+    <Ionicons
+      name="map-outline"
+      color={typeof color === "string" ? color : colors.muted}
+      size={26}
+      accessible={false}
+      aria-hidden
+    />
+  );
+}
 export const unstable_settings = { anchor: "index" };
 export default function Layout() {
   const { signedIn } = useSession();
@@ -95,6 +106,14 @@ export default function Layout() {
           title: "Calendar",
           tabBarAccessibilityLabel: "Calendar",
           tabBarIcon: CalendarIcon,
+        }}
+      />
+      <Tabs.Screen
+        name="explore"
+        options={{
+          title: "Explore",
+          tabBarAccessibilityLabel: "Explore",
+          tabBarIcon: ExploreIcon,
         }}
       />
       <Tabs.Screen

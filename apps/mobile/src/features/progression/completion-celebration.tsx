@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { RewardProgress } from "./reward-progress";
+import { useCelebrationMotion } from "./use-celebration-motion";
 import { Text, View } from "react-native";
-import { Button, Card, Label, createStyles } from "@honeydrunk/ui-native";
+import { Button, Card, Label, styles } from "../../shared/ui";
 import { pocketQuestsTheme } from "../../shared/theme";
 import type { CompletionFeedback } from "./completion-feedback";
 
-const styles = createStyles(pocketQuestsTheme);
 export function CompletionCelebration({
   feedback,
   canUndo,
@@ -17,6 +18,7 @@ export function CompletionCelebration({
   onDismiss(): void;
 }) {
   const [now, setNow] = useState(Date.now);
+  const reduceMotion = useCelebrationMotion();
   useEffect(() => {
     // Static celebration respects reduced motion without hiding the reward.
     const timer = setTimeout(
@@ -48,9 +50,11 @@ export function CompletionCelebration({
       <Label>{feedback.title}</Label>
       <View style={{ gap: 8 }}>
         {feedback.rewards.map((r) => (
-          <Label key={`${r.track}:${r.trackId}`}>
-            {r.name} · +{r.xp} {r.track.toLowerCase()} XP
-          </Label>
+          <RewardProgress
+            key={`${r.track}:${r.trackId}`}
+            {...r}
+            reduceMotion={reduceMotion}
+          />
         ))}
       </View>
       {feedback.levelUps.length > 0 && (

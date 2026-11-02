@@ -101,5 +101,44 @@ public sealed class EfBusinessServiceSqlTests(SchemaFixture fixture) : IClassFix
         Assert.Equal(TimeSpan.Zero, persisted.CreatedAt.Offset);
     }
 
+    /// <summary>Tracked edits cannot rewrite character and avatar inputs retained for receipt replay.</summary>
+    /// <param name="field">The immutable appearance field to attempt to overwrite.</param>
+    /// <returns>Completion after rejecting the edit and verifying original receipt projections.</returns>
+    [Theory]
+    [InlineData("name")]
+    [InlineData("portrait")]
+    [InlineData("avatar")]
+    public async Task CharacterHistoryMutationIsRejectedAndOriginalReceiptsRemainReplayable(string field)
+    {
+        var owner = Identity();
+        var workflow = fixture.Commands();
+        await workflow.Initialize(owner, "Etc/UTC", Start);
+        var character = new QuestCommand(Guid.NewGuid(), QuestActions.SaveCharacter, CharacterName: "Rowan", PortraitId: "portrait-2");
+        var avatar = new QuestCommand(Guid.NewGuid(), QuestActions.SaveAvatar, AvatarCode: AvatarAppearance.Starter);
+        await workflow.Execute(owner, character, Start);
+        await workflow.Execute(owner, avatar, Start);
+        await using (var scope = fixture.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await using var transaction = await db.Database.BeginTransactionAsync();
+            var operation = field == "avatar" ? avatar.OperationId : character.OperationId;
+            var history = await db.QuestCommandHistory.SingleAsync(row => row.Id == operation);
+            if (field == "name")
+                history.CharacterName = "Forged name";
+            else if (field == "portrait")
+                history.PortraitId = "portrait-3";
+            else
+                history.AvatarCode = "v1:0:0:0:0:0";
+            await Assert.ThrowsAsync<InvalidOperationException>(() => db.SaveChangesAsync());
+            await transaction.RollbackAsync();
+        }
+
+        var replayedCharacter = await fixture.Commands().Execute(owner, character, Start.AddHours(1));
+        Assert.Equal("Rowan", replayedCharacter.Profile.CharacterName);
+        Assert.Equal("portrait-2", replayedCharacter.Profile.PortraitId);
+        var replayedAvatar = await fixture.Commands().Execute(owner, avatar, Start.AddHours(1));
+        Assert.Equal(AvatarAppearance.Starter, replayedAvatar.Profile.AvatarCode);
+    }
+
     private static AccountIdentity Identity() => new("honeydrunk-identity", "usr_" + Guid.NewGuid().ToString("N")[..26].ToUpperInvariant());
 }

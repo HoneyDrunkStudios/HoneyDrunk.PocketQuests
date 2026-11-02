@@ -13,7 +13,10 @@ if (instance != "PocketQuests" && !System.Text.RegularExpressions.Regex.IsMatch(
 
 // Remote devices use an explicitly configured trusted HTTPS reverse proxy.
 // Never accept a caller-supplied upstream, connection string, subject or user ID.
-builder.WebHost.UseUrls("http://127.0.0.1:15219");
+var port = builder.Configuration.GetValue("DevelopmentSignIn:Port", 15219);
+if (port is < 1024 or > 65535)
+    throw new InvalidOperationException("Choose a loopback development port between 1024 and 65535.");
+builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 1_048_576);
 builder.Logging.ClearProviders();
 builder.Logging.AddSimpleConsole();

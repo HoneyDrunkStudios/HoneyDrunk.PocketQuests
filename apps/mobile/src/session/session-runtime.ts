@@ -202,6 +202,9 @@ export function createSessionRuntime(clockSource: ClockSource) {
     exportData: requests.exportData,
     previewZone: requests.previewZone,
     previewClock: requests.previewClock,
+    readDiscoveries: requests.readDiscoveries,
+    saveDiscovery: requests.saveDiscovery,
+    removeDiscovery: requests.removeDiscovery,
     dismissCompletion: () =>
       base.setCompletionNotices((notices) =>
         notices

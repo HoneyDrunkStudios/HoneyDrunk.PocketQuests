@@ -18,6 +18,9 @@ CREATE TABLE [pocketquests].[Account] (
     [ModifiedAt] datetimeoffset(7) NOT NULL CONSTRAINT [DF_Account_ModifiedAt] DEFAULT (TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')),
     [RowVersion] rowversion NOT NULL,
     [HasPendingReconciliation] bit NOT NULL CONSTRAINT [DF_Account_HasPendingReconciliation] DEFAULT (0),
+    [CharacterName] nvarchar(40) COLLATE Latin1_General_100_BIN2 NULL,
+    [PortraitId] varchar(16) COLLATE Latin1_General_100_BIN2 NULL,
+    [AvatarCode] varchar(16) COLLATE Latin1_General_100_BIN2 NULL,
     CONSTRAINT [PK_Account] PRIMARY KEY CLUSTERED ([Id]),
     CONSTRAINT [UQ_Account_IdentityUserId] UNIQUE ([IdentityUserId]),
     CONSTRAINT [UQ_Account_Id_IdentityUserId] UNIQUE ([Id], [IdentityUserId]),
@@ -30,6 +33,10 @@ CREATE TABLE [pocketquests].[Account] (
     CONSTRAINT [CK_Account_CreatedAtUtc] CHECK (DATEPART(TZOFFSET,[CreatedAt])=0),
     CONSTRAINT [CK_Account_ModifiedAtUtc] CHECK (DATEPART(TZOFFSET,[ModifiedAt])=0),
     CONSTRAINT [CK_Account_ModificationClock] CHECK ([ModifiedAt]>=[CreatedAt]),
+    CONSTRAINT [CK_Account_CharacterName] CHECK ([CharacterName] IS NULL OR (LEN(LTRIM(RTRIM([CharacterName]))) BETWEEN 1 AND 40 AND DATALENGTH([CharacterName])<=80)),
+    CONSTRAINT [CK_Account_PortraitId] CHECK ([PortraitId] IS NULL OR [PortraitId] IN ('portrait-1','portrait-2','portrait-3','portrait-4','portrait-5','portrait-6')),
+    CONSTRAINT [CK_Account_CharacterPair] CHECK (([CharacterName] IS NULL AND [PortraitId] IS NULL) OR ([CharacterName] IS NOT NULL AND [PortraitId] IS NOT NULL)),
+    CONSTRAINT [CK_Account_AvatarCode] CHECK ([AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]')),
     CONSTRAINT [FK_Account_ProfileReward_SelectedBadge] FOREIGN KEY ([SelectedBadgeId], [SelectedBadgeKind]) REFERENCES [pocketquests].[ProfileReward] ([Id], [KindCode]) ON DELETE NO ACTION,
     CONSTRAINT [FK_Account_ProfileReward_SelectedFrame] FOREIGN KEY ([SelectedFrameId], [SelectedFrameKind]) REFERENCES [pocketquests].[ProfileReward] ([Id], [KindCode]) ON DELETE NO ACTION
 );

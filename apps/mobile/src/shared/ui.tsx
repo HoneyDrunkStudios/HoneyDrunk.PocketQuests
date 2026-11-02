@@ -16,6 +16,7 @@ export const colors = {
 const base = createStyles(pocketQuestsTheme);
 export const styles = StyleSheet.create({
   ...base,
+  input: { ...base.input, color: pocketQuestsTheme.colors.text },
   // Expo registers a runtime face in Android's normal slot. Asking for a bold
   // weight selects an unregistered variant and falls back to the system font.
   title: {
