@@ -135,4 +135,3 @@ GRANT INSERT, UPDATE ON OBJECT::[pocketquests].[AccountAccessRestriction] TO [po
 GO
 GRANT DELETE ON OBJECT::[pocketquests].[AccountAccessRestriction] TO [pocketquests_lifecycle_runtime];
 GO
-
