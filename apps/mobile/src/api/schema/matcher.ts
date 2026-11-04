@@ -45,29 +45,42 @@ export function createSchemaMatcher(contract: {
       return schema.oneOf.filter((part) => matches(value, part)).length === 1;
     if (schema.allOf) return schema.allOf.every((part) => matches(value, part));
     if (schema.enum) return schema.enum.includes(value);
+    return matchesType(value, schema);
+  }
+
+  function matchesType(
+    value: unknown,
+    schema: Exclude<Schema, boolean>,
+  ): boolean {
     if (schema.type === "null") return value === null;
     if (schema.type === "array")
       return (
         Array.isArray(value) &&
         value.every((item) => matches(item, schema.items ?? false))
       );
-    if (schema.type === "object")
-      return (
-        isRecord(value) &&
-        (schema.required ?? []).every((name) => Object.hasOwn(value, name)) &&
-        Object.entries(value).every(([name, child]) =>
-          matches(
-            child,
-            schema.properties && Object.hasOwn(schema.properties, name)
-              ? schema.properties[name]
-              : (schema.additionalProperties ?? true),
-          ),
-        )
-      );
+    if (schema.type === "object") return matchesObject(value, schema);
     if (schema.type === "integer") return Number.isInteger(value);
     if (schema.type === "number")
       return typeof value === "number" && Number.isFinite(value);
     return typeof value === schema.type;
+  }
+
+  function matchesObject(
+    value: unknown,
+    schema: Exclude<Schema, boolean>,
+  ): boolean {
+    return (
+      isRecord(value) &&
+      (schema.required ?? []).every((name) => Object.hasOwn(value, name)) &&
+      Object.entries(value).every(([name, child]) =>
+        matches(
+          child,
+          schema.properties && Object.hasOwn(schema.properties, name)
+            ? schema.properties[name]
+            : (schema.additionalProperties ?? true),
+        ),
+      )
+    );
   }
 
   return {

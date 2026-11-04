@@ -8,7 +8,7 @@ export function UserDirectory({
   more,
   onSelect,
   onMore,
-}: {
+}: Readonly<{
   rows: AdminUser[];
   selectedId?: string;
   pending: boolean;
@@ -16,7 +16,7 @@ export function UserDirectory({
   more: boolean;
   onSelect: (user: AdminUser) => void;
   onMore: () => void;
-}) {
+}>) {
   return (
     <section className="directory panel" aria-labelledby="directory-heading">
       <div className="panel-heading">

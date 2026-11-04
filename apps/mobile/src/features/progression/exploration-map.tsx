@@ -113,11 +113,16 @@ export function ExplorationMap({
             )
               return null;
             const found = discovered.has(point.id);
+            let discoveryLabel = "undiscovered";
+            if (found)
+              discoveryLabel = visited?.has(point.id)
+                ? "saved, visited"
+                : "saved, want to visit";
             return (
               <Pressable
                 key={point.id}
                 accessibilityRole="button"
-                accessibilityLabel={`${index + 1}. ${point.name}, ${point.kind}, ${found ? (visited?.has(point.id) ? "saved, visited" : "saved, want to visit") : "undiscovered"}`}
+                accessibilityLabel={`${index + 1}. ${point.name}, ${point.kind}, ${discoveryLabel}`}
                 accessibilityState={{ selected: point.id === selected }}
                 onPress={() => onSelect(point)}
                 style={{

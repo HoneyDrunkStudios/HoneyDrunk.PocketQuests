@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import type {
   CatalogResponse,
   Quest,
@@ -9,12 +10,31 @@ export function QuestFields({
   catalog,
   disabled,
   onChange,
-}: {
+}: Readonly<{
   value: Quest;
   catalog: CatalogResponse;
   disabled: boolean;
   onChange: (quest: Quest) => void;
-}) {
+}>) {
+  const focusTarget = useRef<{
+    pool: "attributes" | "skills";
+    id: string;
+  } | null>(null);
+  function restoreTargetFocus(
+    node: HTMLSelectElement | null,
+    pool: "attributes" | "skills",
+    id: string,
+  ) {
+    if (
+      node &&
+      focusTarget.current?.pool === pool &&
+      focusTarget.current.id === id
+    ) {
+      node.focus();
+      focusTarget.current = null;
+    }
+  }
+
   function pool(
     key: "attributes" | "skills",
     options: { id: string; name: string }[],
@@ -31,26 +51,35 @@ export function QuestFields({
           independently.
         </p>
         {shares.map((share, index) => (
-          <div className="pool-row" key={index}>
+          <div className="pool-row" key={share.id}>
             <select
+              ref={(node) => restoreTargetFocus(node, key, share.id)}
               aria-label={`${key} target ${index + 1}`}
               value={share.id}
-              onChange={(event) =>
+              onChange={(event) => {
+                const id = event.target.value;
+                focusTarget.current = { pool: key, id };
                 update(
                   shares.map((row, at) =>
-                    at === index ? { ...row, id: event.target.value } : row,
+                    at === index ? { ...row, id } : row,
                   ),
-                )
-              }
+                );
+              }}
             >
               {options.map((option) => (
-                <option key={option.id} value={option.id}>
+                <option
+                  key={option.id}
+                  value={option.id}
+                  disabled={shares.some(
+                    (row) => row !== share && row.id === option.id,
+                  )}
+                >
                   {option.name}
                 </option>
               ))}
             </select>
             <label>
-              Percent
+              Percent{" "}
               <input
                 aria-label={`${key} percent ${index + 1}`}
                 type="number"
@@ -139,7 +168,7 @@ export function QuestFields({
       />
       <div className="quest-options">
         <label>
-          Category
+          Category{" "}
           <select
             value={value.categoryId}
             onChange={(event) =>
@@ -154,7 +183,7 @@ export function QuestFields({
           </select>
         </label>
         <label>
-          Rank
+          Rank{" "}
           <select
             value={value.rank}
             onChange={(event) =>
@@ -167,7 +196,7 @@ export function QuestFields({
           </select>
         </label>
         <label>
-          Effort
+          Effort{" "}
           <select
             value={value.effort}
             onChange={(event) =>
@@ -183,7 +212,7 @@ export function QuestFields({
           </select>
         </label>
         <label>
-          Optional deadline penalty
+          Optional deadline penalty{" "}
           <select
             value={value.penaltyPercent}
             onChange={(event) =>

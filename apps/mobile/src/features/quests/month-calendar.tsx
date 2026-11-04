@@ -129,11 +129,10 @@ export function MonthCalendar({
                         height: 5,
                         marginTop: 3,
                         borderRadius: 3,
-                        backgroundColor: counts.has(date)
-                          ? date === selected
-                            ? colors.onGold
-                            : colors.gold
-                          : "transparent",
+                        backgroundColor: dateMarkerColor(
+                          counts.has(date),
+                          date === selected,
+                        ),
                       }}
                     />
                   </Pressable>
@@ -147,4 +146,9 @@ export function MonthCalendar({
       </ScrollView>
     </Card>
   );
+}
+
+function dateMarkerColor(hasQuests: boolean, selected: boolean) {
+  if (!hasQuests) return "transparent";
+  return selected ? colors.onGold : colors.gold;
 }

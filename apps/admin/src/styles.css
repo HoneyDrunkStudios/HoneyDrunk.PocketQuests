@@ -36,9 +36,6 @@ body {
   background: var(--bg);
   color: var(--ink);
 }
-[hidden] {
-  display: none !important;
-}
 a {
   color: inherit;
 }
@@ -119,7 +116,9 @@ textarea:focus-visible {
   height: 44px;
   display: grid;
   place-items: center;
-  font: 15px Georgia;
+  font:
+    15px Georgia,
+    serif;
   color: var(--gold);
 }
 .account {
@@ -411,7 +410,7 @@ footer {
 }
 @media (prefers-reduced-motion: reduce) {
   * {
-    scroll-behavior: auto !important;
+    scroll-behavior: auto;
   }
 }
 
@@ -525,4 +524,9 @@ legend {
   .quest-options {
     grid-template-columns: 1fr;
   }
+}
+
+/* Keep native hidden elements out of layout after component display rules. */
+[hidden] {
+  display: none;
 }

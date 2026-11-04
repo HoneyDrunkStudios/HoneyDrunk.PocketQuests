@@ -6,10 +6,10 @@ import type {
 export function QuestPreview({
   quest,
   catalog,
-}: {
+}: Readonly<{
   quest: Quest;
   catalog: CatalogResponse;
-}) {
+}>) {
   return (
     <section className="quest-preview" aria-labelledby="quest-preview-heading">
       <p className="eyebrow">PLAYER PREVIEW · SERVER VALIDATED</p>

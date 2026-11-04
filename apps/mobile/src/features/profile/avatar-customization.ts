@@ -35,12 +35,14 @@ export function randomizeAvatarSection(
       ? Object.values(avatarSectionSlots).flat()
       : avatarSectionSlots[section];
   for (const slot of slots) {
-    const owned =
-      slot === "outfit"
-        ? availableCosmetic(outfits[current.outfit].rewardId, rewards)
-        : slot === "accessory"
-          ? availableCosmetic(accessories[current.accessory].rewardId, rewards)
-          : true;
+    let owned = true;
+    if (slot === "outfit")
+      owned = availableCosmetic(outfits[current.outfit].rewardId, rewards);
+    if (slot === "accessory")
+      owned = availableCosmetic(
+        accessories[current.accessory].rewardId,
+        rewards,
+      );
     if (!kept[slot] || !owned) current[slot] = candidate[slot];
   }
   return encodeAvatar(current);

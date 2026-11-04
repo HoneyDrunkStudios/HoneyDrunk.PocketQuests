@@ -16,12 +16,12 @@ export function QuestStudio({
   api,
   onEndSession,
   onPlayers,
-}: {
+}: Readonly<{
   session: Session;
   api: AdminApi;
   onEndSession: (message: string) => void;
   onPlayers: () => void;
-}) {
+}>) {
   const [studio, setStudio] = useState<SystemQuestStudio | null>(null);
   const [selected, setSelected] = useState<AdminSystemQuest | null>(null);
   const [identity, setIdentity] = useState("");
@@ -134,13 +134,7 @@ export function QuestStudio({
       if (cause instanceof AdminApiError && [401, 403].includes(cause.status))
         onEndSession(cause.message);
       else {
-        setNotice(
-          cause instanceof AdminApiError && cause.status === 409
-            ? "This system quest changed. Reload the saved version before another change; your local edits are still shown."
-            : cause instanceof Error
-              ? cause.message
-              : "The request could not be confirmed.",
-        );
+        setNotice(studioFailureMessage(cause));
         setError(true);
         if (mutation) setLocked(true);
       }
@@ -488,4 +482,12 @@ export function QuestStudio({
       </main>
     </>
   );
+}
+
+function studioFailureMessage(cause: unknown) {
+  if (cause instanceof AdminApiError && cause.status === 409)
+    return "This system quest changed. Reload the saved version before another change; your local edits are still shown.";
+  return cause instanceof Error
+    ? cause.message
+    : "The request could not be confirmed.";
 }
