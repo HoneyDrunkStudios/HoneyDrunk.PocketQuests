@@ -1,5 +1,11 @@
 # Changelog
 
+## Focused avatar styling - November 4, 2026
+
+- Randomize or restore one appearance group while keeping the rest of the preview unchanged.
+- Add bounded preview Redo alongside Undo, with explicit saving and offline previews.
+- Preserve saved appearance formats, existing cosmetic ownership and account isolation.
+
 ## Traveler creation and daily adventures — November 2, 2026
 
 - Add a five-step first-run flow for character naming, full-body avatar creation, interests, starting skills and a first quest; retain existing accounts and XP.
