@@ -20,6 +20,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : BaseD
     /// <summary>Gets private saved places.</summary>
     public DbSet<PocketQuests.Data.Entities.Discoveries.SavedPlaceEntity> SavedPlace => Set<PocketQuests.Data.Entities.Discoveries.SavedPlaceEntity>();
 
+    /// <summary>Gets current product access restrictions.</summary>
+    public DbSet<AccountAccessRestrictionEntity> AccountAccessRestriction => Set<AccountAccessRestrictionEntity>();
+
     /// <summary>Gets Category rows.</summary>
     public DbSet<CategoryEntity> Category => Set<CategoryEntity>();
 

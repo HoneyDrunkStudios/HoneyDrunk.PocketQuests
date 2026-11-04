@@ -1,5 +1,69 @@
 {
   "schemas": {
+    "AdminUser": {
+      "required": [
+        "userId",
+        "characterName",
+        "zone",
+        "onboardingComplete",
+        "createdAt",
+        "suspended",
+        "reason",
+        "revision"
+      ],
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "characterName": {
+          "type": "string",
+          "nullable": true
+        },
+        "zone": {
+          "type": "string"
+        },
+        "onboardingComplete": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "suspended": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string",
+          "nullable": true
+        },
+        "revision": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "description": "Minimal product profile and current moderation state, excluding private quest content and provider data."
+    },
+    "AdminUserPage": {
+      "required": [
+        "users",
+        "nextCursor"
+      ],
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/AdminUser"
+          }
+        },
+        "nextCursor": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "description": "A bounded directory page; the next cursor retains the same search."
+    },
     "AnchorRequest": {
       "required": [
         "deviceId",
@@ -1756,6 +1820,53 @@
       },
       "description": "The public ScheduleState JSON contract, independent of storage and domain behavior."
     },
+    "SearchUsersRequest": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "nullable": true
+        },
+        "after": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "description": "Search text stays in the body rather than access-log URLs."
+    },
+    "SetUserAccessRequest": {
+      "required": [
+        "userId",
+        "suspended",
+        "reason",
+        "expectedRevision"
+      ],
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "suspended": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "pattern": "^-?(?:0|[1-9]\\d*)$",
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "format": "int32"
+        }
+      },
+      "description": "An explicit product suspension or reactivation with stale-edit protection and a private reason."
+    },
     "Share": {
       "required": [
         "id",
@@ -2024,6 +2135,12 @@
     },
     "POST /api/discoveries/remove": {
       "$ref": "#/components/schemas/RemovalResult"
+    },
+    "POST /api/admin/users/search": {
+      "$ref": "#/components/schemas/AdminUserPage"
+    },
+    "POST /api/admin/users/access": {
+      "$ref": "#/components/schemas/AdminUser"
     }
   }
 }

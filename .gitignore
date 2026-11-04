@@ -23,3 +23,7 @@ artifacts/
 
 # Executed mobile test coverage
 apps/mobile/coverage/
+
+# React admin assets are rebuilt from locked apps/admin sources by the API build.
+src/PocketQuests.Api/wwwroot/admin/
+apps/admin/coverage/

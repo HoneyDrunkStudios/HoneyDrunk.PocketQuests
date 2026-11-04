@@ -23,6 +23,10 @@ public static class ServiceRegistration
     public static IServiceCollection AddQuestServices(this IServiceCollection services)
     {
         services.TryAddSingleton(TimeProvider.System);
+        services.AddOptions<PocketQuests.Services.Administration.AdminAccessOptions>();
+        services.AddScoped<PocketQuests.Services.Administration.AdminOperator>();
+        services.AddScoped<PocketQuests.Services.Administration.IAdminUserService, PocketQuests.Services.Administration.AdminUserService>();
+        services.AddScoped<PocketQuests.Services.Administration.IAccountAccessService, PocketQuests.Services.Administration.AccountAccessService>();
         services.AddScoped<ProfileHistoryService>();
         services.AddScoped<QuestDefinitionService>();
         services.AddScoped<QuestSeriesService>();

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi;
+using PocketQuests.Api.Administration;
 
 namespace PocketQuests.Api.OpenApi;
 
@@ -26,6 +27,20 @@ public static class QuestOpenApi
                     Scheme = "bearer",
                     Description = "Access token resolved by HoneyDrunk Identity.",
                 };
+                document.Components.SecuritySchemes["AdminSession"] = new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.ApiKey,
+                    In = ParameterLocation.Cookie,
+                    Name = "PocketQuests.Admin",
+                    Description = "Configured operator's HttpOnly session, obtained through /admin/login.",
+                };
+                document.Components.SecuritySchemes["AdminCsrf"] = new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.ApiKey,
+                    In = ParameterLocation.Header,
+                    Name = "X-CSRF-TOKEN",
+                    Description = "Anti-forgery proof from /api/admin/session; required with the administrative cookie.",
+                };
                 return Task.CompletedTask;
             });
             options.AddOperationTransformer((operation, context, token) =>
@@ -37,6 +52,16 @@ public static class QuestOpenApi
                         [new OpenApiSecuritySchemeReference("IdentityBearer", context.Document)] = [],
                     };
                     operation.Security = [requirement];
+                    if (context.Description.ActionDescriptor.EndpointMetadata.OfType<IAuthorizeData>().Any(data => data.Policy == AdminWeb.Policy))
+                    {
+                        operation.Security.Add(new OpenApiSecurityRequirement
+                        {
+                            [new OpenApiSecuritySchemeReference("AdminSession", context.Document)] = [],
+                            [new OpenApiSecuritySchemeReference("AdminCsrf", context.Document)] = [],
+                        });
+                        operation.Description = "Only the explicitly configured canonical Identity operator account is permitted.";
+                    }
+
                     operation.Responses ??= new();
                     operation.Responses.TryAdd("401", new OpenApiResponse { Description = "Authentication required" });
                     operation.Responses.TryAdd("403", new OpenApiResponse { Description = "Forbidden" });

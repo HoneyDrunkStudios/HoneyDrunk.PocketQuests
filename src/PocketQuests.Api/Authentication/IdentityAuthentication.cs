@@ -2,6 +2,7 @@ using HoneyDrunk.Identity.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 using PocketQuests.Domain.Models.Accounts;
+using PocketQuests.Services.Administration;
 using PocketQuests.Services.Lifecycle;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
@@ -9,7 +10,7 @@ using System.Text.Encodings.Web;
 namespace PocketQuests.Api.Authentication;
 
 /// <summary>Resolves bearer credentials exclusively through the shared Identity boundary.</summary>
-public sealed class IdentityAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, IdentityClient identity, ILifecycleService lifecycle)
+public sealed class IdentityAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, IdentityClient identity, ILifecycleService lifecycle, IAccountAccessService access)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     /// <inheritdoc />
@@ -23,6 +24,8 @@ public sealed class IdentityAuthentication(IOptionsMonitor<AuthenticationSchemeO
             var user = await identity.Resolve(header[7..].Trim(), Context.RequestAborted);
             if (user is null || user.State != IdentityProtocol.Active)
                 return AuthenticateResult.Fail("Sign in again.");
+            if (await access.IsSuspended(user.UserId, Context.RequestAborted))
+                return AuthenticateResult.Fail("Pocket Quests access is suspended.");
             await lifecycle.ObserveActive(user, Context.RequestAborted);
             var claims = new ClaimsIdentity([new Claim("iss", "honeydrunk-identity"), new Claim("sub", user.UserId)], Scheme.Name);
             return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(claims), Scheme.Name));

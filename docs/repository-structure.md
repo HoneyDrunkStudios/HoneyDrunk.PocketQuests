@@ -6,6 +6,8 @@ The root contains standard repository/build configuration and README. Product co
 | --- | --- |
 | `HoneyDrunk.PocketQuests.slnx` | Root .NET solution. |
 | `src/` | Contracts/Services/Domain/API/Data/SQL/Aspire projects. |
+| `apps/admin/` | React + TypeScript studio console, Vite build, typed API adapter and React interaction tests. |
+| `src/PocketQuests.Api/wwwroot/admin/` | Ignored generated console assets, built before API static-asset discovery and included in .NET publish. |
 | `tests/` | Backend and schema test projects. |
 | `tools/` | Replay probe and wire fixture tools. |
 | `apps/mobile/src/app/` | Expo Router routes and navigation layouts only. Route paths and public navigation stay unchanged. |

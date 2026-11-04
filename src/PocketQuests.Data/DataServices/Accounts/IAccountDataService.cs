@@ -5,6 +5,12 @@ namespace PocketQuests.Data.DataServices.Accounts;
 /// <summary>Persistence operations and entity-specific queries for Account.</summary>
 public partial interface IAccountDataService : IBaseDataService<AccountEntity>
 {
+    /// <summary>Checks the current Pocket Quests suspension for an Identity-verified user.</summary>
+    /// <param name="userId">Canonical verified Identity user identifier.</param>
+    /// <param name="token">Cancellation.</param>
+    /// <returns>Whether current product access is suspended.</returns>
+    Task<bool> IsAccessSuspended(string userId, CancellationToken token);
+
     /// <summary>Gets the account for the verified canonical Identity user.</summary>
     /// <param name="identityUserId">Verified canonical Identity user identifier.</param>
     /// <param name="cancellationToken">Cancellation.</param>

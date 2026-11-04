@@ -15,6 +15,11 @@
   <ItemGroup>
     <Using Include="Xunit" />
     <Compile Include="../../src/PocketQuests.AppHost/MobileEndpoint.cs" Link="Hosting/MobileEndpoint.cs" />
+    <!-- Run the same operator SQL/API cases in both package and pinned-source
+         modes; the source lane also measures their actual production coverage. -->
+    <Compile Include="../PocketQuests.SchemaTests/SchemaFixture*.cs" Link="Administration/%(Filename)%(Extension)" />
+    <Compile Include="../PocketQuests.SchemaTests/RelationalApiTests.cs;../PocketQuests.SchemaTests/RelationalApiTests.Admin.cs" Link="Administration/%(Filename)%(Extension)" />
+    <None Include="../../docs/schema/schema-contract.json" Link="schema-contract.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\PocketQuests.Domain\PocketQuests.Domain.csproj" />

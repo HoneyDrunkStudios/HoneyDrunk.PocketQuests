@@ -1,5 +1,11 @@
 # Changelog
 
+## Studio player administration — November 4, 2026
+
+- Add a browser console for the explicitly configured operator to search, inspect, suspend and reactivate initialized Pocket Quests profiles.
+- Require private reasons and explicit confirmation, preserve progress, reject stale concurrent edits and erase restriction/audit evidence with the target account.
+- Add server-side OIDC/PKCE session support, per-request shared Identity checks and anti-forgery protection, with access denied until configured.
+
 ## Traveler creation and daily adventures — November 2, 2026
 
 - Add a five-step first-run flow for character naming, full-body avatar creation, interests, starting skills and a first quest; retain existing accounts and XP.

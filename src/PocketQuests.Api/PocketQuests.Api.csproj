@@ -7,6 +7,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.12" />
   </ItemGroup>
   <PropertyGroup>
@@ -14,6 +15,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>be26a4e2-e7bf-4a13-90b9-86be79a088f4</UserSecretsId>
+    <DefaultItemExcludes>$(DefaultItemExcludes);wwwroot/admin/**</DefaultItemExcludes>
   </PropertyGroup>
   <ItemGroup Condition="'$(UseIdentitySource)' != 'true'">
     <PackageReference Include="HoneyDrunk.Identity.Client" Version="[$(IdentityClientVersion)]" />
@@ -25,4 +27,19 @@
     <PackageReference Include="HoneyDrunk.Data.Outbox.Dispatcher" Version="0.7.1" />
     <PackageReference Include="HoneyDrunk.Transport.AzureServiceBus" Version="0.7.2" />
   </ItemGroup>
+  <ItemGroup>
+    <_AdminFrontendInput Include="../../apps/admin/src/**/*;../../apps/admin/*.json;../../apps/admin/*.ts;../../apps/admin/index.html" />
+  </ItemGroup>
+  <!-- Build before static-asset discovery, including the first clean checkout.
+       Re-add Content so newly generated hashed assets participate in publish. -->
+  <Target Name="BuildAdminFrontend" Inputs="@(_AdminFrontendInput)" Outputs="$(MSBuildProjectDirectory)/wwwroot/admin/index.html">
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)/../../apps/admin" Command="npm ci --ignore-scripts" />
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)/../../apps/admin" Command="npm run build" />
+  </Target>
+  <Target Name="IncludeAdminFrontend" BeforeTargets="ResolveProjectStaticWebAssets" DependsOnTargets="BuildAdminFrontend">
+    <ItemGroup>
+      <Content Remove="wwwroot/admin/**/*" />
+      <Content Include="wwwroot/admin/**/*" />
+    </ItemGroup>
+  </Target>
 </Project>

@@ -3,6 +3,7 @@ using HoneyDrunk.Kernel.Hosting;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using PocketQuests.Api.AccountLifecycle;
+using PocketQuests.Api.Administration;
 using PocketQuests.Api.Authentication;
 using PocketQuests.Api.Endpoints;
 using PocketQuests.Api.Errors;
@@ -35,11 +36,13 @@ builder.Services.AddHttpClient<IdentityClient>(client =>
 });
 builder.Services.AddAuthentication("Identity").AddScheme<AuthenticationSchemeOptions, IdentityAuthentication>("Identity", _ => { });
 builder.Services.AddAuthorization();
+builder.AddAdminWeb();
 builder.AddApiHttpPolicy();
 builder.Services.AddQuestOpenApi();
 var app = builder.Build();
 app.UseMiddleware<ApiExceptionMiddleware>();
 app.UseApiTransport();
+app.UseAdminWeb();
 app.UseRouting();
 app.UseCors();
 app.Use(async (context, next) =>
@@ -63,4 +66,5 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
 app.MapDefaultEndpoints();
 app.MapProductEndpoints();
 PocketQuests.Api.Endpoints.Discoveries.DiscoveryEndpoints.MapDiscoveries(app);
+PocketQuests.Api.Endpoints.Administration.AdminEndpoints.MapAdministration(app);
 app.Run();

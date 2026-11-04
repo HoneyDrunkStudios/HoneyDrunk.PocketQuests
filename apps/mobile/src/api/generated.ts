@@ -1,4 +1,20 @@
 // Generated from contracts/pocketquests-v1.openapi.json. Run npm run generate:api.
+export type AdminUser = {
+  "userId": string;
+  "characterName": string | null;
+  "zone": string;
+  "onboardingComplete": boolean;
+  "createdAt": string;
+  "suspended": boolean;
+  "reason": string | null;
+  "revision": number;
+};
+
+export type AdminUserPage = {
+  "users": (AdminUser)[];
+  "nextCursor": string | null;
+};
+
 export type AnchorRequest = {
   "deviceId": string;
   "bootId": string;
@@ -350,6 +366,18 @@ export type ScheduleState = {
   "accountPaused": boolean;
 };
 
+export type SearchUsersRequest = {
+  "query"?: string | null;
+  "after"?: string | null;
+};
+
+export type SetUserAccessRequest = {
+  "userId": string;
+  "suspended": boolean;
+  "reason": string;
+  "expectedRevision": number | string;
+};
+
 export type Share = {
   "id": string;
   "basisPoints": number;
@@ -420,4 +448,6 @@ export type ApiOperations = {
   "GET /api/discoveries": { body: undefined; query: undefined; response: (SavedPlace)[] };
   "POST /api/discoveries/save": { body: SavePlaceRequest; query: undefined; response: SavedPlace };
   "POST /api/discoveries/remove": { body: RemovePlaceRequest; query: undefined; response: RemovalResult };
+  "POST /api/admin/users/search": { body: SearchUsersRequest; query: undefined; response: AdminUserPage };
+  "POST /api/admin/users/access": { body: SetUserAccessRequest; query: undefined; response: AdminUser };
 };
