@@ -8,9 +8,10 @@ permissions:
 jobs:
   backend:
     runs-on: windows-latest
-    # Both disposable-SQL passes take about 20 minutes before restore/build.
-    # Allow hosted-runner variance without skipping either verification lane.
-    timeout-minutes: 45
+    # Hosted run 41883316300 passed all 185 source cases after a 36-minute SQL lane,
+    # then hit the old 45-minute job limit during the separate relational lane.
+    # Budget both full SQL lanes, real coverage and Sonar analysis on Windows.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
         with:
