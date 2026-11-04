@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { View } from "react-native";
+import { Platform, View } from "react-native";
 import Svg, {
   Defs,
   ClipPath,
@@ -38,7 +38,7 @@ function ArtLayer({
   const [x, y, width, height] = placement;
   const [sourceX, sourceY, sourceWidth, sourceHeight] = region;
   const clipId = `avatar-cutout-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
-  const boundsId = `${clipId}-bounds`;
+  const boundsId = `${clipId}-bounds-${region.join("-")}`;
   const scaleX = width / sourceWidth;
   const scaleY = height / sourceHeight;
   return (
@@ -87,6 +87,9 @@ export function AvatarFigure({
   portrait?: boolean;
   size?: number;
 }>) {
+  // Android crops filter bitmaps in canvas pixels; web/iOS use the atlas bounds.
+  const filterUnits =
+    Platform.OS === "android" ? "userSpaceOnUse" : "objectBoundingBox";
   const look = decodeAvatar(code);
   const face = faceArtwork(look.face, look.skin);
   const hair = hairArtwork(look.hairStyle);
@@ -123,14 +126,28 @@ export function AvatarFigure({
           <ClipPath id={neckId}>
             <Path d="M180 147 H220 V169 L211 186 H189 L180 169 Z" />
           </ClipPath>
-          <Filter id={filterId} x="0%" y="0%" width="100%" height="100%">
+          <Filter
+            id={filterId}
+            filterUnits={filterUnits}
+            x="-10%"
+            y="-10%"
+            width="120%"
+            height="120%"
+          >
             <FeColorMatrix
               type="matrix"
               values={hairColorMatrix(look.hairColor)}
             />
           </Filter>
           {look.scarfColor > 0 && (
-            <Filter id={scarfId} x="0%" y="0%" width="100%" height="100%">
+            <Filter
+              id={scarfId}
+              filterUnits={filterUnits}
+              x="-10%"
+              y="-10%"
+              width="120%"
+              height="120%"
+            >
               <FeColorMatrix
                 type="matrix"
                 values={scarfColorMatrix(scarfColors[look.scarfColor])}

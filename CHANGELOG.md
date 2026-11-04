@@ -2,6 +2,7 @@
 
 ## Layered accessories - November 4, 2026
 
+- Keep hair and recolored scarves visible on native SVG renderers, including multiple previews.
 - Combine starter glasses or a scarf with existing gear, and choose from eight scarf palettes.
 - Preserve v1/v2 looks, immutable receipts, private previews, and current reward ownership.
 - Add the approved 20-character v3 appearance format; deploy additive SQL/API support before the mobile client.

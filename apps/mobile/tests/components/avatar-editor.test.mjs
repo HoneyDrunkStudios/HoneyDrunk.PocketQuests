@@ -505,6 +505,74 @@ test("multiple avatar previews keep independent color filters and clip reference
   }
 });
 
+test("hair and scarf filters cover the canvas independently of transformed atlas bounds", async () => {
+  reset();
+  const platform = nativeWeb.Platform.OS;
+  nativeWeb.Platform.OS = "android";
+  const view = await mount(() =>
+    React.createElement(AvatarFigure, {
+      code: "v3:2:1:4:1:1:2:1:2:1",
+      portrait: true,
+    }),
+  );
+  try {
+    const filters = [...view.element.querySelectorAll("filter")];
+    assert.equal(filters.length, 2);
+    for (const filter of filters) {
+      assert.equal(filter.getAttribute("filterUnits"), "userSpaceOnUse");
+      assert.equal(filter.getAttribute("x"), "-10%");
+      assert.equal(filter.getAttribute("y"), "-10%");
+      assert.equal(filter.getAttribute("width"), "120%");
+      assert.equal(filter.getAttribute("height"), "120%");
+      const matrix = filter
+        .querySelector("feColorMatrix")
+        .getAttribute("values")
+        .trim()
+        .split(/[\s,]+/)
+        .map(Number);
+      assert.equal(matrix.length, 20);
+      assert.deepEqual(
+        matrix.slice(15),
+        [0, 0, 0, 1, 0],
+        "transparent artwork must retain its alpha",
+      );
+    }
+  } finally {
+    await view.close();
+    nativeWeb.Platform.OS = platform;
+  }
+});
+
+test("Android hair atlas changes replace the native clip reference", async () => {
+  reset();
+  const platform = nativeWeb.Platform.OS;
+  nativeWeb.Platform.OS = "android";
+  const props = { code: "v1:2:1:0:1:1" };
+  const view = await mount(AvatarFigure, props);
+  try {
+    const clip = () =>
+      view.element
+        .querySelector("image[filter]")
+        .parentElement.getAttribute("clip-path");
+    const initial = clip();
+    props.code = "v2:2:1:4:1:4:2:1";
+    await view.render();
+    assert.notEqual(
+      clip(),
+      initial,
+      "native atlas changes must invalidate the cached clip path",
+    );
+    assert.equal(
+      view.element.querySelector("filter").getAttribute("filterUnits"),
+      "userSpaceOnUse",
+    );
+    assert.equal(sent.length, 0);
+  } finally {
+    await view.close();
+    nativeWeb.Platform.OS = platform;
+  }
+});
+
 test("all four new faces save independently of skin, hair, build and free accessories", async () => {
   reset();
   const view = await mount(AvatarEditor);
