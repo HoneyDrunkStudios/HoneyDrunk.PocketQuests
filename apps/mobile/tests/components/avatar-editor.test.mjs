@@ -480,6 +480,17 @@ test("multiple avatar previews keep independent color filters and clip reference
     assert.equal(new Set(ids).size, ids.length);
     const filters = [...view.element.querySelectorAll("filter")];
     assert.equal(filters.length, 2);
+    for (const filter of filters) {
+      assert.equal(
+        filter.getAttribute("filterUnits"),
+        "objectBoundingBox",
+        "web filters must cover the atlas before its placement transform",
+      );
+      assert.equal(filter.getAttribute("x"), "-10%");
+      assert.equal(filter.getAttribute("y"), "-10%");
+      assert.equal(filter.getAttribute("width"), "120%");
+      assert.equal(filter.getAttribute("height"), "120%");
+    }
     assert.equal(
       view.element.querySelectorAll("svg svg").length,
       0,
@@ -495,6 +506,36 @@ test("multiple avatar previews keep independent color filters and clip reference
     }
   } finally {
     await view.close();
+  }
+});
+
+test("Android hair atlas changes replace the native clip reference", async () => {
+  reset();
+  const platform = nativeWeb.Platform.OS;
+  nativeWeb.Platform.OS = "android";
+  const props = { code: "v1:2:1:0:1:1" };
+  const view = await mount(AvatarFigure, props);
+  try {
+    const clip = () =>
+      view.element
+        .querySelector("image[filter]")
+        .parentElement.getAttribute("clip-path");
+    const initial = clip();
+    props.code = "v2:2:1:4:1:4:2:1";
+    await view.render();
+    assert.notEqual(
+      clip(),
+      initial,
+      "native atlas changes must invalidate the cached clip path",
+    );
+    assert.equal(
+      view.element.querySelector("filter").getAttribute("filterUnits"),
+      "userSpaceOnUse",
+    );
+    assert.equal(sent.length, 0);
+  } finally {
+    await view.close();
+    nativeWeb.Platform.OS = platform;
   }
 });
 
