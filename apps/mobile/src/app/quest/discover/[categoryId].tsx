@@ -13,6 +13,16 @@ export default function DestinationQuests() {
     typeof categoryId === "string"
       ? catalog?.categories.find((entry) => entry.id === categoryId)
       : undefined;
+  let content = (
+    <Label>
+      This category is unavailable. Choose another outing in Explore.
+    </Label>
+  );
+  if (category)
+    content = (
+      <AvailableQuests key={category.id} initialCategoryId={category.id} />
+    );
+  if (!catalog || !state) content = <Label>Loading your quest catalog…</Label>;
   return (
     <Page>
       <Link
@@ -29,15 +39,7 @@ export default function DestinationQuests() {
       >
         Back to Explore
       </Link>
-      {!catalog || !state ? (
-        <Label>Loading your quest catalog…</Label>
-      ) : category ? (
-        <AvailableQuests key={category.id} initialCategoryId={category.id} />
-      ) : (
-        <Label>
-          This category is unavailable. Choose another outing in Explore.
-        </Label>
-      )}
+      {content}
     </Page>
   );
 }

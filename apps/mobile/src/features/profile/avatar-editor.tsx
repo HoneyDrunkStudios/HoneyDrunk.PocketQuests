@@ -28,6 +28,21 @@ import {
   type AvatarLook,
 } from "./avatar-look";
 
+function previewOpacity(saving: boolean, pressed: boolean) {
+  if (saving) return 0.5;
+  return pressed ? 0.8 : 1;
+}
+
+function previewLabel(
+  showingSaved: boolean,
+  dirty: boolean,
+  needsInitialSave: boolean,
+) {
+  if (showingSaved) return "Showing saved look — your preview is kept";
+  if (dirty) return "Preview — not saved";
+  return needsInitialSave ? "Starter look" : "Your saved look";
+}
+
 function Wardrobe({
   state,
   onContinue,
@@ -133,7 +148,7 @@ function Wardrobe({
               borderColor: colors.gold,
               backgroundColor:
                 look[slot] === index ? colors.gold : colors.paper,
-              opacity: saving ? 0.5 : pressed ? 0.8 : 1,
+              opacity: previewOpacity(saving, pressed),
             })}
           >
             {(slot === "skin" || slot === "hairColor") && (
@@ -221,15 +236,7 @@ function Wardrobe({
         secondary
         onPress={() => setZoomed((current) => !current)}
       />
-      <Label>
-        {showingSaved
-          ? "Showing saved look — your preview is kept"
-          : dirty
-            ? "Preview — not saved"
-            : needsInitialSave
-              ? "Starter look"
-              : "Your saved look"}
-      </Label>
+      <Label>{previewLabel(showingSaved, dirty, needsInitialSave)}</Label>
       {dirty && (
         <Button
           title={showingSaved ? "Return to preview" : "Compare saved look"}
@@ -243,7 +250,7 @@ function Wardrobe({
           secondary
           disabled={saving}
           onPress={() => {
-            setDraft(history[history.length - 1]);
+            setDraft(history.at(-1));
             setHistory((previous) => previous.slice(0, -1));
             setComparing(false);
             setError("");
