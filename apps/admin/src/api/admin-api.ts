@@ -23,6 +23,14 @@ export class AdminApiError extends Error {
   }
 }
 
+function accessFailureMessage(status: number) {
+  if (status === 401 || status === 403)
+    return "This session cannot access the console. Sign in with the configured operator account.";
+  if (status === 409)
+    return "This account changed. Reload its status before making another change. Your reason is kept.";
+  return "The request could not be confirmed. Reload the account status before retrying a change.";
+}
+
 async function request(
   path: string,
   csrfToken: string,
@@ -40,12 +48,7 @@ async function request(
     signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]),
   });
   if (!response.ok) {
-    const message =
-      response.status === 401 || response.status === 403
-        ? "This session cannot access the console. Sign in with the configured operator account."
-        : response.status === 409
-          ? "This account changed. Reload its status before making another change. Your reason is kept."
-          : "The request could not be confirmed. Reload the account status before retrying a change.";
+    const message = accessFailureMessage(response.status);
     throw new AdminApiError(response.status, message);
   }
   return response.status === 204 ? null : response.json();

@@ -34,6 +34,14 @@ type Action =
   | { type: "updated"; user: AdminUser; reloaded: boolean }
   | { type: "gone"; userId: string };
 
+function accessStatusNotice(reloaded: boolean, suspended: boolean) {
+  if (reloaded)
+    return "Status reloaded. Review your reason before making a new change.";
+  return suspended
+    ? "Access suspended. The profile and progress are preserved."
+    : "Access reactivated. The traveler can reconnect.";
+}
+
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "input":
@@ -93,11 +101,7 @@ function reducer(state: State, action: Action): State {
         confirmation: null,
         locked: false,
         error: false,
-        notice: action.reloaded
-          ? "Status reloaded. Review your reason before making a new change."
-          : action.user.suspended
-            ? "Access suspended. The profile and progress are preserved."
-            : "Access reactivated. The traveler can reconnect.",
+        notice: accessStatusNotice(action.reloaded, action.user.suspended),
       };
     case "gone":
       return {
@@ -120,13 +124,13 @@ export function UserConsole({
   initialPage,
   initialNotice,
   onEndSession,
-}: {
+}: Readonly<{
   session: Session;
   api: AdminApi;
   initialPage: AdminUserPage;
   initialNotice: string;
   onEndSession: (message: string) => void;
-}) {
+}>) {
   const [state, dispatch] = useReducer(reducer, {
     rows: initialPage.users,
     cursor: initialPage.nextCursor,
