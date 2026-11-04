@@ -196,6 +196,58 @@ public sealed partial class RelationalApiTests
         Assert.Contains((await PublicCatalog(ordinary)).Quests, row => row.Id == quest.Id);
     }
 
+    /// <summary>Schedule-only edits keep account-owned terms, including penalty consent, after republishing and withdrawal.</summary>
+    /// <param name="penalty">Original optional penalty percentage.</param>
+    /// <returns>Completion after schedule edits, stale rejection, new-series denial and exact replay.</returns>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(25)]
+    public async Task SystemQuestSeriesEditsRetainAcceptedTermsAfterRepublishingAndWithdrawal(int penalty)
+    {
+        var actor = NewOwner();
+        var playerId = NewOwner();
+        using var host = new Host(fixture.Connection, adminUserId: actor);
+        using var admin = host.Client(actor);
+        using var player = host.Client(playerId);
+        await Setup(admin);
+        await Setup(player);
+        var id = Guid.NewGuid();
+        var original = Catalog.Quests[0] with { Id = "PQ-ADM-" + id.ToString("N"), Title = "Accepted recurring terms", PenaltyPercent = penalty };
+        var live = await PublishDraft(admin, await SaveDraft(admin, id, null, original), true);
+        var create = new QuestCommand(
+            Guid.NewGuid(),
+            QuestActions.SaveSeries,
+            QuestId: original.Id,
+            DueDate: "2026-01-01",
+            ExpectedRevision: 0,
+            SeriesId: Guid.NewGuid(),
+            Cadence: Cadence.Days,
+            Interval: 1,
+            ConfirmPenalty: penalty != 0,
+            AcceptedLoss: penalty == 0 ? null : ((original.BaseXp * penalty) + 50) / 100,
+            AcceptedQuest: penalty == 0 ? null : original);
+        var created = await Command(player, create);
+        var replacement = await SaveDraft(admin, id, live.Version, original with { Title = "Republished different terms", Effort = Effort.Large, PenaltyPercent = 50 });
+        live = await PublishDraft(admin, replacement, true);
+        var edit = create with { OperationId = Guid.NewGuid(), ExpectedRevision = 1, Interval = 2 };
+        var edited = await Command(player, edit);
+        Assert.Equal(JsonSerializer.Serialize(original, Json), JsonSerializer.Serialize(edited.Schedule.Series.Single().Quest, Json));
+        await PublishDraft(admin, live, false);
+        var withdrawnEdit = edit with { OperationId = Guid.NewGuid(), ExpectedRevision = 2, Interval = 3 };
+        var afterWithdrawal = await Command(player, withdrawnEdit);
+        var series = afterWithdrawal.Schedule.Series.Single();
+        Assert.Equal(JsonSerializer.Serialize(original, Json), JsonSerializer.Serialize(series.Quest, Json));
+        Assert.Equal(3, series.Version);
+        Assert.Equal(3, series.Interval);
+        Assert.Equal(HttpStatusCode.Conflict, (await player.PostAsJsonAsync("/api/commands", edit with { OperationId = Guid.NewGuid() }, Json)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await player.PostAsJsonAsync("/api/commands", create with { OperationId = Guid.NewGuid(), SeriesId = Guid.NewGuid() }, Json)).StatusCode);
+        using var restarted = new Host(fixture.Connection, adminUserId: actor);
+        using var returning = restarted.Client(playerId);
+        Assert.Equal(JsonSerializer.Serialize(created, Json), JsonSerializer.Serialize(await Command(returning, create), Json));
+        Assert.Equal(JsonSerializer.Serialize(edited, Json), JsonSerializer.Serialize(await Command(returning, edit), Json));
+        Assert.Equal(JsonSerializer.Serialize(afterWithdrawal, Json), JsonSerializer.Serialize(await Command(returning, withdrawnEdit), Json));
+    }
+
     private static async Task<AdminSystemQuest> PublishDraft(HttpClient client, AdminSystemQuest reviewed, bool published)
     {
         using var response = await client.PostAsJsonAsync("/api/admin/quests/publish", new { reviewed.Id, expectedVersion = reviewed.Version, expectedDraftRevisionId = reviewed.DraftSystemQuestRevisionId, published }, Json);

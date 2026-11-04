@@ -224,8 +224,13 @@ public sealed class QuestService : IQuestService
         Quest? template = null;
         if (command.Action is QuestActions.Accept or QuestActions.SaveSeries && command.QuestId?.StartsWith("PQ-ADM-", StringComparison.Ordinal) == true)
         {
-            var published = await templates.ReadPublished(command.QuestId, token) ?? throw new QuestValidationException("This system quest is no longer available. Refresh discovery before choosing another quest.");
-            template = SystemQuestSnapshot.Read(published.SnapshotJson);
+            template = command.Action == QuestActions.SaveSeries
+                ? aggregate.Schedule.Series.SingleOrDefault(row => row.Id == command.SeriesId && row.Quest.Id == command.QuestId)?.Quest : null;
+            if (template is null)
+            {
+                var published = await templates.ReadPublished(command.QuestId, token) ?? throw new QuestValidationException("This system quest is no longer available. Refresh discovery before choosing another quest.");
+                template = SystemQuestSnapshot.Read(published.SnapshotJson);
+            }
         }
 
         var action = aggregate.Apply(command, recordedAt, actionBudget, template);
