@@ -121,19 +121,23 @@ public sealed class AdminSystemQuestService(AdminOperator access, IAccountDataSe
             if (head.DraftSystemQuestRevisionId != request.ExpectedDraftRevisionId)
                 throw new QuestConflictException("The draft changed. Reload and review it before publishing.");
             var draft = await revisions.Read(request.ExpectedDraftRevisionId, ct) ?? throw new InvalidOperationException("Draft content is missing.");
-            var target = request.Published ? draft.Id : (Guid?)null;
-            if (head.PublishedSystemQuestRevisionId != target)
-            {
-                head.PublishedSystemQuestRevisionId = target;
-                head.ModifiedAt = now > head.ModifiedAt ? now : head.ModifiedAt;
-                head.ModifiedBy = actor;
-                await RecordAudit(owner.Id, actor, request.Published ? "pocketquests.admin.quest-publish" : "pocketquests.admin.quest-withdraw", head.Id, now, ct);
-            }
+            await UpdatePublication(head, draft, request.Published, owner.Id, actor, now, ct);
 
             return new SystemQuestStudioRow(head, draft, request.Published ? draft : null);
         },
             token);
         return result.ToContract();
+    }
+
+    private async Task UpdatePublication(SystemQuestEntity head, SystemQuestRevisionEntity draft, bool published, Guid accountId, string actor, DateTimeOffset now, CancellationToken token)
+    {
+        var target = published ? draft.Id : (Guid?)null;
+        if (head.PublishedSystemQuestRevisionId == target)
+            return;
+        head.PublishedSystemQuestRevisionId = target;
+        head.ModifiedAt = now > head.ModifiedAt ? now : head.ModifiedAt;
+        head.ModifiedBy = actor;
+        await RecordAudit(accountId, actor, published ? "pocketquests.admin.quest-publish" : "pocketquests.admin.quest-withdraw", head.Id, now, token);
     }
 
     private async Task RecordAudit(Guid accountId, string actor, string action, string questId, DateTimeOffset at, CancellationToken token)

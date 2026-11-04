@@ -221,17 +221,7 @@ public sealed class QuestService : IQuestService
         var projectionAt = QuestClock.Max(logicalNow, recordedAt);
         var before = command.Action == QuestActions.Complete ? aggregate.Project(projectionAt) : null;
         var actionBudget = ReconciliationLimit - reconciliation.Processed;
-        Quest? template = null;
-        if (command.Action is QuestActions.Accept or QuestActions.SaveSeries && command.QuestId?.StartsWith("PQ-ADM-", StringComparison.Ordinal) == true)
-        {
-            template = command.Action == QuestActions.SaveSeries
-                ? aggregate.Schedule.Series.SingleOrDefault(row => row.Id == command.SeriesId && row.Quest.Id == command.QuestId)?.Quest : null;
-            if (template is null)
-            {
-                var published = await templates.ReadPublished(command.QuestId, token) ?? throw new QuestValidationException("This system quest is no longer available. Refresh discovery before choosing another quest.");
-                template = SystemQuestSnapshot.Read(published.SnapshotJson);
-            }
-        }
+        var template = await ResolveTemplate(command, aggregate, token);
 
         var action = aggregate.Apply(command, recordedAt, actionBudget, template);
         var result = aggregate.Project(projectionAt);
@@ -240,5 +230,20 @@ public sealed class QuestService : IQuestService
         var change = new QuestMutation(account, command, aggregate, result, recordedAt, logicalNow, projectionAt, now, ReconciliationLimit, actionBudget, HasPending: action.HasMore || aggregate.Reconcile(projectionAt, 0).HasMore);
         await Persist(identity, change, rows, digest, anchor, token);
         return result;
+    }
+
+    private async Task<Quest?> ResolveTemplate(QuestCommand command, QuestAggregate aggregate, CancellationToken token)
+    {
+        if (command.Action is not (QuestActions.Accept or QuestActions.SaveSeries) || command.QuestId?.StartsWith("PQ-ADM-", StringComparison.Ordinal) != true)
+            return null;
+        if (command.Action == QuestActions.SaveSeries)
+        {
+            var retained = aggregate.Schedule.Series.SingleOrDefault(row => row.Id == command.SeriesId && row.Quest.Id == command.QuestId)?.Quest;
+            if (retained is not null)
+                return retained;
+        }
+
+        var published = await templates.ReadPublished(command.QuestId, token) ?? throw new QuestValidationException("This system quest is no longer available. Refresh discovery before choosing another quest.");
+        return SystemQuestSnapshot.Read(published.SnapshotJson);
     }
 }

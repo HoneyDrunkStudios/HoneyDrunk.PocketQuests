@@ -9,6 +9,7 @@ import type {
 import { Masthead } from "../../components/Masthead";
 import { QuestFields } from "./QuestFields";
 import { QuestPreview } from "./QuestPreview";
+import { QuestPublicationStatus } from "./QuestPublicationStatus";
 
 export function QuestStudio({
   session,
@@ -432,59 +433,14 @@ export function QuestStudio({
                     their original terms.
                   </p>
                   {selected && (
-                    <section
-                      className="publication"
-                      aria-label="Publication status"
-                    >
-                      <h3>
-                        {selected.published
-                          ? "Published to players"
-                          : "Private draft"}
-                      </h3>
-                      {selected.published && (
-                        <p>
-                          Live: {selected.published.title} ·{" "}
-                          {selected.published.baseXp} base XP.{" "}
-                          {selected.publishedSystemQuestRevisionId ===
-                          selected.draftSystemQuestRevisionId
-                            ? "This saved draft is live."
-                            : "Newer draft changes are private."}
-                        </p>
-                      )}
-                      <div className="actions">
-                        <button
-                          className="quiet"
-                          disabled={
-                            pending ||
-                            locked ||
-                            dirty ||
-                            publication !== null ||
-                            selected.publishedSystemQuestRevisionId ===
-                              selected.draftSystemQuestRevisionId
-                          }
-                          onClick={() => reviewPublication(true)}
-                        >
-                          Review publication
-                        </button>
-                        {selected.published && (
-                          <button
-                            className="quiet"
-                            disabled={
-                              pending || locked || dirty || publication !== null
-                            }
-                            onClick={() => reviewPublication(false)}
-                          >
-                            Review withdrawal
-                          </button>
-                        )}
-                      </div>
-                      {dirty && (
-                        <p className="fine">
-                          Save and review your latest draft before changing
-                          publication.
-                        </p>
-                      )}
-                    </section>
+                    <QuestPublicationStatus
+                      selected={selected}
+                      dirty={dirty}
+                      disabled={
+                        pending || locked || dirty || publication !== null
+                      }
+                      onReview={reviewPublication}
+                    />
                   )}
                   {publication !== null && (
                     <section
