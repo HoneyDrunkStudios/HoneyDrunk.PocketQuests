@@ -18,6 +18,8 @@ internal static class SystemQuestValidator
     {
         if (request.Id == Guid.Empty || request.Quest.IsCustom || request.Quest.Id != Code(request.Id))
             throw new QuestValidationException("Use a stable studio quest identity and system-quest terms.");
+        if (request.Quest.Attributes.IsDefault || request.Quest.Skills.IsDefault || request.Quest.Attributes.Any(item => item is null) || request.Quest.Skills.Any(item => item is null))
+            throw new QuestValidationException("Allocations: supply both pools with non-null entries.");
         var quest = request.Quest.ToModel();
         QuestRules.ValidateTerms(quest, Catalog.Skills.Select(skill => skill.Id).ToHashSet(StringComparer.Ordinal));
         return quest with { Title = quest.Title.Trim(), Criterion = quest.Criterion.Trim(), Description = quest.Description?.Trim() };

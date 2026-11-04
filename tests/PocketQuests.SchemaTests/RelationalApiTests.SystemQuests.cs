@@ -74,6 +74,29 @@ public sealed partial class RelationalApiTests
         Assert.False(await db.SystemQuest.AnyAsync(row => row.Id == quest.Id));
     }
 
+    /// <summary>Malformed allocation elements return validation errors before input mapping can dereference them.</summary>
+    /// <returns>Completion after both authoring routes reject both malformed pools without writes.</returns>
+    [Fact]
+    public async Task SystemQuestInputsRejectNullAllocationElementsBeforeMapping()
+    {
+        var actor = NewOwner();
+        using var host = new Host(fixture.Connection, adminUserId: actor);
+        using var admin = host.Client(actor);
+        await Setup(admin);
+        var id = Guid.NewGuid();
+        var input = System.Text.Json.JsonSerializer.SerializeToNode(Catalog.Quests[0] with { Id = "PQ-ADM-" + id.ToString("N") }, Json)!;
+        foreach (var pool in new[] { "attributes", "skills" })
+        {
+            var malformed = input.DeepClone();
+            malformed[pool] = new System.Text.Json.Nodes.JsonArray((System.Text.Json.Nodes.JsonNode?)null);
+            foreach (var route in new[] { "preview", "draft" })
+                Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync("/api/admin/quests/" + route, new { id, quest = malformed }, Json)).StatusCode);
+        }
+
+        await using var db = fixture.Context();
+        Assert.False(await db.SystemQuest.AnyAsync(row => row.Id == "PQ-ADM-" + id.ToString("N")));
+    }
+
     /// <summary>Erasing the operator removes personal stamps and audit ownership while retaining public template history.</summary>
     /// <returns>Completion after the verified lifecycle erasure.</returns>
     [Fact]
