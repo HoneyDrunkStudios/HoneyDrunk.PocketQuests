@@ -23,4 +23,10 @@ public interface IAdminSystemQuestService
     /// <param name="token">Cancellation.</param>
     /// <returns>The committed draft and current version.</returns>
     Task<AdminSystemQuest> Save(SaveSystemQuestRequest request, CancellationToken token);
+
+    /// <summary>Publishes a reviewed saved draft or withdraws future discovery without changing accepted history.</summary>
+    /// <param name="request">Reviewed head and draft identity and desired visibility.</param>
+    /// <param name="token">Cancellation.</param>
+    /// <returns>The committed catalog head.</returns>
+    Task<AdminSystemQuest> Publish(PublishSystemQuestRequest request, CancellationToken token);
 }

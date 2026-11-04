@@ -15,7 +15,7 @@ using System.Collections.Immutable;
 
 namespace PocketQuests.Tests.Api;
 
-internal sealed class ApiTestStore : PocketQuests.Services.Quests.IQuestService, PocketQuests.Services.Profiles.IProfileService, PocketQuests.Services.Synchronization.ISynchronizationService, PocketQuests.Services.Exports.IExportService
+internal sealed class ApiTestStore : PocketQuests.Services.Catalogs.ICatalogService, PocketQuests.Services.Quests.IQuestService, PocketQuests.Services.Profiles.IProfileService, PocketQuests.Services.Synchronization.ISynchronizationService, PocketQuests.Services.Exports.IExportService
 {
     internal static readonly DateTimeOffset At = new(2026, 10, 4, 12, 0, 0, TimeSpan.Zero);
 
@@ -26,6 +26,8 @@ internal sealed class ApiTestStore : PocketQuests.Services.Quests.IQuestService,
     internal int Commands { get; private set; }
 
     internal QuestState State { get; } = CreateState();
+
+    Task<PocketQuests.Contracts.Responses.Catalogs.CatalogResponse> PocketQuests.Services.Catalogs.ICatalogService.Read(CancellationToken token) => Task.FromResult(PocketQuests.Services.Catalogs.Mapping.CatalogSnapshot.BuiltIn());
 
     public Task<QuestState> Read(AccountIdentity identity, DateTimeOffset now, CancellationToken cancellationToken) =>
         Failure is { } failure ? Task.FromException<QuestState>(failure) : Task.FromResult(State);

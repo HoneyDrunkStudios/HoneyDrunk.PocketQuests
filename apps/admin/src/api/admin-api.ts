@@ -7,6 +7,7 @@ import type {
   AdminSystemQuest,
   SystemQuestStudio,
   SaveSystemQuestRequest,
+  PublishSystemQuestRequest,
   Quest,
   AdminUser,
   AdminUserPage,
@@ -15,6 +16,7 @@ export type {
   AdminSystemQuest,
   SystemQuestStudio,
   SaveSystemQuestRequest,
+  PublishSystemQuestRequest,
   Quest,
   AdminUser,
   AdminUserPage,
@@ -186,6 +188,26 @@ export class AdminApi {
         "The updated account status could not be verified. Reload it before another change.",
       );
     return user;
+  }
+
+  async publishQuest(
+    body: PublishSystemQuestRequest,
+    signal: AbortSignal,
+  ): Promise<AdminSystemQuest> {
+    const value = decodeResponse(
+      "POST /api/admin/quests/publish",
+      await request("quests/publish", this.session.csrfToken, signal, body),
+    );
+    if (
+      value.id !== body.id ||
+      (body.published
+        ? value.publishedSystemQuestRevisionId !== body.expectedDraftRevisionId
+        : value.publishedSystemQuestRevisionId !== null)
+    )
+      throw new Error(
+        "The publication result could not be verified. Reload the saved version before another change.",
+      );
+    return value;
   }
 
   async logout(signal: AbortSignal): Promise<void> {

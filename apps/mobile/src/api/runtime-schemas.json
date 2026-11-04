@@ -884,6 +884,32 @@
         }
       }
     },
+    "PublishSystemQuestRequest": {
+      "required": [
+        "id",
+        "expectedVersion",
+        "expectedDraftRevisionId",
+        "published"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "expectedVersion": {
+          "type": "string"
+        },
+        "expectedDraftRevisionId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "published": {
+          "type": "boolean"
+        }
+      },
+      "description": "Review of one saved draft and head version, to publish or withdraw future discovery."
+    },
     "Quest": {
       "required": [
         "id",
@@ -2239,6 +2265,9 @@
       "$ref": "#/components/schemas/Quest"
     },
     "POST /api/admin/quests/draft": {
+      "$ref": "#/components/schemas/AdminSystemQuest"
+    },
+    "POST /api/admin/quests/publish": {
       "$ref": "#/components/schemas/AdminSystemQuest"
     },
     "POST /api/admin/users/search": {

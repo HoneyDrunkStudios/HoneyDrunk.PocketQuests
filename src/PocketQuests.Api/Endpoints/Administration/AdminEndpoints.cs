@@ -26,6 +26,7 @@ public static class AdminEndpoints
         admin.MapPost("/quests/list", Studio).AddEndpointFilter<AdminMutationFilter>().WithName("ReadSystemQuestStudio").Produces(401).Produces(403).ProducesProblem(429).ProducesProblem(500);
         admin.MapPost("/quests/preview", Preview).AddEndpointFilter<AdminMutationFilter>().WithName("PreviewSystemQuest").ProducesProblem(400).Produces(401).Produces(403).ProducesProblem(429).ProducesProblem(500);
         admin.MapPost("/quests/draft", Draft).AddEndpointFilter<AdminMutationFilter>().WithName("SaveSystemQuestDraft").ProducesProblem(400).Produces(401).Produces(403).Produces(404).ProducesProblem(409).ProducesProblem(429).ProducesProblem(500);
+        admin.MapPost("/quests/publish", Publish).AddEndpointFilter<AdminMutationFilter>().WithName("PublishSystemQuest").ProducesProblem(400).Produces(401).Produces(403).Produces(404).ProducesProblem(409).ProducesProblem(429).ProducesProblem(500);
         admin.MapPost("/users/search", Users).AddEndpointFilter<AdminMutationFilter>().WithName("SearchAdminUsers").ProducesProblem(400).Produces(401).Produces(403).ProducesProblem(429).ProducesProblem(500);
         admin.MapPost("/users/access", SetAccess).AddEndpointFilter<AdminMutationFilter>().WithName("SetAdminUserAccess")
             .ProducesProblem(400).Produces(401).Produces(403).Produces(404).ProducesProblem(409).ProducesProblem(429).ProducesProblem(500);
@@ -36,6 +37,8 @@ public static class AdminEndpoints
     private static Ok<PocketQuests.Contracts.Models.Quests.Quest> Preview(SaveSystemQuestRequest request, IAdminSystemQuestService service) => TypedResults.Ok(service.Preview(request));
 
     private static async Task<Ok<AdminSystemQuest>> Draft(SaveSystemQuestRequest request, IAdminSystemQuestService service, CancellationToken token) => TypedResults.Ok(await service.Save(request, token));
+
+    private static async Task<Ok<AdminSystemQuest>> Publish(PublishSystemQuestRequest request, IAdminSystemQuestService service, CancellationToken token) => TypedResults.Ok(await service.Publish(request, token));
 
     private static RedirectHttpResult Home() => TypedResults.Redirect("/admin/index.html");
 

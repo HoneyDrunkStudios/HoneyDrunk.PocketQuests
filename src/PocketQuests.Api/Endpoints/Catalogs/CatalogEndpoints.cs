@@ -12,5 +12,5 @@ public static class CatalogEndpoints
     public static void MapCatalog(this WebApplication app) => app.MapGet("/api/catalog", Read)
         .WithName("GetCatalog").WithTags("PocketQuests.Api").RequireAuthorization().ProducesProblem(400).ProducesProblem(500);
 
-    private static Ok<CatalogResponse> Read(ICatalogService service) => TypedResults.Ok(service.Read());
+    private static async Task<Ok<CatalogResponse>> Read(ICatalogService service, CancellationToken token) => TypedResults.Ok(await service.Read(token));
 }

@@ -22,6 +22,7 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
     IEnumerable<Completion>? completions = null, IEnumerable<UndoEvent>? undos = null,
     IEnumerable<QuestDefinition>? definitions = null, PlayerProfile? profile = null, ScheduleState? schedule = null)
 {
+    private Quest? _systemTemplate;
     private int? _actionDeliveryBudget;
     private int _actionDeliveries;
     private bool _actionHasMoreDeliveries;
@@ -47,11 +48,15 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
     /// <param name="command">The existing command contract.</param>
     /// <param name="now">Verified effective command time.</param>
     /// <param name="maximumDeliveries">Nonnegative delivery budget; zero defers all newly due deliveries.</param>
+    /// <param name="systemTemplate">Optional trusted server-selected immutable system terms for acceptance or recurrence.</param>
     /// <returns>Action-triggered cursor work and whether due deliveries remain.</returns>
-    public ReconciliationProgress Apply(QuestCommand command, DateTimeOffset now, int maximumDeliveries)
+    public ReconciliationProgress Apply(QuestCommand command, DateTimeOffset now, int maximumDeliveries, Quest? systemTemplate = null)
     {
         if (maximumDeliveries < 0)
             throw new ArgumentOutOfRangeException(nameof(maximumDeliveries));
+        if (systemTemplate is not null && (systemTemplate.IsCustom || systemTemplate.Id != command.QuestId || command.Action is not (QuestActions.Accept or QuestActions.SaveSeries)))
+            throw new QuestValidationException("System terms must match this acceptance command.");
+        _systemTemplate = systemTemplate;
         _actionDeliveryBudget = maximumDeliveries;
         _actionDeliveries = 0;
         _actionHasMoreDeliveries = false;
@@ -63,6 +68,7 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
         finally
         {
             _actionDeliveryBudget = null;
+            _systemTemplate = null;
         }
     }
 
@@ -213,7 +219,7 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
 
     private void Accept(QuestCommand command, DateTimeOffset now)
     {
-        var quest = Catalog.Quests.SingleOrDefault(q => q.Id == command.QuestId)
+        var quest = _systemTemplate ?? Catalog.Quests.SingleOrDefault(q => q.Id == command.QuestId)
             ?? Definitions.SingleOrDefault(d => d.Quest.Id == command.QuestId && !d.Archived)?.Quest
             ?? throw new QuestValidationException("Choose an available quest.");
         RequireEligible(quest, now);

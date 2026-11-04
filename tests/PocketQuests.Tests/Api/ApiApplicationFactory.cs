@@ -22,6 +22,7 @@ internal sealed class ApiApplicationFactory : WebApplicationFactory<PocketQuests
         builder.ConfigureLogging(logging => logging.ClearProviders());
         builder.ConfigureServices(services =>
         {
+            services.AddSingleton<PocketQuests.Services.Catalogs.ICatalogService>(Store);
             services.AddSingleton<PocketQuests.Services.Quests.IQuestService>(Store);
             services.AddSingleton<PocketQuests.Services.Profiles.IProfileService>(Store);
             services.AddSingleton<PocketQuests.Services.Synchronization.ISynchronizationService>(Store);

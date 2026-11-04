@@ -23,6 +23,18 @@ public interface ISystemQuestDataService : IBaseDataService<SystemQuestEntity>
     /// <returns>Selected templates in stable identity order.</returns>
     Task<IReadOnlyList<SystemQuestStudioRow>> Studio(int limit, CancellationToken token);
 
+    /// <summary>Reads only published immutable content in one bounded query.</summary>
+    /// <param name="limit">The lookahead bound.</param>
+    /// <param name="token">Cancellation.</param>
+    /// <returns>Public revisions in stable identity order.</returns>
+    Task<IReadOnlyList<SystemQuestRevisionEntity>> Published(int limit, CancellationToken token);
+
+    /// <summary>Reads one currently published template for a new acceptance.</summary>
+    /// <param name="id">Stable system quest identity.</param>
+    /// <param name="token">Cancellation.</param>
+    /// <returns>The published immutable revision, if available.</returns>
+    Task<SystemQuestRevisionEntity?> ReadPublished(string id, CancellationToken token);
+
     /// <summary>Stages a new head and revision, then connects the initial draft pointer inside the caller transaction.</summary>
     /// <param name="head">The new stable identity.</param>
     /// <param name="revision">The first immutable revision.</param>

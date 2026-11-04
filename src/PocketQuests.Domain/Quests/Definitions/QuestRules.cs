@@ -16,6 +16,12 @@ public static class QuestRules
     /// <summary>Maximum optional quest description length.</summary>
     public const int MaximumDescriptionLength = 2_000;
 
+    /// <summary>Maximum authored system quest identities.</summary>
+    public const int MaximumSystemTemplates = 200;
+
+    /// <summary>Maximum immutable revisions per authored system quest.</summary>
+    public const int MaximumSystemRevisions = 1000;
+
     /// <summary>Gets the elapsed-time window for reversing a completion.</summary>
     public static TimeSpan UndoWindow { get; } = TimeSpan.FromHours(24);
 

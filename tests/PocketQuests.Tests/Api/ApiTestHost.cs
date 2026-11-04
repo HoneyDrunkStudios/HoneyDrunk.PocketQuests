@@ -48,7 +48,7 @@ internal sealed class ApiTestHost(WebApplication app, HttpClient client, ApiTest
         builder.Services.AddSingleton<PocketQuests.Services.Profiles.IProfileService>(store);
         builder.Services.AddSingleton<PocketQuests.Services.Synchronization.ISynchronizationService>(store);
         builder.Services.AddSingleton<PocketQuests.Services.Exports.IExportService>(store);
-        builder.Services.AddScoped<PocketQuests.Services.Catalogs.ICatalogService, PocketQuests.Services.Catalogs.CatalogService>();
+        builder.Services.AddSingleton<PocketQuests.Services.Catalogs.ICatalogService>(store);
         builder.Services.AddScoped<PocketQuests.Services.Schedules.IPlanningService, PocketQuests.Services.Schedules.PlanningService>();
         builder.Services.AddTransient(services => new ApiTestAuthentication(
             services.GetRequiredService<Microsoft.Extensions.Options.IOptionsMonitor<AuthenticationSchemeOptions>>(),

@@ -37,6 +37,7 @@ public sealed class QuestService : IQuestService
     private readonly QuestOccurrenceService occurrences;
     private readonly ProgressService progress;
     private readonly QuestCommandHistoryService history;
+    private readonly PocketQuests.Data.DataServices.Quests.ISystemQuestDataService templates;
 
     internal QuestService(
         IAccountDataService data,
@@ -47,7 +48,8 @@ public sealed class QuestService : IQuestService
         QuestSeriesService series,
         QuestOccurrenceService occurrences,
         ProgressService progress,
-        QuestCommandHistoryService history)
+        QuestCommandHistoryService history,
+        PocketQuests.Data.DataServices.Quests.ISystemQuestDataService templates)
     {
         this.data = data;
         this.currentAccount = currentAccount;
@@ -58,6 +60,7 @@ public sealed class QuestService : IQuestService
         this.occurrences = occurrences;
         this.progress = progress;
         this.history = history;
+        this.templates = templates;
     }
 
     /// <inheritdoc />
@@ -218,7 +221,14 @@ public sealed class QuestService : IQuestService
         var projectionAt = QuestClock.Max(logicalNow, recordedAt);
         var before = command.Action == QuestActions.Complete ? aggregate.Project(projectionAt) : null;
         var actionBudget = ReconciliationLimit - reconciliation.Processed;
-        var action = aggregate.Apply(command, recordedAt, actionBudget);
+        Quest? template = null;
+        if (command.Action is QuestActions.Accept or QuestActions.SaveSeries && command.QuestId?.StartsWith("PQ-ADM-", StringComparison.Ordinal) == true)
+        {
+            var published = await templates.ReadPublished(command.QuestId, token) ?? throw new QuestValidationException("This system quest is no longer available. Refresh discovery before choosing another quest.");
+            template = SystemQuestSnapshot.Read(published.SnapshotJson);
+        }
+
+        var action = aggregate.Apply(command, recordedAt, actionBudget, template);
         var result = aggregate.Project(projectionAt);
         if (before is not null)
             result = result with { CompletionOutcome = CompletionOutcome.Between(before, result, command.OperationId, command.OccurrenceId!.Value) };
