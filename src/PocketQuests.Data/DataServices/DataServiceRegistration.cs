@@ -28,6 +28,7 @@ public static class DataServiceRegistration
         services.AddScoped<ISkillDataService, SkillDataService>();
         services.AddScoped<IProfileRewardDataService, ProfileRewardDataService>();
         services.AddScoped<ISystemQuestDataService, SystemQuestDataService>();
+        services.AddScoped<ISystemQuestRevisionDataService, SystemQuestRevisionDataService>();
         services.AddScoped<IAccountDataService, AccountDataService>();
         services.AddScoped<IAccountAccessRestrictionDataService, AccountAccessRestrictionDataService>();
         services.AddScoped<ICommandReceiptDataService, CommandReceiptDataService>();

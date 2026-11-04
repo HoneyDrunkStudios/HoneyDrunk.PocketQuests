@@ -58,6 +58,8 @@ public sealed partial class AccountDataService(AppDbContext context) : BaseDataS
         await Context.QuestOccurrence.Where(row => row.AccountId == accountId).ExecuteUpdateAsync(setters => setters.SetProperty(row => row.ParentQuestOccurrenceId, (Guid?)null), token);
         await Context.AccountEntitlement.Where(row => row.AccountId == accountId).ExecuteDeleteAsync(token);
         await Context.AccountInterest.Where(row => row.AccountId == accountId).ExecuteDeleteAsync(token);
+        await Context.SystemQuest.Where(row => row.CreatedBy == identityUserId).ExecuteUpdateAsync(setters => setters.SetProperty(row => row.CreatedBy, (string?)null), token);
+        await Context.SystemQuest.Where(row => row.ModifiedBy == identityUserId).ExecuteUpdateAsync(setters => setters.SetProperty(row => row.ModifiedBy, (string?)null), token);
         await Context.AccountAccessRestriction.Where(row => row.AccountId == accountId).ExecuteDeleteAsync(token);
         await Context.SavedPlace.Where(row => row.AccountId == accountId).ExecuteDeleteAsync(token);
         await Context.AccountPause.Where(row => row.AccountId == accountId).ExecuteDeleteAsync(token);

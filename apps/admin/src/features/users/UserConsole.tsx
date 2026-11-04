@@ -120,12 +120,14 @@ export function UserConsole({
   initialPage,
   initialNotice,
   onEndSession,
+  onOpenQuests,
 }: {
   session: Session;
   api: AdminApi;
   initialPage: AdminUserPage;
   initialNotice: string;
   onEndSession: (message: string) => void;
+  onOpenQuests?: () => void;
 }) {
   const [state, dispatch] = useReducer(reducer, {
     rows: initialPage.users,
@@ -255,6 +257,15 @@ export function UserConsole({
         <section id="console">
           <nav className="section-nav" aria-label="Administration">
             <span aria-current="page">Players</span>
+            {onOpenQuests && (
+              <button
+                className="quiet"
+                disabled={state.pending || state.locked}
+                onClick={onOpenQuests}
+              >
+                System quests
+              </button>
+            )}
           </nav>
           <div className="page-heading">
             <div>

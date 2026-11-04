@@ -13,11 +13,22 @@ public sealed class SystemQuestMapping : IEntityTypeConfiguration<SystemQuestEnt
     {
         entity.ToTable("SystemQuest", "pocketquests", table =>
         {
-            table.HasComment("One row is one stable system quest identity whose full template is owned by the versioned catalog. Classification: Public. History: reference; Retain referenced codes; source-controlled template versions retain old terms. Not erased with accounts.");
+            table.HasComment("One row is one stable system quest identity. Classification: Public except Restricted operator identifiers. History: mutable draft and publish pointers with rowversion; immutable SystemQuestRevision retains authored content and shared Audit records actions. At most 200 operator-authored identities; retain referenced identities and revisions, never reuse codes. Operator identifiers are cleared on their account erasure.");
             table.HasCheckConstraint("CK_SystemQuest_CreatedAtUtc", "DATEPART(TZOFFSET,[CreatedAt])=0");
             table.HasCheckConstraint("CK_SystemQuest_ModifiedAtUtc", "DATEPART(TZOFFSET,[ModifiedAt])=0");
             table.HasCheckConstraint("CK_SystemQuest_ModificationClock", "[ModifiedAt]>=[CreatedAt]");
+            table.HasCheckConstraint("CK_SystemQuest_CreatedBy", "[CreatedBy] IS NULL OR (DATALENGTH([CreatedBy])=30 AND LEFT([CreatedBy],4)='usr_' AND SUBSTRING([CreatedBy],5,26) NOT LIKE '%[^0123456789ABCDEFGHJKMNPQRSTVWXYZ]%')");
+            table.HasCheckConstraint("CK_SystemQuest_ModifiedBy", "[ModifiedBy] IS NULL OR (DATALENGTH([ModifiedBy])=30 AND LEFT([ModifiedBy],4)='usr_' AND SUBSTRING([ModifiedBy],5,26) NOT LIKE '%[^0123456789ABCDEFGHJKMNPQRSTVWXYZ]%')");
         });
+        entity.Property(row => row.DraftSystemQuestRevisionId).HasComment("Latest saved immutable draft revision of this same system quest. Null for source-controlled starter templates or during atomic initial creation.");
+        entity.Property(row => row.PublishedSystemQuestRevisionId).HasComment("Published immutable revision of this same system quest. Null means operator-authored quest is not discoverable; source-controlled starters remain in code.");
+        entity.Property(row => row.RowVersion).HasComment("SQL concurrency token for explicit draft and publishing changes, not a timestamp.").IsRowVersion();
+        entity.Property(row => row.CreatedBy).HasComment("Restricted canonical Identity operator usr_ identifier; null for source-controlled templates or after operator account erasure.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(30).IsUnicode(false);
+        entity.Property(row => row.ModifiedBy).HasComment("Restricted canonical Identity operator usr_ identifier; null for source-controlled templates or after operator account erasure.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(30).IsUnicode(false);
+        entity.HasIndex(row => new { row.Id, row.DraftSystemQuestRevisionId }, "IX_SystemQuest_DraftRevision");
+        entity.HasOne<SystemQuestRevisionEntity>().WithMany().HasForeignKey(row => new { row.Id, row.DraftSystemQuestRevisionId }).HasPrincipalKey(row => new { row.SystemQuestId, row.Id }).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_SystemQuest_SystemQuestRevision_Draft");
+        entity.HasIndex(row => new { row.Id, row.PublishedSystemQuestRevisionId }, "IX_SystemQuest_PublishedRevision");
+        entity.HasOne<SystemQuestRevisionEntity>().WithMany().HasForeignKey(row => new { row.Id, row.PublishedSystemQuestRevisionId }).HasPrincipalKey(row => new { row.SystemQuestId, row.Id }).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_SystemQuest_SystemQuestRevision_Published");
         entity.HasKey(row => row.Id).HasName("PK_SystemQuest").IsClustered();
         entity.Property(row => row.Id).HasComment("Stable system quest code, for example PQ-CAT-Q01; never reused.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(40).IsUnicode(false).ValueGeneratedNever();
         entity.Property(row => row.CategoryId).HasComment("Canonical category of the system template.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(40).IsUnicode(false);

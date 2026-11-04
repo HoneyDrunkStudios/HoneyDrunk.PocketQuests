@@ -1,5 +1,11 @@
 # Changelog
 
+## System-quest workshop — November 4, 2026
+
+- Add React tools to create, copy, edit and preview private system-quest drafts, including completion terms, optional penalties and reward allocations.
+- Validate XP and eligibility on the server, append immutable revisions, reject stale edits and recover uncertain saves using their original identity.
+- Keep draft and published pointers separate; this slice does not publish content to players.
+
 ## Studio player administration — November 4, 2026
 
 - Add a browser console for the explicitly configured operator to search, inspect, suspend and reactivate initialized Pocket Quests profiles.

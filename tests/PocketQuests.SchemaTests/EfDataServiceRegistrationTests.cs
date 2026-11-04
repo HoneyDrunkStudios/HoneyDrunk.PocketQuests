@@ -21,7 +21,7 @@ public sealed class EfDataServiceRegistrationTests
         var interfaces = typeof(IBaseDataService<>).Assembly.GetTypes()
             .Where(type => type.IsInterface && !type.IsGenericType && type.GetInterfaces().Any(parent => parent.IsGenericType && parent.GetGenericTypeDefinition() == typeof(IBaseDataService<>)))
             .ToArray();
-        Assert.Equal(35, interfaces.Length);
+        Assert.Equal(36, interfaces.Length);
         foreach (var contract in interfaces.Append(typeof(IBaseDataService<AccountEntity>)))
         {
             Assert.Same(first.ServiceProvider.GetRequiredService(contract), first.ServiceProvider.GetRequiredService(contract));

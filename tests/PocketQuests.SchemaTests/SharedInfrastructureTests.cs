@@ -35,7 +35,7 @@ public sealed class SharedInfrastructureTests(SchemaFixture fixture) : IClassFix
         Assert.Equal(new[] { "dbo.AuditRecords", "outbox.OutboxMessages" }, context.Model.GetEntityTypes()
             .Where(e => e.GetSchema() != "pocketquests")
             .Select(e => (e.GetSchema() ?? "dbo") + "." + e.GetTableName()).Order().ToArray());
-        Assert.Equal(35, context.Model.GetEntityTypes().Count(e => e.GetSchema() == "pocketquests"));
+        Assert.Equal(36, context.Model.GetEntityTypes().Count(e => e.GetSchema() == "pocketquests"));
 
         var now = DateTimeOffset.UtcNow;
         var owner = "usr_" + Guid.NewGuid().ToString("N")[..26].ToUpperInvariant();
