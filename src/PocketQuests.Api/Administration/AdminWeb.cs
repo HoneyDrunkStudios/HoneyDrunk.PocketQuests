@@ -26,15 +26,9 @@ public static class AdminWeb
     {
         builder.Services.Configure<AdminAccessOptions>(builder.Configuration.GetSection("Admin"));
         builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
-        builder.Services.AddAuthorization(options => options.AddPolicy(Policy, policy => policy
+        builder.Services.AddAuthorizationBuilder().AddPolicy(Policy, policy => policy
             .AddAuthenticationSchemes("Identity", Cookie).RequireAuthenticatedUser()
-            .RequireAssertion(context =>
-            {
-                var http = context.Resource as HttpContext;
-                var configured = http?.RequestServices.GetRequiredService<IOptions<AdminAccessOptions>>().Value.UserId;
-                return !string.IsNullOrEmpty(configured) && context.User.FindFirstValue("iss") == "honeydrunk-identity"
-                    && context.User.FindFirstValue("sub") == configured;
-            })));
+            .RequireAssertion(context => IsConfiguredOperator(context.Resource as HttpContext, context.User)));
         var authentication = builder.Services.AddAuthentication();
         authentication.AddCookie(Cookie, options =>
         {
@@ -118,6 +112,13 @@ public static class AdminWeb
             await next(context);
         });
         app.MapStaticAssets();
+    }
+
+    private static bool IsConfiguredOperator(HttpContext? http, ClaimsPrincipal user)
+    {
+        var configured = http?.RequestServices.GetRequiredService<IOptions<AdminAccessOptions>>().Value.UserId;
+        return !string.IsNullOrEmpty(configured) && user.FindFirstValue("iss") == "honeydrunk-identity"
+            && user.FindFirstValue("sub") == configured;
     }
 
     private static async Task ValidateSession(CookieValidatePrincipalContext context)

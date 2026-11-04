@@ -13,7 +13,7 @@ export function UserDetails({
   onCancel,
   onConfirm,
   onReload,
-}: {
+}: Readonly<{
   user: AdminUser | null;
   operator: string;
   pending: boolean;
@@ -25,7 +25,7 @@ export function UserDetails({
   onCancel: () => void;
   onConfirm: () => void;
   onReload: () => void;
-}) {
+}>) {
   const confirmButton = useRef<HTMLButtonElement>(null);
   const reviewButton = useRef<HTMLButtonElement>(null);
   const reloadButton = useRef<HTMLButtonElement>(null);
@@ -57,13 +57,7 @@ export function UserDetails({
         {user?.characterName ||
           (user ? "Unnamed traveler" : "Choose a traveler")}
       </h2>
-      <p id="detail-intro">
-        {!user
-          ? "Select a player to see their profile and access status."
-          : user.suspended
-            ? "Pocket Quests access is suspended."
-            : "Pocket Quests access is active."}
-      </p>
+      <p id="detail-intro">{detailIntro(user)}</p>
       {user && (
         <div id="selected">
           <dl id="metadata">
@@ -160,4 +154,11 @@ export function UserDetails({
       )}
     </section>
   );
+}
+
+function detailIntro(user: AdminUser | null) {
+  if (!user) return "Select a player to see their profile and access status.";
+  return user.suspended
+    ? "Pocket Quests access is suspended."
+    : "Pocket Quests access is active.";
 }

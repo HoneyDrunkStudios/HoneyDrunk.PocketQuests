@@ -10,7 +10,6 @@ using PocketQuests.Data.Queries.Administration;
 using PocketQuests.Domain.Errors;
 using PocketQuests.Services.Administration.Mapping;
 using PocketQuests.Services.Administration.Validators;
-using System.Collections.Immutable;
 using System.Diagnostics;
 
 namespace PocketQuests.Services.Administration;
@@ -32,7 +31,7 @@ public sealed class AdminUserService(AdminOperator access, IAccountDataService a
         if (query.Length > 120 || (after is not null && !AdminUserValidator.CanonicalUser(after)))
             throw new QuestValidationException("Use a search of at most 120 characters and a valid page cursor.");
         var rows = await restrictions.Search(query, after, AdminUserValidator.PageSize + 1, token);
-        return new(rows.Take(AdminUserValidator.PageSize).Select(row => row.ToContract()).ToImmutableArray(), rows.Count > AdminUserValidator.PageSize ? rows[AdminUserValidator.PageSize - 1].UserId : null);
+        return new([.. rows.Take(AdminUserValidator.PageSize).Select(row => row.ToContract())], rows.Count > AdminUserValidator.PageSize ? rows[AdminUserValidator.PageSize - 1].UserId : null);
     }
 
     /// <inheritdoc />
