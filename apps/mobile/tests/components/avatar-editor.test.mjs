@@ -65,6 +65,11 @@ const {
   outfits,
   accessories,
 } = require("../../src/features/profile/avatar-look.ts");
+const {
+  avatarSectionSlots,
+  randomizeAvatarSection,
+  restoreAvatarSection,
+} = require("../../src/features/profile/avatar-customization.ts");
 
 function reset() {
   sent = [];
@@ -289,6 +294,8 @@ test("versioned appearances round-trip every slot and all six cosmetic gates", (
     accessory: 3,
     face: 0,
     build: 0,
+    extra: 0,
+    scarfColor: 0,
   };
   assert.deepEqual(decodeAvatar(encodeAvatar(look)), look);
   assert.equal(encodeAvatar(decodeAvatar("v2:5:3:2:3:3")), "v1:2:0:0:0:0");
@@ -509,6 +516,44 @@ test("multiple avatar previews keep independent color filters and clip reference
   }
 });
 
+test("hair and scarf filters cover the canvas independently of transformed atlas bounds", async () => {
+  reset();
+  const platform = nativeWeb.Platform.OS;
+  nativeWeb.Platform.OS = "android";
+  const view = await mount(() =>
+    React.createElement(AvatarFigure, {
+      code: "v3:2:1:4:1:1:2:1:2:1",
+      portrait: true,
+    }),
+  );
+  try {
+    const filters = [...view.element.querySelectorAll("filter")];
+    assert.equal(filters.length, 2);
+    for (const filter of filters) {
+      assert.equal(filter.getAttribute("filterUnits"), "userSpaceOnUse");
+      assert.equal(filter.getAttribute("x"), "-10%");
+      assert.equal(filter.getAttribute("y"), "-10%");
+      assert.equal(filter.getAttribute("width"), "120%");
+      assert.equal(filter.getAttribute("height"), "120%");
+      const matrix = filter
+        .querySelector("feColorMatrix")
+        .getAttribute("values")
+        .trim()
+        .split(/[\s,]+/)
+        .map(Number);
+      assert.equal(matrix.length, 20);
+      assert.deepEqual(
+        matrix.slice(15),
+        [0, 0, 0, 1, 0],
+        "transparent artwork must retain its alpha",
+      );
+    }
+  } finally {
+    await view.close();
+    nativeWeb.Platform.OS = platform;
+  }
+});
+
 test("Android hair atlas changes replace the native clip reference", async () => {
   reset();
   const platform = nativeWeb.Platform.OS;
@@ -726,6 +771,181 @@ test("face zoom changes only the view and keeps the selected appearance", async 
     );
     await view.click("Save avatar");
     assert.equal(decodeAvatar(sent[0].avatarCode).face, 6);
+  } finally {
+    await view.close();
+  }
+});
+
+test("focused styling changes only the selected group and preserves kept traits", () => {
+  const code = "v2:1:1:1:4:4:3:1";
+  const before = decodeAvatar(code);
+  for (const [section, slots] of Object.entries(avatarSectionSlots)) {
+    const next = decodeAvatar(
+      randomizeAvatarSection(code, section, [], {}, () => 0.99),
+    );
+    for (const slot of Object.keys(before))
+      if (!slots.includes(slot))
+        assert.equal(next[slot], before[slot], `${section}/${slot}`);
+    assert.equal(canWear(next, []), true);
+  }
+  const kept = decodeAvatar(
+    randomizeAvatarSection(code, "Hair", [], { hairStyle: true }, () => 0.99),
+  );
+  assert.equal(kept.hairStyle, before.hairStyle);
+  assert.equal(kept.hairColor, 7);
+  const locked = decodeAvatar(
+    randomizeAvatarSection(
+      "v2:1:1:1:3:4:3:1",
+      "Clothing",
+      [],
+      { outfit: true },
+      () => 0.99,
+    ),
+  );
+  assert.equal(locked.outfit, 5);
+  assert.equal(locked.face, 3);
+  const unrelatedLocked = decodeAvatar(
+    randomizeAvatarSection("v2:1:1:1:3:4:3:1", "Hair", [], {}, () => 0.99),
+  );
+  assert.equal(
+    unrelatedLocked.outfit,
+    3,
+    "editing hair never silently changes an unrelated clothing preview",
+  );
+  assert.equal(canWear(unrelatedLocked, []), false);
+});
+
+test("restoring a saved group keeps every other draft choice and both inputs unchanged", () => {
+  const saved = "v1:2:0:0:0:0";
+  const draft = "v2:5:7:6:5:4:6:2";
+  for (const [section, slots] of Object.entries(avatarSectionSlots)) {
+    const restored = decodeAvatar(restoreAvatarSection(draft, saved, section));
+    const expected = decodeAvatar(draft);
+    for (const slot of slots) expected[slot] = decodeAvatar(saved)[slot];
+    assert.deepEqual(restored, expected);
+  }
+  assert.equal(saved, "v1:2:0:0:0:0");
+  assert.equal(draft, "v2:5:7:6:5:4:6:2");
+});
+
+test("redo restores the undone preview, while a new edit and reset clear the redo branch", async () => {
+  reset();
+  session.state.profile.avatarCode = "v1:2:0:0:0:0";
+  const view = await mount(AvatarEditor);
+  try {
+    await view.click("Oval");
+    await view.click("Silver");
+    await view.click("Undo preview edit");
+    assert.ok(view.button("Redo preview edit"));
+    await view.click("Compare saved look");
+    await view.click("Redo preview edit");
+    assert.doesNotMatch(view.element.textContent, /Showing saved look/);
+    assert.equal(view.button("Redo preview edit"), undefined);
+    await view.click("Save avatar");
+    assert.equal(sent[0].avatarCode, "v2:2:3:0:0:0:6:0");
+    await view.click("Undo preview edit");
+    await view.click("Copper");
+    assert.equal(view.button("Redo preview edit"), undefined);
+    await view.click("Undo preview edit");
+    assert.ok(view.button("Redo preview edit"));
+    await view.click("Reset avatar preview");
+    assert.equal(view.button("Redo preview edit"), undefined);
+    assert.equal(view.button("Undo preview edit"), undefined);
+  } finally {
+    await view.close();
+  }
+});
+
+test("focused styling previews offline, preserves identity, and restores only saved hair", async () => {
+  reset();
+  session.state.profile.avatarCode = "v2:1:1:1:4:4:3:1";
+  session.offline = true;
+  const view = await mount(AvatarEditor);
+  const original = Math.random;
+  Math.random = () => 0.99;
+  try {
+    await view.tab("Hair");
+    await view.click("Randomize hair only");
+    assert.ok(
+      view.element.querySelector('[aria-label="Selected: Hair color: Teal"]'),
+    );
+    await view.click("Oval");
+    await view.tab("Hair");
+    await view.click("Restore saved hair");
+    assert.ok(
+      view.element.querySelector(
+        '[aria-label="Selected: Hair color: Chestnut"]',
+      ),
+    );
+    await view.tab("Identity");
+    assert.ok(
+      view.element.querySelector('[aria-label="Selected: Face: Oval"]'),
+    );
+    assert.equal(
+      view.button("Save avatar").getAttribute("aria-disabled"),
+      "true",
+    );
+    assert.deepEqual(sent, []);
+    session.offline = false;
+    await view.render();
+    await view.click("Save avatar");
+    assert.equal(sent[0].avatarCode, "v2:1:1:1:4:4:6:1");
+    session.state = null;
+    await view.render();
+    reset();
+    await view.render();
+    assert.equal(view.button("Redo preview edit"), undefined);
+    assert.equal(view.button("Undo preview edit"), undefined);
+  } finally {
+    Math.random = original;
+    await view.close();
+  }
+});
+
+test("layered appearances retain legacy meanings and reject unsupported extra/color ordinals", () => {
+  const code = "v3:5:7:6:5:1:6:2:2:7";
+  const look = decodeAvatar(code);
+  assert.equal(encodeAvatar(look), code);
+  assert.equal(look.extra, 2);
+  assert.equal(look.scarfColor, 7);
+  assert.equal(decodeAvatar("v2:5:7:6:5:1:6:2").extra, 0);
+  for (const invalid of [
+    "v3:5:7:6:5:1:6:2:3:7",
+    "v3:5:7:6:5:1:6:2:2:8",
+    code + " ",
+  ])
+    assert.equal(encodeAvatar(decodeAvatar(invalid)), "v1:2:0:0:0:0");
+});
+
+test("extra scarf/glasses and color compose with gear, stay local until Save, and Undo retains each layer", async () => {
+  reset();
+  session.state.profile.avatarCode = "v2:1:1:1:4:4:3:1";
+  const view = await mount(AvatarEditor);
+  try {
+    await view.tab("Accessories");
+    await view.click("Add linen scarf");
+    await view.click("Ocean");
+    assert.deepEqual(sent, []);
+    assert.equal(view.element.querySelectorAll("filter").length, 2);
+    await view.click("Save avatar");
+    const layered = decodeAvatar(sent[0].avatarCode);
+    assert.equal(layered.accessory, 4);
+    assert.equal(layered.extra, 2);
+    assert.equal(layered.scarfColor, 2);
+    await view.click("Undo preview edit");
+    await view.click("Save avatar");
+    assert.equal(decodeAvatar(sent[1].avatarCode).extra, 2);
+    assert.equal(decodeAvatar(sent[1].avatarCode).scarfColor, 0);
+    await view.click("Preview locked: Explorer’s satchel");
+    assert.equal(
+      view.button("Save avatar").getAttribute("aria-disabled"),
+      "true",
+    );
+    session.state.entitlements[2].earned = true;
+    await view.render();
+    await view.click("Save avatar");
+    assert.equal(decodeAvatar(sent[2].avatarCode).accessory, 1);
+    assert.equal(decodeAvatar(sent[2].avatarCode).extra, 2);
   } finally {
     await view.close();
   }

@@ -38,7 +38,12 @@ public static class AvatarAppearance
         return new(result);
     }
 
-    private static bool IsValid(string? code) => IsLegacy(code) || IsExpanded(code);
+    private static bool IsValid(string? code) => IsLegacy(code) || IsExpanded(code) || IsLayered(code);
+
+    private static bool IsLayered(string? code) => code is { Length: 20 } && code.StartsWith("v3:", StringComparison.Ordinal)
+        && IsExpanded("v2:" + code[3..16])
+        && code[16] == ':' && code[17] is >= '0' and <= '2'
+        && code[18] == ':' && code[19] is >= '0' and <= '7';
 
     private static bool IsLegacy(string? code) => code is { Length: 12 } && code.StartsWith("v1:", StringComparison.Ordinal)
         && code[3] is >= '0' and <= '5' && code[4] == ':'

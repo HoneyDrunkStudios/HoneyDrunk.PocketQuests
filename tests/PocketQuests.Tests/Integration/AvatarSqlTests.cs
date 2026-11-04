@@ -17,7 +17,7 @@ public sealed partial class SqlApiTests
     public async Task AvatarIntegration_PreservesNamesProgressRewardsAndHistory()
     {
         await CharacterSelection_PreservesProgressAndExactReplayAcrossRestart();
-        foreach (var code in new[] { "v1:5:3:2:0:0", "v2:5:7:7:5:5:2:2", "v2:1:5:4:4:0:3:0", "v2:2:0:3:5:4:4:1", "v2:3:1:7:0:5:5:2", "v2:4:5:2:5:4:6:0" })
+        foreach (var code in new[] { "v1:5:3:2:0:0", "v2:5:7:7:5:5:2:2", "v2:1:5:4:4:0:3:0", "v2:2:0:3:5:4:4:1", "v2:3:1:7:0:5:5:2", "v2:4:5:2:5:4:6:0", "v3:5:7:6:5:4:6:2:2:7", "v3:1:1:1:4:5:3:1:1:2" })
             await AvatarSaveSurvivesRestartAndIsAccountIsolated(code);
         await AvatarUndoAndRecompletionPreserveHistoricalSelection();
     }
@@ -77,7 +77,7 @@ public sealed partial class SqlApiTests
             Assert.Equal("Rowan traveler", (await Read(legacyClient)).Profile.CharacterName);
         }
 
-        foreach (var invalid in new[] { "v2:5:8:7:5:5:2:2", "v2:5:7:7:6:5:2:2", "v2:5:7:7:5:5:7:2", "v2:5:7:7:5:5:2:3" })
+        foreach (var invalid in new[] { "v2:5:8:7:5:5:2:2", "v2:5:7:7:6:5:2:2", "v2:5:7:7:5:5:7:2", "v2:5:7:7:5:5:2:3", "v3:5:7:6:5:4:6:2:3:7", "v3:5:7:6:5:4:6:2:2:8" })
         {
             var exception = await Assert.ThrowsAsync<Microsoft.Data.SqlClient.SqlException>(() =>
                 db.Read.Database.ExecuteSqlRawAsync("UPDATE [pocketquests].[Account] SET [AvatarCode] = {0}", invalid));
