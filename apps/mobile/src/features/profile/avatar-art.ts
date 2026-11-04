@@ -204,16 +204,19 @@ export function hairArtwork(style: number) {
   };
 }
 
+function originalOutfitArtwork(outfit: number) {
+  return {
+    atlas: avatarArt.outfits,
+    region: outfitRegions[outfit],
+    placement: (outfit === 3
+      ? [33, 151, 334, 628]
+      : [44, 151, 312, 628]) as ArtRect,
+    waist: 326,
+  };
+}
+
 export function outfitArtwork(build: number, outfit: number) {
-  if (outfit < 4 && build === 0)
-    return {
-      atlas: avatarArt.outfits,
-      region: outfitRegions[outfit],
-      placement: (outfit === 3
-        ? [33, 151, 334, 628]
-        : [44, 151, 312, 628]) as ArtRect,
-      waist: 326,
-    };
+  if (outfit < 4 && build === 0) return originalOutfitArtwork(outfit);
   if (outfit < 4) {
     const centers = [246, 670, 1093, 1525];
     const width = build === 1 ? 350 : 368;

@@ -28,5 +28,5 @@ public static class ExportsContractMapping
         value.Completions.Select(item => item.ToModel()).ToImmutableArray(),
         value.Undos.Select(item => item.ToModel()).ToImmutableArray(),
         value.Notice,
-        value.SavedPlaces.Select(row => new PocketQuests.Contracts.Models.Discoveries.SavedPlace(row.Id, row.PlaceKey, row.Name, row.Kind, row.CategoryId, row.Latitude, row.Longitude, row.Notes, row.VisitedAt, row.QuestOccurrenceId, row.Revision, row.CreatedAt, row.ModifiedAt)).ToImmutableArray());
+        [.. value.SavedPlaces.Select(row => new PocketQuests.Contracts.Models.Discoveries.SavedPlace(row.Id, row.PlaceKey, row.Name, row.Kind, row.CategoryId, row.Latitude, row.Longitude, row.Notes, row.VisitedAt, row.QuestOccurrenceId, row.Revision, row.CreatedAt, row.ModifiedAt))]);
 }

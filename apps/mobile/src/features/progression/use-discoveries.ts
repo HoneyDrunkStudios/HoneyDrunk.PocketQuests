@@ -22,11 +22,11 @@ export function useDiscoveries() {
     try {
       await work();
       return lifetime.current === owner;
-    } catch (failure) {
+    } catch (error_) {
       if (lifetime.current === owner) {
         setError(
-          (failure instanceof Error
-            ? failure.message
+          (error_ instanceof Error
+            ? error_.message
             : "The journal could not save.") +
             " Reload saved places before making another change.",
         );
