@@ -20,6 +20,19 @@
 - Require private reasons and explicit confirmation, preserve progress, reject stale concurrent edits and erase restriction/audit evidence with the target account.
 - Add server-side OIDC/PKCE session support, per-request shared Identity checks and anti-forgery protection, with access denied until configured.
 
+## Layered accessories - November 4, 2026
+
+- Keep hair and recolored scarves visible on native SVG renderers, including multiple previews.
+- Combine starter glasses or a scarf with existing gear, and choose from eight scarf palettes.
+- Preserve v1/v2 looks, immutable receipts, private previews, and current reward ownership.
+- Add the approved 20-character v3 appearance format; deploy additive SQL/API support before the mobile client.
+
+## Focused avatar styling - November 4, 2026
+
+- Randomize or restore one appearance group while keeping the rest of the preview unchanged.
+- Add bounded preview Redo alongside Undo, with explicit saving and offline previews.
+- Preserve saved appearance formats, existing cosmetic ownership and account isolation.
+
 ## Traveler creation and daily adventures — November 2, 2026
 
 - Add a five-step first-run flow for character naming, full-body avatar creation, interests, starting skills and a first quest; retain existing accounts and XP.

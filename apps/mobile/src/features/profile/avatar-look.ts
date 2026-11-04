@@ -9,6 +9,8 @@ export type AvatarLook = {
   accessory: number;
   face: number;
   build: number;
+  extra: number;
+  scarfColor: number;
 };
 export const skinTones = [
   "#F5D5BC",
@@ -58,6 +60,31 @@ export const faceNames = [
   "Oval",
 ];
 export const buildNames = ["Balanced", "Broad", "Full"];
+export const extraAccessories = [
+  "No extra accessory",
+  "Add round glasses",
+  "Add linen scarf",
+];
+export const scarfNames = [
+  "Original linen",
+  "Moss",
+  "Ocean",
+  "Plum",
+  "Rust",
+  "Midnight",
+  "Cream",
+  "Gold",
+];
+export const scarfColors = [
+  "#B8A98C",
+  "#5C8057",
+  "#397D99",
+  "#86568E",
+  "#B86342",
+  "#33455F",
+  "#E4D7BB",
+  "#C59B48",
+];
 export const outfits = [
   { name: "Trail tunic", rewardId: null },
   { name: "Maker’s vest", rewardId: "PQ-CAT-A01" },
@@ -80,15 +107,41 @@ export function decodeAvatar(code: unknown): AvatarLook {
     typeof code === "string" &&
     ((code.length === 12 && /^v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]$/.test(code)) ||
       (code.length === 16 &&
-        /^v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]$/.test(code)))
+        /^v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]$/.test(code)) ||
+      (code.length === 20 &&
+        /^v3:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]:[0-2]:[0-7]$/.test(
+          code,
+        )))
       ? code
       : starterAvatar;
-  const [, skin, hairColor, hairStyle, outfit, accessory, face = 0, build = 0] =
-    value.split(":").map(Number);
-  return { skin, hairColor, hairStyle, outfit, accessory, face, build };
+  const [
+    ,
+    skin,
+    hairColor,
+    hairStyle,
+    outfit,
+    accessory,
+    face = 0,
+    build = 0,
+    extra = 0,
+    scarfColor = 0,
+  ] = value.split(":").map(Number);
+  return {
+    skin,
+    hairColor,
+    hairStyle,
+    outfit,
+    accessory,
+    face,
+    build,
+    extra,
+    scarfColor,
+  };
 }
 export function encodeAvatar(look: AvatarLook) {
   const choices = `${look.skin}:${look.hairColor}:${look.hairStyle}:${look.outfit}:${look.accessory}`;
+  if (look.extra || look.scarfColor)
+    return `v3:${choices}:${look.face}:${look.build}:${look.extra}:${look.scarfColor}`;
   return look.face === 0 &&
     look.build === 0 &&
     look.hairColor < 4 &&
@@ -134,6 +187,8 @@ export function randomAvatar(
     accessory: extras[pick(extras.length)],
     face: pick(faceNames.length),
     build: pick(buildNames.length),
+    extra: 0,
+    scarfColor: 0,
   });
 }
 export function availableCosmetic(

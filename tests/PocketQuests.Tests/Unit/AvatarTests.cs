@@ -30,6 +30,9 @@ public sealed class AvatarTests
     [InlineData("v2:0:0:0:0:0:7:0")]
     [InlineData("v2:0:0:0:0:0:0:3")]
     [InlineData("v2:0:0:0:0:0:0:0 ")]
+    [InlineData("v3:0:0:0:0:0:0:0:3:0")]
+    [InlineData("v3:0:0:0:0:0:0:0:0:8")]
+    [InlineData("v3:0:0:0:0:0:0:0:0:0 ")]
     public void InvalidAppearanceIsRejected(string? code) => Assert.Throws<QuestValidationException>(() => AvatarAppearance.Validate(code, []));
 
     /// <summary>Every reward cosmetic requires its exact entitlement; revocation preserves free choices.</summary>
@@ -90,5 +93,23 @@ public sealed class AvatarTests
         Assert.Equal("v2:4:6:7:4:0:1:2", AvatarAppearance.Eligible("v2:4:6:7:4:3:1:2", []));
         Assert.Throws<QuestValidationException>(() => AvatarAppearance.Validate("v2:5:7:7:1:0:2:2", []));
         AvatarAppearance.Validate("v2:5:7:7:1:0:2:2", [new("PQ-CAT-A01", "Fixture", "Reward", 1, 1, Rank.F, true)]);
+    }
+
+    /// <summary>Layered starter accessories and scarf colors survive revocation of reward gear.</summary>
+    [Fact]
+    public void LayeredAccessoriesPreserveLegacyAppearanceAndOwnership()
+    {
+        for (var extra = 0; extra < 3; extra++)
+        {
+            for (var color = 0; color < 8; color++)
+            {
+                var code = $"v3:5:7:7:5:4:6:2:{extra}:{color}";
+                AvatarAppearance.Validate(code, []);
+                Assert.Equal(code, AvatarAppearance.Eligible(code, []));
+            }
+        }
+
+        Assert.Equal("v3:5:7:6:0:0:6:2:2:7", AvatarAppearance.Eligible("v3:5:7:6:3:1:6:2:2:7", []));
+        Assert.Throws<QuestValidationException>(() => AvatarAppearance.Validate("v3:5:7:6:3:1:6:2:2:7", []));
     }
 }
