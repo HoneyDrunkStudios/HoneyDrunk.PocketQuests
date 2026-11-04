@@ -84,12 +84,7 @@ export function TodayQuests({
             <Text style={[styles.text, { fontWeight: "600" }]}>
               {item.occurrence.quest.title}
             </Text>
-            <Text style={styles.muted}>
-              {item.occurrence.dueDate
-                ? `Today${item.occurrence.plannedTime ? ` · ${item.occurrence.plannedTime}` : ""}`
-                : "Unscheduled · whenever it fits"}{" "}
-              →
-            </Text>
+            <Text style={styles.muted}>{plannedTimeLabel(item)} →</Text>
           </Pressable>
         </Link>
       ))}
@@ -201,4 +196,11 @@ export function TodayQuests({
       </Link>
     </Card>
   );
+}
+
+function plannedTimeLabel(item: State["occurrences"][number]) {
+  if (!item.occurrence.dueDate) return "Unscheduled · whenever it fits";
+  return item.occurrence.plannedTime
+    ? `Today · ${item.occurrence.plannedTime}`
+    : "Today";
 }

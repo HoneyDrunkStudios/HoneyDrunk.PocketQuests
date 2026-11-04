@@ -21,11 +21,11 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
     item.occurrence.dueDate === state?.today
       ? "today"
       : item.occurrence.dueDate;
-  const status = item.pendingCompletion
-    ? item.pendingTimingVerification
+  let status: string = item.status;
+  if (item.pendingCompletion)
+    status = item.pendingTimingVerification
       ? "Timing unverified"
-      : "Pending sync"
-    : item.status;
+      : "Pending sync";
   return (
     <Card style={{ padding: 0, borderColor: accent, gap: 0 }}>
       <Link
