@@ -11,7 +11,7 @@ import Svg, {
   Path,
   Rect,
 } from "react-native-svg";
-import { decodeAvatar } from "./avatar-look";
+import { decodeAvatar, scarfColors } from "./avatar-look";
 import {
   avatarArt,
   faceArtwork,
@@ -103,6 +103,7 @@ export function AvatarFigure({
   ];
   const filterId = `avatar-hair-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const neckId = `${filterId}-neck`;
+  const scarfId = `${filterId}-scarf`;
   return (
     <View
       accessible
@@ -138,6 +139,21 @@ export function AvatarFigure({
               values={hairColorMatrix(look.hairColor)}
             />
           </Filter>
+          {look.scarfColor > 0 && (
+            <Filter
+              id={scarfId}
+              filterUnits={filterUnits}
+              x="-10%"
+              y="-10%"
+              width="120%"
+              height="120%"
+            >
+              <FeColorMatrix
+                type="matrix"
+                values={scarfColorMatrix(scarfColors[look.scarfColor])}
+              />
+            </Filter>
+          )}
         </Defs>
         <Ellipse
           cx={200}
@@ -204,14 +220,15 @@ export function AvatarFigure({
             placement={[154, 147, 92, 75]}
           />
         </G>
-        {look.accessory === 5 && (
+        {(look.accessory === 5 || look.extra === 2) && (
           <ArtLayer
             atlas={avatarArt.starterAccessories}
             region={[1025, 105, 725, 695]}
             placement={[160, 152, 80, 82]}
+            filter={look.scarfColor > 0 ? `url(#${scarfId})` : undefined}
           />
         )}
-        {look.accessory === 4 && (
+        {(look.accessory === 4 || look.extra === 1) && (
           <ArtLayer
             atlas={avatarArt.starterAccessories}
             region={[45, 300, 845, 315]}
@@ -231,5 +248,20 @@ export function AvatarFigure({
         )}
       </Svg>
     </View>
+  );
+}
+
+/** Recolors only the scarf atlas layer, preserving its transparency and shading. */
+function scarfColorMatrix(color: string) {
+  const channels = [1, 3, 5].map(
+    (offset) => parseInt(color.slice(offset, offset + 2), 16) / 255,
+  );
+  return (
+    channels
+      .map(
+        (channel) =>
+          `${0.299 * channel} ${0.587 * channel} ${0.114 * channel} 0 0`,
+      )
+      .join(" ") + " 0 0 0 1 0"
   );
 }

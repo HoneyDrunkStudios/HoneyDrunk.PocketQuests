@@ -823,10 +823,10 @@
         },
         {
           "name": "AvatarCode",
-          "type": "varchar(16)",
+          "type": "varchar(20)",
           "nullable": true,
           "default": null,
-          "description": "Versioned full-body appearance: v1 stores skin, hair color, hairstyle, outfit and accessory; v2 appends face and build with expanded bounded choices. Null means starter appearance. Private account preference, erased with account history.",
+          "description": "Versioned full-body appearance: v1 stores skin, hair color, hairstyle, outfit and accessory; v2 appends face and build with expanded bounded choices. Null means starter appearance. Private account preference, erased with account history. Version v3 appends an extra starter accessory and scarf color; earlier versions retain their exact meanings.",
           "external_source": null,
           "computed": null,
           "collation": "Latin1_General_100_BIN2"
@@ -916,7 +916,7 @@
         },
         {
           "name": "CK_Account_AvatarCode",
-          "expression": "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]')",
+          "expression": "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]') OR (DATALENGTH([AvatarCode])=20 AND [AvatarCode] LIKE 'v3:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]:[0-2]:[0-7]')",
           "purpose": "Constrain the versioned avatar selection to supported appearance and cosmetic slots."
         }
       ],
@@ -7563,10 +7563,10 @@
         },
         {
           "name": "AvatarCode",
-          "type": "varchar(16)",
+          "type": "varchar(20)",
           "nullable": true,
           "default": null,
-          "description": "Original validated avatar appearance for save-avatar; null for other commands. Immutable private account history, erased with its owner.",
+          "description": "Original validated avatar appearance for save-avatar; null for other commands. Immutable private account history, erased with its owner. Version v3 appends an extra starter accessory and scarf color; earlier versions retain their exact meanings.",
           "external_source": null,
           "computed": null,
           "collation": "Latin1_General_100_BIN2"
@@ -7687,7 +7687,7 @@
         },
         {
           "name": "CK_QuestCommandHistory_AvatarCode",
-          "expression": "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]')",
+          "expression": "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]') OR (DATALENGTH([AvatarCode])=20 AND [AvatarCode] LIKE 'v3:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]:[0-2]:[0-7]')",
           "purpose": "Constrain the versioned avatar selection to supported appearance and cosmetic slots."
         },
         {

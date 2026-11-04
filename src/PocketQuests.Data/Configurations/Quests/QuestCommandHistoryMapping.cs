@@ -19,7 +19,7 @@ public sealed class QuestCommandHistoryMapping : IEntityTypeConfiguration<QuestC
         entity.ToTable("QuestCommandHistory", "pocketquests", table =>
         {
             table.HasCheckConstraint("CK_QuestCommandHistory_AvatarAction", "([ActionCode]='save-avatar' AND [AvatarCode] IS NOT NULL) OR ([ActionCode]<>'save-avatar' AND [AvatarCode] IS NULL)");
-            table.HasCheckConstraint("CK_QuestCommandHistory_AvatarCode", "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]')");
+            table.HasCheckConstraint("CK_QuestCommandHistory_AvatarCode", "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]') OR (DATALENGTH([AvatarCode])=20 AND [AvatarCode] LIKE 'v3:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]:[0-2]:[0-7]')");
             table.HasComment("One row is one immutable, typed successful action input and its replay clocks, never a serialized command or account snapshot. Classification: Restricted. History: immutable. Erase with its account; no age cutoff on replay history.");
             table.HasCheckConstraint("CK_QuestCommandHistory_CharacterName", "[CharacterName] IS NULL OR (LEN(LTRIM(RTRIM([CharacterName]))) BETWEEN 1 AND 40 AND DATALENGTH([CharacterName])<=80)");
             table.HasCheckConstraint("CK_QuestCommandHistory_PortraitId", "[PortraitId] IS NULL OR [PortraitId] IN ('portrait-1','portrait-2','portrait-3','portrait-4','portrait-5','portrait-6')");
@@ -40,7 +40,7 @@ public sealed class QuestCommandHistoryMapping : IEntityTypeConfiguration<QuestC
             table.HasCheckConstraint("CK_QuestCommandHistory_ReconciliationLimit", "[ReconciliationLimit]>=0");
             table.HasCheckConstraint("CK_QuestCommandHistory_ActionReconciliationLimit", "[ActionReconciliationLimit]>=0");
         });
-        entity.Property(row => row.AvatarCode).HasComment("Original validated avatar appearance for save-avatar; null for other commands. Immutable private account history, erased with its owner.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(16).IsUnicode(false).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        entity.Property(row => row.AvatarCode).HasComment("Original validated avatar appearance for save-avatar; null for other commands. Immutable private account history, erased with its owner. Version v3 appends an extra starter accessory and scarf color; earlier versions retain their exact meanings.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(20).IsUnicode(false).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
         entity.HasKey(row => row.Id).HasName("PK_QuestCommandHistory").IsClustered();
         entity.HasAlternateKey(row => new { row.AccountId, row.Id }).HasName("UQ_QuestCommandHistory_Account_Id");
         entity.HasIndex(row => new { row.AccountId, row.AccountMutationVersion }, "UQ_QuestCommandHistory_Account_Version").IsUnique().HasFilter(null);
