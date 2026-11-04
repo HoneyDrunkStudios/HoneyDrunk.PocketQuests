@@ -28,6 +28,7 @@ export function StartingSkills({
   const [saveError, setSaveError] = useState("");
   const sent = useRef<string | null>(null);
   const completed = useRef(false);
+  const submissionError = useRef<string | null | undefined>(null);
   const next = Object.entries(targets ?? {}).find(
     ([id, experience]) =>
       (state?.profile.assessments[id] ?? "New") !== experience,
@@ -39,7 +40,7 @@ export function StartingSkills({
       busy ||
       pending ||
       offline ||
-      error ||
+      (error && error !== submissionError.current) ||
       saveError ||
       queuedCount > 0
     )
@@ -173,6 +174,7 @@ export function StartingSkills({
         onPress={() => {
           sent.current = null;
           completed.current = false;
+          submissionError.current = error;
           setTargets({ ...draft });
         }}
       />

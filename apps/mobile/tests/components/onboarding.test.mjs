@@ -608,3 +608,43 @@ test("an older character confirmation cannot advance a newer edited draft", asyn
     await view.unmount();
   }
 });
+
+for (const recovered of ["Timing check discarded", "Rejected action discarded"]) {
+  test(`starting-skill setup resumes after ${recovered.toLowerCase()}`, async () => {
+    reset();
+    let advanced = 0;
+    session.command = async (input) => {
+      sent.push(input);
+      session.error = "Needs recovery";
+      session.queuedCount = 1;
+    };
+    const view = await mount(StartingSkills, { onContinue: () => advanced++ });
+    try {
+      await act(async () => view.element.querySelector('[aria-label="Programming: Practiced"]').click());
+      await view.click("Continue with these skills");
+      await view.render();
+      assert.equal(advanced, 0);
+      session.queuedCount = 0;
+      session.error = recovered;
+      await view.render();
+      await view.click("Review skill choices");
+      session.command = async (input) => {
+        sent.push(input);
+        session.state.profile.assessments[input.skillId] = input.experience;
+        session.error = null;
+      };
+      await view.click("Continue with these skills");
+      await view.render();
+      assert.equal(advanced, 1);
+      assert.equal(sent.length, 2);
+    } finally { await view.unmount(); }
+  });
+}
+
+test("starting-skill setup can continue unchanged after an informational recovery message", async () => {
+  reset(); session.error = "Rejected action discarded";
+  let advanced = 0;
+  const view = await mount(StartingSkills, { onContinue: () => advanced++ });
+  try { await view.click("Continue with these skills"); await view.render(); assert.equal(advanced, 1); assert.equal(sent.length, 0); }
+  finally { await view.unmount(); }
+});
