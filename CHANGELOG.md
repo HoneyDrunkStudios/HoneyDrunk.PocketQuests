@@ -28,6 +28,7 @@
 - Add a daily Home plan, small quest ideas, reward/wardrobe journal and a confirmed 7/30-day activity recap.
 - Add deliberate nearby-place searches and an account-owned saved-place journal with notes, visit status, accepted-quest links, export and erasure support. Visits grant no XP.
 - Add foreground-only Expo Location support; preserve manual search and cancellation when permission is denied or the screen closes.
+- Keep hair visible on Android and refresh atlas clip references when changing styles.
 - Keep the development backend on loopback with an optional alternate port. Native/provider acceptance and release dependency audit gates remain separate.
 
 ## Active and completed quest search — October 26, 2026
