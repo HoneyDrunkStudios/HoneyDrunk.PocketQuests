@@ -43,23 +43,7 @@ public sealed class SavedPlaceService(IAccountDataService accounts, ISavedPlaceD
             var identity = currentAccount.Identity.ToModel();
             await quests.RequireAccess(identity, true, ct);
             var account = await quests.Account(identity, ct);
-            var existing = await places.GetByAccountId(account.Id, ct);
-            var place = existing.SingleOrDefault(item => item.Id == request.Id);
-            if (place is null)
-            {
-                if (request.ExpectedRevision != 0 || existing.Any(item => item.PlaceKey == request.PlaceKey))
-                    throw new QuestConflictException("This place changed. Reload your journal before editing.");
-                if (existing.Count >= SavedPlaceValidator.MaximumPlaces)
-                    throw new QuestValidationException("Your journal holds 100 places. Remove a place before saving another.");
-                if (await places.FindByIdAsync(request.Id, ct) is not null)
-                    throw new QuestConflictException("Choose a new saved-place identifier.");
-                place = new SavedPlaceEntity { Id = request.Id, AccountId = account.Id, PlaceKey = request.PlaceKey, CreatedAt = now };
-                await places.AddAsync(place, ct);
-            }
-            else if (place.Revision != request.ExpectedRevision || place.PlaceKey != request.PlaceKey)
-            {
-                throw new QuestConflictException("This place changed. Reload your journal before editing.");
-            }
+            var place = await FindOrCreate(account.Id, request, now, ct);
 
             if (request.QuestOccurrenceId is { } occurrence && !await places.CanLink(account.Id, occurrence, ct))
                 throw new QuestValidationException("Choose one of your accepted quests.");
@@ -95,6 +79,28 @@ public sealed class SavedPlaceService(IAccountDataService accounts, ISavedPlaceD
             return new RemovalResult(true);
         },
             token);
+    }
+
+    private async Task<SavedPlaceEntity> FindOrCreate(Guid accountId, SavePlaceRequest request, DateTimeOffset now, CancellationToken token)
+    {
+        var existing = await places.GetByAccountId(accountId, token);
+        var place = existing.SingleOrDefault(item => item.Id == request.Id);
+        if (place is not null)
+        {
+            if (place.Revision != request.ExpectedRevision || place.PlaceKey != request.PlaceKey)
+                throw new QuestConflictException("This place changed. Reload your journal before editing.");
+            return place;
+        }
+
+        if (request.ExpectedRevision != 0 || existing.Any(item => item.PlaceKey == request.PlaceKey))
+            throw new QuestConflictException("This place changed. Reload your journal before editing.");
+        if (existing.Count >= SavedPlaceValidator.MaximumPlaces)
+            throw new QuestValidationException("Your journal holds 100 places. Remove a place before saving another.");
+        if (await places.FindByIdAsync(request.Id, token) is not null)
+            throw new QuestConflictException("Choose a new saved-place identifier.");
+        place = new SavedPlaceEntity { Id = request.Id, AccountId = accountId, PlaceKey = request.PlaceKey, CreatedAt = now };
+        await places.AddAsync(place, token);
+        return place;
     }
 
     private async Task Audit(Guid accountId, string subject, DateTimeOffset at, string action, CancellationToken token)

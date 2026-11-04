@@ -73,12 +73,7 @@ export function activityRecap(state: RecapState, period: RecapPeriod) {
       continue;
     const xp = awards.get(`${completion.id}:${item.occurrence.id}`);
     if (xp === undefined) continue;
-    const instant = new Date(completion.recordedAt);
-    if (!Number.isFinite(instant.getTime())) continue;
-    const parts = formatter.formatToParts(instant);
-    const part = (type: Intl.DateTimeFormatPartTypes) =>
-      parts.find((value) => value.type === type)?.value;
-    const day = `${part("year")}-${part("month")}-${part("day")}`;
+    const day = completionDay(formatter, completion.recordedAt);
     const bucket = byDay.get(day);
     if (!bucket) continue;
     seen.add(completion.id);
@@ -122,4 +117,13 @@ export function activityRecap(state: RecapState, period: RecapPeriod) {
       (a, b) => b.count - a.count || a.name.localeCompare(b.name),
     ),
   };
+}
+
+function completionDay(formatter: Intl.DateTimeFormat, recordedAt: string) {
+  const instant = new Date(recordedAt);
+  if (!Number.isFinite(instant.getTime())) return "";
+  const parts = formatter.formatToParts(instant);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((value) => value.type === type)?.value;
+  return `${part("year")}-${part("month")}-${part("day")}`;
 }

@@ -13,6 +13,11 @@ import { CharacterPortrait } from "./character-portrait";
 import { AvatarEditor } from "./avatar-editor";
 import { StartingSkills } from "./starting-skills";
 
+function interestOpacity(saving: boolean, pressed: boolean) {
+  if (saving) return 0.6;
+  return pressed ? 0.8 : 1;
+}
+
 const steps = [
   "Your name",
   "Your traveler",
@@ -194,7 +199,7 @@ export function Onboarding({
                           borderRadius: 14,
                           borderColor: selected ? colors.gold : colors.line,
                           backgroundColor: selected ? "#243444" : colors.card,
-                          opacity: isSavingInterests ? 0.6 : pressed ? 0.8 : 1,
+                          opacity: interestOpacity(isSavingInterests, pressed),
                         })}
                       >
                         <Ionicons
