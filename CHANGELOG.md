@@ -5,6 +5,7 @@
 - Review and publish saved system-quest drafts to player discovery; keep newer edits private until explicitly republished.
 - Withdraw future discovery while preserving accepted quests, recurring series, rewards, Undo and original retry results.
 - Keep schedule-only edits on their original accepted terms and penalty consent after republication or withdrawal.
+- Refresh published discovery during normal synchronization and foreground resume, preserving the verified catalog for offline use.
 - Reject stale publication reviews, recover uncertain responses through reload and verify publishing/erasure under restricted database roles.
 
 ## System-quest workshop — November 4, 2026
