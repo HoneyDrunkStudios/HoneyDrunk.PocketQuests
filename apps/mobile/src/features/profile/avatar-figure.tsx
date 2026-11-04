@@ -254,7 +254,7 @@ export function AvatarFigure({
 /** Recolors only the scarf atlas layer, preserving its transparency and shading. */
 function scarfColorMatrix(color: string) {
   const channels = [1, 3, 5].map(
-    (offset) => parseInt(color.slice(offset, offset + 2), 16) / 255,
+    (offset) => Number.parseInt(color.slice(offset, offset + 2), 16) / 255,
   );
   return (
     channels

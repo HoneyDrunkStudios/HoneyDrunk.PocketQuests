@@ -35,6 +35,11 @@ import {
   type AvatarSection,
 } from "./avatar-customization";
 
+function swatchPalette(slot: keyof AvatarLook) {
+  if (slot === "skin") return skinTones;
+  return slot === "scarfColor" ? scarfColors : hairColors;
+}
+
 function Wardrobe({
   state,
   onContinue,
@@ -156,11 +161,7 @@ function Wardrobe({
                   borderRadius: 10,
                   borderWidth: 1,
                   borderColor: colors.line,
-                  backgroundColor: (slot === "skin"
-                    ? skinTones
-                    : slot === "scarfColor"
-                      ? scarfColors
-                      : hairColors)[index],
+                  backgroundColor: swatchPalette(slot)[index],
                 }}
               />
             )}
