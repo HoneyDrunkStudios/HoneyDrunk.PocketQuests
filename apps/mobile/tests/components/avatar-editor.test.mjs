@@ -294,6 +294,8 @@ test("versioned appearances round-trip every slot and all six cosmetic gates", (
     accessory: 3,
     face: 0,
     build: 0,
+    extra: 0,
+    scarfColor: 0,
   };
   assert.deepEqual(decodeAvatar(encodeAvatar(look)), look);
   assert.equal(encodeAvatar(decodeAvatar("v2:5:3:2:3:3")), "v1:2:0:0:0:0");
@@ -817,6 +819,55 @@ test("focused styling previews offline, preserves identity, and restores only sa
     assert.equal(view.button("Undo preview edit"), undefined);
   } finally {
     Math.random = original;
+    await view.close();
+  }
+});
+
+test("layered appearances retain legacy meanings and reject unsupported extra/color ordinals", () => {
+  const code = "v3:5:7:6:5:1:6:2:2:7";
+  const look = decodeAvatar(code);
+  assert.equal(encodeAvatar(look), code);
+  assert.equal(look.extra, 2);
+  assert.equal(look.scarfColor, 7);
+  assert.equal(decodeAvatar("v2:5:7:6:5:1:6:2").extra, 0);
+  for (const invalid of [
+    "v3:5:7:6:5:1:6:2:3:7",
+    "v3:5:7:6:5:1:6:2:2:8",
+    code + " ",
+  ])
+    assert.equal(encodeAvatar(decodeAvatar(invalid)), "v1:2:0:0:0:0");
+});
+
+test("extra scarf/glasses and color compose with gear, stay local until Save, and Undo retains each layer", async () => {
+  reset();
+  session.state.profile.avatarCode = "v2:1:1:1:4:4:3:1";
+  const view = await mount(AvatarEditor);
+  try {
+    await view.tab("Accessories");
+    await view.click("Add linen scarf");
+    await view.click("Ocean");
+    assert.deepEqual(sent, []);
+    assert.equal(view.element.querySelectorAll("filter").length, 2);
+    await view.click("Save avatar");
+    const layered = decodeAvatar(sent[0].avatarCode);
+    assert.equal(layered.accessory, 4);
+    assert.equal(layered.extra, 2);
+    assert.equal(layered.scarfColor, 2);
+    await view.click("Undo preview edit");
+    await view.click("Save avatar");
+    assert.equal(decodeAvatar(sent[1].avatarCode).extra, 2);
+    assert.equal(decodeAvatar(sent[1].avatarCode).scarfColor, 0);
+    await view.click("Preview locked: Explorer’s satchel");
+    assert.equal(
+      view.button("Save avatar").getAttribute("aria-disabled"),
+      "true",
+    );
+    session.state.entitlements[2].earned = true;
+    await view.render();
+    await view.click("Save avatar");
+    assert.equal(decodeAvatar(sent[2].avatarCode).accessory, 1);
+    assert.equal(decodeAvatar(sent[2].avatarCode).extra, 2);
+  } finally {
     await view.close();
   }
 });

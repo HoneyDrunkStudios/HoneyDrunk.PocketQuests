@@ -11,6 +11,9 @@ import { questActions } from "../quests/commands/quest-actions";
 import { AvatarFigure } from "./avatar-figure";
 import {
   accessories,
+  extraAccessories,
+  scarfNames,
+  scarfColors,
   availableCosmetic,
   canWear,
   decodeAvatar,
@@ -142,7 +145,9 @@ function Wardrobe({
               opacity: saving ? 0.5 : pressed ? 0.8 : 1,
             })}
           >
-            {(slot === "skin" || slot === "hairColor") && (
+            {(slot === "skin" ||
+              slot === "hairColor" ||
+              slot === "scarfColor") && (
               <View
                 accessible={false}
                 style={{
@@ -151,9 +156,11 @@ function Wardrobe({
                   borderRadius: 10,
                   borderWidth: 1,
                   borderColor: colors.line,
-                  backgroundColor: (slot === "skin" ? skinTones : hairColors)[
-                    index
-                  ],
+                  backgroundColor: (slot === "skin"
+                    ? skinTones
+                    : slot === "scarfColor"
+                      ? scarfColors
+                      : hairColors)[index],
                 }}
               />
             )}
@@ -394,8 +401,20 @@ function Wardrobe({
         </>
       )}
       {section === "Clothing" && wardrobe("Clothing", "outfit", outfits)}
-      {section === "Accessories" &&
-        wardrobe("Accessories", "accessory", accessories)}
+      {section === "Accessories" && (
+        <>
+          {wardrobe("Accessories", "accessory", accessories)}
+          <Label>
+            Layer free glasses or a scarf with your chosen gear. Duplicate items
+            appear once.
+          </Label>
+          {options("Extra accessory", "extra", extraAccessories)}
+          {options("Scarf color", "scarfColor", scarfNames)}
+          {look.accessory !== 5 && look.extra !== 2 && (
+            <Label>Choose a linen scarf to see its color.</Label>
+          )}
+        </>
+      )}
       <Label>
         Undo can remove an unlock. If that happens, your look returns to the
         starter item. Frames and their matching clothing also depend on your

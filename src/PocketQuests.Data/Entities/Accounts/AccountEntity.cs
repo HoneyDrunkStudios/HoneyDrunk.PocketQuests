@@ -3,7 +3,7 @@ namespace PocketQuests.Data.Entities.Accounts;
 /// <summary>One row is one personal Pocket Quests profile for a verified canonical Identity user. Classification: Restricted. History: mutable; Retain while the account exists, including its recovery interval; erase with the account. No arbitrary age-based pruning of replay source facts.</summary>
 public sealed class AccountEntity
 {
-    /// <summary>Gets or sets versioned full-body appearance: v1 stores skin, hair color, hairstyle, outfit and accessory; v2 appends face and build with expanded bounded choices. Null means starter appearance. Private account preference, erased with account history.</summary>
+    /// <summary>Gets or sets versioned full-body appearance: v1 stores skin, hair color, hairstyle, outfit and accessory; v2 appends face and build with expanded bounded choices. Null means starter appearance. Private account preference, erased with account history. Version v3 appends an extra starter accessory and scarf color; earlier versions retain their exact meanings.</summary>
     public string? AvatarCode { get; set; }
 
     /// <summary>Gets or sets application-generated stable row UUID; never reused.</summary>
