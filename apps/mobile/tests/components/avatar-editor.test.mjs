@@ -487,6 +487,17 @@ test("multiple avatar previews keep independent color filters and clip reference
     assert.equal(new Set(ids).size, ids.length);
     const filters = [...view.element.querySelectorAll("filter")];
     assert.equal(filters.length, 2);
+    for (const filter of filters) {
+      assert.equal(
+        filter.getAttribute("filterUnits"),
+        "objectBoundingBox",
+        "web filters must cover the atlas before its placement transform",
+      );
+      assert.equal(filter.getAttribute("x"), "-10%");
+      assert.equal(filter.getAttribute("y"), "-10%");
+      assert.equal(filter.getAttribute("width"), "120%");
+      assert.equal(filter.getAttribute("height"), "120%");
+    }
     assert.equal(
       view.element.querySelectorAll("svg svg").length,
       0,
