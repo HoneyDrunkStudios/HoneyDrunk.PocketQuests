@@ -47,6 +47,32 @@ export class AdminApiError extends Error {
   }
 }
 
+function accessFailureMessage(status: number) {
+  if (status === 401 || status === 403)
+    return "This session cannot access the console. Sign in with the configured operator account.";
+  if (status === 409)
+    return "This account changed. Reload its status before making another change. Your reason is kept.";
+  return "The request could not be confirmed. Reload the account status before retrying a change.";
+}
+
+async function serverFailureMessage(response: Response) {
+  let message = accessFailureMessage(response.status);
+  if (response.status === 400) {
+    try {
+      const problem: unknown = await response.json();
+      if (
+        isRecord(problem) &&
+        typeof problem.detail === "string" &&
+        problem.detail.length <= 2000
+      )
+        message = problem.detail;
+    } catch {
+      /* Retain the generic message for an unreadable problem. */
+    }
+  }
+  return message;
+}
+
 async function request(
   path: string,
   csrfToken: string,
@@ -64,25 +90,7 @@ async function request(
     signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]),
   });
   if (!response.ok) {
-    let message =
-      response.status === 401 || response.status === 403
-        ? "This session cannot access the console. Sign in with the configured operator account."
-        : response.status === 409
-          ? "This account changed. Reload its status before making another change. Your reason is kept."
-          : "The request could not be confirmed. Reload the account status before retrying a change.";
-    if (response.status === 400) {
-      try {
-        const problem: unknown = await response.json();
-        if (
-          isRecord(problem) &&
-          typeof problem.detail === "string" &&
-          problem.detail.length <= 2000
-        )
-          message = problem.detail;
-      } catch {
-        /* Retain the generic message for an unreadable problem. */
-      }
-    }
+    const message = await serverFailureMessage(response);
     throw new AdminApiError(response.status, message);
   }
   return response.status === 204 ? null : response.json();

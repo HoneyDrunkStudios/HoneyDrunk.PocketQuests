@@ -10,6 +10,7 @@ using PocketQuests.Data.Entities.Accounts;
 using PocketQuests.Data.Entities.Quests;
 using PocketQuests.Data.Queries.Administration;
 using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Services.Administration.Mapping;
 using PocketQuests.Services.Administration.Validators;
 using PocketQuests.Services.Catalogs;
@@ -68,39 +69,57 @@ public sealed class AdminSystemQuestService(AdminOperator access, IAccountDataSe
             SystemQuestRevisionEntity revision;
             if (head is null)
             {
-                if (request.ExpectedVersion is not null)
-                    throw new QuestNotFoundException();
-                if ((await templates.Studio(SystemQuestValidator.MaximumTemplates, ct)).Count >= SystemQuestValidator.MaximumTemplates)
-                    throw new QuestValidationException("The studio catalog supports at most 200 authored quests.");
-                head = new() { Id = quest.Id, CategoryId = quest.CategoryId, Title = quest.Title, CatalogVersion = "admin-v1", CreatedAt = now, ModifiedAt = now, CreatedBy = actor, ModifiedBy = actor };
-                revision = new() { Id = Guid.NewGuid(), SystemQuestId = quest.Id, Version = 1, SnapshotJson = snapshot, CreatedAt = now };
-                await templates.AddInitialDraft(head, revision, ct);
+                (head, revision) = await CreateInitialDraft(quest, request.ExpectedVersion, snapshot, actor, now, ct);
             }
             else
             {
-                var previous = await revisions.Read(head.DraftSystemQuestRevisionId ?? throw new InvalidOperationException("A studio draft pointer is required."), ct) ?? throw new InvalidOperationException("Draft content is missing.");
+                var previous = await ReadDraft(head, ct);
 
                 // Exact retry of initial creation reuses its stable client identity.
                 if (request.ExpectedVersion is null && previous.SnapshotJson == snapshot)
-                    return new SystemQuestStudioRow(head, previous, head.PublishedSystemQuestRevisionId is { } live ? await revisions.Read(live, ct) : null);
+                    return await StudioRow(head, previous, ct);
                 SystemQuestValidator.RequireVersion(request.ExpectedVersion, head.RowVersion);
-                if (previous.Version >= SystemQuestValidator.MaximumRevisions)
-                    throw new QuestValidationException("This quest has reached its 1000-revision limit. Create a new template identity for further content.");
-                revision = new() { Id = Guid.NewGuid(), SystemQuestId = quest.Id, Version = previous.Version + 1, SnapshotJson = snapshot, CreatedAt = now };
-                await revisions.AddAsync(revision, ct);
-                head.DraftSystemQuestRevisionId = revision.Id;
-                head.Title = quest.Title;
-                head.CategoryId = quest.CategoryId;
-                head.ModifiedAt = now > head.ModifiedAt ? now : head.ModifiedAt;
-                head.ModifiedBy = actor;
+                revision = await AppendDraft(head, previous, quest, snapshot, actor, now, ct);
             }
 
             await RecordAudit(owner.Id, actor, "pocketquests.admin.quest-draft", head.Id, now, ct);
-            return new SystemQuestStudioRow(head, revision, head.PublishedSystemQuestRevisionId is { } published ? await revisions.Read(published, ct) : null);
+            return await StudioRow(head, revision, ct);
         },
             token);
         return result.ToContract();
     }
+
+    private async Task<(SystemQuestEntity head, SystemQuestRevisionEntity revision)> CreateInitialDraft(Quest quest, string? expectedVersion, string snapshot, string actor, DateTimeOffset now, CancellationToken token)
+    {
+        if (expectedVersion is not null)
+            throw new QuestNotFoundException();
+        if ((await templates.Studio(SystemQuestValidator.MaximumTemplates, token)).Count >= SystemQuestValidator.MaximumTemplates)
+            throw new QuestValidationException("The studio catalog supports at most 200 authored quests.");
+        var head = new SystemQuestEntity { Id = quest.Id, CategoryId = quest.CategoryId, Title = quest.Title, CatalogVersion = "admin-v1", CreatedAt = now, ModifiedAt = now, CreatedBy = actor, ModifiedBy = actor };
+        var revision = new SystemQuestRevisionEntity { Id = Guid.NewGuid(), SystemQuestId = quest.Id, Version = 1, SnapshotJson = snapshot, CreatedAt = now };
+        await templates.AddInitialDraft(head, revision, token);
+        return (head, revision);
+    }
+
+    private async Task<SystemQuestRevisionEntity> ReadDraft(SystemQuestEntity head, CancellationToken token) =>
+        await revisions.Read(head.DraftSystemQuestRevisionId ?? throw new InvalidOperationException("A studio draft pointer is required."), token) ?? throw new InvalidOperationException("Draft content is missing.");
+
+    private async Task<SystemQuestRevisionEntity> AppendDraft(SystemQuestEntity head, SystemQuestRevisionEntity previous, Quest quest, string snapshot, string actor, DateTimeOffset now, CancellationToken token)
+    {
+        if (previous.Version >= SystemQuestValidator.MaximumRevisions)
+            throw new QuestValidationException("This quest has reached its 1000-revision limit. Create a new template identity for further content.");
+        var revision = new SystemQuestRevisionEntity { Id = Guid.NewGuid(), SystemQuestId = quest.Id, Version = previous.Version + 1, SnapshotJson = snapshot, CreatedAt = now };
+        await revisions.AddAsync(revision, token);
+        head.DraftSystemQuestRevisionId = revision.Id;
+        head.Title = quest.Title;
+        head.CategoryId = quest.CategoryId;
+        head.ModifiedAt = now > head.ModifiedAt ? now : head.ModifiedAt;
+        head.ModifiedBy = actor;
+        return revision;
+    }
+
+    private async Task<SystemQuestStudioRow> StudioRow(SystemQuestEntity head, SystemQuestRevisionEntity draft, CancellationToken token) =>
+        new(head, draft, head.PublishedSystemQuestRevisionId is { } published ? await revisions.Read(published, token) : null);
 
     private async Task RecordAudit(Guid accountId, string actor, string action, string questId, DateTimeOffset at, CancellationToken token)
     {
