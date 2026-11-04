@@ -125,3 +125,13 @@ GO
 -- Shared Outbox dispatch UPDATE permission remains composed by its owner; never DENY it here.
 GRANT SELECT, INSERT, DELETE ON OBJECT::[outbox].[OutboxMessages] TO [pocketquests_lifecycle_runtime];
 GO
+-- Private saved-place edits use the account-locked service; erasure removes the same owned rows.
+GRANT INSERT, UPDATE, DELETE ON OBJECT::[pocketquests].[SavedPlace] TO [pocketquests_command_runtime];
+GO
+GRANT DELETE ON OBJECT::[pocketquests].[SavedPlace] TO [pocketquests_lifecycle_runtime];
+GO
+-- Moderation stores only the current owned restriction; lifecycle erasure removes it.
+GRANT INSERT, UPDATE ON OBJECT::[pocketquests].[AccountAccessRestriction] TO [pocketquests_command_runtime];
+GO
+GRANT DELETE ON OBJECT::[pocketquests].[AccountAccessRestriction] TO [pocketquests_lifecycle_runtime];
+GO
