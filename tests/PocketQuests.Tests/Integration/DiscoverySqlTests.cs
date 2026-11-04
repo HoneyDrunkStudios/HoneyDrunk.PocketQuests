@@ -116,16 +116,20 @@ public sealed partial class SqlApiTests
         await Setup(alice);
         var request = DiscoveryRequest();
         await SaveDiscovery(alice, request);
+        await using var db = Context();
+        var owner = await (from place in db.Read.Set<SavedPlaceEntity>()
+                           join account in db.Read.Set<PocketQuests.Data.Entities.Accounts.AccountEntity>() on place.AccountId equals account.Id
+                           where place.Id == request.Id
+                           select account.IdentityUserId).SingleAsync();
         using var scope = host.Services.CreateScope();
         var data = scope.ServiceProvider.GetRequiredService<IAccountDataService>();
         await data.ExecuteInTransaction(
             async token =>
         {
-            await data.AcquireCommandLock(TestIdentity("discovery-erasure").Subject, token);
-            await data.DeleteOwned(TestIdentity("discovery-erasure").Subject, token);
+            await data.AcquireCommandLock(owner, token);
+            await data.DeleteOwned(owner, token);
             return true;
         });
-        await using var db = Context();
         Assert.False(await db.Read.Set<SavedPlaceEntity>().AnyAsync());
     }
 
