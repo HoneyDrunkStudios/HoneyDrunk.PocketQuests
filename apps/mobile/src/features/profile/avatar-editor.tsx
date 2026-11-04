@@ -250,7 +250,7 @@ function Wardrobe({
           disabled={saving}
           onPress={() => {
             setFuture((previous) => [...previous.slice(-19), choice]);
-            setDraft(history[history.length - 1]);
+            setDraft(history.at(-1));
             setHistory((previous) => previous.slice(0, -1));
             setComparing(false);
             setError("");
@@ -264,7 +264,7 @@ function Wardrobe({
           disabled={saving}
           onPress={() => {
             setHistory((previous) => [...previous.slice(-19), choice]);
-            setDraft(future[future.length - 1]);
+            setDraft(future.at(-1));
             setFuture((previous) => previous.slice(0, -1));
             setComparing(false);
             setError("");
