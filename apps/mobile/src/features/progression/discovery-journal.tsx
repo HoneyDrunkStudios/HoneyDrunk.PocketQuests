@@ -9,10 +9,10 @@ import type { DiscoveryJournalState } from "./use-discoveries";
 export function DiscoveryJournal({
   journal,
   onShowMap,
-}: {
+}: Readonly<{
   journal: DiscoveryJournalState;
   onShowMap?: (place: SavedPlace) => void;
-}) {
+}>) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
@@ -114,11 +114,11 @@ function SavedPlaceEditor({
   place,
   journal,
   onShowMap,
-}: {
+}: Readonly<{
   place: SavedPlace;
   journal: DiscoveryJournalState;
   onShowMap?: (place: SavedPlace) => void;
-}) {
+}>) {
   const { state } = useAccountSnapshot();
   const { offline, busy } = useSessionStatus();
   const [notes, setNotes] = useState(place.notes);

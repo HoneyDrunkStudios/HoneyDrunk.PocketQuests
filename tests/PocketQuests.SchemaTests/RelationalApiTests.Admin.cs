@@ -16,6 +16,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace PocketQuests.SchemaTests;
 
@@ -44,7 +45,7 @@ public sealed partial class RelationalApiTests
         shell.EnsureSuccessStatusCode();
         Assert.Contains("no-store", shell.Headers.CacheControl!.ToString(), StringComparison.Ordinal);
         Assert.True(shell.Headers.Contains("Content-Security-Policy"));
-        var assets = System.Text.RegularExpressions.Regex.Matches(await shell.Content.ReadAsStringAsync(), "(?:src|href)=\"(/admin/assets/[^\"]+)\"");
+        var assets = AdminAssetLinks().Matches(await shell.Content.ReadAsStringAsync());
         Assert.True(assets.Count >= 2, "The built React script and stylesheet must be packaged with the API.");
         foreach (System.Text.RegularExpressions.Match asset in assets)
             (await anonymous.GetAsync(new Uri(asset.Groups[1].Value, UriKind.Relative))).EnsureSuccessStatusCode();
@@ -188,4 +189,7 @@ public sealed partial class RelationalApiTests
         Assert.True(response.IsSuccessStatusCode, await response.Content.ReadAsStringAsync());
         return (await response.Content.ReadFromJsonAsync<AdminUserPage>(Json))!;
     }
+
+    [GeneratedRegex("(?:src|href)=\"(/admin/assets/[^\"]+)\"")]
+    private static partial Regex AdminAssetLinks();
 }

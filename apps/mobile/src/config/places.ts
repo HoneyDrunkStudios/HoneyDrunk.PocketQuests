@@ -18,7 +18,7 @@ export const placesConfig = {
 export const mapUserAgent =
   "PocketQuests/1.0 (HoneyDrunkStudios; local development map)";
 export function requireMapService(url: string) {
-  if (!url || !url.startsWith("https://"))
+  if (!url?.startsWith("https://"))
     throw new Error("The map service is not configured for this build.");
   return url;
 }

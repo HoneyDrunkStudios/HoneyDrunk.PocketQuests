@@ -39,7 +39,7 @@ public static class AdminEndpoints
 
     private static RedirectHttpResult Home() => TypedResults.Redirect("/admin/index.html");
 
-    private static async Task<IResult> Login(HttpContext context, IAuthenticationSchemeProvider schemes)
+    private static async Task<IResult> Login(IAuthenticationSchemeProvider schemes)
     {
         if (await schemes.GetSchemeAsync(AdminWeb.Oidc) is null)
             return Results.Problem("Administrative sign-in is not configured.", statusCode: 503);

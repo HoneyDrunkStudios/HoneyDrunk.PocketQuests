@@ -2,11 +2,11 @@ export function Masthead({
   userId,
   pending,
   onSignOut,
-}: {
+}: Readonly<{
   userId?: string;
   pending?: boolean;
   onSignOut?: () => void;
-}) {
+}>) {
   return (
     <header className="masthead">
       <a className="brand" href="/admin/index.html">

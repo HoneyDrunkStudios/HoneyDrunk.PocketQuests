@@ -48,13 +48,7 @@ export function App() {
           setState({ kind: "ready", session, api, page, notice });
       } catch (error) {
         if (!controller.signal.aborted)
-          endSession(
-            new URLSearchParams(location.search).has("signin")
-              ? "Sign-in was not completed for the configured operator account."
-              : error instanceof Error
-                ? error.message
-                : "The console session could not be verified.",
-          );
+          endSession(sessionFailureMessage(error));
       }
     })();
     return () => controller.abort();
@@ -123,4 +117,12 @@ export function App() {
       </main>
     </>
   );
+}
+
+function sessionFailureMessage(error: unknown) {
+  if (new URLSearchParams(location.search).has("signin"))
+    return "Sign-in was not completed for the configured operator account.";
+  return error instanceof Error
+    ? error.message
+    : "The console session could not be verified.";
 }
