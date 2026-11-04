@@ -49,6 +49,9 @@ public sealed class SystemQuestRuntimeRoleTests(SchemaFixture fixture) : IClassF
                 Assert.Equal(2, edit.DraftNumber);
                 var live = await studio.Publish(new(id, edit.Version, edit.DraftSystemQuestRevisionId, true), default);
                 Assert.Equal(edit.DraftSystemQuestRevisionId, live.PublishedSystemQuestRevisionId);
+                var history = await studio.History(new(id), default);
+                Assert.Equal(new[] { 2, 1 }, history.Revisions.Select(row => row.Number));
+                Assert.Equal(draft.DraftSystemQuestRevisionId, history.Revisions[1].Id);
                 await Assert.ThrowsAsync<SqlException>(() => db.Database.ExecuteSqlRawAsync("UPDATE pocketquests.SystemQuestRevision SET SnapshotJson=N'{{}}';"));
                 await Assert.ThrowsAsync<SqlException>(() => db.Database.ExecuteSqlRawAsync("DELETE FROM pocketquests.SystemQuestRevision;"));
                 await db.Database.ExecuteSqlRawAsync("REVERT; EXECUTE AS USER='pq_studio_erasure';");

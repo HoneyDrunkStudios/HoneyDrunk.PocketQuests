@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AdminApi, AdminApiError } from "../../api/admin-api";
 import type {
   AdminSystemQuest,
+  AdminSystemQuestRevision,
   Quest,
   Session,
   SystemQuestStudio,
@@ -9,6 +10,7 @@ import type {
 import { Masthead } from "../../components/Masthead";
 import { QuestFields } from "./QuestFields";
 import { QuestPreview } from "./QuestPreview";
+import { QuestHistory } from "./QuestHistory";
 import { QuestPublicationStatus } from "./QuestPublicationStatus";
 
 export function QuestStudio({
@@ -34,6 +36,7 @@ export function QuestStudio({
   const [notice, setNotice] = useState("Loading the quest studio…");
   const [search, setSearch] = useState("");
   const [error, setError] = useState(false);
+  const previewButton = useRef<HTMLButtonElement>(null);
   const busy = useRef(false);
   const requests = useRef<AbortController | null>(null);
 
@@ -151,6 +154,16 @@ export function QuestStudio({
     setPreview(null);
     setPublication(null);
     setDirty(true);
+  }
+  function restoreRevision(revision: AdminSystemQuestRevision) {
+    if (locked || publication !== null || !selected || !mayLeave()) return;
+    if (revision.quest.id !== selected.draft.id) return;
+    change(revision.quest);
+    setError(false);
+    setNotice(
+      `Revision ${revision.number} loaded into your unsaved draft. Validate and save to create a new revision. Publication is unchanged.`,
+    );
+    previewButton.current?.focus();
   }
   function body() {
     return {
@@ -404,6 +417,7 @@ export function QuestStudio({
                   <div className="actions">
                     <button
                       disabled={pending || locked || publication !== null}
+                      ref={previewButton}
                       onClick={showPreview}
                     >
                       Validate and preview
@@ -427,14 +441,25 @@ export function QuestStudio({
                     their original terms.
                   </p>
                   {selected && (
-                    <QuestPublicationStatus
-                      selected={selected}
-                      dirty={dirty}
-                      disabled={
-                        pending || locked || dirty || publication !== null
-                      }
-                      onReview={reviewPublication}
-                    />
+                    <>
+                      <QuestPublicationStatus
+                        selected={selected}
+                        dirty={dirty}
+                        disabled={
+                          pending || locked || dirty || publication !== null
+                        }
+                        onReview={reviewPublication}
+                      />
+                      <QuestHistory
+                        key={selected.draftSystemQuestRevisionId}
+                        selected={selected}
+                        api={api}
+                        catalog={studio.catalog}
+                        disabled={pending || locked || publication !== null}
+                        onRestore={restoreRevision}
+                        onEndSession={onEndSession}
+                      />
+                    </>
                   )}
                   {publication !== null && (
                     <section

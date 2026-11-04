@@ -15,6 +15,9 @@ public sealed class SystemQuestDataService(AppDbContext context) : BaseDataServi
         await SystemQuests.ToListAsync(cancellationToken);
 
     /// <inheritdoc />
+    public Task<bool> Exists(string id, CancellationToken token) => SystemQuests.AsNoTracking().AnyAsync(row => row.Id == id, token);
+
+    /// <inheritdoc />
     public Task<SystemQuestEntity?> Editable(string id, CancellationToken token) => SystemQuests.SingleOrDefaultAsync(row => row.Id == id, token);
 
     /// <inheritdoc />

@@ -13,6 +13,12 @@ public interface IAdminSystemQuestService
     /// <returns>The authored drafts and starter catalog.</returns>
     Task<SystemQuestStudio> Read(CancellationToken token);
 
+    /// <summary>Reads a bounded page of retained content without changing any pointers.</summary>
+    /// <param name="request">Quest identity and exclusive revision cursor.</param>
+    /// <param name="token">Cancellation.</param>
+    /// <returns>Immutable content available for explicit preview and restoration as a new draft.</returns>
+    Task<SystemQuestHistory> History(ReadSystemQuestHistoryRequest request, CancellationToken token);
+
     /// <summary>Validates a preview without saving or publishing anything.</summary>
     /// <param name="request">Proposed system terms.</param>
     /// <returns>The normalized server-calculated preview.</returns>

@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type {
   CatalogResponse,
   Quest,
@@ -10,10 +11,11 @@ export function QuestPreview({
   quest: Quest;
   catalog: CatalogResponse;
 }>) {
+  const headingId = useId();
   return (
-    <section className="quest-preview" aria-labelledby="quest-preview-heading">
+    <section className="quest-preview" aria-labelledby={headingId}>
       <p className="eyebrow">PLAYER PREVIEW · SERVER VALIDATED</p>
-      <h2 id="quest-preview-heading">{quest.title}</h2>
+      <h2 id={headingId}>{quest.title}</h2>
       <p>{quest.description}</p>
       <h3>Complete when</h3>
       <p>{quest.criterion}</p>
