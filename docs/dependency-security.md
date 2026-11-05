@@ -1,5 +1,11 @@
 # PocketQuests dependency assessment
 
+## November 5 dependency remediation
+
+The compatible Expo 58 / React Native 0.88 patch graph now passes a clean locked install and npm audit with zero reported vulnerabilities. Scoped glob and minimatch overrides remove affected tooling versions; the resolved upstream node-forge 1.4.3 replaces the obsolete local RSA patch. The hash-pinned braces depth guard and its atomic/tamper regression checks remain enabled. CI pins npm 11.16.0 because npm 10 rejects the version-qualified override lock; Node 22 and the release audit gate remain unchanged.
+
+All 439 mobile tests, 56 architecture fixtures, lint, strict types, shared UI snapshot, generated API contract and security-patch verification passed. Android/iOS Hermes and web production exports passed with fixture URLs. Signed device builds, real-provider behavior, native storage/restart, accessibility and distribution acceptance remain separate and unrun. GitHub default-branch alert closure must be checked after merge; a clean registry audit alone does not prove it. The older assessments below are dated history.
+
 ## November 2 traveler and daily-adventure PR preflight
 
 Fresh lockfile-only audits of main `d1e50123c64a7e62ff46385b959c3ed42d415e4d` and the intended feature graph both report 29 affected-package entries: 1 low, 25 moderate, 3 high and no critical findings. Adding the React Native 0.88 assets registry, `react-native-svg` 15.16.0 and Expo Location 58.0.20 introduces no new advisory/package pairs in this dated comparison. This does not resolve the inherited findings or establish a clean audit. Existing source-patch verification, registry advisory visibility and release audit gates remain unchanged.
