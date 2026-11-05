@@ -74,8 +74,7 @@ public sealed class AdminSystemQuestService(AdminOperator access, IAccountDataSe
             await accounts.AcquireCommandLock(actor, ct);
             await accounts.AcquireCommandLock("system-quest-catalog", ct);
             var owner = await accounts.GetByIdentityUserId(actor, ct) ?? throw new QuestValidationException("Initialize your Pocket Quests profile before authoring studio quests.");
-            if (await accounts.GetErasure(actor, ct) is not null || (await accounts.GetLifecycle(actor, ct)) is { StateCode: not "Active" })
-                throw new UnauthorizedAccessException();
+            await RequireActiveOperator(actor, ct);
             var head = await templates.Editable(quest.Id, ct);
             SystemQuestRevisionEntity revision;
             if (head is null)
@@ -113,8 +112,7 @@ public sealed class AdminSystemQuestService(AdminOperator access, IAccountDataSe
             await accounts.AcquireCommandLock(actor, ct);
             await accounts.AcquireCommandLock("system-quest-catalog", ct);
             var owner = await accounts.GetByIdentityUserId(actor, ct) ?? throw new UnauthorizedAccessException();
-            if (await accounts.GetErasure(actor, ct) is not null || (await accounts.GetLifecycle(actor, ct)) is { StateCode: not "Active" })
-                throw new UnauthorizedAccessException();
+            await RequireActiveOperator(actor, ct);
             var head = await templates.Editable(SystemQuestValidator.Code(request.Id), ct) ?? throw new QuestNotFoundException();
             SystemQuestValidator.RequireVersion(request.ExpectedVersion, head.RowVersion);
             if (head.DraftSystemQuestRevisionId != request.ExpectedDraftRevisionId)
@@ -126,6 +124,12 @@ public sealed class AdminSystemQuestService(AdminOperator access, IAccountDataSe
         },
             token);
         return result.ToContract();
+    }
+
+    private async Task RequireActiveOperator(string actor, CancellationToken token)
+    {
+        if (await accounts.GetErasure(actor, token) is not null || (await accounts.GetLifecycle(actor, token)) is { StateCode: not "Active" })
+            throw new UnauthorizedAccessException();
     }
 
     private async Task UpdatePublication(SystemQuestEntity head, SystemQuestRevisionEntity draft, bool published, Guid accountId, string actor, DateTimeOffset now, CancellationToken token)

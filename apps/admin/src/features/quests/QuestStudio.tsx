@@ -11,7 +11,10 @@ import { Masthead } from "../../components/Masthead";
 import { QuestFields } from "./QuestFields";
 import { QuestPreview } from "./QuestPreview";
 import { QuestHistory } from "./QuestHistory";
-import { QuestPublicationStatus } from "./QuestPublicationStatus";
+import {
+  QuestPublicationReview,
+  QuestPublicationStatus,
+} from "./QuestPublicationStatus";
 
 export function QuestStudio({
   session,
@@ -462,35 +465,12 @@ export function QuestStudio({
                     </>
                   )}
                   {publication !== null && (
-                    <section
-                      className="publication-review"
-                      aria-label="Confirm publication change"
-                    >
-                      <h3>
-                        {publication
-                          ? "Publish this saved draft?"
-                          : "Withdraw this quest from discovery?"}
-                      </h3>
-                      <p>
-                        {publication
-                          ? "New acceptances will use the terms below. Existing accepted quests and recurring series retain their original terms."
-                          : "Players will no longer find or newly accept this template. Their accepted quests, recurring series and rewards remain available."}
-                      </p>
-                      <div className="actions">
-                        <button disabled={pending || locked} onClick={publish}>
-                          {publication
-                            ? "Publish reviewed draft"
-                            : "Withdraw from discovery"}
-                        </button>
-                        <button
-                          className="quiet"
-                          disabled={pending || locked}
-                          onClick={() => setPublication(null)}
-                        >
-                          Cancel publication review
-                        </button>
-                      </div>
-                    </section>
+                    <QuestPublicationReview
+                      published={publication}
+                      disabled={pending || locked}
+                      onPublish={publish}
+                      onCancel={() => setPublication(null)}
+                    />
                   )}
                   {preview && (
                     <QuestPreview quest={preview} catalog={studio.catalog} />

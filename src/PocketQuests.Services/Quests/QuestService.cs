@@ -210,12 +210,7 @@ public sealed class QuestService : IQuestService
         }
 
         var anchor = command.RecordedTime is { } proof ? await data.GetAnchor(account.Id, proof.AnchorId, token) : null;
-        QuestAggregate? anchored = null;
-        if (anchor is not null && command.Action == QuestActions.Complete)
-        {
-            var retained = await data.ReadReplay(account.Id, anchor.IssuedMutationVersion, token);
-            anchored = QuestReplay.Through(retained, account, QuestTerms.Read(retained), anchor.IssuedMutationVersion).Aggregate;
-        }
+        var anchored = await ReadAnchoredAggregate(account, command, anchor, token);
 
         var recordedAt = QuestClock.Resolve(account, command, aggregate, anchored, anchor, now, logicalNow);
         var projectionAt = QuestClock.Max(logicalNow, recordedAt);
@@ -230,6 +225,14 @@ public sealed class QuestService : IQuestService
         var change = new QuestMutation(account, command, aggregate, result, recordedAt, logicalNow, projectionAt, now, ReconciliationLimit, actionBudget, HasPending: action.HasMore || aggregate.Reconcile(projectionAt, 0).HasMore);
         await Persist(identity, change, rows, digest, anchor, token);
         return result;
+    }
+
+    private async Task<QuestAggregate?> ReadAnchoredAggregate(AccountEntity account, QuestCommand command, SyncAnchorEntity? anchor, CancellationToken token)
+    {
+        if (anchor is null || command.Action != QuestActions.Complete)
+            return null;
+        var retained = await data.ReadReplay(account.Id, anchor.IssuedMutationVersion, token);
+        return QuestReplay.Through(retained, account, QuestTerms.Read(retained), anchor.IssuedMutationVersion).Aggregate;
     }
 
     private async Task<Quest?> ResolveTemplate(QuestCommand command, QuestAggregate aggregate, CancellationToken token)
