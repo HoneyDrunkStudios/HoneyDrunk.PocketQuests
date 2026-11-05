@@ -130,6 +130,10 @@
 
 ## [Unreleased]
 
+- Update HoneyDrunk.Standards to 0.4.1 to consume the architecture analyzer and TODO issue-link fixes.
+- Split selected quest-source reads into a scoped `IQuestReadDataService`, retain account transaction ownership, and name persistence query helpers explicitly for HD0102/HD0106. Preserve SQL predicates, tracking, replay, ownership and public HTTP contracts.
+- Pin Identity source integration to `3fd288dab90aa6213c819165d3e9756221a00d47` (HoneyDrunk.Identity #16) and update the lifecycle test to its renamed unit of work.
+
 - Show accessible overall, category, attribute and skill XP progress on the character sheet using approved curves and confirmed server balances; completion and Undo refresh the bars.
 
 - Add day/seven-day calendar navigation, strict date selection, per-day quest groups ordered by planned time, and choose/create actions that retain the selected date.

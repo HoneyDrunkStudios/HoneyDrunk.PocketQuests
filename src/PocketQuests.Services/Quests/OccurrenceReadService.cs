@@ -17,7 +17,8 @@ namespace PocketQuests.Services.Quests;
 /// <param name="revisions">Selected occurrence revisions.</param>
 /// <param name="series">Selected series provenance.</param>
 /// <param name="quests">Shared verified account access.</param>
-public sealed class OccurrenceReadService(IAccountDataService data, IQuestOccurrenceDataService occurrences, IQuestCompletionDataService completions, IQuestOccurrenceRevisionDataService revisions, IQuestSeriesRevisionDataService series, QuestService quests)
+/// <param name="questReads">Owned quest source queries in the shared transaction.</param>
+public sealed class OccurrenceReadService(IAccountDataService data, IQuestReadDataService questReads, IQuestOccurrenceDataService occurrences, IQuestCompletionDataService completions, IQuestOccurrenceRevisionDataService revisions, IQuestSeriesRevisionDataService series, QuestService quests)
 {
     internal Task<QuestOccurrencePage> Read(AccountIdentity identity, int after, int size, DateTimeOffset now, CancellationToken token = default)
     {
@@ -43,7 +44,7 @@ public sealed class OccurrenceReadService(IAccountDataService data, IQuestOccurr
         var completionRevisionIds = completionRows.Select(row => row.QuestOccurrenceRevisionId).ToArray();
         var completionRevisions = (await revisions.GetSelected(account.Id, completionRevisionIds, token)).ToDictionary(row => row.Id);
         var termIds = rows.Select(row => row.QuestDefinitionRevisionId).Concat(completionRevisions.Values.Select(row => row.QuestDefinitionRevisionId)).Distinct().ToArray();
-        var terms = QuestTerms.Read(await data.ReadSelectedTerms(account.Id, termIds, token));
+        var terms = QuestTerms.Read(await questReads.ReadSelectedTerms(account.Id, termIds, token));
         var seriesIds = rows.Where(row => row.QuestSeriesRevisionId is not null).Select(row => row.QuestSeriesRevisionId!.Value).Distinct().ToArray();
         var seriesRows = (await series.GetSelected(account.Id, seriesIds, token)).ToDictionary(row => row.Id);
         var views = rows.Select(row =>

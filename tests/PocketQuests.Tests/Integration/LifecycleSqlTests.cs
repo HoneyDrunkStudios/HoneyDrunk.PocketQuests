@@ -108,7 +108,7 @@ public sealed partial class SqlApiTests
         await Setup(fresh);
         Assert.Equal(0, (await Read(fresh)).OverallXp);
 
-        SqlAccountLifecycle Coordinator(IdentityDbContext db) => new(db, clock, host.External, Options.Create(new LifecycleOptions { DeliveryEnabled = true, Consumers = { ["pocketquests"] = "pocketquests-lifecycle" } }));
+        SqlAccountLifecycleUnitOfWork Coordinator(IdentityDbContext db) => new(db, clock, host.External, Options.Create(new LifecycleOptions { DeliveryEnabled = true, Consumers = { ["pocketquests"] = "pocketquests-lifecycle" } }));
     }
 
     /// <summary>Injected acknowledgment failure rolls back erasure; restore markers purge restored rows before access.</summary>

@@ -1,5 +1,6 @@
 using PocketQuests.Contracts.Models.Reconciliation;
 using PocketQuests.Data.DataServices.Accounts;
+using PocketQuests.Data.DataServices.Quests;
 using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Schedules;
 using PocketQuests.Services.Quests;
@@ -11,7 +12,8 @@ namespace PocketQuests.Services.Reconciliation;
 /// <summary>Advances bounded retained work without rewriting idle accounts.</summary>
 /// <param name="data">Account selection, due-work checks and transaction ownership.</param>
 /// <param name="quests">Shared source and mutation preparation.</param>
-public sealed class ReconciliationService(IAccountDataService data, QuestService quests) : IReconciliationService
+/// <param name="questReads">Owned quest source queries in the shared transaction.</param>
+public sealed class ReconciliationService(IAccountDataService data, IQuestReadDataService questReads, QuestService quests) : IReconciliationService
 {
     /// <inheritdoc />
     public async Task<ReconciliationBatch> ReconcileAccounts(DateTimeOffset now, ReconciliationCursor? after = null, int maximumAccounts = 10, int maximumDeliveries = 100, CancellationToken token = default)
@@ -57,7 +59,7 @@ public sealed class ReconciliationService(IAccountDataService data, QuestService
         {
             await quests.RequireAccess(identity, true, cancellationToken);
             var account = await quests.Account(identity, cancellationToken);
-            var rows = await data.ReadCurrentState(account.Id, cancellationToken);
+            var rows = await questReads.ReadCurrentState(account.Id, cancellationToken);
             var aggregate = QuestService.Current(account, rows);
             var at = QuestClock.Max(now, account.LastRecordedAt);
             var progress = aggregate.Reconcile(at, maximumDeliveries);

@@ -1,5 +1,6 @@
 using HoneyDrunk.Audit.Abstractions;
 using PocketQuests.Data.DataServices.Accounts;
+using PocketQuests.Data.DataServices.Quests;
 using PocketQuests.Data.Entities.Accounts;
 using PocketQuests.Data.Entities.Synchronization;
 using PocketQuests.Data.Queries.Quests;
@@ -29,6 +30,7 @@ public sealed class QuestService : IQuestService
 {
     internal const int ReconciliationLimit = 100;
     private readonly IAccountDataService data;
+    private readonly IQuestReadDataService questReads;
     private readonly ICurrentAccount currentAccount;
     private readonly TimeProvider clock;
     private readonly ProfileHistoryService profiles;
@@ -41,6 +43,7 @@ public sealed class QuestService : IQuestService
 
     internal QuestService(
         IAccountDataService data,
+        IQuestReadDataService questReads,
         ICurrentAccount currentAccount,
         TimeProvider clock,
         ProfileHistoryService profiles,
@@ -52,6 +55,7 @@ public sealed class QuestService : IQuestService
         PocketQuests.Data.DataServices.Quests.ISystemQuestDataService templates)
     {
         this.data = data;
+        this.questReads = questReads;
         this.currentAccount = currentAccount;
         this.clock = clock;
         this.profiles = profiles;
@@ -101,7 +105,7 @@ public sealed class QuestService : IQuestService
         {
             await RequireAccess(identity, false, cancellationToken);
             var account = await Account(identity, cancellationToken);
-            var rows = await data.ReadCurrentState(account.Id, cancellationToken);
+            var rows = await questReads.ReadCurrentState(account.Id, cancellationToken);
             var aggregate = Current(account, rows);
             var at = QuestClock.Max(now, account.LastRecordedAt);
             if (aggregate.Reconcile(at, ReconciliationLimit).HasMore)
@@ -131,8 +135,8 @@ public sealed class QuestService : IQuestService
         var involved = change.Aggregate.Definitions.Select(row => row.Quest)
             .Concat(change.Aggregate.Occurrences.Select(row => row.Quest)).Concat(change.Aggregate.Schedule.Series.Select(row => row.Quest));
         var definitionIds = involved.Select(quest => QuestTermHistory.DefinitionId(change.Account.Id, quest)).Distinct().ToArray();
-        var retainedTerms = await data.ReadTerms(change.Account.Id, definitionIds, token);
-        var projections = await data.ReadProjections(change.Account.Id, token);
+        var retainedTerms = await questReads.ReadTerms(change.Account.Id, definitionIds, token);
+        var projections = await questReads.ReadProjections(change.Account.Id, token);
         await profiles.Record(change, rows, token);
         var terms = await definitions.Record(change, retainedTerms, token);
         var configurations = await series.Record(change, rows, terms, token);
@@ -161,7 +165,7 @@ public sealed class QuestService : IQuestService
 
     internal async Task StageLifecyclePause(AccountIdentity identity, AccountEntity account, DateTimeOffset pausedAt, DateTimeOffset now, CancellationToken token)
     {
-        var rows = await data.ReadCurrentState(account.Id, token);
+        var rows = await questReads.ReadCurrentState(account.Id, token);
         var aggregate = Current(account, rows);
         var command = new QuestCommand(Guid.NewGuid(), "$lifecycle-pause");
         var pending = aggregate.Apply(new(command.OperationId, QuestActions.Pause), pausedAt, 0);
@@ -192,12 +196,12 @@ public sealed class QuestService : IQuestService
         RequireMatchingReceipt(receipt, account, command, digest);
         if (receipt is not null)
         {
-            var retained = await data.ReadReplay(account.Id, receipt.AppliedMutationVersion, token);
+            var retained = await questReads.ReadReplay(account.Id, receipt.AppliedMutationVersion, token);
             var original = QuestReplay.Through(retained, account, QuestTerms.Read(retained), receipt.AppliedMutationVersion);
             return original.Aggregate.Project(receipt.ToOutcome().ProjectionAt) with { CompletionOutcome = original.Outcome };
         }
 
-        var rows = await data.ReadCurrentState(account.Id, token);
+        var rows = await questReads.ReadCurrentState(account.Id, token);
         var aggregate = Current(account, rows);
         var logicalNow = QuestClock.Max(now, account.LastRecordedAt);
         var reconciliation = aggregate.Reconcile(logicalNow, ReconciliationLimit);
@@ -231,7 +235,7 @@ public sealed class QuestService : IQuestService
     {
         if (anchor is null || command.Action != QuestActions.Complete)
             return null;
-        var retained = await data.ReadReplay(account.Id, anchor.IssuedMutationVersion, token);
+        var retained = await questReads.ReadReplay(account.Id, anchor.IssuedMutationVersion, token);
         return QuestReplay.Through(retained, account, QuestTerms.Read(retained), anchor.IssuedMutationVersion).Aggregate;
     }
 

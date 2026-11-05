@@ -13,6 +13,6 @@
     <NuGetLockFilePath Condition="'$(UseIdentitySource)' == 'true'">$(MSBuildProjectDirectory)/.local/packages.source.lock.json</NuGetLockFilePath>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="HoneyDrunk.Standards" Version="0.3.0" PrivateAssets="all" />
+    <PackageReference Include="HoneyDrunk.Standards" Version="0.4.1" PrivateAssets="all" />
   </ItemGroup>
 </Project>

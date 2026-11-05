@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace PocketQuests.Data.Queries.Quests;
 
-internal static class QuestProjectionQueries
+internal static class QuestProjectionQueryDataService
 {
     internal static async Task<QuestProjectionRows> Read(AppDbContext context, Guid accountId, CancellationToken token) => new()
     {

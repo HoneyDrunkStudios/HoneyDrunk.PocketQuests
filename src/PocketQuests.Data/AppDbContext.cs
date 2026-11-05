@@ -1,5 +1,6 @@
 using HoneyDrunk.Data.Outbox;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using PocketQuests.Data.Configurations;
 using PocketQuests.Data.Configurations.Accounts;
 using PocketQuests.Data.Entities.Accounts;
@@ -124,6 +125,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : BaseD
 
     /// <summary>Gets QuestCommandInterest rows.</summary>
     public DbSet<QuestCommandInterestEntity> QuestCommandInterest => Set<QuestCommandInterestEntity>();
+
+    /// <summary>Resolves the same scoped context for shared Audit and Outbox persistence.</summary>
+    internal static AppDbContext ResolveScoped(IServiceProvider services) => services.GetRequiredService<AppDbContext>();
 
     /// <inheritdoc />
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

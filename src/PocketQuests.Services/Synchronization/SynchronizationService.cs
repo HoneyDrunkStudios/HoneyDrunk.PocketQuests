@@ -1,5 +1,6 @@
 using PocketQuests.Contracts.Requests.Synchronization;
 using PocketQuests.Data.DataServices.Accounts;
+using PocketQuests.Data.DataServices.Quests;
 using PocketQuests.Data.DataServices.Synchronization;
 using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Models.Quests;
@@ -19,7 +20,8 @@ namespace PocketQuests.Services.Synchronization;
 /// <param name="quests">Shared source and mutation preparation.</param>
 /// <param name="currentAccount">Authenticated identity.</param>
 /// <param name="clock">Authoritative host time.</param>
-public sealed class SynchronizationService(IAccountDataService data, ISyncAnchorDataService anchors, QuestService quests, ICurrentAccount currentAccount, TimeProvider clock) : ISynchronizationService
+/// <param name="questReads">Owned quest source queries in the shared transaction.</param>
+public sealed class SynchronizationService(IAccountDataService data, IQuestReadDataService questReads, ISyncAnchorDataService anchors, QuestService quests, ICurrentAccount currentAccount, TimeProvider clock) : ISynchronizationService
 {
     /// <inheritdoc />
     public async Task<AnchorResponse> CreateAnchor(AnchorRequest request, CancellationToken token = default) =>
@@ -37,7 +39,7 @@ public sealed class SynchronizationService(IAccountDataService data, ISyncAnchor
             var account = await quests.Account(identity, cancellationToken);
             var floor = QuestClock.Max(now, account.LastRecordedAt);
             SynchronizationValidator.RequireClock(floor, now);
-            var rows = await data.ReadCurrentState(account.Id, cancellationToken);
+            var rows = await questReads.ReadCurrentState(account.Id, cancellationToken);
             var aggregate = QuestService.Current(account, rows);
             var progress = aggregate.Reconcile(floor, QuestService.ReconciliationLimit);
             if (progress.Processed > 0 || account.HasPendingReconciliation)

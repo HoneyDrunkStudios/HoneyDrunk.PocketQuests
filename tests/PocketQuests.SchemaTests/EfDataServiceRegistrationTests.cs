@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using PocketQuests.Data;
 using PocketQuests.Data.DataServices;
+using PocketQuests.Data.DataServices.Quests;
 using PocketQuests.Data.Entities.Accounts;
 using PocketQuests.Tests.Fixtures;
 
@@ -22,7 +23,7 @@ public sealed class EfDataServiceRegistrationTests
             .Where(type => type.IsInterface && !type.IsGenericType && type.GetInterfaces().Any(parent => parent.IsGenericType && parent.GetGenericTypeDefinition() == typeof(IBaseDataService<>)))
             .ToArray();
         Assert.Equal(36, interfaces.Length);
-        foreach (var contract in interfaces.Append(typeof(IBaseDataService<AccountEntity>)))
+        foreach (var contract in interfaces.Append(typeof(IBaseDataService<AccountEntity>)).Append(typeof(IQuestReadDataService)))
         {
             Assert.Same(first.ServiceProvider.GetRequiredService(contract), first.ServiceProvider.GetRequiredService(contract));
             Assert.NotSame(first.ServiceProvider.GetRequiredService(contract), second.ServiceProvider.GetRequiredService(contract));

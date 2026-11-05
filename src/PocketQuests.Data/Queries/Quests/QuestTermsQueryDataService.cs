@@ -3,7 +3,7 @@ using PocketQuests.Data.Entities.Quests;
 
 namespace PocketQuests.Data.Queries.Quests;
 
-internal static class QuestTermsQueries
+internal static class QuestTermsQueryDataService
 {
     internal static Task<QuestTermsRows> Read(AppDbContext context, Guid accountId, Guid[] definitionIds, CancellationToken token) =>
         Read(context, accountId, context.QuestDefinitionRevision.Where(row => row.AccountId == accountId && definitionIds.Contains(row.QuestDefinitionId)), token);

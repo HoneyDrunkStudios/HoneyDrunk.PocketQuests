@@ -1,5 +1,6 @@
 using PocketQuests.Data.DataServices.Accounts;
 using PocketQuests.Data.DataServices.Discoveries;
+using PocketQuests.Data.DataServices.Quests;
 using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Services.Accounts;
@@ -18,7 +19,8 @@ namespace PocketQuests.Services.Exports;
 /// <param name="currentAccount">Authenticated identity.</param>
 /// <param name="clock">Host time.</param>
 /// <param name="places">Account-owned discovery queries.</param>
-public sealed class ExportService(IAccountDataService data, QuestService quests, ICurrentAccount currentAccount, TimeProvider clock, ISavedPlaceDataService places) : IExportService
+/// <param name="questReads">Owned quest source queries in the shared transaction.</param>
+public sealed class ExportService(IAccountDataService data, IQuestReadDataService questReads, QuestService quests, ICurrentAccount currentAccount, TimeProvider clock, ISavedPlaceDataService places) : IExportService
 {
     /// <inheritdoc />
     public async Task<ExportResponse> Read(CancellationToken token = default) =>
@@ -32,13 +34,13 @@ public sealed class ExportService(IAccountDataService data, QuestService quests,
         {
             await quests.RequireAccess(identity, true, cancellationToken);
             var account = await quests.Account(identity, cancellationToken);
-            var rows = await data.ReadCurrentState(account.Id, cancellationToken);
+            var rows = await questReads.ReadCurrentState(account.Id, cancellationToken);
             var aggregate = QuestService.Current(account, rows);
             var savedPlaces = await places.GetByAccountId(account.Id, cancellationToken);
             var at = savedPlaces.Select(place => place.ModifiedAt).Append(QuestClock.Max(now, account.LastRecordedAt)).Max();
             if (aggregate.Reconcile(at, QuestService.ReconciliationLimit).HasMore)
                 throw new ReconciliationPendingException("Recurring deliveries must finish reconciliation before a complete export can be produced.");
-            var history = await data.ReadDefinitionHistory(account.Id, cancellationToken);
+            var history = await questReads.ReadDefinitionHistory(account.Id, cancellationToken);
             var terms = QuestTerms.Read(history.Terms);
             var definitions = history.Terms.DefinitionRevisions.OrderBy(row => row.QuestDefinitionId).ThenBy(row => row.Revision)
                 .Select(row => row.ToModel(terms[row.Id], history.ArchivedRevisionIds.Contains(row.Id)));

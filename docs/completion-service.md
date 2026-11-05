@@ -2,6 +2,8 @@
 
 The API has one relational execution path for commands, initialization, reads, synchronization, export, maintenance and private account lifecycle. Application and persistence-aware Domain services have been removed. Domain contains the existing pure rules and aggregates; reward formulas and public JSON contracts are unchanged.
 
+`IAccountDataService` owns account persistence, access/lifecycle checks, receipts, anchors and transaction execution. `IQuestReadDataService` owns current quest sources, replay, projections and retained terms. Both resolve the same scoped `AppDbContext`, so quest reads participate in the caller's existing transaction and change tracker. Internal query helpers are explicitly named `*DataService`; shared Audit/Outbox registrations resolve that same context through its scoped factory.
+
 | Layer | Responsibility |
 | --- | --- |
 | API | Named typed handlers, authentication, HTTP status/rate/error policy, worker and private-message adapters. |
