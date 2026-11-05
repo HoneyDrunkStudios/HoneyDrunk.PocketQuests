@@ -40,7 +40,7 @@ public sealed partial class QuestAggregate
         Progression.Require(Guid.TryParseExact(input.Id, "D", out _), "Definition ID: use a stable UUID.");
         Progression.Require(input.IsCustom, "Only custom definitions can be edited.");
         QuestRules.ValidateTerms(input, SkillItems().Where(skill => !IsArchivedSkill(skill.Id)).Select(skill => skill.Id).ToHashSet(StringComparer.Ordinal));
-        var quest = input with { Title = input.Title!.Trim(), Criterion = input.Criterion!.Trim(), Description = input.Description?.Trim() };
+        var quest = input with { Title = input.Title.Trim(), Criterion = input.Criterion.Trim(), Description = input.Description?.Trim() };
         RequireEligible(quest, now);
         var index = Definitions.FindIndex(d => d.Quest.Id == quest.Id);
         var revision = index < 0 ? 0 : Definitions[index].Revision;
