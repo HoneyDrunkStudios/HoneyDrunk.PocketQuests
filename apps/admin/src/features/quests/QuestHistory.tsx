@@ -87,7 +87,7 @@ export function QuestHistory({
       >
         {loaded ? "Refresh revision history" : "Load revision history"}
       </button>
-      <p role="status">{notice}</p>
+      <p><output>{notice}</output></p>
       {loaded && (
         <RevisionEntries
           entries={entries}

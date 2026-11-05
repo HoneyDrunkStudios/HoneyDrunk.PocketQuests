@@ -9,6 +9,8 @@ namespace PocketQuests.SchemaTests;
 /// <summary>Bounded immutable history and restoration through the existing draft workflow.</summary>
 public sealed partial class RelationalApiTests
 {
+    private static readonly int[] OlderHistoryRevisionNumbers = [2, 1];
+
     /// <summary>History is operator-only, paginates stably through new revisions and never moves publication.</summary>
     /// <returns>Completion after a retained revision is explicitly saved as new content.</returns>
     [Fact]
@@ -41,7 +43,7 @@ public sealed partial class RelationalApiTests
         // A new append must not skip or duplicate the older page.
         head = await SaveDraft(admin, id, head.Version, terms with { Title = "Revision 23" });
         var older = await History(admin, id, newest.NextBefore);
-        Assert.Equal(new[] { 2, 1 }, older.Revisions.Select(row => row.Number));
+        Assert.Equal(OlderHistoryRevisionNumbers, older.Revisions.Select(row => row.Number));
         Assert.Null(older.NextBefore);
         var original = older.Revisions.Single(row => row.Number == 1);
         Assert.Equal(first.DraftSystemQuestRevisionId, original.Id);
