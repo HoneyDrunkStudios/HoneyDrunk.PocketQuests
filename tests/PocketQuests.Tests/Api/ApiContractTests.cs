@@ -33,7 +33,8 @@ public sealed class ApiContractTests
         Assert.NotNull(document);
         var paths = document["paths"]!.AsObject();
         var endpoints = host.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>()
-            .Where(endpoint => endpoint.RoutePattern.RawText?.StartsWith("/api/", StringComparison.Ordinal) == true).ToArray();
+            .Where(endpoint => endpoint.RoutePattern.RawText?.StartsWith("/api/", StringComparison.Ordinal) == true
+                && endpoint.Metadata.GetMetadata<IExcludeFromDescriptionMetadata>()?.ExcludeFromDescription != true).ToArray();
         var actual = endpoints.SelectMany(endpoint => endpoint.Metadata.GetRequiredMetadata<HttpMethodMetadata>().HttpMethods
             .Select(method => method.ToLowerInvariant() + " " + endpoint.RoutePattern.RawText)).Order().ToArray();
         var declared = paths.SelectMany(path => path.Value!.AsObject().Select(operation => operation.Key + " " + path.Key)).Order().ToArray();

@@ -112,4 +112,7 @@
       <FileWrites Include="$(SchemaMetadataFile)" />
     </ItemGroup>
   </Target>
+  <ItemGroup>
+    <Build Include="Tables\Accounts\AccountAccessRestriction.sql" />
+  </ItemGroup>
 </Project>

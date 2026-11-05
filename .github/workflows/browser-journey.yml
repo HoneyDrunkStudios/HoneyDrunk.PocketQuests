@@ -59,6 +59,9 @@ jobs:
           npm ci --ignore-scripts
           node scripts/patch-dependencies.cjs
           node node_modules/@playwright/test/cli.js install chromium
+      - name: Verify administrative browser interactions with a controlled API
+        shell: pwsh
+        run: node product/scripts/tests/Test-AdminConsole.mjs
       - name: Verify actual browser journey and disposable cleanup
         timeout-minutes: 14
         shell: pwsh

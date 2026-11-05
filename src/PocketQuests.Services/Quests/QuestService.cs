@@ -112,6 +112,8 @@ public sealed class QuestService : IQuestService
         IdentityValidation.RequireCanonical(identity);
         if (commandLock)
             await data.AcquireCommandLock(identity.Subject, token);
+        if (await data.IsAccessSuspended(identity.Subject, token))
+            throw new UnauthorizedAccessException("Pocket Quests access is suspended.");
         var marker = await data.GetErasure(identity.Subject, token);
         var lifecycle = await data.GetLifecycle(identity.Subject, token);
         if (marker is not null || (lifecycle is not null && lifecycle.StateCode != IdentityProtocol.Active))

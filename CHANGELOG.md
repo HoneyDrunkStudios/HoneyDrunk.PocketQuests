@@ -1,5 +1,11 @@
 # Changelog
 
+## Studio player administration — November 4, 2026
+
+- Add a browser console for the explicitly configured operator to search, inspect, suspend and reactivate initialized Pocket Quests profiles.
+- Require private reasons and explicit confirmation, preserve progress, reject stale concurrent edits and erase restriction/audit evidence with the target account.
+- Add server-side OIDC/PKCE session support, per-request shared Identity checks and anti-forgery protection, with access denied until configured.
+
 ## Layered accessories - November 4, 2026
 
 - Keep hair and recolored scarves visible on native SVG renderers, including multiple previews.

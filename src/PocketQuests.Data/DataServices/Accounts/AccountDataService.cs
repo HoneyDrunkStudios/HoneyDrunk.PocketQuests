@@ -11,6 +11,10 @@ public sealed partial class AccountDataService(AppDbContext context) : BaseDataS
     private IQueryable<AccountEntity> Accounts => DbSet;
 
     /// <inheritdoc />
+    public Task<bool> IsAccessSuspended(string userId, CancellationToken token) => Accounts.AsNoTracking()
+        .AnyAsync(account => account.IdentityUserId == userId && Context.AccountAccessRestriction.Any(restriction => restriction.AccountId == account.Id && restriction.IsSuspended), token);
+
+    /// <inheritdoc />
     public Task<AccountEntity?> GetByIdentityUserId(string identityUserId, CancellationToken cancellationToken = default) =>
         Accounts.SingleOrDefaultAsync(row => row.IdentityUserId == identityUserId, cancellationToken);
 
@@ -22,7 +26,8 @@ public sealed partial class AccountDataService(AppDbContext context) : BaseDataS
     {
         var query = Accounts.AsNoTracking().Where(account => account.ProjectionAsOfAt < now && account.MutationVersion > 0
             && !Context.ErasureMarker.Any(marker => marker.Id == account.IdentityUserId)
-            && !Context.AccountLifecycleState.Any(barrier => barrier.IdentityUserId == account.IdentityUserId && barrier.StateCode != activeState));
+            && !Context.AccountLifecycleState.Any(barrier => barrier.IdentityUserId == account.IdentityUserId && barrier.StateCode != activeState)
+            && !Context.AccountAccessRestriction.Any(restriction => restriction.AccountId == account.Id && restriction.IsSuspended));
         if (afterProjectionAt is not null && afterAccountId is not null)
             query = query.Where(account => account.ProjectionAsOfAt > afterProjectionAt || (account.ProjectionAsOfAt == afterProjectionAt && account.Id.CompareTo(afterAccountId.Value) > 0));
         return await query.OrderBy(account => account.ProjectionAsOfAt).ThenBy(account => account.Id).Take(maximumAccounts + 1).ToListAsync(token);
@@ -53,6 +58,7 @@ public sealed partial class AccountDataService(AppDbContext context) : BaseDataS
         await Context.QuestOccurrence.Where(row => row.AccountId == accountId).ExecuteUpdateAsync(setters => setters.SetProperty(row => row.ParentQuestOccurrenceId, (Guid?)null), token);
         await Context.AccountEntitlement.Where(row => row.AccountId == accountId).ExecuteDeleteAsync(token);
         await Context.AccountInterest.Where(row => row.AccountId == accountId).ExecuteDeleteAsync(token);
+        await Context.AccountAccessRestriction.Where(row => row.AccountId == accountId).ExecuteDeleteAsync(token);
         await Context.SavedPlace.Where(row => row.AccountId == accountId).ExecuteDeleteAsync(token);
         await Context.AccountPause.Where(row => row.AccountId == accountId).ExecuteDeleteAsync(token);
         await Context.CategoryProgress.Where(row => row.AccountId == accountId).ExecuteDeleteAsync(token);

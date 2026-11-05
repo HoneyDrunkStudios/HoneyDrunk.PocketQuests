@@ -8430,6 +8430,185 @@
       "notes": [
         "Account-prefixed unique keys serve bounded account reads and place deduplication; sort at most 100 account rows by ModifiedAt."
       ]
+    },
+    {
+      "schema": "pocketquests",
+      "name": "AccountAccessRestriction",
+      "description": "One row is the current Pocket Quests access restriction for one account. Classification: Restricted. History: mutable current row with actor stamps and rowversion; shared action audit excludes reasons and is erased with the account. Retain only while the product account exists; no temporal copies of reasons.",
+      "kind": "mutable",
+      "retention": "Erase this row and linked personal action audit during final account erasure. One current row per account.",
+      "classification": "Restricted",
+      "columns": [
+        {
+          "name": "Id",
+          "type": "uniqueidentifier",
+          "nullable": false,
+          "default": null,
+          "description": "Application-generated stable identifier for the current account moderation record.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "AccountId",
+          "type": "uniqueidentifier",
+          "nullable": false,
+          "default": null,
+          "description": "Pocket Quests profile whose product access is restricted; not a global Identity suspension.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "IsSuspended",
+          "type": "bit",
+          "nullable": false,
+          "default": null,
+          "description": "True denies Pocket Quests use until an authorized explicit reactivation.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "Reason",
+          "type": "nvarchar(500)",
+          "nullable": false,
+          "default": null,
+          "description": "Current private operator reason for suspension or reactivation; no previous reason copies are retained.",
+          "external_source": null,
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
+          "name": "Revision",
+          "type": "int",
+          "nullable": false,
+          "default": null,
+          "description": "Positive edit revision checked under the account command lock; stale changes must reload.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "CreatedBy",
+          "type": "varchar(30)",
+          "nullable": false,
+          "default": null,
+          "description": "Canonical HoneyDrunk.Identity usr_ operator identifier that created this record; not a provider subject or email.",
+          "external_source": "HoneyDrunk.Identity canonical user directory, outside this product database",
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
+          "name": "ModifiedBy",
+          "type": "varchar(30)",
+          "nullable": false,
+          "default": null,
+          "description": "Canonical HoneyDrunk.Identity usr_ operator identifier for the most recent explicit change.",
+          "external_source": "HoneyDrunk.Identity canonical user directory, outside this product database",
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
+          "name": "CreatedAt",
+          "type": "datetimeoffset(7)",
+          "nullable": false,
+          "default": null,
+          "description": "UTC creation instant for this current moderation record.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "ModifiedAt",
+          "type": "datetimeoffset(7)",
+          "nullable": false,
+          "default": null,
+          "description": "UTC instant of the most recent explicit moderation change, never before creation.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "RowVersion",
+          "type": "rowversion",
+          "nullable": false,
+          "default": null,
+          "description": "SQL-generated concurrency token, not a timestamp.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        }
+      ],
+      "primary_key": {
+        "name": "PK_AccountAccessRestriction",
+        "columns": [
+          "Id"
+        ]
+      },
+      "unique_keys": [
+        {
+          "name": "UQ_AccountAccessRestriction_AccountId",
+          "columns": [
+            "AccountId"
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "name": "CK_AccountAccessRestriction_Revision",
+          "expression": "[Revision]>=1",
+          "purpose": "Enforce bounded moderation state and trusted UTC/actor metadata."
+        },
+        {
+          "name": "CK_AccountAccessRestriction_Reason",
+          "expression": "LEN(LTRIM(RTRIM([Reason])))>0",
+          "purpose": "Enforce bounded moderation state and trusted UTC/actor metadata."
+        },
+        {
+          "name": "CK_AccountAccessRestriction_CreatedAtUtc",
+          "expression": "DATEPART(TZOFFSET,[CreatedAt])=0",
+          "purpose": "Enforce bounded moderation state and trusted UTC/actor metadata."
+        },
+        {
+          "name": "CK_AccountAccessRestriction_ModifiedAtUtc",
+          "expression": "DATEPART(TZOFFSET,[ModifiedAt])=0",
+          "purpose": "Enforce bounded moderation state and trusted UTC/actor metadata."
+        },
+        {
+          "name": "CK_AccountAccessRestriction_ModificationClock",
+          "expression": "[ModifiedAt]>=[CreatedAt]",
+          "purpose": "Enforce bounded moderation state and trusted UTC/actor metadata."
+        },
+        {
+          "name": "CK_AccountAccessRestriction_CreatedBy",
+          "expression": "DATALENGTH([CreatedBy])=30 AND LEFT([CreatedBy],4)='usr_' AND SUBSTRING([CreatedBy],5,26) NOT LIKE '%[^0123456789ABCDEFGHJKMNPQRSTVWXYZ]%'",
+          "purpose": "Enforce bounded moderation state and trusted UTC/actor metadata."
+        },
+        {
+          "name": "CK_AccountAccessRestriction_ModifiedBy",
+          "expression": "DATALENGTH([ModifiedBy])=30 AND LEFT([ModifiedBy],4)='usr_' AND SUBSTRING([ModifiedBy],5,26) NOT LIKE '%[^0123456789ABCDEFGHJKMNPQRSTVWXYZ]%'",
+          "purpose": "Enforce bounded moderation state and trusted UTC/actor metadata."
+        }
+      ],
+      "foreign_keys": [
+        {
+          "name": "FK_AccountAccessRestriction_Account",
+          "columns": [
+            "AccountId"
+          ],
+          "referenced_schema": "pocketquests",
+          "referenced_table": "Account",
+          "referenced_columns": [
+            "Id"
+          ],
+          "delete_action": "NO ACTION"
+        }
+      ],
+      "indexes": [],
+      "notes": [
+        "Shared HoneyDrunk.Audit records the action and actor in the same transaction; no reasons, quest content, email or tokens are logged."
+      ]
     }
   ],
   "external_tables": [

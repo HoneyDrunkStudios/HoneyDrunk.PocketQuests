@@ -157,7 +157,7 @@ public sealed partial class RelationalApiTests(SchemaFixture fixture) : IClassFi
         public override DateTimeOffset GetUtcNow() => Now;
     }
 
-    private sealed class Host(string connection, string? owner = null, bool reconciliationEnabled = false) : WebApplicationFactory<PocketQuestsApiProgram>
+    private sealed class Host(string connection, string? owner = null, bool reconciliationEnabled = false, string? adminUserId = null) : WebApplicationFactory<PocketQuestsApiProgram>
     {
         public string Owner { get; } = owner ?? NewOwner();
 
@@ -181,11 +181,13 @@ public sealed partial class RelationalApiTests(SchemaFixture fixture) : IClassFi
             // Minimal-host registration reads these settings before ConfigureAppConfiguration callbacks.
             builder.UseSetting("Persistence:ReconciliationEnabled", reconciliationEnabled.ToString());
             builder.UseSetting("ConnectionStrings:quests", connection);
+            builder.UseSetting("Admin:UserId", adminUserId ?? string.Empty);
             builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:quests"] = connection,
                 ["Persistence:ReconciliationEnabled"] = reconciliationEnabled.ToString(),
                 ["Lifecycle:ServiceBusNamespace"] = null,
+                ["Admin:UserId"] = adminUserId ?? string.Empty,
             }));
             builder.ConfigureServices(services =>
             {

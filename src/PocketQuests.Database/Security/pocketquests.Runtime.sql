@@ -130,3 +130,8 @@ GRANT INSERT, UPDATE, DELETE ON OBJECT::[pocketquests].[SavedPlace] TO [pocketqu
 GO
 GRANT DELETE ON OBJECT::[pocketquests].[SavedPlace] TO [pocketquests_lifecycle_runtime];
 GO
+-- Moderation stores only the current owned restriction; lifecycle erasure removes it.
+GRANT INSERT, UPDATE ON OBJECT::[pocketquests].[AccountAccessRestriction] TO [pocketquests_command_runtime];
+GO
+GRANT DELETE ON OBJECT::[pocketquests].[AccountAccessRestriction] TO [pocketquests_lifecycle_runtime];
+GO
