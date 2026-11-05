@@ -1,6 +1,7 @@
 using HoneyDrunk.Identity.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Options;
 using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Services.Administration;
@@ -72,20 +73,7 @@ public static class AdminWeb
             options.Scope.Add("profile");
             foreach (var scope in (builder.Configuration["Admin:Scope"] ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries))
                 options.Scope.Add(scope);
-            options.Events.OnTokenValidated = async context =>
-            {
-                var token = context.TokenEndpointResponse?.AccessToken;
-                var identity = context.HttpContext.RequestServices.GetRequiredService<IdentityClient>();
-                var user = string.IsNullOrEmpty(token) ? null : await identity.Resolve(token, context.HttpContext.RequestAborted);
-                var configured = context.HttpContext.RequestServices.GetRequiredService<IOptions<AdminAccessOptions>>().Value.UserId;
-                if (user is null || user.State != IdentityProtocol.Active || string.IsNullOrEmpty(configured) || user.UserId != configured)
-                {
-                    context.Fail("Administrative sign-in is not permitted.");
-                    return;
-                }
-
-                context.Principal = new ClaimsPrincipal(new ClaimsIdentity([new Claim("iss", "honeydrunk-identity"), new Claim("sub", user.UserId)], Cookie));
-            };
+            options.Events.OnTokenValidated = ValidateOperatorSignIn;
             options.Events.OnRemoteFailure = context =>
             {
                 context.HandleResponse();
@@ -112,6 +100,21 @@ public static class AdminWeb
             await next(context);
         });
         app.MapStaticAssets();
+    }
+
+    private static async Task ValidateOperatorSignIn(TokenValidatedContext context)
+    {
+        var token = context.TokenEndpointResponse?.AccessToken;
+        var identity = context.HttpContext.RequestServices.GetRequiredService<IdentityClient>();
+        var user = string.IsNullOrEmpty(token) ? null : await identity.Resolve(token, context.HttpContext.RequestAborted);
+        var configured = context.HttpContext.RequestServices.GetRequiredService<IOptions<AdminAccessOptions>>().Value.UserId;
+        if (user is null || user.State != IdentityProtocol.Active || string.IsNullOrEmpty(configured) || user.UserId != configured)
+        {
+            context.Fail("Administrative sign-in is not permitted.");
+            return;
+        }
+
+        context.Principal = new ClaimsPrincipal(new ClaimsIdentity([new Claim("iss", "honeydrunk-identity"), new Claim("sub", user.UserId)], Cookie));
     }
 
     private static bool IsConfiguredOperator(HttpContext? http, ClaimsPrincipal user)
