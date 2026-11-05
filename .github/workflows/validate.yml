@@ -103,7 +103,7 @@ jobs:
         run: ./product/scripts/Test-RelationalSchema.ps1 -NoBuild
       - name: Install mobile dependencies and collect real LCOV coverage
         working-directory: product/apps/mobile
-        run: npm ci --ignore-scripts && node scripts/patch-dependencies.cjs && npm run test:coverage
+        run: npm install --global npm@11.16.0 && npm ci --ignore-scripts && node scripts/patch-dependencies.cjs && npm run test:coverage
       - name: Collect React admin interaction coverage
         working-directory: product/apps/admin
         run: npm run test:coverage
@@ -182,7 +182,7 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: apps/mobile/package-lock.json
-      - run: npm ci --ignore-scripts
+      - run: npm install --global npm@11.16.0 && npm ci --ignore-scripts
       - run: node scripts/patch-dependencies.cjs
       - run: npm run check:security-patch
       - run: npm run lint
