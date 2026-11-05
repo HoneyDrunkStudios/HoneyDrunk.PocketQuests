@@ -65,6 +65,11 @@ try {
   let failMutation = false;
   let authenticated = true;
   let lastSearch;
+  let studioSaved = null;
+  let studioWrites = 0;
+  const studioCatalog = JSON.parse(
+    await readFile(resolve(root, "contracts/wire-fixtures.json"), "utf8"),
+  ).catalog;
   await page.route("**/api/admin/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     const body = route.request().postDataJSON();
@@ -78,6 +83,27 @@ try {
     if (path.endsWith("/session"))
       return reply(200, { userId: operator, csrfToken: "fixture-only" });
     assert.equal(route.request().headers()["x-csrf-token"], "fixture-only");
+    if (path.endsWith("/quests/list"))
+      return reply(200, {
+        quests: studioSaved ? [studioSaved] : [],
+        catalog: studioCatalog,
+      });
+    if (path.endsWith("/quests/preview"))
+      return reply(200, { ...body.quest, baseXp: 10 });
+    if (path.endsWith("/quests/draft")) {
+      studioWrites++;
+      studioSaved = {
+        id: body.id,
+        version: "AAAAAAAAAAE=",
+        draftNumber: studioWrites,
+        draftSystemQuestRevisionId: "11111111-1111-4111-8111-111111111111",
+        publishedSystemQuestRevisionId: null,
+        draft: { ...body.quest, baseXp: 10 },
+        published: null,
+        modifiedAt: "2026-01-01T12:00:00Z",
+      };
+      return reply(200, studioSaved);
+    }
     if (path.endsWith("/users/search")) {
       lastSearch = body;
       return reply(200, {
@@ -215,6 +241,75 @@ try {
     /session cannot access/,
   );
   assert.equal(await page.locator("#users").count(), 0);
+  authenticated = true;
+  await page.reload();
+  await page
+    .getByRole("button", { name: "System quests", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "New system quest", exact: true })
+    .click();
+  await page
+    .getByLabel("Quest title", { exact: true })
+    .fill("A little adventure outside");
+  await page
+    .getByLabel("What counts as complete?", { exact: true })
+    .fill("Finish one self-chosen walk somewhere new.");
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Save draft", exact: true })
+      .isDisabled(),
+    true,
+  );
+  await page
+    .getByRole("button", { name: "Validate and preview", exact: true })
+    .click();
+  await page
+    .getByRole("heading", { name: "A little adventure outside", exact: true })
+    .waitFor();
+  assert.equal(studioWrites, 0);
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await page
+    .getByText("Draft 1 saved. It is not published to players.", {
+      exact: true,
+    })
+    .waitFor();
+  assert.equal(studioWrites, 1);
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  if (process.env.PQ_ADMIN_EVIDENCE)
+    await page.screenshot({
+      path: resolve(
+        process.env.PQ_ADMIN_EVIDENCE,
+        "system-quest-studio-desktop.png",
+      ),
+      fullPage: true,
+    });
+  await page.setViewportSize({ width: 320, height: 900 });
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+    true,
+    "Quest editor must fit 320px",
+  );
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "200%";
+  });
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+    true,
+    "Quest editor must fit enlarged text",
+  );
+  if (process.env.PQ_ADMIN_EVIDENCE)
+    await page.screenshot({
+      path: resolve(
+        process.env.PQ_ADMIN_EVIDENCE,
+        "system-quest-studio-large-text.png",
+      ),
+      fullPage: true,
+    });
   assert.deepEqual(errors, []);
   console.log(
     "Admin Chromium checks passed: review/cancel, access changes, stale edit/reload, self protection, literal rendering/search, logout/expiry clearing, 320px/large text.",

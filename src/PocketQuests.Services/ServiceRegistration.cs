@@ -25,6 +25,7 @@ public static class ServiceRegistration
         services.TryAddSingleton(TimeProvider.System);
         services.AddOptions<PocketQuests.Services.Administration.AdminAccessOptions>();
         services.AddScoped<PocketQuests.Services.Administration.AdminOperator>();
+        services.AddScoped<PocketQuests.Services.Administration.IAdminSystemQuestService, PocketQuests.Services.Administration.AdminSystemQuestService>();
         services.AddScoped<PocketQuests.Services.Administration.IAdminUserService, PocketQuests.Services.Administration.AdminUserService>();
         services.AddScoped<PocketQuests.Services.Administration.IAccountAccessService, PocketQuests.Services.Administration.AccountAccessService>();
         services.AddScoped<ProfileHistoryService>();

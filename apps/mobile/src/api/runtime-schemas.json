@@ -1,5 +1,61 @@
 {
   "schemas": {
+    "AdminSystemQuest": {
+      "required": [
+        "id",
+        "version",
+        "draftNumber",
+        "draftSystemQuestRevisionId",
+        "publishedSystemQuestRevisionId",
+        "draft",
+        "published",
+        "modifiedAt"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "version": {
+          "type": "string"
+        },
+        "draftNumber": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "draftSystemQuestRevisionId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "publishedSystemQuestRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        },
+        "draft": {
+          "$ref": "#/components/schemas/Quest"
+        },
+        "published": {
+          "oneOf": [
+            {
+              "enum": [
+                null
+              ],
+              "nullable": true
+            },
+            {
+              "$ref": "#/components/schemas/Quest"
+            }
+          ]
+        },
+        "modifiedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "Saved studio draft and separate published terms, with an optimistic head version."
+    },
     "AdminUser": {
       "required": [
         "userId",
@@ -1787,6 +1843,27 @@
       },
       "description": "Explicit online discovery edit with a required optimistic revision; zero creates a new record."
     },
+    "SaveSystemQuestRequest": {
+      "required": [
+        "id",
+        "quest"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "quest": {
+          "$ref": "#/components/schemas/QuestInput"
+        },
+        "expectedVersion": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "description": "A stable client-generated draft identity and optimistic catalog version; null version creates a draft."
+    },
     "ScheduleState": {
       "required": [
         "series",
@@ -1995,6 +2072,25 @@
       },
       "description": "The public SyncAnchor JSON contract, independent of storage and domain behavior."
     },
+    "SystemQuestStudio": {
+      "required": [
+        "quests",
+        "catalog"
+      ],
+      "type": "object",
+      "properties": {
+        "quests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/AdminSystemQuest"
+          }
+        },
+        "catalog": {
+          "$ref": "#/components/schemas/CatalogResponse"
+        }
+      },
+      "description": "Bounded authored templates and code-owned starter choices for editing and preview."
+    },
     "UndoEvent": {
       "required": [
         "id",
@@ -2135,6 +2231,15 @@
     },
     "POST /api/discoveries/remove": {
       "$ref": "#/components/schemas/RemovalResult"
+    },
+    "POST /api/admin/quests/list": {
+      "$ref": "#/components/schemas/SystemQuestStudio"
+    },
+    "POST /api/admin/quests/preview": {
+      "$ref": "#/components/schemas/Quest"
+    },
+    "POST /api/admin/quests/draft": {
+      "$ref": "#/components/schemas/AdminSystemQuest"
     },
     "POST /api/admin/users/search": {
       "$ref": "#/components/schemas/AdminUserPage"

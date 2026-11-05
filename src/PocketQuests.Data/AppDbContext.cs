@@ -35,6 +35,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : BaseD
     /// <summary>Gets ProfileReward rows.</summary>
     public DbSet<ProfileRewardEntity> ProfileReward => Set<ProfileRewardEntity>();
 
+    /// <summary>Gets immutable system template revisions.</summary>
+    public DbSet<SystemQuestRevisionEntity> SystemQuestRevision => Set<SystemQuestRevisionEntity>();
+
     /// <summary>Gets SystemQuest rows.</summary>
     public DbSet<SystemQuestEntity> SystemQuest => Set<SystemQuestEntity>();
 

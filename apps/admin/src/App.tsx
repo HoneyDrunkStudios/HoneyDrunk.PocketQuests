@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AdminApi, AdminApiError, readSession } from "./api/admin-api";
 import type { AdminUserPage, Session } from "./api/admin-api";
 import { Masthead } from "./components/Masthead";
+import { QuestStudio } from "./features/quests/QuestStudio";
 import { UserConsole } from "./features/users/UserConsole";
 
 type AppState =
@@ -17,11 +18,12 @@ type AppState =
 
 export function App() {
   const [state, setState] = useState<AppState>({ kind: "checking" });
+  const [view, setView] = useState<"players" | "quests">("players");
   const [attempt, setAttempt] = useState(0);
-  const endSession = useCallback(
-    (message: string) => setState({ kind: "signed-out", message }),
-    [],
-  );
+  const endSession = useCallback((message: string) => {
+    setView("players");
+    setState({ kind: "signed-out", message });
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -52,6 +54,19 @@ export function App() {
     return () => controller.abort();
   }, [attempt, endSession]);
 
+  if (state.kind === "ready" && view === "quests")
+    return (
+      <QuestStudio
+        session={state.session}
+        api={state.api}
+        onEndSession={endSession}
+        onPlayers={() => {
+          setView("players");
+          setState({ kind: "checking" });
+          setAttempt((value) => value + 1);
+        }}
+      />
+    );
   if (state.kind === "ready")
     return (
       <UserConsole
@@ -61,6 +76,7 @@ export function App() {
         initialPage={state.page}
         initialNotice={state.notice}
         onEndSession={endSession}
+        onOpenQuests={() => setView("quests")}
       />
     );
   return (

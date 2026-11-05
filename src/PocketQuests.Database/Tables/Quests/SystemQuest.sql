@@ -6,13 +6,28 @@ CREATE TABLE [pocketquests].[SystemQuest] (
     [CatalogVersion] varchar(32) COLLATE Latin1_General_100_BIN2 NOT NULL,
     [CreatedAt] datetimeoffset(7) NOT NULL CONSTRAINT [DF_SystemQuest_CreatedAt] DEFAULT (TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')),
     [ModifiedAt] datetimeoffset(7) NOT NULL CONSTRAINT [DF_SystemQuest_ModifiedAt] DEFAULT (TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')),
+    [DraftSystemQuestRevisionId] uniqueidentifier NULL,
+    [PublishedSystemQuestRevisionId] uniqueidentifier NULL,
+    [RowVersion] rowversion NOT NULL,
+    [CreatedBy] varchar(30) COLLATE Latin1_General_100_BIN2 NULL,
+    [ModifiedBy] varchar(30) COLLATE Latin1_General_100_BIN2 NULL,
     CONSTRAINT [PK_SystemQuest] PRIMARY KEY CLUSTERED ([Id]),
     CONSTRAINT [CK_SystemQuest_CreatedAtUtc] CHECK (DATEPART(TZOFFSET,[CreatedAt])=0),
     CONSTRAINT [CK_SystemQuest_ModifiedAtUtc] CHECK (DATEPART(TZOFFSET,[ModifiedAt])=0),
     CONSTRAINT [CK_SystemQuest_ModificationClock] CHECK ([ModifiedAt]>=[CreatedAt]),
-    CONSTRAINT [FK_SystemQuest_Category] FOREIGN KEY ([CategoryId]) REFERENCES [pocketquests].[Category] ([Id]) ON DELETE NO ACTION
+    CONSTRAINT [CK_SystemQuest_CreatedBy] CHECK ([CreatedBy] IS NULL OR (DATALENGTH([CreatedBy])=30 AND LEFT([CreatedBy],4)='usr_' AND SUBSTRING([CreatedBy],5,26) NOT LIKE '%[^0123456789ABCDEFGHJKMNPQRSTVWXYZ]%')),
+    CONSTRAINT [CK_SystemQuest_ModifiedBy] CHECK ([ModifiedBy] IS NULL OR (DATALENGTH([ModifiedBy])=30 AND LEFT([ModifiedBy],4)='usr_' AND SUBSTRING([ModifiedBy],5,26) NOT LIKE '%[^0123456789ABCDEFGHJKMNPQRSTVWXYZ]%')),
+    CONSTRAINT [FK_SystemQuest_Category] FOREIGN KEY ([CategoryId]) REFERENCES [pocketquests].[Category] ([Id]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_SystemQuest_SystemQuestRevision_Draft] FOREIGN KEY ([Id], [DraftSystemQuestRevisionId]) REFERENCES [pocketquests].[SystemQuestRevision] ([SystemQuestId], [Id]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_SystemQuest_SystemQuestRevision_Published] FOREIGN KEY ([Id], [PublishedSystemQuestRevisionId]) REFERENCES [pocketquests].[SystemQuestRevision] ([SystemQuestId], [Id]) ON DELETE NO ACTION
 );
 GO
 -- Supports FK_SystemQuest_Category parent-reference validation/deletion and direct child lookup; no covering payload columns.
 CREATE INDEX [IX_SystemQuest_FK_Category] ON [pocketquests].[SystemQuest] ([CategoryId]);
+GO
+-- Supports the named relational reference and parent deletion validation without scanning unrelated templates.
+CREATE INDEX [IX_SystemQuest_DraftRevision] ON [pocketquests].[SystemQuest] ([Id], [DraftSystemQuestRevisionId]);
+GO
+-- Supports the named relational reference and parent deletion validation without scanning unrelated templates.
+CREATE INDEX [IX_SystemQuest_PublishedRevision] ON [pocketquests].[SystemQuest] ([Id], [PublishedSystemQuestRevisionId]);
 GO

@@ -1,11 +1,35 @@
-// DTO types come from the existing endpoint-derived generator; this import has
-// no mobile runtime dependency and cannot grant administrative access.
+// Generated contracts and a pure schema matcher are shared with the mobile client;
+// the administrative bundle has no Expo or native-platform dependency.
+import { createSchemaMatcher } from "../../../mobile/src/api/schema/matcher";
+import schemas from "../../../mobile/src/api/runtime-schemas.json";
 import type {
+  ApiOperations,
+  AdminSystemQuest,
+  SystemQuestStudio,
+  SaveSystemQuestRequest,
+  Quest,
   AdminUser,
   AdminUserPage,
 } from "../../../mobile/src/api/generated";
-
-export type { AdminUser, AdminUserPage };
+export type {
+  AdminSystemQuest,
+  SystemQuestStudio,
+  SaveSystemQuestRequest,
+  Quest,
+  AdminUser,
+  AdminUserPage,
+};
+const responseMatcher = createSchemaMatcher(schemas);
+function decodeResponse<K extends keyof ApiOperations>(
+  operation: K,
+  value: unknown,
+): ApiOperations[K]["response"] {
+  if (!responseMatcher.matchesResponse(operation, value))
+    throw new Error(
+      "The studio response could not be verified. Reload the saved version before another change.",
+    );
+  return value as ApiOperations[K]["response"];
+}
 export type Session = { userId: string; csrfToken: string };
 export type AccessChange = {
   userId: string;
@@ -31,6 +55,24 @@ function accessFailureMessage(status: number) {
   return "The request could not be confirmed. Reload the account status before retrying a change.";
 }
 
+async function serverFailureMessage(response: Response) {
+  let message = accessFailureMessage(response.status);
+  if (response.status === 400) {
+    try {
+      const problem: unknown = await response.json();
+      if (
+        isRecord(problem) &&
+        typeof problem.detail === "string" &&
+        problem.detail.length <= 2000
+      )
+        message = problem.detail;
+    } catch {
+      /* Retain the generic message for an unreadable problem. */
+    }
+  }
+  return message;
+}
+
 async function request(
   path: string,
   csrfToken: string,
@@ -48,7 +90,7 @@ async function request(
     signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]),
   });
   if (!response.ok) {
-    const message = accessFailureMessage(response.status);
+    const message = await serverFailureMessage(response);
     throw new AdminApiError(response.status, message);
   }
   return response.status === 204 ? null : response.json();
@@ -68,6 +110,47 @@ export async function readSession(signal: AbortSignal): Promise<Session> {
 
 export class AdminApi {
   constructor(private readonly session: Session) {}
+
+  async studio(signal: AbortSignal): Promise<SystemQuestStudio> {
+    const value = await request(
+      "quests/list",
+      this.session.csrfToken,
+      signal,
+      {},
+    );
+    return decodeResponse("POST /api/admin/quests/list", value);
+  }
+
+  async previewQuest(
+    body: SaveSystemQuestRequest,
+    signal: AbortSignal,
+  ): Promise<Quest> {
+    const value = await request(
+      "quests/preview",
+      this.session.csrfToken,
+      signal,
+      body,
+    );
+    return decodeResponse("POST /api/admin/quests/preview", value);
+  }
+
+  async saveQuest(
+    body: SaveSystemQuestRequest,
+    signal: AbortSignal,
+  ): Promise<AdminSystemQuest> {
+    const value = await request(
+      "quests/draft",
+      this.session.csrfToken,
+      signal,
+      body,
+    );
+    const saved = decodeResponse("POST /api/admin/quests/draft", value);
+    if (saved.id !== body.id || saved.draft.id !== body.quest.id)
+      throw new Error(
+        "The saved draft identity could not be verified. Reload before another save.",
+      );
+    return saved;
+  }
 
   async users(
     query: string,

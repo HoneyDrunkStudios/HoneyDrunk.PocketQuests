@@ -60,6 +60,7 @@
     <Build Include="Tables\Skills\Skill.sql" />
     <Build Include="Tables\Progress\ProfileReward.sql" />
     <Build Include="Tables\Quests\SystemQuest.sql" />
+    <Build Include="Tables\Quests\SystemQuestRevision.sql" />
     <Build Include="Tables\Quests\QuestCommandHistory.sql" />
     <Build Include="Tables\Quests\QuestCommandInterest.sql" />
     <Build Include="Tables\Discoveries\SavedPlace.sql" />

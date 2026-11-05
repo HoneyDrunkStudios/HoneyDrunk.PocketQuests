@@ -1,4 +1,15 @@
 // Generated from contracts/pocketquests-v1.openapi.json. Run npm run generate:api.
+export type AdminSystemQuest = {
+  "id": string;
+  "version": string;
+  "draftNumber": number;
+  "draftSystemQuestRevisionId": string;
+  "publishedSystemQuestRevisionId": string | null;
+  "draft": Quest;
+  "published": null | Quest;
+  "modifiedAt": string;
+};
+
 export type AdminUser = {
   "userId": string;
   "characterName": string | null;
@@ -359,6 +370,12 @@ export type SavePlaceRequest = {
   "expectedRevision": number | string;
 };
 
+export type SaveSystemQuestRequest = {
+  "id": string;
+  "quest": QuestInput;
+  "expectedVersion"?: string | null;
+};
+
 export type ScheduleState = {
   "series": (QuestSeries)[];
   "pauses": (PauseWindow)[];
@@ -410,6 +427,11 @@ export type SyncAnchor = {
   "recordedTimeFloor": string | null;
 };
 
+export type SystemQuestStudio = {
+  "quests": (AdminSystemQuest)[];
+  "catalog": CatalogResponse;
+};
+
 export type UndoEvent = {
   "id": string;
   "completionId": string;
@@ -448,6 +470,9 @@ export type ApiOperations = {
   "GET /api/discoveries": { body: undefined; query: undefined; response: (SavedPlace)[] };
   "POST /api/discoveries/save": { body: SavePlaceRequest; query: undefined; response: SavedPlace };
   "POST /api/discoveries/remove": { body: RemovePlaceRequest; query: undefined; response: RemovalResult };
+  "POST /api/admin/quests/list": { body: undefined; query: undefined; response: SystemQuestStudio };
+  "POST /api/admin/quests/preview": { body: SaveSystemQuestRequest; query: undefined; response: Quest };
+  "POST /api/admin/quests/draft": { body: SaveSystemQuestRequest; query: undefined; response: AdminSystemQuest };
   "POST /api/admin/users/search": { body: SearchUsersRequest; query: undefined; response: AdminUserPage };
   "POST /api/admin/users/access": { body: SetUserAccessRequest; query: undefined; response: AdminUser };
 };

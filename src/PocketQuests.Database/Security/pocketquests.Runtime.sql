@@ -9,6 +9,16 @@ ALTER ROLE [pocketquests_command_runtime] ADD MEMBER [pocketquests_lifecycle_run
 GO
 GRANT SELECT ON SCHEMA::[pocketquests] TO [pocketquests_command_runtime];
 GO
+-- Studio authoring may append content and move the draft head; immutable revisions cannot be updated or deleted.
+GRANT INSERT ON OBJECT::[pocketquests].[SystemQuest] TO [pocketquests_command_runtime];
+GO
+GRANT UPDATE ON OBJECT::[pocketquests].[SystemQuest] ([Title], [CategoryId], [ModifiedAt], [ModifiedBy], [DraftSystemQuestRevisionId]) TO [pocketquests_command_runtime];
+GO
+GRANT INSERT ON OBJECT::[pocketquests].[SystemQuestRevision] TO [pocketquests_command_runtime];
+GO
+-- Erasure clears personal operator stamps while retaining public template content.
+GRANT UPDATE ON OBJECT::[pocketquests].[SystemQuest] ([CreatedBy], [ModifiedBy]) TO [pocketquests_lifecycle_runtime];
+GO
 -- First product initialization may attach an already verified Active lifecycle fence.
 GRANT UPDATE ON OBJECT::[pocketquests].[AccountLifecycleState] ([AccountId]) TO [pocketquests_command_runtime];
 GO
