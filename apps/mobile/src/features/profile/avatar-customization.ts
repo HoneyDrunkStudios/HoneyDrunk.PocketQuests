@@ -13,7 +13,7 @@ export const avatarSectionSlots = {
   Identity: ["face", "build", "skin"],
   Hair: ["hairColor", "hairStyle"],
   Clothing: ["outfit"],
-  Accessories: ["accessory"],
+  Accessories: ["accessory", "extra", "scarfColor"],
 } as const satisfies Record<string, readonly (keyof AvatarLook)[]>;
 export type AvatarSection = keyof typeof avatarSectionSlots;
 
@@ -27,6 +27,9 @@ export function randomizeAvatarSection(
 ) {
   const current = decodeAvatar(code);
   const candidate = decodeAvatar(randomAvatar(rewards, random));
+  // Both extras are starter items. Randomization never grants reward gear.
+  candidate.extra = Math.min(2, Math.max(0, Math.floor(random() * 3)));
+  candidate.scarfColor = Math.min(7, Math.max(0, Math.floor(random() * 8)));
   const slots =
     section === "All"
       ? Object.values(avatarSectionSlots).flat()

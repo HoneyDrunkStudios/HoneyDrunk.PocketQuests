@@ -14,7 +14,7 @@ public sealed class AccountMapping : IEntityTypeConfiguration<AccountEntity>
     {
         entity.ToTable("Account", "pocketquests", table =>
         {
-            table.HasCheckConstraint("CK_Account_AvatarCode", "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]')");
+            table.HasCheckConstraint("CK_Account_AvatarCode", "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]') OR (DATALENGTH([AvatarCode])=20 AND [AvatarCode] LIKE 'v3:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]:[0-2]:[0-7]')");
             table.HasComment("One row is one personal Pocket Quests profile for a verified canonical Identity user. Classification: Restricted. History: mutable; Retain while the account exists, including its recovery interval; erase with the account. No arbitrary age-based pruning of replay source facts.");
             table.HasCheckConstraint("CK_Account_CharacterName", "[CharacterName] IS NULL OR (LEN(LTRIM(RTRIM([CharacterName]))) BETWEEN 1 AND 40 AND DATALENGTH([CharacterName])<=80)");
             table.HasCheckConstraint("CK_Account_PortraitId", "[PortraitId] IS NULL OR [PortraitId] IN ('portrait-1','portrait-2','portrait-3','portrait-4','portrait-5','portrait-6')");
@@ -29,7 +29,7 @@ public sealed class AccountMapping : IEntityTypeConfiguration<AccountEntity>
             table.HasCheckConstraint("CK_Account_ModifiedAtUtc", "DATEPART(TZOFFSET,[ModifiedAt])=0");
             table.HasCheckConstraint("CK_Account_ModificationClock", "[ModifiedAt]>=[CreatedAt]");
         });
-        entity.Property(row => row.AvatarCode).HasComment("Versioned full-body appearance: v1 stores skin, hair color, hairstyle, outfit and accessory; v2 appends face and build with expanded bounded choices. Null means starter appearance. Private account preference, erased with account history.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(16).IsUnicode(false);
+        entity.Property(row => row.AvatarCode).HasComment("Versioned full-body appearance: v1 stores skin, hair color, hairstyle, outfit and accessory; v2 appends face and build with expanded bounded choices. Null means starter appearance. Private account preference, erased with account history. Version v3 appends an extra starter accessory and scarf color; earlier versions retain their exact meanings.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(20).IsUnicode(false);
         entity.HasKey(row => row.Id).HasName("PK_Account").IsClustered();
         entity.HasIndex(row => row.IdentityUserId, "UQ_Account_IdentityUserId").IsUnique().HasFilter(null);
         entity.HasAlternateKey(row => new { row.Id, row.IdentityUserId }).HasName("UQ_Account_Id_IdentityUserId");

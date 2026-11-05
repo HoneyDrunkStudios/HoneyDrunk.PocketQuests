@@ -8,6 +8,8 @@ namespace PocketQuests.Tests.Fixtures;
 /// <summary>Deploys the production SQL project into isolated integration-test databases.</summary>
 internal static class DatabaseSchema
 {
+    private const int SchemaCommandTimeoutSeconds = 300;
+
     internal static Task DeployAsync(DatabaseFacade database, string project = "PocketQuests.Database") => Task.Run(() =>
     {
         // A pooled DacFx model connection can retain a shared database lock and block CREATE DATABASE.
@@ -26,6 +28,9 @@ internal static class DatabaseSchema
             if (exists.ExecuteScalar() is DBNull)
             {
                 using var create = new SqlCommand("DECLARE @statement nvarchar(max) = N'CREATE DATABASE ' + QUOTENAME(@database); EXEC sys.sp_executesql @statement;", sql);
+
+                // Hosted cold-start database creation needs the same bounded budget as DACPAC deployment.
+                create.CommandTimeout = SchemaCommandTimeoutSeconds;
                 create.Parameters.AddWithValue("@database", connection.InitialCatalog);
                 create.ExecuteNonQuery();
             }
@@ -35,7 +40,7 @@ internal static class DatabaseSchema
         var service = new DacServices(connection.ConnectionString);
         service.Deploy(package, connection.InitialCatalog, upgradeExisting: true, options: new DacDeployOptions
         {
-            CommandTimeout = 300,
+            CommandTimeout = SchemaCommandTimeoutSeconds,
             BlockOnPossibleDataLoss = true,
             DropObjectsNotInSource = false,
             ScriptDatabaseOptions = false,
