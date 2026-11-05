@@ -1,5 +1,7 @@
 # Full-body avatars
 
+The focused styling controls let players randomize or restore only Identity, Hair, Clothing or Accessories, preserving every unrelated draft choice. Existing kept-trait controls apply to both group and whole-look randomization; revoked cosmetics cannot be retained when their group is randomized. Preview Undo and Redo retain at most 20 steps each and are cleared by reset or account unloading. A new edit clears the redo branch. All styling remains a preview until the existing Save avatar command succeeds, including offline use. These controls keep the existing v1/v2 appearance format and add no account fields or schema changes.
+
 The October 28 creator update groups controls into Identity, Hair, Clothing, Accessories and Looks. Looks shows ten illustrated free presets. Switching sections retains the draft. Zoom in on face and Show full traveler change only the view. Compare saved look changes only the displayed figure; Save always submits the draft. Undo preview edit keeps up to 20 local edits, and Reset returns to the currently saved appearance. Preview history is cleared when the editor unmounts and is not stored on the account.
 
 Each appearance slot can be kept during Surprise me. Identity choices remain free. A kept clothing or accessory slot is retained only while its reward is currently available; randomization replaces locked or revoked choices with an eligible item. These controls add no API fields or storage formats.

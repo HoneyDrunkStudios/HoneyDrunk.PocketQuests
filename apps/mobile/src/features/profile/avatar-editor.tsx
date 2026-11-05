@@ -21,12 +21,16 @@ import {
   faceNames,
   buildNames,
   starterLooks,
-  randomAvatar,
   outfits,
   skinTones,
   starterAvatar,
   type AvatarLook,
 } from "./avatar-look";
+import {
+  randomizeAvatarSection,
+  restoreAvatarSection,
+  type AvatarSection,
+} from "./avatar-customization";
 
 function previewOpacity(saving: boolean, pressed: boolean) {
   if (saving) return 0.5;
@@ -52,8 +56,9 @@ function Wardrobe({
   const [draft, setDraft] = useState<string>();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [section, setSection] = useState("Identity");
+  const [section, setSection] = useState<AvatarSection | "Looks">("Identity");
   const [history, setHistory] = useState<string[]>([]);
+  const [future, setFuture] = useState<string[]>([]);
   const [comparing, setComparing] = useState(false);
   const [zoomed, setZoomed] = useState(false);
   const [kept, setKept] = useState<Partial<Record<keyof AvatarLook, boolean>>>(
@@ -72,6 +77,7 @@ function Wardrobe({
   const preview = (code: string) => {
     if (code !== choice) {
       setHistory((previous) => [...previous.slice(-19), choice]);
+      setFuture([]);
       setDraft(code);
     }
     setComparing(false);
@@ -250,8 +256,23 @@ function Wardrobe({
           secondary
           disabled={saving}
           onPress={() => {
+            setFuture((previous) => [...previous.slice(-19), choice]);
             setDraft(history.at(-1));
             setHistory((previous) => previous.slice(0, -1));
+            setComparing(false);
+            setError("");
+          }}
+        />
+      )}
+      {future.length > 0 && (
+        <Button
+          title="Redo preview edit"
+          secondary
+          disabled={saving}
+          onPress={() => {
+            setHistory((previous) => [...previous.slice(-19), choice]);
+            setDraft(future.at(-1));
+            setFuture((previous) => previous.slice(0, -1));
             setComparing(false);
             setError("");
           }}
@@ -262,55 +283,69 @@ function Wardrobe({
           title="Surprise me"
           secondary
           disabled={saving}
-          onPress={() => {
-            const next = decodeAvatar(randomAvatar(state.entitlements));
-            for (const slot of Object.keys(kept) as (keyof AvatarLook)[]) {
-              if (!kept[slot]) continue;
-              if (
-                slot === "outfit" &&
-                !availableCosmetic(
-                  outfits[look.outfit].rewardId,
-                  state.entitlements,
-                )
-              )
-                continue;
-              if (
-                slot === "accessory" &&
-                !availableCosmetic(
-                  accessories[look.accessory].rewardId,
-                  state.entitlements,
-                )
-              )
-                continue;
-              next[slot] = look[slot];
-            }
-            preview(encodeAvatar(next));
-          }}
+          onPress={() =>
+            preview(
+              randomizeAvatarSection(choice, "All", state.entitlements, kept),
+            )
+          }
         />
       </View>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {["Identity", "Hair", "Clothing", "Accessories", "Looks"].map(
-          (name) => (
-            <Pressable
-              key={name}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: section === name }}
-              onPress={() => setSection(name)}
-              style={{
-                minHeight: 48,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: section === name ? colors.gold : colors.line,
-                backgroundColor: section === name ? colors.card : colors.paper,
-              }}
-            >
-              <Text style={styles.text}>{name}</Text>
-            </Pressable>
-          ),
-        )}
+        {(
+          ["Identity", "Hair", "Clothing", "Accessories", "Looks"] as const
+        ).map((name) => (
+          <Pressable
+            key={name}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: section === name }}
+            onPress={() => setSection(name)}
+            style={{
+              minHeight: 48,
+              paddingHorizontal: 14,
+              paddingVertical: 12,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: section === name ? colors.gold : colors.line,
+              backgroundColor: section === name ? colors.card : colors.paper,
+            }}
+          >
+            <Text style={styles.text}>{name}</Text>
+          </Pressable>
+        ))}
       </View>
+      {section !== "Looks" && (
+        <View style={{ gap: 8 }}>
+          <Label>
+            Try just this part of your look. Your other choices stay as you made
+            them.
+          </Label>
+          <Button
+            title={`Randomize ${section.toLowerCase()} only`}
+            secondary
+            disabled={saving}
+            onPress={() =>
+              preview(
+                randomizeAvatarSection(
+                  choice,
+                  section,
+                  state.entitlements,
+                  kept,
+                ),
+              )
+            }
+          />
+          <Button
+            title={`Restore saved ${section.toLowerCase()}`}
+            secondary
+            disabled={
+              saving || restoreAvatarSection(choice, saved, section) === choice
+            }
+            onPress={() =>
+              preview(restoreAvatarSection(choice, saved, section))
+            }
+          />
+        </View>
+      )}
       {section === "Looks" && (
         <View style={{ gap: 8 }}>
           <Label>
@@ -413,6 +448,7 @@ function Wardrobe({
           onPress={() => {
             setDraft(undefined);
             setHistory([]);
+            setFuture([]);
             setComparing(false);
             setError("");
           }}

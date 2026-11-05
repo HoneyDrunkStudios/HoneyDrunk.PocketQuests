@@ -65,6 +65,11 @@ const {
   outfits,
   accessories,
 } = require("../../src/features/profile/avatar-look.ts");
+const {
+  avatarSectionSlots,
+  randomizeAvatarSection,
+  restoreAvatarSection,
+} = require("../../src/features/profile/avatar-customization.ts");
 
 function reset() {
   sent = [];
@@ -727,6 +732,132 @@ test("face zoom changes only the view and keeps the selected appearance", async 
     await view.click("Save avatar");
     assert.equal(decodeAvatar(sent[0].avatarCode).face, 6);
   } finally {
+    await view.close();
+  }
+});
+
+test("focused styling changes only the selected group and preserves kept traits", () => {
+  const code = "v2:1:1:1:4:4:3:1";
+  const before = decodeAvatar(code);
+  for (const [section, slots] of Object.entries(avatarSectionSlots)) {
+    const next = decodeAvatar(
+      randomizeAvatarSection(code, section, [], {}, () => 0.99),
+    );
+    for (const slot of Object.keys(before))
+      if (!slots.includes(slot))
+        assert.equal(next[slot], before[slot], `${section}/${slot}`);
+    assert.equal(canWear(next, []), true);
+  }
+  const kept = decodeAvatar(
+    randomizeAvatarSection(code, "Hair", [], { hairStyle: true }, () => 0.99),
+  );
+  assert.equal(kept.hairStyle, before.hairStyle);
+  assert.equal(kept.hairColor, 7);
+  const locked = decodeAvatar(
+    randomizeAvatarSection(
+      "v2:1:1:1:3:4:3:1",
+      "Clothing",
+      [],
+      { outfit: true },
+      () => 0.99,
+    ),
+  );
+  assert.equal(locked.outfit, 5);
+  assert.equal(locked.face, 3);
+  const unrelatedLocked = decodeAvatar(
+    randomizeAvatarSection("v2:1:1:1:3:4:3:1", "Hair", [], {}, () => 0.99),
+  );
+  assert.equal(
+    unrelatedLocked.outfit,
+    3,
+    "editing hair never silently changes an unrelated clothing preview",
+  );
+  assert.equal(canWear(unrelatedLocked, []), false);
+});
+
+test("restoring a saved group keeps every other draft choice and both inputs unchanged", () => {
+  const saved = "v1:2:0:0:0:0";
+  const draft = "v2:5:7:6:5:4:6:2";
+  for (const [section, slots] of Object.entries(avatarSectionSlots)) {
+    const restored = decodeAvatar(restoreAvatarSection(draft, saved, section));
+    const expected = decodeAvatar(draft);
+    for (const slot of slots) expected[slot] = decodeAvatar(saved)[slot];
+    assert.deepEqual(restored, expected);
+  }
+  assert.equal(saved, "v1:2:0:0:0:0");
+  assert.equal(draft, "v2:5:7:6:5:4:6:2");
+});
+
+test("redo restores the undone preview, while a new edit and reset clear the redo branch", async () => {
+  reset();
+  session.state.profile.avatarCode = "v1:2:0:0:0:0";
+  const view = await mount(AvatarEditor);
+  try {
+    await view.click("Oval");
+    await view.click("Silver");
+    await view.click("Undo preview edit");
+    assert.ok(view.button("Redo preview edit"));
+    await view.click("Compare saved look");
+    await view.click("Redo preview edit");
+    assert.doesNotMatch(view.element.textContent, /Showing saved look/);
+    assert.equal(view.button("Redo preview edit"), undefined);
+    await view.click("Save avatar");
+    assert.equal(sent[0].avatarCode, "v2:2:3:0:0:0:6:0");
+    await view.click("Undo preview edit");
+    await view.click("Copper");
+    assert.equal(view.button("Redo preview edit"), undefined);
+    await view.click("Undo preview edit");
+    assert.ok(view.button("Redo preview edit"));
+    await view.click("Reset avatar preview");
+    assert.equal(view.button("Redo preview edit"), undefined);
+    assert.equal(view.button("Undo preview edit"), undefined);
+  } finally {
+    await view.close();
+  }
+});
+
+test("focused styling previews offline, preserves identity, and restores only saved hair", async () => {
+  reset();
+  session.state.profile.avatarCode = "v2:1:1:1:4:4:3:1";
+  session.offline = true;
+  const view = await mount(AvatarEditor);
+  const original = Math.random;
+  Math.random = () => 0.99;
+  try {
+    await view.tab("Hair");
+    await view.click("Randomize hair only");
+    assert.ok(
+      view.element.querySelector('[aria-label="Selected: Hair color: Teal"]'),
+    );
+    await view.click("Oval");
+    await view.tab("Hair");
+    await view.click("Restore saved hair");
+    assert.ok(
+      view.element.querySelector(
+        '[aria-label="Selected: Hair color: Chestnut"]',
+      ),
+    );
+    await view.tab("Identity");
+    assert.ok(
+      view.element.querySelector('[aria-label="Selected: Face: Oval"]'),
+    );
+    assert.equal(
+      view.button("Save avatar").getAttribute("aria-disabled"),
+      "true",
+    );
+    assert.deepEqual(sent, []);
+    session.offline = false;
+    await view.render();
+    await view.click("Save avatar");
+    assert.equal(sent[0].avatarCode, "v2:1:1:1:4:4:6:1");
+    session.state = null;
+    await view.render();
+    reset();
+    await view.render();
+    assert.equal(view.button("Redo preview edit"), undefined);
+    assert.equal(view.button("Undo preview edit"), undefined);
+  } finally {
+    Math.random = original;
     await view.close();
   }
 });
