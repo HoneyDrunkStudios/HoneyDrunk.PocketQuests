@@ -145,6 +145,38 @@ test("Strict Mode boots once, keeps actions stable, isolates status renders and 
   assert.equal(host.requests.length, requests);
 });
 
+test("returning to the foreground refreshes published discovery for the signed-in account", async () => {
+  const wire = require("../../../../contracts/wire-fixtures.json");
+  const host = createHarness();
+  let catalog = structuredClone(wire.catalog);
+  host.respond = async (url) =>
+    url.endsWith("/api/catalog")
+      ? { ok: true, status: 200, json: async () => structuredClone(catalog) }
+      : null;
+  const view = await mount(host);
+  try {
+    await view.settle();
+    const published = {
+      ...catalog.quests[0],
+      id: "PQ-ADM-" + "b".repeat(32),
+      title: "Published while away",
+    };
+    catalog = { ...catalog, quests: [...catalog.quests, published] };
+    await act(async () => {
+      for (const listener of host.appListeners) listener("background");
+      for (const listener of host.appListeners) listener("active");
+      await tick();
+      await tick();
+    });
+    await view.settle();
+    assert.equal(view.current.catalog.quests.at(-1).title, published.title);
+    assert.deepEqual(host.disk.catalog, catalog);
+    assert.equal(view.current.signedIn, true);
+  } finally {
+    await view.unmount();
+  }
+});
+
 test("unmount during cache opening prevents stale boot publication; remount retains pending work", async () => {
   const pending = {
     operationId: "retained",

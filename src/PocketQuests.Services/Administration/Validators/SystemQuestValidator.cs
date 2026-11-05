@@ -9,8 +9,8 @@ namespace PocketQuests.Services.Administration.Validators;
 
 internal static class SystemQuestValidator
 {
-    internal const int MaximumTemplates = 200;
-    internal const int MaximumRevisions = 1000;
+    internal const int MaximumTemplates = QuestRules.MaximumSystemTemplates;
+    internal const int MaximumRevisions = QuestRules.MaximumSystemRevisions;
 
     internal static string Code(Guid id) => "PQ-ADM-" + id.ToString("N");
 

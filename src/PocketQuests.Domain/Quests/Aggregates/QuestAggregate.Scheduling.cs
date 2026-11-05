@@ -114,7 +114,7 @@ public sealed partial class QuestAggregate
     private void SaveSeries(QuestCommand command, DateTimeOffset now)
     {
         Progression.Require(command.SeriesId is { } id && id != Guid.Empty, "A series ID is required.");
-        var quest = Catalog.Quests.SingleOrDefault(q => q.Id == command.QuestId)
+        var quest = _systemTemplate ?? Catalog.Quests.SingleOrDefault(q => q.Id == command.QuestId)
             ?? Definitions.SingleOrDefault(d => d.Quest.Id == command.QuestId && !d.Archived)?.Quest
             ?? throw new QuestValidationException("Choose an available quest.");
         RequireEligible(quest, now);

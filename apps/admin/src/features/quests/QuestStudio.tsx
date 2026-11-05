@@ -9,6 +9,10 @@ import type {
 import { Masthead } from "../../components/Masthead";
 import { QuestFields } from "./QuestFields";
 import { QuestPreview } from "./QuestPreview";
+import {
+  QuestPublicationReview,
+  QuestPublicationStatus,
+} from "./QuestPublicationStatus";
 
 export function QuestStudio({
   session,
@@ -27,6 +31,7 @@ export function QuestStudio({
   const [form, setForm] = useState<Quest | null>(null);
   const [preview, setPreview] = useState<Quest | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [publication, setPublication] = useState<boolean | null>(null);
   const [pending, setPending] = useState(false);
   const [locked, setLocked] = useState(false);
   const [notice, setNotice] = useState("Loading the quest studio…");
@@ -81,6 +86,7 @@ export function QuestStudio({
     setIdentity(saved.id);
     setForm(saved.draft);
     setPreview(null);
+    setPublication(null);
     setDirty(false);
     setError(false);
     setNotice(
@@ -94,6 +100,7 @@ export function QuestStudio({
     setIdentity(id);
     setSelected(null);
     setPreview(null);
+    setPublication(null);
     setDirty(true);
     setError(false);
     setForm({
@@ -145,6 +152,7 @@ export function QuestStudio({
   function change(value: Quest) {
     setForm(value);
     setPreview(null);
+    setPublication(null);
     setDirty(true);
   }
   function body() {
@@ -161,33 +169,71 @@ export function QuestStudio({
       (value) => {
         setPreview(value);
         setNotice(
-          "Preview validated. Saving creates a private immutable draft revision.",
+          "Preview checked. Save this as a private draft before publishing.",
         );
       },
     );
+  }
+  function retain(saved: AdminSystemQuest) {
+    setSelected(saved);
+    setIdentity(saved.id);
+    setForm(saved.draft);
+    setPreview(saved.draft);
+    setDirty(false);
+    setStudio(
+      (old) =>
+        old && {
+          ...old,
+          quests: [...old.quests.filter((row) => row.id !== saved.id), saved],
+        },
+    );
+    setPublication(null);
   }
   function save() {
     if (!form || !preview || locked) return;
     void perform(
       (signal) => api.saveQuest(body(), signal),
       (saved) => {
-        setSelected(saved);
-        setIdentity(saved.id);
-        setForm(saved.draft);
-        setPreview(saved.draft);
-        setDirty(false);
-        setStudio(
-          (old) =>
-            old && {
-              ...old,
-              quests: [
-                ...old.quests.filter((row) => row.id !== saved.id),
-                saved,
-              ],
-            },
-        );
+        retain(saved);
         setNotice(
-          `Draft ${saved.draftNumber} saved. It is not published to players.`,
+          saved.published
+            ? `Draft ${saved.draftNumber} saved. The published version is unchanged.`
+            : `Draft ${saved.draftNumber} saved. It is not published to players.`,
+        );
+      },
+      true,
+    );
+  }
+  function reviewPublication(published: boolean) {
+    if (!selected || dirty || locked || busy.current) return;
+    setPreview(selected.draft);
+    setPublication(published);
+    setNotice(
+      published
+        ? "Review these saved terms before publishing them to players."
+        : "Review withdrawal. Accepted quests and recurring deliveries keep their existing terms.",
+    );
+  }
+  function publish() {
+    if (!selected || dirty || locked || publication === null) return;
+    const published = publication;
+    void perform(
+      (signal) =>
+        api.publishQuest(
+          {
+            id: selected.id,
+            expectedVersion: selected.version,
+            expectedDraftRevisionId: selected.draftSystemQuestRevisionId,
+            published,
+          },
+          signal,
+        ),
+      (saved) => {
+        retain(saved);
+        setNotice(
+          published
+            ? `Draft ${saved.draftNumber} is now published to players.`
+            : "Withdrawn from discovery. Accepted quests and recurring series keep their existing terms.",
         );
       },
       true,
@@ -210,6 +256,7 @@ export function QuestStudio({
         setPreview(null);
         setDirty(false);
         setLocked(false);
+        setPublication(null);
         setNotice(
           saved
             ? "Saved draft reloaded. Review it before making a new change."
@@ -354,16 +401,25 @@ export function QuestStudio({
                   <QuestFields
                     value={form}
                     catalog={studio.catalog}
-                    disabled={pending || locked}
+                    disabled={pending || locked || publication !== null}
                     onChange={change}
                   />
                   <div className="actions">
-                    <button disabled={pending || locked} onClick={showPreview}>
+                    <button
+                      disabled={pending || locked || publication !== null}
+                      onClick={showPreview}
+                    >
                       Validate and preview
                     </button>
                     <button
                       className="quiet"
-                      disabled={pending || locked || !preview || !dirty}
+                      disabled={
+                        pending ||
+                        locked ||
+                        !preview ||
+                        !dirty ||
+                        publication !== null
+                      }
                       onClick={save}
                     >
                       Save draft
@@ -373,6 +429,24 @@ export function QuestStudio({
                     Draft changes are private. Existing accepted quests retain
                     their original terms.
                   </p>
+                  {selected && (
+                    <QuestPublicationStatus
+                      selected={selected}
+                      dirty={dirty}
+                      disabled={
+                        pending || locked || dirty || publication !== null
+                      }
+                      onReview={reviewPublication}
+                    />
+                  )}
+                  {publication !== null && (
+                    <QuestPublicationReview
+                      published={publication}
+                      disabled={pending || locked}
+                      onPublish={publish}
+                      onCancel={() => setPublication(null)}
+                    />
+                  )}
                   {preview && (
                     <QuestPreview quest={preview} catalog={studio.catalog} />
                   )}

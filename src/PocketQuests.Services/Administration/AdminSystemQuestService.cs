@@ -13,7 +13,6 @@ using PocketQuests.Domain.Errors;
 using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Services.Administration.Mapping;
 using PocketQuests.Services.Administration.Validators;
-using PocketQuests.Services.Catalogs;
 using PocketQuests.Services.Quests.Mapping;
 using System.Diagnostics;
 using ContractQuest = PocketQuests.Contracts.Models.Quests.Quest;
@@ -37,7 +36,7 @@ public sealed class AdminSystemQuestService(AdminOperator access, IAccountDataSe
         var rows = await templates.Studio(SystemQuestValidator.MaximumTemplates + 1, token);
         if (rows.Count > SystemQuestValidator.MaximumTemplates)
             throw new InvalidOperationException("The authored catalog exceeded its supported bound.");
-        return new([.. rows.Select(row => row.ToContract())], new CatalogService().Read());
+        return new([.. rows.Select(row => row.ToContract())], PocketQuests.Services.Catalogs.Mapping.CatalogSnapshot.BuiltIn());
     }
 
     /// <inheritdoc />
@@ -45,7 +44,7 @@ public sealed class AdminSystemQuestService(AdminOperator access, IAccountDataSe
     {
         _ = access.Require();
         var quest = SystemQuestValidator.Normalize(request);
-        SystemQuestValidator.RequireSnapshotSize(SystemQuestMapping.Freeze(quest));
+        SystemQuestValidator.RequireSnapshotSize(SystemQuestSnapshot.Freeze(quest));
         return quest.ToModel();
     }
 
@@ -54,7 +53,7 @@ public sealed class AdminSystemQuestService(AdminOperator access, IAccountDataSe
     {
         var actor = access.Require();
         var quest = SystemQuestValidator.Normalize(request);
-        var snapshot = SystemQuestMapping.Freeze(quest);
+        var snapshot = SystemQuestSnapshot.Freeze(quest);
         SystemQuestValidator.RequireSnapshotSize(snapshot);
         var now = clock.GetUtcNow().ToUniversalTime();
         var result = await accounts.ExecuteInTransaction(
@@ -63,8 +62,7 @@ public sealed class AdminSystemQuestService(AdminOperator access, IAccountDataSe
             await accounts.AcquireCommandLock(actor, ct);
             await accounts.AcquireCommandLock("system-quest-catalog", ct);
             var owner = await accounts.GetByIdentityUserId(actor, ct) ?? throw new QuestValidationException("Initialize your Pocket Quests profile before authoring studio quests.");
-            if (await accounts.GetErasure(actor, ct) is not null || (await accounts.GetLifecycle(actor, ct)) is { StateCode: not "Active" })
-                throw new UnauthorizedAccessException();
+            await RequireActiveOperator(actor, ct);
             var head = await templates.Editable(quest.Id, ct);
             SystemQuestRevisionEntity revision;
             if (head is null)
@@ -87,6 +85,50 @@ public sealed class AdminSystemQuestService(AdminOperator access, IAccountDataSe
         },
             token);
         return result.ToContract();
+    }
+
+    /// <inheritdoc />
+    public async Task<AdminSystemQuest> Publish(PublishSystemQuestRequest request, CancellationToken token)
+    {
+        var actor = access.Require();
+        if (request.Id == Guid.Empty || request.ExpectedDraftRevisionId == Guid.Empty)
+            throw new QuestValidationException("Review a saved system quest draft before publishing.");
+        var now = clock.GetUtcNow().ToUniversalTime();
+        var result = await accounts.ExecuteInTransaction(
+            async ct =>
+        {
+            await accounts.AcquireCommandLock(actor, ct);
+            await accounts.AcquireCommandLock("system-quest-catalog", ct);
+            var owner = await accounts.GetByIdentityUserId(actor, ct) ?? throw new UnauthorizedAccessException();
+            await RequireActiveOperator(actor, ct);
+            var head = await templates.Editable(SystemQuestValidator.Code(request.Id), ct) ?? throw new QuestNotFoundException();
+            SystemQuestValidator.RequireVersion(request.ExpectedVersion, head.RowVersion);
+            if (head.DraftSystemQuestRevisionId != request.ExpectedDraftRevisionId)
+                throw new QuestConflictException("The draft changed. Reload and review it before publishing.");
+            var draft = await revisions.Read(request.ExpectedDraftRevisionId, ct) ?? throw new InvalidOperationException("Draft content is missing.");
+            await UpdatePublication(head, draft, request.Published, owner.Id, actor, now, ct);
+
+            return new SystemQuestStudioRow(head, draft, request.Published ? draft : null);
+        },
+            token);
+        return result.ToContract();
+    }
+
+    private async Task RequireActiveOperator(string actor, CancellationToken token)
+    {
+        if (await accounts.GetErasure(actor, token) is not null || (await accounts.GetLifecycle(actor, token)) is { StateCode: not "Active" })
+            throw new UnauthorizedAccessException();
+    }
+
+    private async Task UpdatePublication(SystemQuestEntity head, SystemQuestRevisionEntity draft, bool published, Guid accountId, string actor, DateTimeOffset now, CancellationToken token)
+    {
+        var target = published ? draft.Id : (Guid?)null;
+        if (head.PublishedSystemQuestRevisionId == target)
+            return;
+        head.PublishedSystemQuestRevisionId = target;
+        head.ModifiedAt = now > head.ModifiedAt ? now : head.ModifiedAt;
+        head.ModifiedBy = actor;
+        await RecordAudit(accountId, actor, published ? "pocketquests.admin.quest-publish" : "pocketquests.admin.quest-withdraw", head.Id, now, token);
     }
 
     private async Task<(SystemQuestEntity head, SystemQuestRevisionEntity revision)> CreateInitialDraft(Quest quest, string? expectedVersion, string snapshot, string actor, DateTimeOffset now, CancellationToken token)

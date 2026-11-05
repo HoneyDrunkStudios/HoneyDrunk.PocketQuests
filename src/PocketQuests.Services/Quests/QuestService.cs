@@ -37,6 +37,7 @@ public sealed class QuestService : IQuestService
     private readonly QuestOccurrenceService occurrences;
     private readonly ProgressService progress;
     private readonly QuestCommandHistoryService history;
+    private readonly PocketQuests.Data.DataServices.Quests.ISystemQuestDataService templates;
 
     internal QuestService(
         IAccountDataService data,
@@ -47,7 +48,8 @@ public sealed class QuestService : IQuestService
         QuestSeriesService series,
         QuestOccurrenceService occurrences,
         ProgressService progress,
-        QuestCommandHistoryService history)
+        QuestCommandHistoryService history,
+        PocketQuests.Data.DataServices.Quests.ISystemQuestDataService templates)
     {
         this.data = data;
         this.currentAccount = currentAccount;
@@ -58,6 +60,7 @@ public sealed class QuestService : IQuestService
         this.occurrences = occurrences;
         this.progress = progress;
         this.history = history;
+        this.templates = templates;
     }
 
     /// <inheritdoc />
@@ -207,23 +210,43 @@ public sealed class QuestService : IQuestService
         }
 
         var anchor = command.RecordedTime is { } proof ? await data.GetAnchor(account.Id, proof.AnchorId, token) : null;
-        QuestAggregate? anchored = null;
-        if (anchor is not null && command.Action == QuestActions.Complete)
-        {
-            var retained = await data.ReadReplay(account.Id, anchor.IssuedMutationVersion, token);
-            anchored = QuestReplay.Through(retained, account, QuestTerms.Read(retained), anchor.IssuedMutationVersion).Aggregate;
-        }
+        var anchored = await ReadAnchoredAggregate(account, command, anchor, token);
 
         var recordedAt = QuestClock.Resolve(account, command, aggregate, anchored, anchor, now, logicalNow);
         var projectionAt = QuestClock.Max(logicalNow, recordedAt);
         var before = command.Action == QuestActions.Complete ? aggregate.Project(projectionAt) : null;
         var actionBudget = ReconciliationLimit - reconciliation.Processed;
-        var action = aggregate.Apply(command, recordedAt, actionBudget);
+        var template = await ResolveTemplate(command, aggregate, token);
+
+        var action = aggregate.Apply(command, recordedAt, actionBudget, template);
         var result = aggregate.Project(projectionAt);
         if (before is not null)
             result = result with { CompletionOutcome = CompletionOutcome.Between(before, result, command.OperationId, command.OccurrenceId!.Value) };
         var change = new QuestMutation(account, command, aggregate, result, recordedAt, logicalNow, projectionAt, now, ReconciliationLimit, actionBudget, HasPending: action.HasMore || aggregate.Reconcile(projectionAt, 0).HasMore);
         await Persist(identity, change, rows, digest, anchor, token);
         return result;
+    }
+
+    private async Task<QuestAggregate?> ReadAnchoredAggregate(AccountEntity account, QuestCommand command, SyncAnchorEntity? anchor, CancellationToken token)
+    {
+        if (anchor is null || command.Action != QuestActions.Complete)
+            return null;
+        var retained = await data.ReadReplay(account.Id, anchor.IssuedMutationVersion, token);
+        return QuestReplay.Through(retained, account, QuestTerms.Read(retained), anchor.IssuedMutationVersion).Aggregate;
+    }
+
+    private async Task<Quest?> ResolveTemplate(QuestCommand command, QuestAggregate aggregate, CancellationToken token)
+    {
+        if (command.Action is not (QuestActions.Accept or QuestActions.SaveSeries) || command.QuestId?.StartsWith("PQ-ADM-", StringComparison.Ordinal) != true)
+            return null;
+        if (command.Action == QuestActions.SaveSeries)
+        {
+            var retained = aggregate.Schedule.Series.SingleOrDefault(row => row.Id == command.SeriesId && row.Quest.Id == command.QuestId)?.Quest;
+            if (retained is not null)
+                return retained;
+        }
+
+        var published = await templates.ReadPublished(command.QuestId, token) ?? throw new QuestValidationException("This system quest is no longer available. Refresh discovery before choosing another quest.");
+        return SystemQuestSnapshot.Read(published.SnapshotJson);
     }
 }

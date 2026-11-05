@@ -15,12 +15,16 @@ let writes: number;
 let loseSave: boolean;
 let conflict: boolean;
 let authenticated: boolean;
+let publications: number;
+let publicationFailure: "none" | "lost" | "malformed";
 beforeEach(() => {
   saved = null;
   writes = 0;
   loseSave = false;
   conflict = false;
   authenticated = true;
+  publications = 0;
+  publicationFailure = "none";
   vi.stubGlobal(
     "confirm",
     vi.fn(() => true),
@@ -64,12 +68,38 @@ beforeEach(() => {
           version: "AAAAAAAAAAE=",
           draftNumber: (saved?.draftNumber ?? 0) + 1,
           draftSystemQuestRevisionId: crypto.randomUUID(),
-          publishedSystemQuestRevisionId: null,
+          publishedSystemQuestRevisionId:
+            saved?.publishedSystemQuestRevisionId ?? null,
           draft: { ...body.quest, baseXp: 10 } as Quest,
-          published: null,
+          published: saved?.published ?? null,
           modifiedAt: "2026-01-01T12:00:00Z",
         };
         return loseSave ? reply(503, {}) : reply(200, saved);
+      }
+      if (input.endsWith("/quests/publish")) {
+        publications++;
+        if (
+          conflict ||
+          !saved ||
+          body.expectedDraftRevisionId !== saved.draftSystemQuestRevisionId
+        )
+          return reply(409, {});
+        saved = {
+          ...saved,
+          version: "AAAAAAAAAAI=",
+          published: body.published ? saved.draft : null,
+          publishedSystemQuestRevisionId: body.published
+            ? saved.draftSystemQuestRevisionId
+            : null,
+        };
+        return publicationFailure === "lost"
+          ? reply(503, {})
+          : reply(
+              200,
+              publicationFailure === "malformed"
+                ? { ...saved, id: crypto.randomUUID() }
+                : saved,
+            );
       }
       if (input.endsWith("/logout")) return reply(204, null);
       throw new Error("Unexpected fixture route: " + input);
@@ -239,4 +269,105 @@ it("previews edited reward pools and protects unsaved terms when copying a start
   fireEvent.click(screen.getByRole("button", { name: "Players" }));
   await screen.findByRole("heading", { name: "Your travelers" });
   expect(screen.queryByLabelText("Quest title")).toBeNull();
+});
+
+async function savedQuest() {
+  await openStudio();
+  enter("Walk from the workshop");
+  await preview();
+  fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+  await screen.findByText("Draft 1 saved. It is not published to players.");
+}
+
+it("reviews saved terms before publication and withdrawal while edits stay private", async () => {
+  await savedQuest();
+  fireEvent.click(screen.getByRole("button", { name: "Review publication" }));
+  expect(publications).toBe(0);
+  expect(screen.getByLabelText("Quest title").matches(":disabled")).toBe(true);
+  fireEvent.click(
+    screen.getByRole("button", { name: "Cancel publication review" }),
+  );
+  expect(publications).toBe(0);
+  fireEvent.click(screen.getByRole("button", { name: "Review publication" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Publish reviewed draft" }),
+  );
+  await screen.findByText("Draft 1 is now published to players.");
+  expect(publications).toBe(1);
+  fireEvent.change(screen.getByLabelText("Quest title"), {
+    target: { value: "Walk with new terms" },
+  });
+  expect(
+    (
+      screen.getByRole("button", {
+        name: "Review publication",
+      }) as HTMLButtonElement
+    ).disabled,
+  ).toBe(true);
+  await preview();
+  fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+  await screen.findByText("Draft 2 saved. The published version is unchanged.");
+  expect(saved?.published?.title).toBe("Walk from the workshop");
+  fireEvent.click(screen.getByRole("button", { name: "Review publication" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Publish reviewed draft" }),
+  );
+  await screen.findByText("Draft 2 is now published to players.");
+  expect(saved?.published?.title).toBe("Walk with new terms");
+  fireEvent.click(screen.getByRole("button", { name: "Review withdrawal" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Withdraw from discovery" }),
+  );
+  await screen.findByText(
+    "Withdrawn from discovery. Accepted quests and recurring series keep their existing terms.",
+  );
+  expect(publications).toBe(3);
+  expect(saved?.published).toBeNull();
+});
+
+it.each(["lost", "malformed"] as const)(
+  "recovers a %s publication response without another write",
+  async (failure) => {
+    await savedQuest();
+    publicationFailure = failure;
+    fireEvent.click(screen.getByRole("button", { name: "Review publication" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Publish reviewed draft" }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Reload saved version and discard local edits",
+      }),
+    );
+    await screen.findByText(
+      "Saved draft reloaded. Review it before making a new change.",
+    );
+    expect(publications).toBe(1);
+    expect(saved?.published?.title).toBe("Walk from the workshop");
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Review publication",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+  },
+);
+
+it("requires reload after a conflicting publication review", async () => {
+  await savedQuest();
+  conflict = true;
+  fireEvent.click(screen.getByRole("button", { name: "Review publication" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Publish reviewed draft" }),
+  );
+  await screen.findByText(/This system quest changed/);
+  expect(
+    (
+      screen.getByRole("button", {
+        name: "Publish reviewed draft",
+      }) as HTMLButtonElement
+    ).disabled,
+  ).toBe(true);
+  expect(saved?.published).toBeNull();
 });

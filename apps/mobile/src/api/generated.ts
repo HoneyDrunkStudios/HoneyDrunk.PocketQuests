@@ -187,6 +187,13 @@ export type ProblemDetails = {
   "instance"?: string | null;
 };
 
+export type PublishSystemQuestRequest = {
+  "id": string;
+  "expectedVersion": string;
+  "expectedDraftRevisionId": string;
+  "published": boolean;
+};
+
 export type Quest = {
   "id": string;
   "title": string;
@@ -473,6 +480,7 @@ export type ApiOperations = {
   "POST /api/admin/quests/list": { body: undefined; query: undefined; response: SystemQuestStudio };
   "POST /api/admin/quests/preview": { body: SaveSystemQuestRequest; query: undefined; response: Quest };
   "POST /api/admin/quests/draft": { body: SaveSystemQuestRequest; query: undefined; response: AdminSystemQuest };
+  "POST /api/admin/quests/publish": { body: PublishSystemQuestRequest; query: undefined; response: AdminSystemQuest };
   "POST /api/admin/users/search": { body: SearchUsersRequest; query: undefined; response: AdminUserPage };
   "POST /api/admin/users/access": { body: SetUserAccessRequest; query: undefined; response: AdminUser };
 };

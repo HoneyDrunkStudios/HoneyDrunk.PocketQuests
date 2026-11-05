@@ -43,7 +43,8 @@ public static class ServiceRegistration
             provider.GetRequiredService<QuestSeriesService>(),
             provider.GetRequiredService<QuestOccurrenceService>(),
             provider.GetRequiredService<ProgressService>(),
-            provider.GetRequiredService<QuestCommandHistoryService>()));
+            provider.GetRequiredService<QuestCommandHistoryService>(),
+            provider.GetRequiredService<PocketQuests.Data.DataServices.Quests.ISystemQuestDataService>()));
         services.AddScoped<IQuestService>(provider => provider.GetRequiredService<QuestService>());
         services.AddScoped<ProfileService>();
         services.AddScoped<IProfileService>(provider => provider.GetRequiredService<ProfileService>());

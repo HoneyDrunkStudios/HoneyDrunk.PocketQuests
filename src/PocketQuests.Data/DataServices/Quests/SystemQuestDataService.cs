@@ -27,6 +27,14 @@ public sealed class SystemQuestDataService(AppDbContext context) : BaseDataServi
                select new SystemQuestStudioRow(head, draft, published)).Take(limit).ToListAsync(token);
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<SystemQuestRevisionEntity>> Published(int limit, CancellationToken token) =>
+        await PublishedQuery().OrderBy(row => row.SystemQuestId).Take(limit).ToListAsync(token);
+
+    /// <inheritdoc />
+    public Task<SystemQuestRevisionEntity?> ReadPublished(string id, CancellationToken token) =>
+        PublishedQuery().SingleOrDefaultAsync(row => row.SystemQuestId == id, token);
+
+    /// <inheritdoc />
     public async Task AddInitialDraft(SystemQuestEntity head, SystemQuestRevisionEntity revision, CancellationToken token)
     {
         if (Context.Database.CurrentTransaction is null)
@@ -39,4 +47,9 @@ public sealed class SystemQuestDataService(AppDbContext context) : BaseDataServi
         await Context.SaveChangesAsync(token);
         head.DraftSystemQuestRevisionId = revision.Id;
     }
+
+    private IQueryable<SystemQuestRevisionEntity> PublishedQuery() =>
+        from head in SystemQuests.AsNoTracking()
+        join revision in Context.SystemQuestRevision.AsNoTracking() on head.PublishedSystemQuestRevisionId equals revision.Id
+        select revision;
 }

@@ -145,12 +145,15 @@ export function createQuestSync({
           ),
         );
     }
-    const state = await client("GET /api/state", undefined, undefined);
+    const [state, catalog] = await Promise.all([
+      client("GET /api/state", undefined, undefined),
+      client("GET /api/catalog", undefined, undefined),
+    ]);
     const anchor = await anchorFor();
     const current = localRef.current;
     if (current.requiresReload)
       throw new Error("Reload history before synchronizing.");
-    await publish({ ...current, state, anchor });
+    await publish({ ...current, state, catalog, anchor });
     // An Undo can arrive after its completion was acknowledged but before a
     // failed refresh delivered the feedback. Check durable pending intent at
     // delivery too, including writes that committed before their response failed.

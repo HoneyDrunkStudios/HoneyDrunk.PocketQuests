@@ -47,6 +47,8 @@ public sealed class SystemQuestRuntimeRoleTests(SchemaFixture fixture) : IClassF
                 var draft = await studio.Save(new(id, quest.ToInput()), default);
                 var edit = await studio.Save(new(id, (quest with { Title = "Runtime edited title" }).ToInput(), draft.Version), default);
                 Assert.Equal(2, edit.DraftNumber);
+                var live = await studio.Publish(new(id, edit.Version, edit.DraftSystemQuestRevisionId, true), default);
+                Assert.Equal(edit.DraftSystemQuestRevisionId, live.PublishedSystemQuestRevisionId);
                 await Assert.ThrowsAsync<SqlException>(() => db.Database.ExecuteSqlRawAsync("UPDATE pocketquests.SystemQuestRevision SET SnapshotJson=N'{{}}';"));
                 await Assert.ThrowsAsync<SqlException>(() => db.Database.ExecuteSqlRawAsync("DELETE FROM pocketquests.SystemQuestRevision;"));
                 await db.Database.ExecuteSqlRawAsync("REVERT; EXECUTE AS USER='pq_studio_erasure';");
@@ -60,6 +62,7 @@ public sealed class SystemQuestRuntimeRoleTests(SchemaFixture fixture) : IClassF
                 var head = await db.SystemQuest.AsNoTracking().SingleAsync(row => row.Id == quest.Id);
                 Assert.Null(head.CreatedBy);
                 Assert.Null(head.ModifiedBy);
+                Assert.Equal(edit.DraftSystemQuestRevisionId, head.PublishedSystemQuestRevisionId);
                 Assert.Equal(2, await db.SystemQuestRevision.CountAsync(row => row.SystemQuestId == quest.Id));
                 Assert.False(await db.Account.AnyAsync(row => row.IdentityUserId == owner.Subject || row.IdentityUserId == other.Subject));
             }

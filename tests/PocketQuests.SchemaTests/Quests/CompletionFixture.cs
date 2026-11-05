@@ -33,7 +33,8 @@ internal static class CompletionFixture
         services.GetRequiredService<QuestSeriesService>(),
         services.GetRequiredService<QuestOccurrenceService>(),
         services.GetRequiredService<ProgressService>(),
-        services.GetRequiredService<QuestCommandHistoryService>());
+        services.GetRequiredService<QuestCommandHistoryService>(),
+        services.GetRequiredService<PocketQuests.Data.DataServices.Quests.ISystemQuestDataService>());
 
     // A single externally owned context lets fault-injection interceptors exercise every typed repository.
     internal static ServiceProvider Provider(AppDbContext db, string connection)

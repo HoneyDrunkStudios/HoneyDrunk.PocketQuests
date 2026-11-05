@@ -12,7 +12,7 @@ GO
 -- Studio authoring may append content and move the draft head; immutable revisions cannot be updated or deleted.
 GRANT INSERT ON OBJECT::[pocketquests].[SystemQuest] TO [pocketquests_command_runtime];
 GO
-GRANT UPDATE ON OBJECT::[pocketquests].[SystemQuest] ([Title], [CategoryId], [ModifiedAt], [ModifiedBy], [DraftSystemQuestRevisionId]) TO [pocketquests_command_runtime];
+GRANT UPDATE ON OBJECT::[pocketquests].[SystemQuest] ([Title], [CategoryId], [ModifiedAt], [ModifiedBy], [DraftSystemQuestRevisionId], [PublishedSystemQuestRevisionId]) TO [pocketquests_command_runtime];
 GO
 GRANT INSERT ON OBJECT::[pocketquests].[SystemQuestRevision] TO [pocketquests_command_runtime];
 GO

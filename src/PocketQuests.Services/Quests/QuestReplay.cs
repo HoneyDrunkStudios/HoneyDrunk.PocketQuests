@@ -55,7 +55,8 @@ internal static class QuestReplay
             }
 
             var before = row.ActionCode == QuestActions.Complete ? aggregate.Project(row.ProjectionAt) : null;
-            _ = aggregate.Apply(command, row.RecordedAt, row.ActionReconciliationLimit);
+            var template = row.ActionCode is QuestActions.Accept or QuestActions.SaveSeries && row.QuestDefinitionRevisionId is { } termId && !terms[termId].IsCustom ? terms[termId] : null;
+            _ = aggregate.Apply(command, row.RecordedAt, row.ActionReconciliationLimit, template);
             var projected = aggregate.Project(row.ProjectionAt);
             if (before is not null)
                 outcome = CompletionOutcome.Between(before, projected, row.Id, row.QuestOccurrenceId!.Value);

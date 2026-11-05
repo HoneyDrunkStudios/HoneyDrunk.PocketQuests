@@ -6,6 +6,7 @@ namespace PocketQuests.Services.Catalogs;
 public interface ICatalogService
 {
     /// <summary>Returns the existing catalog and reward rules.</summary>
+    /// <param name="token">Cancellation.</param>
     /// <returns>The public catalog.</returns>
-    CatalogResponse Read();
+    Task<CatalogResponse> Read(CancellationToken token = default);
 }

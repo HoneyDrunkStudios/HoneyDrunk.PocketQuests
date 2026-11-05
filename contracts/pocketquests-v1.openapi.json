@@ -1059,6 +1059,95 @@
         ]
       }
     },
+    "/api/admin/quests/publish": {
+      "post": {
+        "tags": [
+          "PocketQuests.Admin"
+        ],
+        "description": "Only the explicitly configured canonical Identity operator account is permitted.",
+        "operationId": "PublishSystemQuest",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishSystemQuestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSystemQuest"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "IdentityBearer": []
+          },
+          {
+            "AdminSession": [],
+            "AdminCsrf": []
+          }
+        ]
+      }
+    },
     "/api/admin/users/search": {
       "post": {
         "tags": [
@@ -2110,6 +2199,32 @@
             "nullable": true
           }
         }
+      },
+      "PublishSystemQuestRequest": {
+        "required": [
+          "id",
+          "expectedVersion",
+          "expectedDraftRevisionId",
+          "published"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expectedVersion": {
+            "type": "string"
+          },
+          "expectedDraftRevisionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "published": {
+            "type": "boolean"
+          }
+        },
+        "description": "Review of one saved draft and head version, to publish or withdraw future discovery."
       },
       "Quest": {
         "required": [

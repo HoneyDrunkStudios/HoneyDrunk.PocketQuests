@@ -1,7 +1,6 @@
 using PocketQuests.Domain.Catalogs;
 using PocketQuests.Domain.Commands;
 using PocketQuests.Domain.Quests.Aggregates;
-using PocketQuests.Services.Catalogs;
 using PocketQuests.Services.Projections.Mapping;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -17,6 +16,6 @@ aggregate.Apply(new(Guid.Parse("00000000-0000-4000-8000-000000000003"), QuestAct
 var fixtures = new
 {
     State = aggregate.Project(at).ToModel(),
-    Catalog = new CatalogService().Read(),
+    Catalog = PocketQuests.Services.Catalogs.Mapping.CatalogSnapshot.BuiltIn(),
 };
 File.WriteAllText(Path.Combine(output, "wire-fixtures.json"), JsonSerializer.Serialize(fixtures, json) + "\n");

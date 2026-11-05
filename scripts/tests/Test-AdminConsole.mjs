@@ -67,6 +67,7 @@ try {
   let lastSearch;
   let studioSaved = null;
   let studioWrites = 0;
+  let publicationWrites = 0;
   const studioCatalog = JSON.parse(
     await readFile(resolve(root, "contracts/wire-fixtures.json"), "utf8"),
   ).catalog;
@@ -94,13 +95,31 @@ try {
       studioWrites++;
       studioSaved = {
         id: body.id,
-        version: "AAAAAAAAAAE=",
+        version: `AAAAAAAAAA${studioWrites}=`,
         draftNumber: studioWrites,
-        draftSystemQuestRevisionId: "11111111-1111-4111-8111-111111111111",
-        publishedSystemQuestRevisionId: null,
+        draftSystemQuestRevisionId: crypto.randomUUID(),
+        publishedSystemQuestRevisionId:
+          studioSaved?.publishedSystemQuestRevisionId ?? null,
         draft: { ...body.quest, baseXp: 10 },
-        published: null,
+        published: studioSaved?.published ?? null,
         modifiedAt: "2026-01-01T12:00:00Z",
+      };
+      return reply(200, studioSaved);
+    }
+    if (path.endsWith("/quests/publish")) {
+      assert.equal(body.expectedVersion, studioSaved.version);
+      assert.equal(
+        body.expectedDraftRevisionId,
+        studioSaved.draftSystemQuestRevisionId,
+      );
+      publicationWrites++;
+      studioSaved = {
+        ...studioSaved,
+        version: `AAAAAAAAAB${publicationWrites}=`,
+        publishedSystemQuestRevisionId: body.published
+          ? studioSaved.draftSystemQuestRevisionId
+          : null,
+        published: body.published ? studioSaved.draft : null,
       };
       return reply(200, studioSaved);
     }
@@ -275,12 +294,58 @@ try {
     })
     .waitFor();
   assert.equal(studioWrites, 1);
+  await page
+    .getByRole("button", { name: "Review publication", exact: true })
+    .click();
+  assert.equal(
+    await page.getByLabel("Quest title", { exact: true }).isDisabled(),
+    true,
+  );
+  assert.equal(publicationWrites, 0);
+  await page
+    .getByRole("button", { name: "Cancel publication review", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Review publication", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Publish reviewed draft", exact: true })
+    .click();
+  await page
+    .getByText("Draft 1 is now published to players.", { exact: true })
+    .waitFor();
+  await page
+    .getByLabel("Quest title", { exact: true })
+    .fill("An updated little adventure");
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Review publication", exact: true })
+      .isDisabled(),
+    true,
+  );
+  await page
+    .getByRole("button", { name: "Validate and preview", exact: true })
+    .click();
+  await page
+    .getByRole("heading", { name: "An updated little adventure", exact: true })
+    .waitFor();
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await page
+    .getByText("Draft 2 saved. The published version is unchanged.", {
+      exact: true,
+    })
+    .waitFor();
+  assert.equal(studioSaved.published.title, "A little adventure outside");
+  await page
+    .getByRole("button", { name: "Review publication", exact: true })
+    .click();
+
   await page.setViewportSize({ width: 1280, height: 1000 });
   if (process.env.PQ_ADMIN_EVIDENCE)
     await page.screenshot({
       path: resolve(
         process.env.PQ_ADMIN_EVIDENCE,
-        "system-quest-studio-desktop.png",
+        "system-quest-publication-desktop.png",
       ),
       fullPage: true,
     });
@@ -306,13 +371,33 @@ try {
     await page.screenshot({
       path: resolve(
         process.env.PQ_ADMIN_EVIDENCE,
-        "system-quest-studio-large-text.png",
+        "system-quest-publication-large-text.png",
       ),
       fullPage: true,
     });
+  await page
+    .getByRole("button", { name: "Publish reviewed draft", exact: true })
+    .click();
+  await page
+    .getByText("Draft 2 is now published to players.", { exact: true })
+    .waitFor();
+  await page
+    .getByRole("button", { name: "Review withdrawal", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Withdraw from discovery", exact: true })
+    .click();
+  await page
+    .getByText(
+      "Withdrawn from discovery. Accepted quests and recurring series keep their existing terms.",
+      { exact: true },
+    )
+    .waitFor();
+  assert.equal(publicationWrites, 3);
+  assert.equal(studioSaved.published, null);
   assert.deepEqual(errors, []);
   console.log(
-    "Admin Chromium checks passed: review/cancel, access changes, stale edit/reload, self protection, literal rendering/search, logout/expiry clearing, 320px/large text.",
+    "Admin Chromium checks passed: review/cancel, access changes, stale edit/reload, self protection, literal rendering/search, logout/expiry clearing, draft authoring, review/cancel/publish/edit/republish/withdraw, 320px/large text.",
   );
 } finally {
   await browser?.close();
