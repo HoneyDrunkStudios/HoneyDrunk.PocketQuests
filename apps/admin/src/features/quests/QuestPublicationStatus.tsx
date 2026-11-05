@@ -1,5 +1,43 @@
 import type { AdminSystemQuest } from "../../api/admin-api";
 
+export function QuestPublicationReview({
+  published,
+  disabled,
+  onPublish,
+  onCancel,
+}: Readonly<{
+  published: boolean;
+  disabled: boolean;
+  onPublish: () => void;
+  onCancel: () => void;
+}>) {
+  return (
+    <section
+      className="publication-review"
+      aria-label="Confirm publication change"
+    >
+      <h3>
+        {published
+          ? "Publish this saved draft?"
+          : "Withdraw this quest from discovery?"}
+      </h3>
+      <p>
+        {published
+          ? "New acceptances will use the terms below. Existing accepted quests and recurring series retain their original terms."
+          : "Players will no longer find or newly accept this template. Their accepted quests, recurring series and rewards remain available."}
+      </p>
+      <div className="actions">
+        <button disabled={disabled} onClick={onPublish}>
+          {published ? "Publish reviewed draft" : "Withdraw from discovery"}
+        </button>
+        <button className="quiet" disabled={disabled} onClick={onCancel}>
+          Cancel publication review
+        </button>
+      </div>
+    </section>
+  );
+}
+
 export function QuestPublicationStatus({
   selected,
   dirty,
