@@ -15,6 +15,8 @@ namespace PocketQuests.SchemaTests;
 /// <param name="fixture">Disposable deployed database.</param>
 public sealed class SystemQuestRuntimeRoleTests(SchemaFixture fixture) : IClassFixture<SchemaFixture>
 {
+    private static readonly int[] HistoryRevisionNumbers = [2, 1];
+
     /// <summary>Draft creation/editing succeeds, immutable content stays protected and both authors and other accounts can be erased.</summary>
     /// <returns>Completion after real services operate under restricted database users.</returns>
     [Fact]
@@ -49,6 +51,9 @@ public sealed class SystemQuestRuntimeRoleTests(SchemaFixture fixture) : IClassF
                 Assert.Equal(2, edit.DraftNumber);
                 var live = await studio.Publish(new(id, edit.Version, edit.DraftSystemQuestRevisionId, true), default);
                 Assert.Equal(edit.DraftSystemQuestRevisionId, live.PublishedSystemQuestRevisionId);
+                var history = await studio.History(new(id), default);
+                Assert.Equal(HistoryRevisionNumbers, history.Revisions.Select(row => row.Number));
+                Assert.Equal(draft.DraftSystemQuestRevisionId, history.Revisions[1].Id);
                 await Assert.ThrowsAsync<SqlException>(() => db.Database.ExecuteSqlRawAsync("UPDATE pocketquests.SystemQuestRevision SET SnapshotJson=N'{{}}';"));
                 await Assert.ThrowsAsync<SqlException>(() => db.Database.ExecuteSqlRawAsync("DELETE FROM pocketquests.SystemQuestRevision;"));
                 await db.Database.ExecuteSqlRawAsync("REVERT; EXECUTE AS USER='pq_studio_erasure';");

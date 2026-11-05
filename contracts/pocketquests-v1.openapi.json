@@ -894,6 +894,85 @@
         ]
       }
     },
+    "/api/admin/quests/history": {
+      "post": {
+        "tags": [
+          "PocketQuests.Admin"
+        ],
+        "description": "Only the explicitly configured canonical Identity operator account is permitted.",
+        "operationId": "ReadSystemQuestHistory",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReadSystemQuestHistoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemQuestHistory"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "IdentityBearer": []
+          },
+          {
+            "AdminSession": [],
+            "AdminCsrf": []
+          }
+        ]
+      }
+    },
     "/api/admin/quests/preview": {
       "post": {
         "tags": [
@@ -1371,6 +1450,33 @@
           }
         },
         "description": "Saved studio draft and separate published terms, with an optimistic head version."
+      },
+      "AdminSystemQuestRevision": {
+        "required": [
+          "id",
+          "number",
+          "createdAt",
+          "quest"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "quest": {
+            "$ref": "#/components/schemas/Quest"
+          }
+        },
+        "description": "One retained content revision, without operator account identifiers."
       },
       "AdminUser": {
         "required": [
@@ -2946,6 +3052,38 @@
         },
         "description": "The public RankRule JSON contract, independent of storage and domain behavior."
       },
+      "ReadSystemQuestHistoryRequest": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "before": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ],
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "description": "Reads immutable revisions before an exclusive version cursor; null starts at the newest revision."
+      },
       "RecordedActionTime": {
         "required": [
           "anchorId",
@@ -3413,6 +3551,46 @@
           }
         },
         "description": "The public SyncAnchor JSON contract, independent of storage and domain behavior."
+      },
+      "SystemQuestHistory": {
+        "required": [
+          "id",
+          "revisions",
+          "nextBefore"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "revisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminSystemQuestRevision"
+            }
+          },
+          "nextBefore": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ],
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "description": "A newest-first bounded page of immutable content; NextBefore is an exclusive version cursor."
       },
       "SystemQuestStudio": {
         "required": [

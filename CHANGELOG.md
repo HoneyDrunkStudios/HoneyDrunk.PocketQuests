@@ -1,5 +1,11 @@
 # Changelog
 
+## Quest revision history — November 4, 2026
+
+- Inspect saved quest revisions, including the current draft and published version, in bounded newest-first pages.
+- Restore older terms into an unsaved draft, keeping local discard protection and requiring validation and an explicit save to append a new revision.
+- Preserve publication, accepted terms and original immutable records; reject malformed history and clear it when the console session ends.
+
 ## System-quest publishing — November 4, 2026
 
 - Review and publish saved system-quest drafts to player discovery; keep newer edits private until explicitly republished.

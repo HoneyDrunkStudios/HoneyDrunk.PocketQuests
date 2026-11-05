@@ -6,6 +6,8 @@ import type {
   ApiOperations,
   AdminSystemQuest,
   SystemQuestStudio,
+  SystemQuestHistory,
+  AdminSystemQuestRevision,
   SaveSystemQuestRequest,
   PublishSystemQuestRequest,
   Quest,
@@ -15,6 +17,8 @@ import type {
 export type {
   AdminSystemQuest,
   SystemQuestStudio,
+  SystemQuestHistory,
+  AdminSystemQuestRevision,
   SaveSystemQuestRequest,
   PublishSystemQuestRequest,
   Quest,
@@ -32,6 +36,9 @@ function decodeResponse<K extends keyof ApiOperations>(
     );
   return value as ApiOperations[K]["response"];
 }
+export type QuestHistoryPage = Omit<SystemQuestHistory, "nextBefore"> & {
+  nextBefore: number | null;
+};
 export type Session = { userId: string; csrfToken: string };
 export type AccessChange = {
   userId: string;
@@ -121,6 +128,38 @@ export class AdminApi {
       {},
     );
     return decodeResponse("POST /api/admin/quests/list", value);
+  }
+
+  async questHistory(
+    id: string,
+    before: number | null,
+    signal: AbortSignal,
+  ): Promise<QuestHistoryPage> {
+    const page = decodeResponse(
+      "POST /api/admin/quests/history",
+      await request("quests/history", this.session.csrfToken, signal, {
+        id,
+        before,
+      }),
+    );
+    const code = "PQ-ADM-" + id.replaceAll("-", "");
+    const nextBefore =
+      page.nextBefore === null ? null : Number(page.nextBefore);
+    if (
+      page.id !== id ||
+      page.revisions.length > 20 ||
+      !validRevisionPage(page.revisions, code, before ?? 1001) ||
+      (nextBefore !== null &&
+        (!Number.isInteger(nextBefore) ||
+          nextBefore < 1 ||
+          nextBefore > 1000 ||
+          page.revisions.length !== 20 ||
+          nextBefore !== page.revisions.at(-1)?.number))
+    )
+      throw new Error(
+        "The revision history could not be verified. Reload it before choosing a version.",
+      );
+    return { ...page, nextBefore };
   }
 
   async previewQuest(
@@ -247,5 +286,25 @@ function validUser(value: unknown): value is AdminUser {
     typeof value.createdAt === "string" &&
     Number.isFinite(Date.parse(value.createdAt)) &&
     (value.reason === null || typeof value.reason === "string")
+  );
+}
+
+function validRevisionPage(
+  revisions: AdminSystemQuestRevision[],
+  code: string,
+  before: number,
+) {
+  if (
+    new Set(revisions.map((revision) => revision.id)).size !== revisions.length
+  )
+    return false;
+  return revisions.every(
+    (revision, index) =>
+      revision.quest.id === code &&
+      !revision.quest.isCustom &&
+      Number.isFinite(Date.parse(revision.createdAt)) &&
+      revision.number >= 1 &&
+      revision.number <= 1000 &&
+      revision.number < (index === 0 ? before : revisions[index - 1].number),
   );
 }

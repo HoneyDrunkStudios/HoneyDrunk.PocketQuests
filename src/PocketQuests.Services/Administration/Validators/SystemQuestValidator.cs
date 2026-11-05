@@ -12,6 +12,14 @@ internal static class SystemQuestValidator
     internal const int MaximumTemplates = QuestRules.MaximumSystemTemplates;
     internal const int MaximumRevisions = QuestRules.MaximumSystemRevisions;
 
+    internal const int HistoryPageSize = 20;
+
+    internal static void ValidateHistory(ReadSystemQuestHistoryRequest request)
+    {
+        if (request.Id == Guid.Empty || request.Before is < 1 or > MaximumRevisions + 1)
+            throw new QuestValidationException("Choose a saved system quest and a valid revision page.");
+    }
+
     internal static string Code(Guid id) => "PQ-ADM-" + id.ToString("N");
 
     internal static Quest Normalize(SaveSystemQuestRequest request)

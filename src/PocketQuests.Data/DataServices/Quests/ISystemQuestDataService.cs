@@ -11,6 +11,12 @@ public interface ISystemQuestDataService : IBaseDataService<SystemQuestEntity>
     /// <returns>Matching tracked entities.</returns>
     Task<IReadOnlyList<SystemQuestEntity>> GetCatalog(CancellationToken cancellationToken = default);
 
+    /// <summary>Checks existence without tracking a catalog head.</summary>
+    /// <param name="id">Stable system quest code.</param>
+    /// <param name="token">Cancellation.</param>
+    /// <returns>Whether the quest exists.</returns>
+    Task<bool> Exists(string id, CancellationToken token);
+
     /// <summary>Reads the tracked catalog head for a serialized edit.</summary>
     /// <param name="id">The stable system quest code.</param>
     /// <param name="token">Cancellation.</param>

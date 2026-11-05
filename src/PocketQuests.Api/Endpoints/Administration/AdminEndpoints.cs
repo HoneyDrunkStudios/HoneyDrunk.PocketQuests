@@ -24,6 +24,7 @@ public static class AdminEndpoints
         admin.MapGet("/session", Session).ExcludeFromDescription();
         admin.MapPost("/logout", (Delegate)Logout).AddEndpointFilter<AdminMutationFilter>().ExcludeFromDescription();
         admin.MapPost("/quests/list", Studio).AddEndpointFilter<AdminMutationFilter>().WithName("ReadSystemQuestStudio").Produces(401).Produces(403).ProducesProblem(429).ProducesProblem(500);
+        admin.MapPost("/quests/history", History).AddEndpointFilter<AdminMutationFilter>().WithName("ReadSystemQuestHistory").ProducesProblem(400).Produces(401).Produces(403).Produces(404).ProducesProblem(429).ProducesProblem(500);
         admin.MapPost("/quests/preview", Preview).AddEndpointFilter<AdminMutationFilter>().WithName("PreviewSystemQuest").ProducesProblem(400).Produces(401).Produces(403).ProducesProblem(429).ProducesProblem(500);
         admin.MapPost("/quests/draft", Draft).AddEndpointFilter<AdminMutationFilter>().WithName("SaveSystemQuestDraft").ProducesProblem(400).Produces(401).Produces(403).Produces(404).ProducesProblem(409).ProducesProblem(429).ProducesProblem(500);
         admin.MapPost("/quests/publish", Publish).AddEndpointFilter<AdminMutationFilter>().WithName("PublishSystemQuest").ProducesProblem(400).Produces(401).Produces(403).Produces(404).ProducesProblem(409).ProducesProblem(429).ProducesProblem(500);
@@ -33,6 +34,8 @@ public static class AdminEndpoints
     }
 
     private static async Task<Ok<SystemQuestStudio>> Studio(IAdminSystemQuestService service, CancellationToken token) => TypedResults.Ok(await service.Read(token));
+
+    private static async Task<Ok<SystemQuestHistory>> History(ReadSystemQuestHistoryRequest request, IAdminSystemQuestService service, CancellationToken token) => TypedResults.Ok(await service.History(request, token));
 
     private static Ok<PocketQuests.Contracts.Models.Quests.Quest> Preview(SaveSystemQuestRequest request, IAdminSystemQuestService service) => TypedResults.Ok(service.Preview(request));
 
