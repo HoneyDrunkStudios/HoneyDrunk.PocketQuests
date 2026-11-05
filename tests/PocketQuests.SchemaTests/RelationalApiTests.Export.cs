@@ -61,7 +61,7 @@ public sealed partial class RelationalApiTests
         Assert.Equal("application/zip", csv.Content.Headers.ContentType!.MediaType);
         Assert.True(csv.Headers.CacheControl!.NoStore);
         using var archive = new ZipArchive(new MemoryStream(await csv.Content.ReadAsByteArrayAsync()), ZipArchiveMode.Read);
-        Assert.Equal(new[] { "snapshot.txt", "occurrences.csv", "completions.csv", "undo.csv", "ledger.csv" }, archive.Entries.Select(e => e.FullName));
+        Assert.Equal(new[] { "snapshot.txt", "discoveries.csv", "occurrences.csv", "completions.csv", "undo.csv", "ledger.csv" }, archive.Entries.Select(e => e.FullName));
         using var reader = new StreamReader(archive.GetEntry("completions.csv")!.Open());
         var rows = await reader.ReadToEndAsync();
         Assert.Contains("\"'=original \"\"quoted\"\", title\"", rows, StringComparison.Ordinal);

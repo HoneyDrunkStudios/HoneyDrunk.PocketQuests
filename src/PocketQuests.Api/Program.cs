@@ -62,4 +62,5 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
     app.MapOpenApi();
 app.MapDefaultEndpoints();
 app.MapProductEndpoints();
+PocketQuests.Api.Endpoints.Discoveries.DiscoveryEndpoints.MapDiscoveries(app);
 app.Run();

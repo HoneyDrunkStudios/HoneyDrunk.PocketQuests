@@ -1,5 +1,16 @@
 # Changelog
 
+## Traveler creation and daily adventures — November 2, 2026
+
+- Add a five-step first-run flow for character naming, full-body avatar creation, interests, starting skills and a first quest; retain existing accounts and XP.
+- Save versioned appearances through owned, replayable commands, including current reward-based clothing/accessory eligibility and compatibility with older receipts and caches.
+- Improve readable inputs, whole-card quest/path navigation, category-specific artwork, month-calendar planning, back controls and animated completion feedback.
+- Add a daily Home plan, small quest ideas, reward/wardrobe journal and a confirmed 7/30-day activity recap.
+- Add deliberate nearby-place searches and an account-owned saved-place journal with notes, visit status, accepted-quest links, export and erasure support. Visits grant no XP.
+- Add foreground-only Expo Location support; preserve manual search and cancellation when permission is denied or the screen closes.
+- Keep hair visible on Android and refresh atlas clip references when changing styles.
+- Keep the development backend on loopback with an optional alternate port. Native/provider acceptance and release dependency audit gates remain separate.
+
 ## Active and completed quest search — October 26, 2026
 
 - Search accepted quest titles, descriptions, completion goals and categories, including archived quests in completed history.

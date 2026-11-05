@@ -1,7 +1,8 @@
 import { Page } from "../../session/session-page";
+import { useMemo } from "react";
 import { Text, View } from "react-native";
-import { Redirect } from "expo-router";
-import { useAccountSnapshot } from "../../session/session";
+import { Link, Redirect } from "expo-router";
+import { useAccountSnapshot, useSessionStatus } from "../../session/session";
 import { Label, Card, colors, styles } from "../../shared/ui";
 import { JournalHeading } from "../../shared/journal-heading";
 import { ProgressRow, CategoryProgress } from "./character-tracks";
@@ -9,9 +10,17 @@ import { RankProgress } from "./rank-progress";
 import { CharacterPortrait } from "../profile/character-portrait";
 import { LevelProgress } from "./level-progress-view";
 import { CharacterSection } from "./character-section";
+import { TodayQuests } from "../quests/today-quests";
+import { activityRecap } from "./activity-recap";
+import { RewardSummary } from "./reward-summary";
 
 export function CharacterHome() {
   const { state, catalog } = useAccountSnapshot();
+  const { pending } = useSessionStatus();
+  const recap = useMemo(
+    () => (state ? activityRecap(state, 7) : null),
+    [state],
+  );
   if (!state)
     return (
       <Page header={<JournalHeading title="Your character" />}>
@@ -26,7 +35,7 @@ export function CharacterHome() {
     <Page
       header={
         <JournalHeading
-          title="Your character"
+          title={state.profile.characterName ?? "Your character"}
           description="A record of the things you choose to do."
         />
       }
@@ -43,7 +52,10 @@ export function CharacterHome() {
             alignItems: "center",
           }}
         >
-          <CharacterPortrait />
+          <CharacterPortrait
+            portraitId={state.profile.portraitId}
+            avatarCode={state.profile.avatarCode}
+          />
           <View
             style={{
               flexBasis: 140,
@@ -73,6 +85,38 @@ export function CharacterHome() {
           </View>
         </View>
       </Card>
+      <Link
+        href="/character-setup"
+        accessibilityLabel={
+          state.profile.characterName
+            ? "Edit your character"
+            : "Create your character"
+        }
+        style={[
+          styles.text,
+          { color: colors.gold, paddingVertical: 12, minHeight: 48 },
+        ]}
+      >
+        {state.profile.characterName
+          ? "Edit your character"
+          : "Create your character →"}
+      </Link>
+      <Link
+        href="/avatar"
+        style={[
+          styles.text,
+          { color: colors.gold, paddingVertical: 12, minHeight: 48 },
+        ]}
+      >
+        Customize your traveler
+      </Link>
+      <TodayQuests
+        state={state}
+        catalog={catalog}
+        completedToday={recap?.days.at(-1)?.count ?? 0}
+        pending={pending}
+      />
+      <RewardSummary />
       <RankProgress
         compact
         rank={state.rank}

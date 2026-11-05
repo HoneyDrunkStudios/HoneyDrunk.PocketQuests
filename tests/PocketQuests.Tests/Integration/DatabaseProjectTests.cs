@@ -26,7 +26,8 @@ public sealed partial class SqlApiTests
         Assert.Equal(1, await db.Read.Set<CommandReceiptEntity>().CountAsync());
         var tables = await db.Database.SqlQueryRaw<string>("SELECT SCHEMA_NAME(schema_id)+'.'+name AS Value FROM sys.tables WHERE is_ms_shipped=0").ToListAsync();
         Assert.Equal(new[] { "dbo.AuditRecords", "outbox.OutboxMessages" }, tables.Where(t => !t.StartsWith("pocketquests.", StringComparison.Ordinal)).Order().ToArray());
-        Assert.Equal(33, tables.Count(t => t.StartsWith("pocketquests.", StringComparison.Ordinal)));
+        Assert.Equal(34, tables.Count(t => t.StartsWith("pocketquests.", StringComparison.Ordinal)));
+        Assert.Contains("pocketquests.SavedPlace", tables);
         Assert.Equal(System.Text.Json.JsonSerializer.Serialize(original), System.Text.Json.JsonSerializer.Serialize(await ExecuteAt(identity, command, now.AddHours(1))));
     }
 }

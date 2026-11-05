@@ -30,6 +30,12 @@ public static class QuestActions
     /// <summary>The interests command.</summary>
     public const string Interests = "interests";
 
+    /// <summary>The character name and bundled portrait selection command.</summary>
+    public const string SaveCharacter = "save-character";
+
+    /// <summary>Saves a validated full-body traveler appearance.</summary>
+    public const string SaveAvatar = "save-avatar";
+
     /// <summary>The finish-onboarding command.</summary>
     public const string FinishOnboarding = "finish-onboarding";
 

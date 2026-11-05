@@ -83,6 +83,8 @@ Module._load = function (name, ...rest) {
   if (name === "../shared/ui")
     return {
       Label: container,
+      Input: (props) =>
+        React.createElement(require("react-native").TextInput, props),
       styles: {},
       Button: ({ title, onPress, disabled }) =>
         React.createElement("button", { onClick: onPress, disabled }, title),

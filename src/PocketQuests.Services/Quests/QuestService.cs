@@ -171,9 +171,11 @@ public sealed class QuestService : IQuestService
             return;
         if (receipt.AccountId != account.Id)
             throw new QuestConflictException("Operation ID already belongs to another account.");
-        if (receipt.ApiVersion != 1 || receipt.DigestVersion != 1 || receipt.OutcomeVersion != 2)
+        if (receipt.ApiVersion != 1 || receipt.DigestVersion is not (1 or 2 or 3) || receipt.OutcomeVersion != 2)
             throw new NotSupportedException("The stored receipt version requires its original replay implementation.");
-        if (!receipt.PayloadDigest.AsSpan().SequenceEqual(digest) || receipt.CommandType != command.Action)
+        var legacyAvatar = receipt.DigestVersion == 2 && command.Action == QuestActions.SaveAvatar;
+        var receiptDigest = legacyAvatar ? CommandDigest.ComputeLegacyAvatar(command) : digest;
+        if ((!legacyAvatar && receipt.DigestVersion != CommandDigest.Version(command)) || !receipt.PayloadDigest.AsSpan().SequenceEqual(receiptDigest) || receipt.CommandType != command.Action)
             throw new QuestConflictException("Operation ID already belongs to a different payload.");
     }
 

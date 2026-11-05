@@ -51,6 +51,7 @@ Module._load = function (name, ...rest) {
           children,
         ),
       useLocalSearchParams: () => ({ id: "o" }),
+      useRouter: () => ({ setParams: () => {} }),
       useFocusEffect: () => {},
     };
   if (name === "react-native-safe-area-context")
@@ -146,8 +147,7 @@ test("large history initially mounts a bounded SectionList window with accessibl
   assert.match(html, /Unscheduled history/);
   assert.match(html, /History item 0/);
   assert.doesNotMatch(html, /History item 999/);
-  const detailLinks =
-    html.match(/aria-label="View quest &amp; rewards:/g) ?? [];
+  const detailLinks = html.match(/aria-label="Quest details:/g) ?? [];
   assert.ok(detailLinks.length > 0 && detailLinks.length <= 20);
 });
 
@@ -249,9 +249,14 @@ test("timing-unverified actions are visible without promising reconnect will con
   unverified = [];
 });
 
-test("Home exposes compact character sections with an accessible portrait and no Today quest actions", () => {
+test("Home exposes compact character sections, a daily plan and no direct quest writes", () => {
   state = {
-    profile: { onboardingComplete: true },
+    profile: { onboardingComplete: true, interests: [] },
+    today: "2026-11-02",
+    zone: "UTC",
+    occurrences: [],
+    definitions: [],
+    ledger: [],
     entitlements: [],
     overallXp: 100,
     overallLevel: 2,
@@ -286,6 +291,7 @@ test("Home exposes compact character sections with an accessible portrait and no
   assert.match(html, /role="img"/);
   assert.match(html, /role="heading"/);
   assert.match(html, /Level 2/);
+  assert.match(html, /Your day/);
   for (const name of [
     "Categories, 10",
     "Attributes, 8",
@@ -301,7 +307,7 @@ test("Home exposes compact character sections with an accessible portrait and no
       item: state.categories[0],
       streak: state.streaks[0],
     });
-  assert.match(category(), /Category 0: 1 day in this streak\. Done today\./);
+  assert.match(category(), /1-day streak\. Done today\./);
   state.streaks[0] = {
     categoryId: "c0",
     days: 20,
@@ -309,10 +315,7 @@ test("Home exposes compact character sections with an accessible portrait and no
     rate: 19,
   };
   const ongoing = category();
-  assert.match(
-    ongoing,
-    /Category 0: 20 days in this streak\. Complete today to continue\./,
-  );
+  assert.match(ongoing, /20-day streak\. Complete today to continue\./);
   assert.notEqual(html, ongoing);
   state.streaks[0] = {
     categoryId: "c0",
@@ -320,10 +323,7 @@ test("Home exposes compact character sections with an accessible portrait and no
     qualifiedToday: false,
     rate: 0,
   };
-  assert.match(
-    category(),
-    /Category 0: 0 days in this streak\. Complete a quest to start a streak\./,
-  );
+  assert.match(category(), /Complete a quest to start a streak\./);
 });
 test("quest sections expose selected tab semantics and onboarding remains reachable", () => {
   state = { profile: { onboardingComplete: true }, occurrences: [] };

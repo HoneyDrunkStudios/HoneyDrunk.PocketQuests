@@ -1,37 +1,30 @@
-import { Image, View } from "react-native";
+import { Image } from "react-native";
 import { journalArt } from "../../shared/journal-art";
 
-/** Bundled decorative scenery stays behind live labels, statuses and controls. */
+const artwork: Record<string, number> = {
+  c01: require("../../../assets/journal/character/fitness.jpg"),
+  c02: require("../../../assets/journal/character/learning.jpg"),
+  c03: require("../../../assets/journal/character/creativity.jpg"),
+  c04: require("../../../assets/journal/character/work.jpg"),
+  c05: require("../../../assets/journal/character/relationships.jpg"),
+  c06: require("../../../assets/journal/character/home.jpg"),
+  c07: require("../../../assets/journal/character/wellbeing.jpg"),
+  c08: require("../../../assets/journal/character/wellbeing.jpg"),
+  c09: require("../../../assets/journal/character/finances.jpg"),
+  c10: require("../../../assets/journal/character/adventure.jpg"),
+};
+
 export function QuestCardArtwork({
-  creative,
-}: Readonly<{ creative: boolean }>) {
+  categoryId,
+}: Readonly<{ categoryId: string }>) {
   return (
-    <View
-      pointerEvents="none"
-      style={{
-        position: "absolute",
-        top: 0,
-        bottom: 0,
-        left: 0,
-        right: 0,
-        overflow: "hidden",
-        borderRadius: 14,
-      }}
-    >
-      <Image
-        testID="journal-quest-artwork"
-        source={creative ? journalArt.sketchScene : journalArt.workScene}
-        accessible={false}
-        aria-hidden
-        resizeMode="cover"
-        style={{
-          position: "absolute",
-          top: -30,
-          right: 0,
-          width: "140%",
-          aspectRatio: 2,
-        }}
-      />
-    </View>
+    <Image
+      testID="journal-quest-artwork"
+      source={artwork[categoryId] ?? journalArt.compass}
+      accessible={false}
+      aria-hidden
+      resizeMode="contain"
+      style={{ width: 88, height: 88, borderRadius: 12, flexShrink: 0 }}
+    />
   );
 }

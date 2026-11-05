@@ -52,6 +52,22 @@ export function CharacterSection({
             {description}
           </Text>
         </View>
+        <View
+          style={{
+            minWidth: 58,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          <Text style={[styles.text, { color: path.color }]}>{count}</Text>
+          <Ionicons
+            name={expanded ? "chevron-down" : "chevron-forward"}
+            size={18}
+            color={colors.muted}
+            accessible={false}
+          />
+        </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${title}, ${count}`}
@@ -63,8 +79,9 @@ export function CharacterSection({
           onBlur={() => setFocused(false)}
           style={({ pressed }) => [
             {
+              position: "absolute",
+              inset: 0,
               minHeight: 48,
-              minWidth: 58,
               borderRadius: 10,
               flexDirection: "row",
               alignItems: "center",
@@ -74,15 +91,7 @@ export function CharacterSection({
             },
             focusAppearance(pocketQuestsTheme, focused),
           ]}
-        >
-          <Text style={[styles.text, { color: path.color }]}>{count}</Text>
-          <Ionicons
-            name={expanded ? "chevron-down" : "chevron-forward"}
-            size={18}
-            color={colors.muted}
-            accessible={false}
-          />
-        </Pressable>
+        ></Pressable>
       </View>
       {expanded && (
         <View style={{ gap: 4, padding: 16 }}>

@@ -3,6 +3,9 @@ namespace PocketQuests.Data.Entities.Quests;
 /// <summary>One row is one immutable, typed successful action input and its replay clocks, never a serialized command or account snapshot. Classification: Restricted. History: immutable. Erase with its account; no age cutoff on replay history.</summary>
 public sealed class QuestCommandHistoryEntity
 {
+    /// <summary>Gets or sets original validated avatar appearance for save-avatar; null for other commands. Immutable private account history, erased with its owner.</summary>
+    public string? AvatarCode { get; set; }
+
     /// <summary>Gets or sets stable transition UUID, equal to the operation UUID for a client command.</summary>
     public Guid Id { get; set; }
 
@@ -116,4 +119,10 @@ public sealed class QuestCommandHistoryEntity
 
     /// <summary>Gets or sets maximum due-delivery cursor work performed by the action itself, such as a zone change or series creation; retained independently of the pre-action budget for exact original-response replay.</summary>
     public int ActionReconciliationLimit { get; set; }
+
+    /// <summary>Gets or sets the player-chosen character name; null preserves an unconfigured existing account.</summary>
+    public string? CharacterName { get; set; }
+
+    /// <summary>Gets or sets one of the bundled portrait codes; null means no character selection.</summary>
+    public string? PortraitId { get; set; }
 }

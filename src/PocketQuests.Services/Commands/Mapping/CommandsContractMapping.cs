@@ -44,7 +44,10 @@ public static class CommandsContractMapping
         value.NewZone,
         value.ExpectedZone,
         value.ConfirmZoneChange,
-        value.ExpiryWarnings);
+        value.ExpiryWarnings,
+        value.CharacterName,
+        value.PortraitId,
+        value.AvatarCode);
 
     /// <summary>Maps QuestCommand explicitly without changing its JSON values.</summary>
     /// <param name="value">The source value.</param>
@@ -76,5 +79,8 @@ public static class CommandsContractMapping
         value.NewZone,
         value.ExpectedZone,
         value.ConfirmZoneChange,
-        value.ExpiryWarnings);
+        value.ExpiryWarnings,
+        value.CharacterName,
+        value.PortraitId,
+        value.AvatarCode);
 }

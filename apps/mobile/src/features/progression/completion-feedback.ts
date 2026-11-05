@@ -1,10 +1,18 @@
 import type { Balance, Command, State } from "../../shared/contracts";
+import { rewardCosmetics } from "../profile/avatar-look";
 
 export type CompletionFeedback = {
   occurrenceId: string;
   completionId: string;
   title: string;
-  rewards: { track: string; trackId: string; name: string; xp: number }[];
+  rewards: {
+    track: string;
+    trackId: string;
+    name: string;
+    xp: number;
+    totalXp?: number;
+    level?: number;
+  }[];
   levelUps: {
     track: string;
     trackId: string;
@@ -62,7 +70,15 @@ export function completionFeedback(
       e.track === "Overall"
         ? "Overall"
         : (groups[e.track]?.find((b) => b.id === e.trackId)?.name ?? e.trackId);
-    return { track: e.track, trackId: e.trackId, name, xp: e.amount };
+    const balance = groups[e.track]?.find((b) => b.id === e.trackId);
+    return {
+      track: e.track,
+      trackId: e.trackId,
+      name,
+      xp: e.amount,
+      totalXp: e.track === "Overall" ? after.overallXp : balance?.xp,
+      level: e.track === "Overall" ? after.overallLevel : balance?.level,
+    };
   });
   return {
     occurrenceId: item.occurrence.id,
@@ -71,7 +87,8 @@ export function completionFeedback(
     rewards,
     levelUps: outcome?.levelUps ?? [],
     rankUp: outcome?.rankUp ?? null,
-    unlocks: outcome?.unlocks.map((e) => e.name) ?? [],
+    unlocks:
+      outcome?.unlocks.flatMap((e) => [e.name, ...rewardCosmetics(e.id)]) ?? [],
   };
 }
 

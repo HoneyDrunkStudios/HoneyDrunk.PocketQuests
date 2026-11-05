@@ -20,7 +20,12 @@ import type { Quest, Series, Definition } from "../../shared/contracts";
 export function AvailableQuests({
   initialDate = "",
   initialCreate = false,
-}: Readonly<{ initialDate?: string; initialCreate?: boolean }> = {}) {
+  initialCategoryId,
+}: Readonly<{
+  initialDate?: string;
+  initialCreate?: boolean;
+  initialCategoryId?: string;
+}> = {}) {
   const { catalog, state, command, busy, pending } = useSession();
   const [recurring, setRecurring] = useState<{
     quest: Quest;
@@ -29,9 +34,10 @@ export function AvailableQuests({
   const [editing, setEditing] = useState<Definition | "new" | null>(
     initialCreate ? "new" : null,
   );
-  const [filters, setFilters] = useState<DiscoveryFilters>(
-    defaultDiscoveryFilters,
-  );
+  const [filters, setFilters] = useState<DiscoveryFilters>({
+    ...defaultDiscoveryFilters,
+    categoryId: initialCategoryId ?? null,
+  });
   const [visibleLimit, setVisibleLimit] = useState(20);
   const indexedQuests = useMemo(
     () => indexDiscoveryQuests(availableQuests(catalog, state), catalog, state),
@@ -89,9 +95,8 @@ export function AvailableQuests({
         onPress={() => setEditing("new")}
       />
       <Label>
-        Start plans a quest for {initialDate || state?.today} in {state?.zone}.
-        Open quest details to change its date, leave it unscheduled or set
-        recurrence.
+        Start plans a quest for {initialDate || state?.today}. Open quest
+        details to change its date, leave it unscheduled or set recurrence.
       </Label>
       {visibleQuests.length === 0 && (
         <Label>

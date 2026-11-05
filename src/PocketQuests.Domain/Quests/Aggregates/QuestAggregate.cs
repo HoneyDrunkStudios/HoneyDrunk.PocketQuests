@@ -165,7 +165,8 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
             Definitions.ToImmutableArray(),
             Profile with {
                 BadgeId = entitlements.Any(e => e.Id == Profile.BadgeId && e.Earned) ? Profile.BadgeId : null,
-                FrameId = entitlements.Any(e => e.Id == Profile.FrameId && e.Earned) ? Profile.FrameId : null },
+                FrameId = entitlements.Any(e => e.Id == Profile.FrameId && e.Earned) ? Profile.FrameId : null,
+                AvatarCode = AvatarAppearance.Eligible(Profile.AvatarCode, entitlements) },
             Schedule,
             [.. penalties],
             [.. ledger],
@@ -178,6 +179,7 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
     private void ApplyCore(QuestCommand command, DateTimeOffset now)
     {
         Progression.Require(command.OperationId != Guid.Empty, "An operation ID is required.");
+        Progression.Require(command.AvatarCode is null || command.Action == QuestActions.SaveAvatar, "Avatar appearance belongs to the save-avatar command.");
         switch (command.Action)
         {
             case QuestActions.Accept: Accept(command, now); break;
@@ -189,6 +191,8 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
             case QuestActions.SaveSkill: SaveSkill(command); break;
             case QuestActions.ArchiveSkill: ArchiveSkill(command); break;
             case QuestActions.Interests: SetInterests(command); break;
+            case QuestActions.SaveAvatar: SaveAvatar(command, now); break;
+            case QuestActions.SaveCharacter: SaveCharacter(command); break;
             case QuestActions.FinishOnboarding: Profile = Profile with { OnboardingComplete = true }; break;
             case QuestActions.Plan: Plan(command, now); break;
             case QuestActions.Zone: ChangeZone(command, now); break;

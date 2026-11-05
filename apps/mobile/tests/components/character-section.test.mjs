@@ -166,7 +166,7 @@ test("open and reopened character groups use current completion, streak and Undo
       "true",
     );
     assert.match(view.element.textContent, /Level 2 · 10 XP/);
-    assert.match(view.element.textContent, /1 day in this streak. Done today/);
+    assert.match(view.element.textContent, /1-day streak. Done today/);
     await view.render([before]);
     assert.match(view.element.textContent, /Level 1 · 9 XP/);
     await view.click("Categories");

@@ -36,7 +36,10 @@ public static class ProfilesContractMapping
         value.CustomSkills?.Select(item => item.ToModel()).ToImmutableList(),
         value.AssessmentHistory?.Select(item => item.ToModel()).ToImmutableList(),
         value.ZoneHistory?.Select(item => item.ToModel()).ToImmutableList(),
-        value.ExpiryWarnings);
+        value.ExpiryWarnings,
+        value.CharacterName,
+        value.PortraitId,
+        value.AvatarCode);
 
     /// <summary>Maps SkillAssessment explicitly without changing its JSON values.</summary>
     /// <param name="value">The source value.</param>

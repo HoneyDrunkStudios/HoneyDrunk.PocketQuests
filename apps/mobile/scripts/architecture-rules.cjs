@@ -1,7 +1,12 @@
 const path = require("node:path");
 
-const httpOwners = new Set(["api/client.ts", "session/identity-client.ts"]);
+const httpOwners = new Set([
+  "api/client.ts",
+  "api/places-client.ts",
+  "session/identity-client.ts",
+]);
 const platformOwners = {
+  "expo-location": ["features/progression/map-location.ts"],
   "expo-secure-store": ["session/storage.ts", "session/offline-store.ts"],
   "expo-file-system": [
     "session/offline-store.ts",
@@ -25,10 +30,12 @@ const platformOwners = {
 // would introduce cycles between profile and quests and eagerly load adapters.
 const featureEntries = new Set([
   "features/profile/character-portrait",
+  "features/profile/avatar-look",
   "features/profile/profile-editor",
   "features/quests/quest-rules",
   "features/quests/commands/quest-actions",
   "features/quests/notifications",
+  "features/quests/today-quests",
 ]);
 const networkPackages = [
   "axios",
@@ -144,10 +151,7 @@ module.exports = {
           }
         }
         function checkImport(node, source) {
-          if (
-            source?.type !== "Literal" ||
-            typeof source.value !== "string"
-          ) {
+          if (source?.type !== "Literal" || typeof source.value !== "string") {
             context.report({ node, messageId: "dynamic" });
             return;
           }

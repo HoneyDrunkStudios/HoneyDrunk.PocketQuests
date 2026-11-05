@@ -17,9 +17,15 @@ import {
 import { QuestViewTabs } from "./quest-view-tabs";
 
 const boardViews = ["Available", "Active", "Completed"] as const;
-type BoardView = (typeof boardViews)[number];
+export type BoardView = (typeof boardViews)[number];
 
-export function QuestBoard() {
+export function QuestBoard({
+  initialView = "Available",
+  onViewChange,
+}: Readonly<{
+  initialView?: BoardView;
+  onViewChange?(view: BoardView): void;
+}> = {}) {
   const { state, catalog } = useAccountSnapshot();
   if (!state)
     return (
@@ -28,17 +34,32 @@ export function QuestBoard() {
       </Page>
     );
   if (!state.profile.onboardingComplete) return <Redirect href="/onboarding" />;
-  return <QuestBoardContent state={state} catalog={catalog} />;
+  return (
+    <QuestBoardContent
+      key={initialView}
+      state={state}
+      catalog={catalog}
+      initialView={initialView}
+      onViewChange={onViewChange}
+    />
+  );
 }
 
 function QuestBoardContent({
   state,
   catalog,
-}: Readonly<{ state: State; catalog: Catalog | null }>) {
+  initialView,
+  onViewChange,
+}: Readonly<{
+  state: State;
+  catalog: Catalog | null;
+  initialView: BoardView;
+  onViewChange?(view: BoardView): void;
+}>) {
   const [filters, setFilters] = useState<QuestSearchFilters>(
     defaultQuestSearchFilters,
   );
-  const [section, setSection] = useState<BoardView>("Available");
+  const [section, setSection] = useState<BoardView>(initialView);
   const [showPast, setShowPast] = useState(false);
   const plan = useMemo(
     () => activePlan(state.occurrences, state.today),
@@ -59,6 +80,7 @@ function QuestBoardContent({
     setSection(view);
     setFilters(defaultQuestSearchFilters);
     setShowPast(false);
+    onViewChange?.(view);
   };
   const items = state.occurrences.filter((o) => {
     if (section === "Completed") return o.status === "Completed";
@@ -156,8 +178,7 @@ function QuestBoardContent({
       {section === "Active" && (
         <>
           <Label style={{ fontSize: 14, lineHeight: 20 }}>
-            Your day in {state.zone}. Planned times come first, then acceptance
-            order. Unscheduled quests have no deadline.
+            Your plans for today. Unscheduled quests have no deadline.
           </Label>
           {plan.past.length > 0 && (
             <Button

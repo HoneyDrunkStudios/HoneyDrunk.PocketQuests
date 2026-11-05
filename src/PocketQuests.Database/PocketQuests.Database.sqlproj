@@ -62,6 +62,7 @@
     <Build Include="Tables\Quests\SystemQuest.sql" />
     <Build Include="Tables\Quests\QuestCommandHistory.sql" />
     <Build Include="Tables\Quests\QuestCommandInterest.sql" />
+    <Build Include="Tables\Discoveries\SavedPlace.sql" />
     <Build Include="Tables\Accounts\Account.sql" />
     <Build Include="Tables\Synchronization\CommandReceipt.sql" />
     <Build Include="Tables\Accounts\AccountInterest.sql" />

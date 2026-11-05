@@ -1,5 +1,6 @@
 using PocketQuests.Domain.Errors;
 using PocketQuests.Domain.Models.Quests;
+using PocketQuests.Domain.Models.Synchronization;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Security.Cryptography;
@@ -11,20 +12,47 @@ namespace PocketQuests.Domain.Commands;
 // Adding a field, changing normalization or supported wire meanings requires a new digest version.
 internal static class CommandDigest
 {
-    internal static byte[] Compute(QuestCommand command)
+    internal static short Version(QuestCommand command) => command.Action switch
     {
+        QuestActions.SaveAvatar => 3,
+        QuestActions.SaveCharacter => 2,
+        _ => 1,
+    };
+
+    internal static byte[] Compute(QuestCommand command) => ComputeCore(command, Version(command));
+
+    // The earlier avatar implementation issued v2 receipts with one avatar field.
+    // Character v2 receipts have two identity fields; their action disambiguates the tuple.
+    internal static byte[] ComputeLegacyAvatar(QuestCommand command)
+    {
+        if (command.Action != QuestActions.SaveAvatar)
+            throw new QuestValidationException("Only avatar commands have legacy avatar receipts.");
+        return ComputeCore(command, 2);
+    }
+
+    private static byte[] ComputeCore(QuestCommand command, short version)
+    {
+        if (command.Action != QuestActions.SaveCharacter && (command.CharacterName is not null || command.PortraitId is not null))
+            throw new QuestValidationException("Character fields require the save-character action.");
+        if (command.Action != QuestActions.SaveAvatar && command.AvatarCode is not null)
+            throw new QuestValidationException("Avatar appearance requires the save-avatar action.");
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream))
         {
             writer.WriteStartArray();
-            writer.WriteStringValue("pocketquests-command/api-1/digest-1");
+            writer.WriteStringValue(version switch
+            {
+                1 => "pocketquests-command/api-1/digest-1",
+                2 => "pocketquests-command/api-1/digest-2",
+                _ => "pocketquests-command/api-1/digest-3",
+            });
             Text(command.OperationId.ToString("D"));
             Text(command.Action);
             Text(command.OccurrenceId?.ToString("D"));
             Text(command.QuestId);
             Text(command.DueDate);
             Text(command.CompletionId?.ToString("D"));
-            Quest(command.Definition);
+            WriteQuest(writer, command.Definition);
             Number(command.ExpectedRevision);
             Text(command.SkillId);
             Number((int?)command.Experience);
@@ -49,25 +77,10 @@ internal static class CommandDigest
             Text(command.CategoryId);
             writer.WriteBooleanValue(command.ConfirmPenalty);
             Number(command.AcceptedLoss);
-            if (command.RecordedTime is { } proof)
-            {
-                if (!double.IsFinite(proof.ElapsedMilliseconds))
-                    throw new QuestValidationException("Offline elapsed time must be finite.");
-                writer.WriteStartArray();
-                Text(proof.AnchorId.ToString("D"));
-                Text(proof.BootId.ToString("D"));
-                writer.WriteNumberValue(proof.Ordinal);
-                writer.WriteNumberValue(proof.ElapsedMilliseconds);
-                Text(proof.DeviceUtc.ToString("O", CultureInfo.InvariantCulture));
-                writer.WriteEndArray();
-            }
-            else
-            {
-                writer.WriteNullValue();
-            }
+            WriteRecordedTime(writer, command.RecordedTime);
 
             Text(command.SkillName);
-            Quest(command.AcceptedQuest);
+            WriteQuest(writer, command.AcceptedQuest);
             Text(command.NewZone);
             Text(command.ExpectedZone);
             writer.WriteBooleanValue(command.ConfirmZoneChange);
@@ -75,55 +88,86 @@ internal static class CommandDigest
                 writer.WriteBooleanValue(warnings);
             else
                 writer.WriteNullValue();
+            if (command.Action == QuestActions.SaveCharacter)
+            {
+                Text(command.CharacterName);
+                Text(command.PortraitId);
+            }
+
+            if (command.Action == QuestActions.SaveAvatar)
+                Text(command.AvatarCode);
+
             writer.WriteEndArray();
 
             void Text(string? value) => writer.WriteStringValue(value);
-            void Number(int? value)
-            {
-                if (value is { } number)
-                    writer.WriteNumberValue(number);
-                else
-                    writer.WriteNullValue();
-            }
-
-            void Shares(ImmutableArray<Share> shares)
-            {
-                writer.WriteStartArray();
-                foreach (var share in shares)
-                {
-                    writer.WriteStartArray();
-                    Text(share.Id);
-                    writer.WriteNumberValue(share.BasisPoints);
-                    writer.WriteEndArray();
-                }
-
-                writer.WriteEndArray();
-            }
-
-            void Quest(Quest? quest)
-            {
-                if (quest is null)
-                {
-                    writer.WriteNullValue();
-                    return;
-                }
-
-                writer.WriteStartArray();
-                Text(quest.Id);
-                Text(quest.Title);
-                Text(quest.Criterion);
-                Text(quest.CategoryId);
-                Number((int)quest.Rank);
-                Number((int)quest.Effort);
-                Shares(quest.Attributes);
-                Shares(quest.Skills);
-                writer.WriteBooleanValue(quest.IsCustom);
-                Text(quest.Description);
-                Number(quest.PenaltyPercent);
-                writer.WriteEndArray();
-            }
+            void Number(int? value) => WriteNumber(writer, value);
         }
 
         return SHA256.HashData(stream.ToArray());
+    }
+
+    private static void WriteNumber(Utf8JsonWriter writer, int? value)
+    {
+        if (value is { } number)
+            writer.WriteNumberValue(number);
+        else
+            writer.WriteNullValue();
+    }
+
+    private static void WriteShares(Utf8JsonWriter writer, ImmutableArray<Share> shares)
+    {
+        writer.WriteStartArray();
+        foreach (var share in shares)
+        {
+            writer.WriteStartArray();
+            writer.WriteStringValue(share.Id);
+            writer.WriteNumberValue(share.BasisPoints);
+            writer.WriteEndArray();
+        }
+
+        writer.WriteEndArray();
+    }
+
+    private static void WriteQuest(Utf8JsonWriter writer, Quest? quest)
+    {
+        if (quest is null)
+        {
+            writer.WriteNullValue();
+            return;
+        }
+
+        writer.WriteStartArray();
+        writer.WriteStringValue(quest.Id);
+        writer.WriteStringValue(quest.Title);
+        writer.WriteStringValue(quest.Criterion);
+        writer.WriteStringValue(quest.CategoryId);
+        WriteNumber(writer, (int)quest.Rank);
+        WriteNumber(writer, (int)quest.Effort);
+        WriteShares(writer, quest.Attributes);
+        WriteShares(writer, quest.Skills);
+        writer.WriteBooleanValue(quest.IsCustom);
+        writer.WriteStringValue(quest.Description);
+        WriteNumber(writer, quest.PenaltyPercent);
+        writer.WriteEndArray();
+    }
+
+    private static void WriteRecordedTime(Utf8JsonWriter writer, RecordedActionTime? recordedTime)
+    {
+        if (recordedTime is { } proof)
+        {
+            if (!double.IsFinite(proof.ElapsedMilliseconds))
+                throw new QuestValidationException("Offline elapsed time must be finite.");
+            writer.WriteStartArray();
+            writer.WriteStringValue(proof.AnchorId.ToString("D"));
+            writer.WriteStringValue(proof.BootId.ToString("D"));
+            writer.WriteNumberValue(proof.Ordinal);
+            writer.WriteNumberValue(proof.ElapsedMilliseconds);
+            writer.WriteStringValue(proof.DeviceUtc.ToString("O", CultureInfo.InvariantCulture));
+            writer.WriteEndArray();
+        }
+        else
+        {
+            writer.WriteNullValue();
+        }
     }
 }

@@ -1,0 +1,24 @@
+{
+  "source": "exec-49183f27-fade-42a5-bf9e-5adcd1a0d1bf.png",
+  "mode": "Built-in image_gen",
+  "layout": "4x4 atlas; row-major cell extraction and density export only",
+  "names": [
+    "fitness",
+    "learning",
+    "creativity",
+    "work",
+    "relationships",
+    "home",
+    "wellbeing",
+    "nature",
+    "finances",
+    "adventure",
+    "portrait-1",
+    "portrait-2",
+    "portrait-3",
+    "portrait-4",
+    "portrait-5",
+    "portrait-6"
+  ],
+  "prompt_record": "See outputs/illustration-prompt.txt in the walkthrough delivery"
+}

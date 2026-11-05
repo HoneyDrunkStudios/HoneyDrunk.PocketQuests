@@ -708,6 +708,18 @@
         },
         "expiryWarnings": {
           "type": "boolean"
+        },
+        "characterName": {
+          "type": "string",
+          "nullable": true
+        },
+        "portraitId": {
+          "type": "string",
+          "nullable": true
+        },
+        "avatarCode": {
+          "type": "string",
+          "nullable": true
         }
       },
       "description": "The public PlayerProfile JSON contract, independent of storage and domain behavior."
@@ -1027,6 +1039,18 @@
         "expiryWarnings": {
           "type": "boolean",
           "nullable": true
+        },
+        "characterName": {
+          "type": "string",
+          "nullable": true
+        },
+        "portraitId": {
+          "type": "string",
+          "nullable": true
+        },
+        "avatarCode": {
+          "type": "string",
+          "nullable": true
         }
       },
       "description": "The public QuestCommand JSON contract, independent of storage and domain behavior."
@@ -1062,7 +1086,8 @@
         "definitionRevisions",
         "completions",
         "undos",
-        "notice"
+        "notice",
+        "savedPlaces"
       ],
       "type": "object",
       "properties": {
@@ -1105,6 +1130,12 @@
         },
         "notice": {
           "type": "string"
+        },
+        "savedPlaces": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/SavedPlace"
+          }
         }
       },
       "description": "The public QuestExport JSON contract, independent of storage and domain behavior."
@@ -1502,6 +1533,196 @@
       },
       "description": "The public RecordedActionTime JSON contract, independent of storage and domain behavior."
     },
+    "RemovalResult": {
+      "required": [
+        "removed"
+      ],
+      "type": "object",
+      "properties": {
+        "removed": {
+          "type": "boolean"
+        }
+      },
+      "description": "Confirmation that a private saved place is absent."
+    },
+    "RemovePlaceRequest": {
+      "required": [
+        "id",
+        "expectedRevision"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "expectedRevision": {
+          "pattern": "^-?(?:0|[1-9]\\d*)$",
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "format": "int32"
+        }
+      },
+      "description": "Removes only the observed revision of an account-owned saved place."
+    },
+    "SavedPlace": {
+      "required": [
+        "id",
+        "placeKey",
+        "name",
+        "kind",
+        "categoryId",
+        "latitude",
+        "longitude",
+        "notes",
+        "visitedAt",
+        "questOccurrenceId",
+        "revision",
+        "createdAt",
+        "modifiedAt"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "placeKey": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "categoryId": {
+          "type": "string"
+        },
+        "latitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "visitedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "questOccurrenceId": {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        },
+        "revision": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "modifiedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "A private saved place and self-reported exploration status; no visit proof or reward."
+    },
+    "SavePlaceRequest": {
+      "required": [
+        "id",
+        "placeKey",
+        "name",
+        "kind",
+        "categoryId",
+        "latitude",
+        "longitude",
+        "notes",
+        "visited",
+        "questOccurrenceId",
+        "expectedRevision"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "placeKey": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "categoryId": {
+          "type": "string"
+        },
+        "latitude": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "format": "double"
+        },
+        "longitude": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "format": "double"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "visited": {
+          "type": "boolean"
+        },
+        "questOccurrenceId": {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        },
+        "expectedRevision": {
+          "pattern": "^-?(?:0|[1-9]\\d*)$",
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "format": "int32"
+        }
+      },
+      "description": "Explicit online discovery edit with a required optimistic revision; zero creates a new record."
+    },
     "ScheduleState": {
       "required": [
         "series",
@@ -1791,6 +2012,18 @@
     },
     "GET /api/planning/zone": {
       "$ref": "#/components/schemas/ZonePreview"
+    },
+    "GET /api/discoveries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/SavedPlace"
+      }
+    },
+    "POST /api/discoveries/save": {
+      "$ref": "#/components/schemas/SavedPlace"
+    },
+    "POST /api/discoveries/remove": {
+      "$ref": "#/components/schemas/RemovalResult"
     }
   }
 }

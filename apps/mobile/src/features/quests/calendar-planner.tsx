@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { Text, TextInput, View } from "react-native";
+import { Text, View } from "react-native";
 import { useAccountSnapshot } from "../../session/session";
 import { Page } from "../../session/session-page";
-import { Button, Label, colors, styles } from "../../shared/ui";
+import { Button, Input, Label, colors, styles } from "../../shared/ui";
+import { MonthCalendar } from "./month-calendar";
 import { AvailableQuests } from "./available-quests";
 import { QuestHistory } from "./quest-history";
 import { QuestViewTabs } from "./quest-view-tabs";
@@ -20,6 +21,7 @@ export function CalendarPlanner() {
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [week, setWeek] = useState(false);
+  const [month, setMonth] = useState("");
   const [planning, setPlanning] = useState<{
     date: string;
     create: boolean;
@@ -44,7 +46,7 @@ export function CalendarPlanner() {
           onPress={() => setPlanning(null)}
         />
         <Label>
-          Planning for {planning.date} · {state.zone}. Choose a quest, then
+          Planning for {calendarDateLabel(planning.date)}. Choose a quest, then
           review its date and terms before starting.
         </Label>
         <AvailableQuests
@@ -56,6 +58,7 @@ export function CalendarPlanner() {
     );
   const selectDate = (value: string) => {
     setDate(value);
+    setMonth(value);
     setDraft("");
     setError(null);
   };
@@ -101,6 +104,14 @@ export function CalendarPlanner() {
         selected={week ? "7 days" : "Day"}
         onSelect={(value) => setWeek(value === "7 days")}
       />
+      <MonthCalendar
+        month={month || selected}
+        selected={selected}
+        today={state.today}
+        occurrences={state.occurrences}
+        onMonth={setMonth}
+        onSelect={selectDate}
+      />
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         <Button
           title={week ? "Previous 7 days" : "Previous day"}
@@ -122,10 +133,9 @@ export function CalendarPlanner() {
       </View>
       <Label>
         {selected}
-        {week && plan.days.length ? ` – ${plan.days.at(-1)?.date}` : ""} ·{" "}
-        {state.zone}
+        {week && plan.days.length ? ` – ${plan.days.at(-1)?.date}` : ""}
       </Label>
-      <TextInput
+      <Input
         accessibilityLabel="Calendar date YYYY-MM-DD"
         placeholder={selected}
         value={draft}

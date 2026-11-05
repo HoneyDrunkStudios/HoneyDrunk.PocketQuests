@@ -49,8 +49,23 @@ export function JournalHeading({
           <Text style={[styles.subtitle, { fontSize: 23, flex: 1 }]}>
             Pocket Quests
           </Text>
+        </View>
+      </View>
+      <View
+        style={{
+          gap: 6,
+          marginTop: -24,
+          paddingHorizontal: 24,
+          paddingTop: compact ? 0 : 4,
+          paddingBottom: 0,
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <Text accessibilityRole="header" style={[styles.title, { flex: 1 }]}>
+            {title}
+          </Text>
           {showSettings && (
-            <Link href="/(tabs)/profile" asChild>
+            <Link href="/settings" asChild>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Settings and profile"
@@ -75,19 +90,6 @@ export function JournalHeading({
             </Link>
           )}
         </View>
-      </View>
-      <View
-        style={{
-          gap: 6,
-          marginTop: -24,
-          paddingHorizontal: 24,
-          paddingTop: compact ? 0 : 4,
-          paddingBottom: 0,
-        }}
-      >
-        <Text accessibilityRole="header" style={styles.title}>
-          {title}
-        </Text>
         {description && (
           <Text style={[styles.muted, { fontSize: 15 }]}>{description}</Text>
         )}

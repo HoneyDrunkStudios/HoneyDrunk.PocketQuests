@@ -25,6 +25,7 @@ public sealed partial class SchemaFixture : IAsyncLifetime
     /// <summary>Gets safe repeat-publication options.</summary>
     public static DacDeployOptions Options => new()
     {
+        CommandTimeout = 300,
         BlockOnPossibleDataLoss = true,
         DropObjectsNotInSource = false,
         ScriptDatabaseOptions = false,
@@ -54,9 +55,10 @@ public sealed partial class SchemaFixture : IAsyncLifetime
 
     /// <summary>Creates a DacFx connection for deployment and semantic schema comparison.</summary>
     /// <returns>The schema service.</returns>
-    public DacServices Services() => new(Connection);
+    public DacServices Services() => new(new SqlConnectionStringBuilder(Connection) { Pooling = false }.ConnectionString);
 
     /// <inheritdoc />
+    [SuppressMessage("Security", "CA2100:Review SQL queries for security vulnerabilities", Justification = "The database identifier is a locally generated GUID on an explicitly isolated instance, never request data.")]
     public async Task InitializeAsync()
     {
         var instance = Environment.GetEnvironmentVariable("POCKETQUESTS_SCHEMA_TEST_INSTANCE");
@@ -70,8 +72,18 @@ public sealed partial class SchemaFixture : IAsyncLifetime
         try
         {
             using var package = DacPackage.Load(Path.Combine(AppContext.BaseDirectory, "PocketQuests.Database.dacpac"));
-            Services().Deploy(package, database, upgradeExisting: false, options: Options);
+
+            // Close the model connection before DacFx inspects the empty target.
+            var master = new SqlConnectionStringBuilder(Connection) { InitialCatalog = "master", Pooling = false };
+            await using (var connection = new SqlConnection(master.ConnectionString))
+            {
+                await connection.OpenAsync();
+                await using var create = new SqlCommand($"CREATE DATABASE [{database}];", connection) { CommandTimeout = 60 };
+                await create.ExecuteNonQueryAsync();
+            }
+
             deployed = true;
+            Services().Deploy(package, database, upgradeExisting: true, options: Options);
             persistence = new(Connection);
         }
         finally

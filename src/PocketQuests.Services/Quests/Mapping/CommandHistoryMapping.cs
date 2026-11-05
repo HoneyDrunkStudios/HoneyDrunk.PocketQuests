@@ -16,7 +16,7 @@ internal static class CommandHistoryMapping
         AccountId = change.Account.Id,
         CommandType = change.Command.Action,
         ApiVersion = 1,
-        DigestVersion = 1,
+        DigestVersion = CommandDigest.Version(change.Command),
         PayloadDigest = digest,
         OutcomeVersion = 2,
         OutcomeJson = JsonSerializer.Serialize(new CompactOutcome(change.ProjectionAt, null)),
@@ -60,6 +60,9 @@ internal static class CommandHistoryMapping
         target.SystemSkillId = system;
         target.CustomSkillId = custom;
         target.SkillName = skillName;
+        target.CharacterName = action == QuestActions.SaveCharacter ? command.CharacterName : null;
+        target.PortraitId = action == QuestActions.SaveCharacter ? command.PortraitId : null;
+        target.AvatarCode = action == QuestActions.SaveAvatar ? command.AvatarCode : null;
         target.ExperienceCode = action == QuestActions.AssessSkill ? command.Experience!.Value.ToString() : null;
         target.DueOn = action is QuestActions.Accept or QuestActions.Plan or QuestActions.SaveSeries ? QuestValues.Date(command.DueDate) : null;
         target.PlannedTime = action is QuestActions.Accept or QuestActions.Plan or QuestActions.SaveSeries ? QuestValues.Time(command.PlannedTime) : null;

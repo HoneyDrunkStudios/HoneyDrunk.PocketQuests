@@ -123,6 +123,7 @@ export function AvailableQuestDetails({
       )}
       <Button
         title={`Start: ${quest.title}`}
+        loading={busy}
         disabled={
           busy ||
           pending ||

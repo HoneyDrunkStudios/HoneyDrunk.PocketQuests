@@ -162,7 +162,7 @@ async function mount(Component = QuestCard) {
   await view.render();
   return view;
 }
-test("compact journal exposes a unique detail link and heading without repeating criterion or promising earned XP", async () => {
+test("journal cards expose one detail link, a short summary and confirmed reward wording", async () => {
   reset();
   const view = await mount();
   try {
@@ -172,16 +172,16 @@ test("compact journal exposes a unique detail link and heading without repeating
     );
     assert.equal(
       view.element
-        .querySelector('a[aria-label="View quest & rewards: Practice"]')
+        .querySelector('a[aria-label="Quest details: Practice"]')
         .getAttribute("href"),
       "/quest/o",
     );
-    assert.match(view.element.textContent, /Health.*Active/);
+    assert.match(view.element.textContent, /Health[\s\S]*Active/);
     assert.match(view.element.textContent, /10 base XP · Rank F · Small/);
     assert.match(view.element.textContent, /Due today.*Planned 09:30/);
     assert.doesNotMatch(
       view.element.textContent,
-      /Finish one practice|Take a deliberate break|Complete:/,
+      /Take a deliberate break|Complete:/,
     );
     item.occurrence.dueDate = null;
     item.occurrence.plannedTime = null;
@@ -189,7 +189,7 @@ test("compact journal exposes a unique detail link and heading without repeating
     await view.render();
     assert.match(
       view.element.textContent,
-      /Completed.*10 base XP.*Unscheduled/,
+      /10 base XP[\s\S]*Completed[\s\S]*Unscheduled/,
     );
     assert.deepEqual(sent, []);
   } finally {

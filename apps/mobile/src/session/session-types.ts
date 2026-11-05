@@ -17,6 +17,13 @@ export type AccountStatus = {
   version: number;
 };
 export type SessionContext = {
+  readDiscoveries(): Promise<import("../api/generated").SavedPlace[]>;
+  saveDiscovery(
+    request: import("../api/generated").SavePlaceRequest,
+  ): Promise<import("../api/generated").SavedPlace>;
+  removeDiscovery(
+    request: import("../api/generated").RemovePlaceRequest,
+  ): Promise<import("../api/generated").RemovalResult>;
   inactiveAccount: AccountStatus | null;
   verifyOwner(token: string): Promise<void>;
   accountAction(

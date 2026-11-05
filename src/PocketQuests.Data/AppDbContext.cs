@@ -17,6 +17,9 @@ namespace PocketQuests.Data;
 /// <param name="options">SQL connection and EF options.</param>
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : BaseDbContext(options)
 {
+    /// <summary>Gets private saved places.</summary>
+    public DbSet<PocketQuests.Data.Entities.Discoveries.SavedPlaceEntity> SavedPlace => Set<PocketQuests.Data.Entities.Discoveries.SavedPlaceEntity>();
+
     /// <summary>Gets Category rows.</summary>
     public DbSet<CategoryEntity> Category => Set<CategoryEntity>();
 

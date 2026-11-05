@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { TextInput, View } from "react-native";
+import { View } from "react-native";
 import { developmentSignInEnabled } from "../config/client";
-import { Button, Label, styles } from "../shared/ui";
+import { Button, Input, Label, styles } from "../shared/ui";
 import { requestDevelopmentSession } from "./identity-client";
 import { useSession } from "./session";
 
@@ -44,7 +44,7 @@ export function DevelopmentSignIn() {
       <Label>
         Quest progress is saved to the development database on your computer.
       </Label>
-      <TextInput
+      <Input
         accessibilityLabel="Development pairing code"
         placeholder="6-digit pairing code"
         value={pairingCode}

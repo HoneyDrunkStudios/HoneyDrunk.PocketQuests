@@ -1,0 +1,9 @@
+# Activity recap
+
+Progress includes **Your recent adventures** with 7- and 30-day views ending on the account snapshot's `today`. It shows completed quests, days with a completion, overall XP from those completions and categories explored. The summary starts compact; **Explore activity** expands the day and category filters and linked completion list. Show more reveals five additional entries at a time.
+
+The recap is a read-only projection of existing account state. It issues no commands, makes no network requests and creates no storage or schema. Completion counts require a surviving Completed occurrence, no pending-completion/timing-verification flag, and a matching Overall ledger entry. XP comes from that ledger entry, never from the current quest catalog or a client reward calculation. Category bonuses, penalties and attribute/skill allocations are excluded. Completion snapshots retain the original title/category; legacy null snapshots fall back to the accepted occurrence.
+
+Undo removes the completion from the recap, including the local preview of a queued Undo. Pending completions do not increase totals. Pending and offline messages explain these limits. Offline views end on the saved snapshot date rather than inventing a fresh server clock. All displayed completion dates use the current account time zone; active days are a recap metric, not the game's category streak calculation, which can use historical zones and pauses.
+
+Regression coverage exercises time-zone boundaries, DST, leap dates, 7/30-day ranges, invalid clocks, immutable snapshots, server ledger amounts, pending/Undo behavior, account replacement, filters, pagination and links. Fixture visual captures cover narrow widths and enlarged text. Native screen-reader, touch and installed-device acceptance remain separate.

@@ -14,7 +14,11 @@ public sealed class AccountMapping : IEntityTypeConfiguration<AccountEntity>
     {
         entity.ToTable("Account", "pocketquests", table =>
         {
+            table.HasCheckConstraint("CK_Account_AvatarCode", "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]')");
             table.HasComment("One row is one personal Pocket Quests profile for a verified canonical Identity user. Classification: Restricted. History: mutable; Retain while the account exists, including its recovery interval; erase with the account. No arbitrary age-based pruning of replay source facts.");
+            table.HasCheckConstraint("CK_Account_CharacterName", "[CharacterName] IS NULL OR (LEN(LTRIM(RTRIM([CharacterName]))) BETWEEN 1 AND 40 AND DATALENGTH([CharacterName])<=80)");
+            table.HasCheckConstraint("CK_Account_PortraitId", "[PortraitId] IS NULL OR [PortraitId] IN ('portrait-1','portrait-2','portrait-3','portrait-4','portrait-5','portrait-6')");
+            table.HasCheckConstraint("CK_Account_CharacterPair", "([CharacterName] IS NULL AND [PortraitId] IS NULL) OR ([CharacterName] IS NOT NULL AND [PortraitId] IS NOT NULL)");
             table.HasCheckConstraint("CK_Account_SelectedBadgeKind", "[SelectedBadgeKind] IN ('Badge')");
             table.HasCheckConstraint("CK_Account_SelectedFrameKind", "[SelectedFrameKind] IN ('Frame')");
             table.HasCheckConstraint("CK_Account_IdentityUserId", "DATALENGTH([IdentityUserId])=30 AND LEFT([IdentityUserId],4)='usr_' AND SUBSTRING([IdentityUserId],5,26) NOT LIKE '%[^0123456789ABCDEFGHJKMNPQRSTVWXYZ]%' COLLATE Latin1_General_100_BIN2");
@@ -25,9 +29,12 @@ public sealed class AccountMapping : IEntityTypeConfiguration<AccountEntity>
             table.HasCheckConstraint("CK_Account_ModifiedAtUtc", "DATEPART(TZOFFSET,[ModifiedAt])=0");
             table.HasCheckConstraint("CK_Account_ModificationClock", "[ModifiedAt]>=[CreatedAt]");
         });
+        entity.Property(row => row.AvatarCode).HasComment("Versioned full-body appearance: v1 stores skin, hair color, hairstyle, outfit and accessory; v2 appends face and build with expanded bounded choices. Null means starter appearance. Private account preference, erased with account history.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(16).IsUnicode(false);
         entity.HasKey(row => row.Id).HasName("PK_Account").IsClustered();
         entity.HasIndex(row => row.IdentityUserId, "UQ_Account_IdentityUserId").IsUnique().HasFilter(null);
         entity.HasAlternateKey(row => new { row.Id, row.IdentityUserId }).HasName("UQ_Account_Id_IdentityUserId");
+        entity.Property(row => row.CharacterName).HasComment("Player-chosen character display name, 1 to 40 UTF-16 code units; null means the player has not chosen a character. Restricted account data; erase with the account.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(40);
+        entity.Property(row => row.PortraitId).HasComment("Bundled portrait code portrait-1 through portrait-6; null means the player has not chosen a character. No remote URL or upload; erase with the account.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(16).IsUnicode(false);
         entity.Property(row => row.Id).HasComment("Application-generated stable row UUID; never reused.").ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
         entity.Property(row => row.IdentityUserId).HasComment("Canonical never-recycled usr_ identifier returned by HoneyDrunk.Identity, not a provider subject or email.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(30).IsUnicode(false).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
         entity.Property(row => row.TimeZoneId).HasComment("Selected IANA timezone used for personal calendar calculations, not a UTC offset.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(100).IsUnicode(false);
