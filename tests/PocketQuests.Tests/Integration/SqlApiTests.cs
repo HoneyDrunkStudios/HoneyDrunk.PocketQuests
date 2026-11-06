@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Product HTTP regressions run against real SQL in both package and source Identity lanes.</summary>
+/// <content>Product HTTP regressions run against real SQL in both package and source Identity lanes.</content>
 public sealed partial class SqlApiTests
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };

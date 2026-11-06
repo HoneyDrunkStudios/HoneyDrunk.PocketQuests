@@ -21,7 +21,7 @@ using System.Text;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <content>Real Identity source host for cross-service authentication and lifecycle acceptance.</content>
+/// <summary>Real Identity source host for cross-service authentication and lifecycle acceptance.</summary>
 public sealed partial class SqlApiTests : IAsyncLifetime
 {
     private readonly string database = "PocketQuests_Tests_" + Guid.NewGuid().ToString("N");
