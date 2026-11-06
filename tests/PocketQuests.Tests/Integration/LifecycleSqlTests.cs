@@ -18,7 +18,7 @@ using System.Text.Json;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Cross-service lifecycle acceptance against isolated real Identity and product databases.</summary>
+/// <content>Cross-service lifecycle acceptance against isolated real Identity and product databases.</content>
 public sealed partial class SqlApiTests
 {
     /// <summary>Inactive access fails immediately, recovery freezes before delayed delivery, and verified erasure clears only its owner.</summary>
@@ -108,7 +108,7 @@ public sealed partial class SqlApiTests
         await Setup(fresh);
         Assert.Equal(0, (await Read(fresh)).OverallXp);
 
-        SqlAccountLifecycle Coordinator(IdentityDbContext db) => new(db, clock, host.External, Options.Create(new LifecycleOptions { DeliveryEnabled = true, Consumers = { ["pocketquests"] = "pocketquests-lifecycle" } }));
+        SqlAccountLifecycleDataService Coordinator(IdentityDbContext db) => new(db, clock, host.External, Options.Create(new LifecycleOptions { DeliveryEnabled = true, Consumers = { ["pocketquests"] = "pocketquests-lifecycle" } }));
     }
 
     /// <summary>Injected acknowledgment failure rolls back erasure; restore markers purge restored rows before access.</summary>

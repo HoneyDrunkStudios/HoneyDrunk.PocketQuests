@@ -19,6 +19,12 @@ using System.Collections.Immutable;
 namespace PocketQuests.Services.Discoveries;
 
 /// <summary>Persists private discoveries under the existing account lock, lifecycle policy and transaction.</summary>
+/// <param name="accounts">The scoped account command and lock data service.</param>
+/// <param name="places">The scoped saved-place data service.</param>
+/// <param name="audits">The scoped account audit-record data service.</param>
+/// <param name="quests">The quest service used to validate linked occurrences.</param>
+/// <param name="currentAccount">The current authenticated account accessor.</param>
+/// <param name="clock">The clock used for visit and audit timestamps.</param>
 public sealed class SavedPlaceService(IAccountDataService accounts, ISavedPlaceDataService places, IAccountAuditRecordDataService audits, QuestService quests, ICurrentAccount currentAccount, TimeProvider clock) : ISavedPlaceService
 {
     /// <inheritdoc />

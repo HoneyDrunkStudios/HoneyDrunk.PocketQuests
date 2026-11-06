@@ -8,7 +8,7 @@ using System.Net.Http.Json;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Private exports preserve revision history while isolating owners and neutralizing CSV formulas.</summary>
+/// <content>Private exports preserve revision history while isolating owners and neutralizing CSV formulas.</content>
 public sealed partial class SqlApiTests
 {
     /// <summary>Verifies authenticated JSON and CSV exports from the actual SQL account snapshot.</summary>

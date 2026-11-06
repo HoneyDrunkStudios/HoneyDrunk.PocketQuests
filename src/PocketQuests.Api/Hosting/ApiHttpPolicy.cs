@@ -41,8 +41,7 @@ public static class ApiHttpPolicy
                 options.KnownProxies.Add(IPAddress.Parse(value));
 
             // Empty trust lists must never mean trust every caller, including when the hosting env enables forwarding.
-            options.ForwardedHeaders = settings.KnownProxies.Count == 0 ? ForwardedHeaders.None
-                : ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            options.ForwardedHeaders = settings.KnownProxies.Count == 0 ? ForwardedHeaders.None : ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             options.ForwardLimit = 1;
             options.RequireHeaderSymmetry = true;
         });

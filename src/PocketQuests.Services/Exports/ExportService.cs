@@ -14,11 +14,12 @@ namespace PocketQuests.Services.Exports;
 
 /// <summary>Reads retained export sources under a repeatable-read transaction without account writebacks.</summary>
 /// <param name="data">Account transaction and selected source queries.</param>
+/// <param name="accountState">Scoped lifecycle and retained-state reads.</param>
 /// <param name="quests">Verified account access and current projection.</param>
 /// <param name="currentAccount">Authenticated identity.</param>
 /// <param name="clock">Host time.</param>
 /// <param name="places">Account-owned discovery queries.</param>
-public sealed class ExportService(IAccountDataService data, QuestService quests, ICurrentAccount currentAccount, TimeProvider clock, ISavedPlaceDataService places) : IExportService
+public sealed class ExportService(IAccountDataService data, IAccountStateDataService accountState, QuestService quests, ICurrentAccount currentAccount, TimeProvider clock, ISavedPlaceDataService places) : IExportService
 {
     /// <inheritdoc />
     public async Task<ExportResponse> Read(CancellationToken token = default) =>
@@ -32,13 +33,13 @@ public sealed class ExportService(IAccountDataService data, QuestService quests,
         {
             await quests.RequireAccess(identity, true, cancellationToken);
             var account = await quests.Account(identity, cancellationToken);
-            var rows = await data.ReadCurrentState(account.Id, cancellationToken);
+            var rows = await accountState.ReadCurrentState(account.Id, cancellationToken);
             var aggregate = QuestService.Current(account, rows);
             var savedPlaces = await places.GetByAccountId(account.Id, cancellationToken);
             var at = savedPlaces.Select(place => place.ModifiedAt).Append(QuestClock.Max(now, account.LastRecordedAt)).Max();
             if (aggregate.Reconcile(at, QuestService.ReconciliationLimit).HasMore)
                 throw new ReconciliationPendingException("Recurring deliveries must finish reconciliation before a complete export can be produced.");
-            var history = await data.ReadDefinitionHistory(account.Id, cancellationToken);
+            var history = await accountState.ReadDefinitionHistory(account.Id, cancellationToken);
             var terms = QuestTerms.Read(history.Terms);
             var definitions = history.Terms.DefinitionRevisions.OrderBy(row => row.QuestDefinitionId).ThenBy(row => row.Revision)
                 .Select(row => row.ToModel(terms[row.Id], history.ArchivedRevisionIds.Contains(row.Id)));

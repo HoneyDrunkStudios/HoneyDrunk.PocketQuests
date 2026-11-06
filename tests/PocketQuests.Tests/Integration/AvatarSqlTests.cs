@@ -8,7 +8,7 @@ using System.Net.Http.Json;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Avatar HTTP commands exercise actual persistence, receipts and reward reversal.</summary>
+/// <content>Avatar HTTP commands exercise actual persistence, receipts and reward reversal.</content>
 public sealed partial class SqlApiTests
 {
     /// <summary>Combines avatar versions, names, reward reversal and replay in one disposable database.</summary>

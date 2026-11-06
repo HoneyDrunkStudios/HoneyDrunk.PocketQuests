@@ -17,11 +17,17 @@ namespace PocketQuests.Services.Administration;
 /// <summary>Audits product access changes without changing Identity, progress or quest history.</summary>
 /// <param name="access">Configured operator authorization.</param>
 /// <param name="accounts">Account locks and transaction ownership.</param>
+/// <param name="accountState">Scoped lifecycle and retained-state reads.</param>
 /// <param name="restrictions">Current moderation records.</param>
 /// <param name="audits">Shared audit and account-erasure association.</param>
 /// <param name="clock">Trusted server clock.</param>
-public sealed class AdminUserService(AdminOperator access, IAccountDataService accounts,
-    IAccountAccessRestrictionDataService restrictions, IAccountAuditRecordDataService audits, TimeProvider clock) : IAdminUserService
+public sealed class AdminUserService(
+    AdminOperator access,
+    IAccountDataService accounts,
+    IAccountStateDataService accountState,
+    IAccountAccessRestrictionDataService restrictions,
+    IAccountAuditRecordDataService audits,
+    TimeProvider clock) : IAdminUserService
 {
     /// <inheritdoc />
     public async Task<AdminUserPage> Search(string? query, string? after, CancellationToken token)
@@ -47,7 +53,7 @@ public sealed class AdminUserService(AdminOperator access, IAccountDataService a
         {
             await accounts.AcquireCommandLock(request.UserId, ct);
             var account = await accounts.GetByIdentityUserId(request.UserId, ct) ?? throw new QuestNotFoundException();
-            if (await accounts.GetErasure(request.UserId, ct) is not null)
+            if (await accountState.GetErasure(request.UserId, ct) is not null)
                 throw new QuestNotFoundException();
             var restriction = await restrictions.GetForAccount(account.Id, ct);
             if ((restriction?.Revision ?? 0) != request.ExpectedRevision)

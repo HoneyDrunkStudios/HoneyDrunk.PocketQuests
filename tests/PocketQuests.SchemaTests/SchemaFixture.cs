@@ -12,7 +12,7 @@ using System.Text.RegularExpressions;
 
 namespace PocketQuests.SchemaTests;
 
-/// <summary>Uses only a caller-created, disposable SQL instance and a unique database.</summary>
+/// <content>Uses only a caller-created, disposable SQL instance and a unique database.</content>
 [SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "xUnit calls IAsyncLifetime.DisposeAsync, which awaits all owned scopes and the provider before database cleanup.")]
 public sealed partial class SchemaFixture : IAsyncLifetime
 {

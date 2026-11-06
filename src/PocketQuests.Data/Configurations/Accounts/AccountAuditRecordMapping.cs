@@ -10,19 +10,19 @@ namespace PocketQuests.Data.Configurations.Accounts;
 public sealed class AccountAuditRecordMapping : IEntityTypeConfiguration<AccountAuditRecordEntity>
 {
     /// <inheritdoc />
-    public void Configure(EntityTypeBuilder<AccountAuditRecordEntity> entity)
+    public void Configure(EntityTypeBuilder<AccountAuditRecordEntity> builder)
     {
-        entity.ToTable("AccountAuditRecord", "pocketquests", table =>
+        builder.ToTable("AccountAuditRecord", "pocketquests", table =>
         {
             table.HasComment("One row is one ownership association between a personal account and its canonical shared audit record. Classification: Restricted. History: event; Retain with the linked personal audit record. Delete association and owned audit record atomically on approved final erasure; no content duplicated.");
             table.HasCheckConstraint("CK_AccountAuditRecord_CreatedAtUtc", "DATEPART(TZOFFSET,[CreatedAt])=0");
         });
-        entity.HasKey(row => new { row.AccountId, row.AuditRecordId }).HasName("PK_AccountAuditRecord").IsClustered();
-        entity.HasIndex(row => row.AuditRecordId, "UQ_AccountAuditRecord_AuditRecordId").IsUnique().HasFilter(null);
-        entity.Property(row => row.AccountId).HasComment("Pocket Quests account that exclusively owns this row; supplied by trusted server context.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.AuditRecordId).HasComment("Canonical shared AuditRecord ID; envelope content and shape remain Audit-owned. Uses DATABASE_DEFAULT collation to match the unchanged shared AuditRecords.Id.").HasMaxLength(32).IsUnicode(false).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.CreatedAt).HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.HasOne<AccountEntity>().WithMany().HasForeignKey(row => row.AccountId).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountAuditRecord_Account");
-        entity.HasOne<AuditRecord>().WithMany().HasForeignKey(row => row.AuditRecordId).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountAuditRecord_AuditRecords");
+        builder.HasKey(row => new { row.AccountId, row.AuditRecordId }).HasName("PK_AccountAuditRecord").IsClustered();
+        builder.HasIndex(row => row.AuditRecordId, "UQ_AccountAuditRecord_AuditRecordId").IsUnique().HasFilter(null);
+        builder.Property(row => row.AccountId).HasComment("Pocket Quests account that exclusively owns this row; supplied by trusted server context.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        builder.Property(row => row.AuditRecordId).HasComment("Canonical shared AuditRecord ID; envelope content and shape remain Audit-owned. Uses DATABASE_DEFAULT collation to match the unchanged shared AuditRecords.Id.").HasMaxLength(32).IsUnicode(false).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        builder.Property(row => row.CreatedAt).HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        builder.HasOne<AccountEntity>().WithMany().HasForeignKey(row => row.AccountId).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountAuditRecord_Account");
+        builder.HasOne<AuditRecord>().WithMany().HasForeignKey(row => row.AuditRecordId).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_AccountAuditRecord_AuditRecords");
     }
 }

@@ -9,7 +9,7 @@ using System.Text.Json;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Exercises clock ordering through persisted anchors, command receipts and fresh store instances.</summary>
+/// <content>Exercises clock ordering through persisted anchors, command receipts and fresh store instances.</content>
 public sealed partial class SqlApiTests
 {
     /// <summary>A refreshed anchor cannot place immediate Undo before the completion already shown to the client.</summary>

@@ -9,7 +9,7 @@ using PocketQuests.Domain.Models.Synchronization;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Late synchronization uses verified anchor time and immutable cached terms, with real SQL receipts.</summary>
+/// <content>Late synchronization uses verified anchor time and immutable cached terms, with real SQL receipts.</content>
 public sealed partial class SqlApiTests
 {
     /// <summary>Late receipt honors pre-cutoff recording and repeated replay grants only once.</summary>

@@ -16,8 +16,7 @@ internal static class QuestReplay
         var history = rows.History.Where(row => row.AccountMutationVersion <= version).ToArray();
         if (history.Length == 0)
         {
-            return version == 0 ? new(new QuestAggregate(rows.InitialTimeZone ?? account.TimeZoneId), null)
-                : throw new NotSupportedException("The requested historical version has no retained source history.");
+            return version == 0 ? new(new QuestAggregate(rows.InitialTimeZone ?? account.TimeZoneId), null) : throw new NotSupportedException("The requested historical version has no retained source history.");
         }
 
         if (history[0].AccountMutationVersion != 1 || history.Length != version)

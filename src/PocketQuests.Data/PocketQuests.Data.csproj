@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 <ItemGroup>
-    <PackageReference Include="HoneyDrunk.Audit.Data" Version="0.2.1" />
-    <PackageReference Include="HoneyDrunk.Data.EntityFramework" Version="0.7.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
+    <PackageReference Include="HoneyDrunk.Audit.Data" Version="0.2.2" />
+    <PackageReference Include="HoneyDrunk.Data.EntityFramework" Version="0.7.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.14" />
     <!-- Match net10 so the patched PKCS asset wins over the ASP.NET shared framework. -->
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -15,6 +15,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HoneyDrunk.Data.Outbox" Version="0.7.1" />
+    <PackageReference Include="HoneyDrunk.Data.Outbox" Version="0.7.2" />
   </ItemGroup>
 </Project>

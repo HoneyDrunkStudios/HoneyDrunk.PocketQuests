@@ -9,7 +9,7 @@ using PocketQuests.Domain.Schedules;
 
 namespace PocketQuests.Domain.Quests.Aggregates;
 
-/// <summary>Definition editing, onboarding, planning and reward selection rules.</summary>
+/// <content>Definition editing, onboarding, planning and reward selection rules.</content>
 public sealed partial class QuestAggregate
 {
     /// <summary>Gets editable account-owned definitions.</summary>

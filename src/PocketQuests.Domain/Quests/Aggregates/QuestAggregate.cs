@@ -17,10 +17,22 @@ namespace PocketQuests.Domain.Quests.Aggregates;
 // Storage loads the immutable accepted snapshots and append-only completion/Undo
 // events inside an account transaction; projections are rebuilt from surviving events.
 
-/// <summary>Applies commands and rebuilds progression from immutable accepted terms and surviving events.</summary>
-public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>? occurrences = null,
-    IEnumerable<Completion>? completions = null, IEnumerable<UndoEvent>? undos = null,
-    IEnumerable<QuestDefinition>? definitions = null, PlayerProfile? profile = null, ScheduleState? schedule = null)
+/// <content>Applies commands and rebuilds progression from immutable accepted terms and surviving events.</content>
+/// <param name="zone">The account time zone.</param>
+/// <param name="occurrences">The retained quest occurrences.</param>
+/// <param name="completions">The retained completion events.</param>
+/// <param name="undos">The retained undo events.</param>
+/// <param name="definitions">The retained quest definitions.</param>
+/// <param name="profile">The current character profile.</param>
+/// <param name="schedule">The recurrence schedule state.</param>
+public sealed partial class QuestAggregate(
+    string zone,
+    IEnumerable<Occurrence>? occurrences = null,
+    IEnumerable<Completion>? completions = null,
+    IEnumerable<UndoEvent>? undos = null,
+    IEnumerable<QuestDefinition>? definitions = null,
+    PlayerProfile? profile = null,
+    ScheduleState? schedule = null)
 {
     private Quest? _systemTemplate;
     private int? _actionDeliveryBudget;
@@ -140,11 +152,7 @@ public sealed partial class QuestAggregate(string zone, IEnumerable<Occurrence>?
         var views = Occurrences.Select(occurrence =>
         {
             var completion = Surviving(occurrence.Id, now);
-            var status = occurrence.Lifecycle?.Unaccepted == true ? QuestStatus.Offered
-                : completion is not null ? QuestStatus.Completed
-                : occurrence.Lifecycle?.AbandonedAt is not null ? QuestStatus.Abandoned
-                : occurrence.Lifecycle?.FrozenAt is not null ? QuestStatus.Frozen
-                : occurrence.Deadline is { } deadline && now >= deadline ? QuestStatus.Missed : QuestStatus.Active;
+            var status = occurrence.Lifecycle?.Unaccepted == true ? QuestStatus.Offered : completion is not null ? QuestStatus.Completed : occurrence.Lifecycle?.AbandonedAt is not null ? QuestStatus.Abandoned : occurrence.Lifecycle?.FrozenAt is not null ? QuestStatus.Frozen : occurrence.Deadline is { } deadline && now >= deadline ? QuestStatus.Missed : QuestStatus.Active;
             var canUndo = completion is not null && now >= completion.RecordedAt && now < completion.RecordedAt.Add(QuestRules.UndoWindow);
             return new OccurrenceView(occurrence, status, completion, canUndo, occurrence.DueDate is not null && occurrence.PlannedTime is not null ? Scheduling.Planned(occurrence.DueDate, occurrence.PlannedTime, occurrence.Lifecycle?.DeadlineZone ?? Zone) : null);
         }).ToImmutableArray();

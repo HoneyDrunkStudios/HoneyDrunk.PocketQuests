@@ -6,7 +6,7 @@ using PocketQuests.Domain.Schedules;
 
 namespace PocketQuests.Domain.Quests.Aggregates;
 
-/// <summary>Explicit zone changes preserve final cutoffs and segment local-day accounting.</summary>
+/// <content>Explicit zone changes preserve final cutoffs and segment local-day accounting.</content>
 public sealed partial class QuestAggregate
 {
     private string ZoneAt(DateTimeOffset at) => (Profile.ZoneHistory ?? []).Where(c => c.At <= at).OrderBy(c => c.At).LastOrDefault()?.To

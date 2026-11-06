@@ -8,7 +8,7 @@ using System.Collections.Immutable;
 
 namespace PocketQuests.Domain.Quests.Aggregates;
 
-/// <summary>Custom skills retain their identities and XP across names, categories and archival.</summary>
+/// <content>Custom skills retain their identities and XP across names, categories and archival.</content>
 public sealed partial class QuestAggregate
 {
     private ImmutableArray<NamedItem> SkillItems() => [.. Catalog.Skills, .. (Profile.CustomSkills ?? []).Select(s => new NamedItem(s.Id, s.Name))];
@@ -18,8 +18,7 @@ public sealed partial class QuestAggregate
     private Experience AssessmentAt(string id, DateTimeOffset at)
     {
         var history = Profile.AssessmentHistory?.Where(s => s.SkillId == id).ToArray() ?? [];
-        return history.Length == 0 ? Profile.Assessments.GetValueOrDefault(id)
-            : history.Where(s => s.At <= at).OrderBy(s => s.At).LastOrDefault()?.Experience ?? Experience.New;
+        return history.Length == 0 ? Profile.Assessments.GetValueOrDefault(id) : history.Where(s => s.At <= at).OrderBy(s => s.At).LastOrDefault()?.Experience ?? Experience.New;
     }
 
     private void SaveSkill(QuestCommand command)

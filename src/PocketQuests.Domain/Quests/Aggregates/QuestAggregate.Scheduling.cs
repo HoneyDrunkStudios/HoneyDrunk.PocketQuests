@@ -10,7 +10,7 @@ using System.Text;
 
 namespace PocketQuests.Domain.Quests.Aggregates;
 
-/// <summary>Durable recurrence and effective pause transitions under the account transaction.</summary>
+/// <content>Durable recurrence and effective pause transitions under the account transaction.</content>
 public sealed partial class QuestAggregate
 {
     /// <summary>Gets the durable series and pause state.</summary>
@@ -92,8 +92,7 @@ public sealed partial class QuestAggregate
 
     private bool IsPaused(string categoryId) => Schedule.AccountPaused || Schedule.PausedCategories.Contains(categoryId);
 
-    private DateTimeOffset? OpenPause(string categoryId) => IsPaused(categoryId)
-        ? Schedule.Pauses.Single(p => p.CategoryId == categoryId && p.EndedAt is null).StartedAt : null;
+    private DateTimeOffset? OpenPause(string categoryId) => IsPaused(categoryId) ? Schedule.Pauses.Single(p => p.CategoryId == categoryId && p.EndedAt is null).StartedAt : null;
 
     private int ActiveDaysBetween(string categoryId, LocalDate first, LocalDate last)
     {

@@ -7,7 +7,7 @@ using PocketQuests.Domain.Models.Schedules;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Restart and failure-injection coverage for schedules in real SQL.</summary>
+/// <content>Restart and failure-injection coverage for schedules in real SQL.</content>
 public sealed partial class SqlApiTests
 {
     /// <summary>Reopens the store between operations and deduplicates delivery under concurrent readers.</summary>

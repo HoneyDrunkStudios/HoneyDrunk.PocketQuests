@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 
 namespace PocketQuests.Domain.Quests.Aggregates;
 
-/// <summary>Finite generic warning forecast; awards still require delivered, accepted occurrences.</summary>
+/// <content>Finite generic warning forecast; awards still require delivered, accepted occurrences.</content>
 public sealed partial class QuestAggregate
 {
     private ImmutableList<DateTimeOffset> FutureWarnings(DateTimeOffset now)
@@ -17,8 +17,10 @@ public sealed partial class QuestAggregate
         var forecast = new QuestAggregate(Zone, Occurrences, Completions, Undos, Definitions, Profile with { ExpiryWarnings = false }, Schedule);
         forecast.Reconcile(Scheduling.Zone(Zone).AtStartOfDay(horizon).ToDateTimeOffset());
         var existing = Occurrences.Select(o => o.Id).ToHashSet();
-        return [.. forecast.Occurrences.Where(o => !existing.Contains(o.Id) && o.Lifecycle?.Unaccepted != true
+        return [
+            .. forecast.Occurrences.Where(o => !existing.Contains(o.Id) && o.Lifecycle?.Unaccepted != true
             && o.Lifecycle?.FrozenAt is null && o.Lifecycle?.AbandonedAt is null && o.Deadline > now)
-            .Select(o => o.Deadline!.Value).Distinct().Order()];
+            .Select(o => o.Deadline!.Value).Distinct().Order()
+        ];
     }
 }

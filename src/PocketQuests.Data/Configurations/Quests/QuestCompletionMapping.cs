@@ -10,9 +10,9 @@ namespace PocketQuests.Data.Configurations.Quests;
 public sealed class QuestCompletionMapping : IEntityTypeConfiguration<QuestCompletionEntity>
 {
     /// <inheritdoc />
-    public void Configure(EntityTypeBuilder<QuestCompletionEntity> entity)
+    public void Configure(EntityTypeBuilder<QuestCompletionEntity> builder)
     {
-        entity.ToTable("QuestCompletion", "pocketquests", table =>
+        builder.ToTable("QuestCompletion", "pocketquests", table =>
         {
             table.HasComment("One row is one immutable successful completion with at most one write-once Undo annotation. Classification: Restricted. History: mutable; Retain while the account exists, including its recovery interval; erase with the account. No arbitrary age-based pruning of replay source facts.");
             table.HasCheckConstraint("CK_QuestCompletion_Undo", "([UndoneAt] IS NULL AND [UndoQuestOccurrenceEventId] IS NULL) OR ([UndoneAt] IS NOT NULL AND [UndoQuestOccurrenceEventId] IS NOT NULL AND [UndoneAt]>=[RecordedAt] AND [UndoneAt]<DATEADD(hour,24,[RecordedAt]))");
@@ -22,27 +22,27 @@ public sealed class QuestCompletionMapping : IEntityTypeConfiguration<QuestCompl
             table.HasCheckConstraint("CK_QuestCompletion_ModifiedAtUtc", "DATEPART(TZOFFSET,[ModifiedAt])=0");
             table.HasCheckConstraint("CK_QuestCompletion_ModificationClock", "[ModifiedAt]>=[CreatedAt]");
         });
-        entity.HasKey(row => row.Id).HasName("PK_QuestCompletion").IsClustered();
-        entity.HasAlternateKey(row => new { row.AccountId, row.Id }).HasName("UQ_QuestCompletion_AccountId_Id");
-        entity.HasIndex(row => new { row.AccountId, row.QuestOccurrenceId, row.Id }, "UQ_QuestCompletion_AccountId_QuestOccurrenceId_Id").IsUnique().HasFilter(null);
-        entity.Property(row => row.Id).HasComment("UUID of its Completed occurrence event and stable completion identifier.").ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.AccountId).HasComment("Pocket Quests account that exclusively owns this row; supplied by trusted server context.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.QuestOccurrenceId).HasComment("Occurrence completed by this fact.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.QuestOccurrenceRevisionId).HasComment("Exact completed terms; never replaced by a later definition edit.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.RecordedAt).HasComment("Trusted recorded completion time, including validated offline time. UTC instant.").HasPrecision(7).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.UndoneAt).HasComment("Trusted recorded Undo time, if the completion was reversed. UTC instant. Null means this event has not happened.").HasPrecision(7);
-        entity.Property(row => row.UndoQuestOccurrenceEventId).HasComment("Stable Undone event; null exactly when UndoneAt is null.");
-        entity.Property(row => row.CreatedAt).HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-        entity.Property(row => row.ModifiedAt).HasComment("Server UTC time of the most recent persisted change; writer must set on each update.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')");
-        entity.Property(row => row.RowVersion).HasColumnType("rowversion").HasComment("SQL-generated opaque concurrency token; compare as bytes, not as a clock.").IsRowVersion();
-        entity.HasIndex(row => new { row.AccountId, row.QuestOccurrenceId }, "UQ_QuestCompletion_OneLive").IsUnique().HasFilter("[UndoneAt] IS NULL");
-        entity.HasIndex(row => new { row.AccountId, row.UndoQuestOccurrenceEventId }, "UQ_QuestCompletion_OneUndo").IsUnique().HasFilter("[UndoQuestOccurrenceEventId] IS NOT NULL");
-        entity.HasIndex(row => new { row.AccountId, row.RecordedAt, row.Id }, "IX_QuestCompletion_History");
-        entity.HasIndex(row => new { row.AccountId, row.QuestOccurrenceId, row.QuestOccurrenceRevisionId }, "IX_QuestCompletion_FK_QuestOccurrenceRevision");
-        entity.HasIndex(row => new { row.AccountId, row.QuestOccurrenceId, row.UndoQuestOccurrenceEventId }, "IX_QuestCompletion_FK_QuestOccurrenceEvent_Undo");
-        entity.HasOne<AccountEntity>().WithMany().HasForeignKey(row => row.AccountId).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_QuestCompletion_Account");
-        entity.HasOne<QuestOccurrenceEventEntity>().WithMany().HasForeignKey(row => new { row.AccountId, row.QuestOccurrenceId, row.Id }).HasPrincipalKey(row => new { row.AccountId, row.QuestOccurrenceId, row.Id }).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_QuestCompletion_QuestOccurrenceEvent_Completion");
-        entity.HasOne<QuestOccurrenceRevisionEntity>().WithMany().HasForeignKey(row => new { row.AccountId, row.QuestOccurrenceId, row.QuestOccurrenceRevisionId }).HasPrincipalKey(row => new { row.AccountId, row.QuestOccurrenceId, row.Id }).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_QuestCompletion_QuestOccurrenceRevision");
-        entity.HasOne<QuestOccurrenceEventEntity>().WithMany().HasForeignKey(row => new { row.AccountId, row.QuestOccurrenceId, row.UndoQuestOccurrenceEventId }).HasPrincipalKey(row => new { row.AccountId, row.QuestOccurrenceId, row.Id }).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_QuestCompletion_QuestOccurrenceEvent_Undo");
+        builder.HasKey(row => row.Id).HasName("PK_QuestCompletion").IsClustered();
+        builder.HasAlternateKey(row => new { row.AccountId, row.Id }).HasName("UQ_QuestCompletion_AccountId_Id");
+        builder.HasIndex(row => new { row.AccountId, row.QuestOccurrenceId, row.Id }, "UQ_QuestCompletion_AccountId_QuestOccurrenceId_Id").IsUnique().HasFilter(null);
+        builder.Property(row => row.Id).HasComment("UUID of its Completed occurrence event and stable completion identifier.").ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        builder.Property(row => row.AccountId).HasComment("Pocket Quests account that exclusively owns this row; supplied by trusted server context.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        builder.Property(row => row.QuestOccurrenceId).HasComment("Occurrence completed by this fact.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        builder.Property(row => row.QuestOccurrenceRevisionId).HasComment("Exact completed terms; never replaced by a later definition edit.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        builder.Property(row => row.RecordedAt).HasComment("Trusted recorded completion time, including validated offline time. UTC instant.").HasPrecision(7).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        builder.Property(row => row.UndoneAt).HasComment("Trusted recorded Undo time, if the completion was reversed. UTC instant. Null means this event has not happened.").HasPrecision(7);
+        builder.Property(row => row.UndoQuestOccurrenceEventId).HasComment("Stable Undone event; null exactly when UndoneAt is null.");
+        builder.Property(row => row.CreatedAt).HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+        builder.Property(row => row.ModifiedAt).HasComment("Server UTC time of the most recent persisted change; writer must set on each update.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')");
+        builder.Property(row => row.RowVersion).HasColumnType("rowversion").HasComment("SQL-generated opaque concurrency token; compare as bytes, not as a clock.").IsRowVersion();
+        builder.HasIndex(row => new { row.AccountId, row.QuestOccurrenceId }, "UQ_QuestCompletion_OneLive").IsUnique().HasFilter("[UndoneAt] IS NULL");
+        builder.HasIndex(row => new { row.AccountId, row.UndoQuestOccurrenceEventId }, "UQ_QuestCompletion_OneUndo").IsUnique().HasFilter("[UndoQuestOccurrenceEventId] IS NOT NULL");
+        builder.HasIndex(row => new { row.AccountId, row.RecordedAt, row.Id }, "IX_QuestCompletion_History");
+        builder.HasIndex(row => new { row.AccountId, row.QuestOccurrenceId, row.QuestOccurrenceRevisionId }, "IX_QuestCompletion_FK_QuestOccurrenceRevision");
+        builder.HasIndex(row => new { row.AccountId, row.QuestOccurrenceId, row.UndoQuestOccurrenceEventId }, "IX_QuestCompletion_FK_QuestOccurrenceEvent_Undo");
+        builder.HasOne<AccountEntity>().WithMany().HasForeignKey(row => row.AccountId).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_QuestCompletion_Account");
+        builder.HasOne<QuestOccurrenceEventEntity>().WithMany().HasForeignKey(row => new { row.AccountId, row.QuestOccurrenceId, row.Id }).HasPrincipalKey(row => new { row.AccountId, row.QuestOccurrenceId, row.Id }).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_QuestCompletion_QuestOccurrenceEvent_Completion");
+        builder.HasOne<QuestOccurrenceRevisionEntity>().WithMany().HasForeignKey(row => new { row.AccountId, row.QuestOccurrenceId, row.QuestOccurrenceRevisionId }).HasPrincipalKey(row => new { row.AccountId, row.QuestOccurrenceId, row.Id }).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_QuestCompletion_QuestOccurrenceRevision");
+        builder.HasOne<QuestOccurrenceEventEntity>().WithMany().HasForeignKey(row => new { row.AccountId, row.QuestOccurrenceId, row.UndoQuestOccurrenceEventId }).HasPrincipalKey(row => new { row.AccountId, row.QuestOccurrenceId, row.Id }).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_QuestCompletion_QuestOccurrenceEvent_Undo");
     }
 }

@@ -5,7 +5,7 @@ using PocketQuests.Data.Entities.Synchronization;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Fresh schema and safe repeat publication against the same disposable product database.</summary>
+/// <content>Fresh schema and safe repeat publication against the same disposable product database.</content>
 public sealed partial class SqlApiTests
 {
     /// <summary>The initial schema has only canonical product tables plus unchanged shared dependencies.</summary>

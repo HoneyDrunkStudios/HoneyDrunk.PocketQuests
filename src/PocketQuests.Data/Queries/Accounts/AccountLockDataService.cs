@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace PocketQuests.Data.Queries.Accounts;
 
-internal static class AccountQueries
+internal static class AccountLockDataService
 {
     internal static async Task AcquireLock(AppDbContext context, string identityUserId, CancellationToken token)
     {

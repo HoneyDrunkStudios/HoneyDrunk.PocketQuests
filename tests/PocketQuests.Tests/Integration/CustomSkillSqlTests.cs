@@ -6,7 +6,7 @@ using System.Net.Http.Json;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>SQL-backed custom skill isolation and history regressions.</summary>
+/// <content>SQL-backed custom skill isolation and history regressions.</content>
 public sealed partial class SqlApiTests
 {
     /// <summary>Renaming keeps identity and earnings; archival preserves history and other accounts cannot reference it.</summary>

@@ -13,8 +13,7 @@ internal static class QuestHistory
     {
         var command = change.Command;
         var action = command.Action;
-        var target = action == QuestActions.Accept ? change.Aggregate.Occurrences[^1]
-            : command.OccurrenceId is { } id ? change.Aggregate.Occurrences.SingleOrDefault(row => row.Id == id) : null;
+        var target = action == QuestActions.Accept ? change.Aggregate.Occurrences[^1] : command.OccurrenceId is { } id ? change.Aggregate.Occurrences.SingleOrDefault(row => row.Id == id) : null;
         Quest? quest = action switch
         {
             QuestActions.SaveDefinition => change.Aggregate.Definitions.Single(row => row.Quest.Id == command.Definition!.Id).Quest,

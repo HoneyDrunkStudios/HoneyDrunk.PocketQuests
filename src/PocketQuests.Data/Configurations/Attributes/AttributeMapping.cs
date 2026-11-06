@@ -8,9 +8,9 @@ namespace PocketQuests.Data.Configurations.Attributes;
 public sealed class AttributeMapping : IEntityTypeConfiguration<AttributeEntity>
 {
     /// <inheritdoc />
-    public void Configure(EntityTypeBuilder<AttributeEntity> entity)
+    public void Configure(EntityTypeBuilder<AttributeEntity> builder)
     {
-        entity.ToTable("Attribute", "pocketquests", table =>
+        builder.ToTable("Attribute", "pocketquests", table =>
         {
             table.HasComment("One row is one canonical attribute. Classification: Public. History: reference; Retain stable codes indefinitely; source control owns reference history. Not erased with accounts.");
             table.HasCheckConstraint("CK_Attribute_SortOrder", "[SortOrder] >= 1");
@@ -18,13 +18,13 @@ public sealed class AttributeMapping : IEntityTypeConfiguration<AttributeEntity>
             table.HasCheckConstraint("CK_Attribute_ModifiedAtUtc", "DATEPART(TZOFFSET,[ModifiedAt])=0");
             table.HasCheckConstraint("CK_Attribute_ModificationClock", "[ModifiedAt]>=[CreatedAt]");
         });
-        entity.HasKey(row => row.Id).HasName("PK_Attribute").IsClustered();
-        entity.HasIndex(row => row.SortOrder, "UQ_Attribute_SortOrder").IsUnique().HasFilter(null);
-        entity.Property(row => row.Id).HasComment("Stable public catalog code; preserve existing IDs and ordinal allocation tie-breaking.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(40).IsUnicode(false).ValueGeneratedNever();
-        entity.Property(row => row.Name).HasComment("Current public catalog display name.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(120).IsUnicode(true);
-        entity.Property(row => row.CatalogVersion).HasComment("Version of the reviewed catalog that supplied this row.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(32).IsUnicode(false);
-        entity.Property(row => row.SortOrder).HasComment("Positive canonical display order; not an independently chosen progression priority.");
-        entity.Property(row => row.CreatedAt).HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')");
-        entity.Property(row => row.ModifiedAt).HasComment("Server UTC time of the most recent persisted change; writer must set on each update.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')");
+        builder.HasKey(row => row.Id).HasName("PK_Attribute").IsClustered();
+        builder.HasIndex(row => row.SortOrder, "UQ_Attribute_SortOrder").IsUnique().HasFilter(null);
+        builder.Property(row => row.Id).HasComment("Stable public catalog code; preserve existing IDs and ordinal allocation tie-breaking.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(40).IsUnicode(false).ValueGeneratedNever();
+        builder.Property(row => row.Name).HasComment("Current public catalog display name.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(120).IsUnicode(true);
+        builder.Property(row => row.CatalogVersion).HasComment("Version of the reviewed catalog that supplied this row.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(32).IsUnicode(false);
+        builder.Property(row => row.SortOrder).HasComment("Positive canonical display order; not an independently chosen progression priority.");
+        builder.Property(row => row.CreatedAt).HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')");
+        builder.Property(row => row.ModifiedAt).HasComment("Server UTC time of the most recent persisted change; writer must set on each update.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')");
     }
 }

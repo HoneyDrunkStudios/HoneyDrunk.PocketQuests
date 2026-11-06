@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace PocketQuests.SchemaTests;
 
-/// <summary>Private version-one export content, history and CSV safety.</summary>
+/// <content>Private version-one export content, history and CSV safety.</content>
 public sealed partial class RelationalApiTests
 {
     /// <summary>JSON preserves historical terms and archived revisions; CSV preserves existing files and escapes formula text.</summary>

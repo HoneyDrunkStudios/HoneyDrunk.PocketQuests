@@ -7,8 +7,10 @@ using QuestValues = PocketQuests.Domain.Quests.QuestValues;
 namespace PocketQuests.Services.Quests;
 
 internal sealed class QuestOccurrenceService(
-    IQuestOccurrenceDataService occurrenceData, IQuestOccurrenceRevisionDataService revisionData,
-    IQuestOccurrenceEventDataService eventData, IQuestCompletionDataService completionData)
+    IQuestOccurrenceDataService occurrenceData,
+    IQuestOccurrenceRevisionDataService revisionData,
+    IQuestOccurrenceEventDataService eventData,
+    IQuestCompletionDataService completionData)
 {
     internal async Task<(IReadOnlyList<QuestOccurrenceEntity> occurrences, IReadOnlySet<Guid> eventIds)> Record(
         QuestMutation change, QuestStateRows rows, QuestTermHistory terms, IReadOnlyList<QuestSeriesRevisionEntity> seriesRevisions, CancellationToken token)
@@ -22,8 +24,7 @@ internal sealed class QuestOccurrenceService(
         var aggregate = change.Aggregate;
         var recordedAt = change.RecordedAt;
         var existing = rows.Occurrences.ToDictionary(row => row.Id);
-        var configurations = QuestHistory.Series(change.Command.Action == PocketQuests.Domain.Commands.QuestActions.SaveDefinition
-            ? rows.SeriesRevisions : seriesRevisions);
+        var configurations = QuestHistory.Series(change.Command.Action == PocketQuests.Domain.Commands.QuestActions.SaveDefinition ? rows.SeriesRevisions : seriesRevisions);
         foreach (var view in change.State.Occurrences)
         {
             var occurrence = view.Occurrence;

@@ -6,9 +6,9 @@
     <ProjectReference Include="..\PocketQuests.ServiceDefaults\PocketQuests.ServiceDefaults.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.12" />
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.14" />
   </ItemGroup>
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -24,8 +24,8 @@
     <ProjectReference Include="$(IdentityProjectsRoot)/HoneyDrunk.Identity.Client/HoneyDrunk.Identity.Client.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="HoneyDrunk.Data.Outbox.Dispatcher" Version="0.7.1" />
-    <PackageReference Include="HoneyDrunk.Transport.AzureServiceBus" Version="0.7.2" />
+    <PackageReference Include="HoneyDrunk.Data.Outbox.Dispatcher" Version="0.7.2" />
+    <PackageReference Include="HoneyDrunk.Transport.AzureServiceBus" Version="0.7.3" />
   </ItemGroup>
   <ItemGroup>
     <_AdminFrontendInput Include="../../apps/admin/src/**/*;../../apps/admin/*.json;../../apps/admin/*.ts;../../apps/admin/index.html" />

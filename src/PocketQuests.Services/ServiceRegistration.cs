@@ -36,6 +36,7 @@ public static class ServiceRegistration
         services.AddScoped<QuestCommandHistoryService>();
         services.AddScoped(provider => new QuestService(
             provider.GetRequiredService<IAccountDataService>(),
+            provider.GetRequiredService<IAccountStateDataService>(),
             provider.GetRequiredService<ICurrentAccount>(),
             provider.GetRequiredService<TimeProvider>(),
             provider.GetRequiredService<ProfileHistoryService>(),

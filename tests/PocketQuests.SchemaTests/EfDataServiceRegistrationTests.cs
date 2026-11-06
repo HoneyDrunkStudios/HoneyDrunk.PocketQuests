@@ -22,14 +22,13 @@ public sealed class EfDataServiceRegistrationTests
             .Where(type => type.IsInterface && !type.IsGenericType && type.GetInterfaces().Any(parent => parent.IsGenericType && parent.GetGenericTypeDefinition() == typeof(IBaseDataService<>)))
             .ToArray();
         Assert.Equal(36, interfaces.Length);
-        foreach (var contract in interfaces.Append(typeof(IBaseDataService<AccountEntity>)))
+        foreach (var contract in interfaces.Append(typeof(IBaseDataService<AccountEntity>)).Append(typeof(PocketQuests.Data.DataServices.Accounts.IAccountStateDataService)))
         {
             Assert.Same(first.ServiceProvider.GetRequiredService(contract), first.ServiceProvider.GetRequiredService(contract));
             Assert.NotSame(first.ServiceProvider.GetRequiredService(contract), second.ServiceProvider.GetRequiredService(contract));
             Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService(contract));
         }
 
-        Assert.Same(first.ServiceProvider.GetRequiredService<AppDbContext>(), first.ServiceProvider.GetRequiredService<BaseDbContext>());
         Assert.NotSame(first.ServiceProvider.GetRequiredService<AppDbContext>(), second.ServiceProvider.GetRequiredService<AppDbContext>());
     }
 

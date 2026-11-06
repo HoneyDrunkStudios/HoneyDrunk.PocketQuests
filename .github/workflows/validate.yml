@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           repository: HoneyDrunkStudios/HoneyDrunk.Identity
-          ref: 5cfc1da16f075b566e845df8ba81de5f0e4347a8
+          ref: 6e46977163da31949ce3b3d3bc833e69438bfec4
           path: identity
       - name: Read the declared SDK baseline
         id: dotnet_version

@@ -19,7 +19,7 @@ public sealed partial class AccountDataService(AppDbContext context) : BaseDataS
         Accounts.SingleOrDefaultAsync(row => row.IdentityUserId == identityUserId, cancellationToken);
 
     /// <inheritdoc />
-    public Task AcquireCommandLock(string identityUserId, CancellationToken token = default) => AccountQueries.AcquireLock(Context, identityUserId, token);
+    public Task AcquireCommandLock(string identityUserId, CancellationToken token = default) => AccountLockDataService.AcquireLock(Context, identityUserId, token);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<AccountEntity>> GetReconciliationCandidates(DateTimeOffset now, DateTimeOffset? afterProjectionAt, Guid? afterAccountId, int maximumAccounts, string activeState, CancellationToken token = default)

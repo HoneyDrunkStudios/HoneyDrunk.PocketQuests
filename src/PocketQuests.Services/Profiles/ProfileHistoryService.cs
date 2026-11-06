@@ -14,9 +14,12 @@ using QuestValues = PocketQuests.Domain.Quests.QuestValues;
 namespace PocketQuests.Services.Profiles;
 
 internal sealed class ProfileHistoryService(
-    IAccountInterestDataService interests, IQuestCommandInterestDataService commandInterests,
-    ICustomSkillDataService skills, ISkillAssessmentDataService assessments,
-    ITimeZoneChangeDataService zones, IAccountPauseDataService pauses)
+    IAccountInterestDataService interests,
+    IQuestCommandInterestDataService commandInterests,
+    ICustomSkillDataService skills,
+    ISkillAssessmentDataService assessments,
+    ITimeZoneChangeDataService zones,
+    IAccountPauseDataService pauses)
 {
     internal async Task Record(QuestMutation change, QuestStateRows rows, CancellationToken token)
     {

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Canonical persistence helpers shared by both real-SQL regression hosts.</summary>
+/// <content>Canonical persistence helpers shared by both real-SQL regression hosts.</content>
 public sealed partial class SqlApiTests
 {
     private PersistenceServices? persistence;

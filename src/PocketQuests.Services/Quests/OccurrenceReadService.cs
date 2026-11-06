@@ -12,12 +12,13 @@ namespace PocketQuests.Services.Quests;
 
 /// <summary>Bounded occurrence reads for private consumers; no public route is introduced.</summary>
 /// <param name="data">Account transaction and selected terms.</param>
+/// <param name="accountState">Scoped lifecycle and retained-state reads.</param>
 /// <param name="occurrences">Keyset occurrence query.</param>
 /// <param name="completions">Selected active completion sources.</param>
 /// <param name="revisions">Selected occurrence revisions.</param>
 /// <param name="series">Selected series provenance.</param>
 /// <param name="quests">Shared verified account access.</param>
-public sealed class OccurrenceReadService(IAccountDataService data, IQuestOccurrenceDataService occurrences, IQuestCompletionDataService completions, IQuestOccurrenceRevisionDataService revisions, IQuestSeriesRevisionDataService series, QuestService quests)
+public sealed class OccurrenceReadService(IAccountDataService data, IAccountStateDataService accountState, IQuestOccurrenceDataService occurrences, IQuestCompletionDataService completions, IQuestOccurrenceRevisionDataService revisions, IQuestSeriesRevisionDataService series, QuestService quests)
 {
     internal Task<QuestOccurrencePage> Read(AccountIdentity identity, int after, int size, DateTimeOffset now, CancellationToken token = default)
     {
@@ -43,7 +44,7 @@ public sealed class OccurrenceReadService(IAccountDataService data, IQuestOccurr
         var completionRevisionIds = completionRows.Select(row => row.QuestOccurrenceRevisionId).ToArray();
         var completionRevisions = (await revisions.GetSelected(account.Id, completionRevisionIds, token)).ToDictionary(row => row.Id);
         var termIds = rows.Select(row => row.QuestDefinitionRevisionId).Concat(completionRevisions.Values.Select(row => row.QuestDefinitionRevisionId)).Distinct().ToArray();
-        var terms = QuestTerms.Read(await data.ReadSelectedTerms(account.Id, termIds, token));
+        var terms = QuestTerms.Read(await accountState.ReadSelectedTerms(account.Id, termIds, token));
         var seriesIds = rows.Where(row => row.QuestSeriesRevisionId is not null).Select(row => row.QuestSeriesRevisionId!.Value).Distinct().ToArray();
         var seriesRows = (await series.GetSelected(account.Id, seriesIds, token)).ToDictionary(row => row.Id);
         var views = rows.Select(row =>
@@ -51,12 +52,9 @@ public sealed class OccurrenceReadService(IAccountDataService data, IQuestOccurr
             var occurrence = row.ToModel(terms, seriesRows);
             var source = completionRows.SingleOrDefault(completion => completion.QuestOccurrenceId == row.Id);
             var completion = source?.ToModel(terms[completionRevisions[source.QuestOccurrenceRevisionId].QuestDefinitionRevisionId]);
-            var status = row.AcceptedAt is null ? QuestStatus.Offered : completion is not null ? QuestStatus.Completed
-                : row.AbandonedAt is not null ? QuestStatus.Abandoned : row.FrozenAt is not null ? QuestStatus.Frozen
-                : row.DeadlineAt <= at ? QuestStatus.Missed : QuestStatus.Active;
+            var status = row.AcceptedAt is null ? QuestStatus.Offered : completion is not null ? QuestStatus.Completed : row.AbandonedAt is not null ? QuestStatus.Abandoned : row.FrozenAt is not null ? QuestStatus.Frozen : row.DeadlineAt <= at ? QuestStatus.Missed : QuestStatus.Active;
             var canUndo = completion is not null && at >= completion.RecordedAt && at < completion.RecordedAt.AddHours(24);
-            var planned = occurrence.DueDate is not null && occurrence.PlannedTime is not null
-                ? Scheduling.Planned(occurrence.DueDate, occurrence.PlannedTime, row.DeadlineTimeZoneId!) : null;
+            var planned = occurrence.DueDate is not null && occurrence.PlannedTime is not null ? Scheduling.Planned(occurrence.DueDate, occurrence.PlannedTime, row.DeadlineTimeZoneId!) : null;
             return occurrence.ToView(status, completion, canUndo, planned);
         });
         return views.ToPage(next, account);

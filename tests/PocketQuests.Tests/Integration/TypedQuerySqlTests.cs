@@ -17,7 +17,7 @@ using PocketQuests.Tests.Fixtures;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Real SQL query contracts shared by the package and Identity-source test lanes.</summary>
+/// <content>Real SQL query contracts shared by the package and Identity-source test lanes.</content>
 public sealed partial class SqlApiTests
 {
     /// <summary>Typed reads preserve account ownership, tracked identity and cancellation after real commands.</summary>

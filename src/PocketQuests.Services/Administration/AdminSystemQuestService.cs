@@ -22,12 +22,19 @@ namespace PocketQuests.Services.Administration;
 /// <summary>Audited immutable draft authoring with separate catalog pointers.</summary>
 /// <param name="access">Configured operator authorization.</param>
 /// <param name="accounts">Transaction and operator lifecycle ownership.</param>
+/// <param name="accountState">Scoped lifecycle and retained-state reads.</param>
 /// <param name="templates">Catalog heads and bounded queries.</param>
 /// <param name="revisions">Immutable template inserts.</param>
 /// <param name="audits">Shared action audit and erasure ownership.</param>
 /// <param name="clock">Trusted server clock.</param>
-public sealed class AdminSystemQuestService(AdminOperator access, IAccountDataService accounts, ISystemQuestDataService templates,
-    ISystemQuestRevisionDataService revisions, IAccountAuditRecordDataService audits, TimeProvider clock) : IAdminSystemQuestService
+public sealed class AdminSystemQuestService(
+    AdminOperator access,
+    IAccountDataService accounts,
+    IAccountStateDataService accountState,
+    ISystemQuestDataService templates,
+    ISystemQuestRevisionDataService revisions,
+    IAccountAuditRecordDataService audits,
+    TimeProvider clock) : IAdminSystemQuestService
 {
     /// <inheritdoc />
     public async Task<SystemQuestStudio> Read(CancellationToken token)
@@ -116,7 +123,7 @@ public sealed class AdminSystemQuestService(AdminOperator access, IAccountDataSe
 
     private async Task RequireActiveOperator(string actor, CancellationToken token)
     {
-        if (await accounts.GetErasure(actor, token) is not null || (await accounts.GetLifecycle(actor, token)) is { StateCode: not "Active" })
+        if (await accountState.GetErasure(actor, token) is not null || (await accountState.GetLifecycle(actor, token)) is { StateCode: not "Active" })
             throw new UnauthorizedAccessException();
     }
 

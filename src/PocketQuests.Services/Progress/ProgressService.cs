@@ -13,8 +13,12 @@ using QuestValues = PocketQuests.Domain.Quests.QuestValues;
 
 namespace PocketQuests.Services.Progress;
 
-internal sealed class ProgressService(IXpLedgerEntryDataService ledgerData, IXpBalanceDataService balanceData,
-    ICategoryProgressDataService categoryData, IAccountEntitlementDataService entitlementData, IQuestOccurrenceEventDataService eventData)
+internal sealed class ProgressService(
+    IXpLedgerEntryDataService ledgerData,
+    IXpBalanceDataService balanceData,
+    ICategoryProgressDataService categoryData,
+    IAccountEntitlementDataService entitlementData,
+    IQuestOccurrenceEventDataService eventData)
 {
     internal async Task Recalculate(QuestMutation change, QuestStateRows rows, QuestProjectionRows projections, IReadOnlyList<QuestOccurrenceEntity> occurrences, IReadOnlySet<Guid> eventIds, CancellationToken token)
     {
