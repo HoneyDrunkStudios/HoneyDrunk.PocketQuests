@@ -3,7 +3,7 @@ using PocketQuests.Domain.Models.Quests;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Verifies the existing API ledger used by native completion feedback.</summary>
+/// <content>Verifies the existing API ledger used by native completion feedback.</content>
 public sealed partial class SqlApiTests
 {
     /// <summary>Confirms completion-specific pools, replay and Undo against isolated SQL.</summary>

@@ -15,21 +15,26 @@
       "properties": {
         "id": {
           "type": "string",
+          "description": "The identifier of the represented resource.",
           "format": "uuid"
         },
         "version": {
-          "type": "string"
+          "type": "string",
+          "description": "The version of the represented state or resource."
         },
         "draftNumber": {
           "type": "integer",
+          "description": "The draft sequence number.",
           "format": "int32"
         },
         "draftSystemQuestRevisionId": {
           "type": "string",
+          "description": "The saved system quest draft revision identifier.",
           "format": "uuid"
         },
         "publishedSystemQuestRevisionId": {
           "type": "string",
+          "description": "The published system quest revision identifier.",
           "format": "uuid",
           "nullable": true
         },
@@ -51,6 +56,7 @@
         },
         "modifiedAt": {
           "type": "string",
+          "description": "The most recent modification timestamp.",
           "format": "date-time"
         }
       },
@@ -67,14 +73,17 @@
       "properties": {
         "id": {
           "type": "string",
+          "description": "The immutable content revision identifier.",
           "format": "uuid"
         },
         "number": {
           "type": "integer",
+          "description": "The content revision number.",
           "format": "int32"
         },
         "createdAt": {
           "type": "string",
+          "description": "The revision creation timestamp.",
           "format": "date-time"
         },
         "quest": {
@@ -97,31 +106,39 @@
       "type": "object",
       "properties": {
         "userId": {
-          "type": "string"
+          "type": "string",
+          "description": "The canonical account user identifier."
         },
         "characterName": {
           "type": "string",
+          "description": "The account character display name.",
           "nullable": true
         },
         "zone": {
-          "type": "string"
+          "type": "string",
+          "description": "The applicable account time zone."
         },
         "onboardingComplete": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the account has completed onboarding."
         },
         "createdAt": {
           "type": "string",
+          "description": "The resource creation timestamp.",
           "format": "date-time"
         },
         "suspended": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether account access is suspended."
         },
         "reason": {
           "type": "string",
+          "description": "The human-readable reason associated with this result.",
           "nullable": true
         },
         "revision": {
           "type": "integer",
+          "description": "The immutable resource revision.",
           "format": "int32"
         }
       },
@@ -138,10 +155,12 @@
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/AdminUser"
-          }
+          },
+          "description": "The users included in this result."
         },
         "nextCursor": {
           "type": "string",
+          "description": "The cursor for the next result page, when present.",
           "nullable": true
         }
       },
@@ -157,14 +176,17 @@
       "properties": {
         "deviceId": {
           "type": "string",
+          "description": "The device identifier used by recorded-clock evidence.",
           "format": "uuid"
         },
         "bootId": {
           "type": "string",
+          "description": "The device boot identifier used by recorded-clock evidence.",
           "format": "uuid"
         },
         "deviceUtc": {
           "type": "string",
+          "description": "The device-reported UTC instant.",
           "format": "date-time"
         }
       },
@@ -180,17 +202,21 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "The identifier of the represented resource."
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "The human-readable name."
         },
         "xp": {
           "type": "integer",
+          "description": "The experience represented by this result.",
           "format": "int64"
         },
         "level": {
           "type": "integer",
+          "description": "The progression level.",
           "format": "int32"
         }
       },
@@ -219,31 +245,36 @@
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/NamedItem"
-          }
+          },
+          "description": "The categories included in this snapshot."
         },
         "attributes": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/NamedItem"
-          }
+          },
+          "description": "The character attributes in this snapshot."
         },
         "skills": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/NamedItem"
-          }
+          },
+          "description": "The skills included in this snapshot."
         },
         "quests": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/Quest"
-          }
+          },
+          "description": "The quests included in this snapshot."
         },
         "rules": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/RankRule"
-          }
+          },
+          "description": "The rules evaluated by this operation."
         }
       },
       "description": "The public quest catalog and authoritative global rank rules."
@@ -259,14 +290,17 @@
       "properties": {
         "id": {
           "type": "string",
+          "description": "The identifier of the represented resource.",
           "format": "uuid"
         },
         "occurrenceId": {
           "type": "string",
+          "description": "The occurrence identifier.",
           "format": "uuid"
         },
         "recordedAt": {
           "type": "string",
+          "description": "The retained timestamp for this event.",
           "format": "date-time"
         },
         "snapshot": {
@@ -296,20 +330,25 @@
       "type": "object",
       "properties": {
         "track": {
-          "type": "string"
+          "type": "string",
+          "description": "The progression track associated with this operation."
         },
         "trackId": {
-          "type": "string"
+          "type": "string",
+          "description": "The progression track identifier."
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "The human-readable name."
         },
         "from": {
           "type": "integer",
+          "description": "The beginning of the represented range or transition.",
           "format": "int32"
         },
         "to": {
           "type": "integer",
+          "description": "The end of the represented range or transition.",
           "format": "int32"
         }
       },
@@ -327,17 +366,20 @@
       "properties": {
         "completionId": {
           "type": "string",
+          "description": "The completion identifier.",
           "format": "uuid"
         },
         "occurrenceId": {
           "type": "string",
+          "description": "The occurrence identifier.",
           "format": "uuid"
         },
         "levelUps": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/CompletionLevelUp"
-          }
+          },
+          "description": "The level increases produced by this calculation."
         },
         "rankUp": {
           "oneOf": [
@@ -356,7 +398,8 @@
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/Entitlement"
-          }
+          },
+          "description": "The unlocks produced by this progression result."
         }
       },
       "description": "The public CompletionOutcome JSON contract, independent of storage and domain behavior."
@@ -371,17 +414,21 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "The identifier of the represented resource."
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "The human-readable name."
         },
         "revision": {
           "type": "integer",
+          "description": "The immutable resource revision.",
           "format": "int32"
         },
         "archived": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the selected definition is archived."
         }
       },
       "description": "The public CustomSkill JSON contract, independent of storage and domain behavior."
@@ -397,17 +444,21 @@
       "properties": {
         "occurrenceId": {
           "type": "string",
+          "description": "The occurrence identifier.",
           "format": "uuid"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "The human-readable title."
         },
         "deadline": {
           "type": "string",
+          "description": "The occurrence deadline.",
           "format": "date-time"
         },
         "becomesMissed": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether this transition marks the occurrence missed."
         }
       },
       "description": "The public DeadlineChange JSON contract, independent of storage and domain behavior."
@@ -433,27 +484,33 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "The identifier of the represented resource."
         },
         "kind": {
-          "type": "string"
+          "type": "string",
+          "description": "The event or requirement classification."
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "The human-readable name."
         },
         "count": {
           "type": "integer",
+          "description": "The number of matching items.",
           "format": "int32"
         },
         "requiredCount": {
           "type": "integer",
+          "description": "The count required to satisfy the requirement.",
           "format": "int32"
         },
         "requiredRank": {
           "$ref": "#/components/schemas/Rank"
         },
         "earned": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "The experience earned by this calculation."
         }
       },
       "description": "The public Entitlement JSON contract, independent of storage and domain behavior."
@@ -474,7 +531,8 @@
       "type": "object",
       "properties": {
         "zone": {
-          "type": "string"
+          "type": "string",
+          "description": "The applicable account time zone."
         }
       },
       "description": "Initial account timezone selected from the device, validated against TZDB."
@@ -487,10 +545,12 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "The identifier of the represented resource."
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "The human-readable name."
         }
       },
       "description": "The public NamedItem JSON contract, independent of storage and domain behavior."
@@ -510,6 +570,7 @@
       "properties": {
         "id": {
           "type": "string",
+          "description": "The identifier of the represented resource.",
           "format": "uuid"
         },
         "quest": {
@@ -517,23 +578,28 @@
         },
         "dueDate": {
           "type": "string",
+          "description": "The due date interpreted in the applicable account time zone.",
           "nullable": true
         },
         "deadline": {
           "type": "string",
+          "description": "The occurrence deadline.",
           "format": "date-time",
           "nullable": true
         },
         "acceptedAt": {
           "type": "string",
+          "description": "The instant the offered quest was accepted.",
           "format": "date-time"
         },
         "plannedTime": {
           "type": "string",
+          "description": "The planned occurrence time.",
           "nullable": true
         },
         "parentId": {
           "type": "string",
+          "description": "The parent resource identifier, when present.",
           "format": "uuid",
           "nullable": true
         },
@@ -571,6 +637,7 @@
       "properties": {
         "seriesId": {
           "type": "string",
+          "description": "The recurring quest series identifier.",
           "format": "uuid",
           "nullable": true
         },
@@ -590,6 +657,7 @@
               "nullable": true
             }
           ],
+          "description": "The event sequence number.",
           "format": "int32",
           "nullable": true
         },
@@ -609,19 +677,23 @@
               "nullable": true
             }
           ],
+          "description": "The version of the recurrence schedule.",
           "format": "int32",
           "nullable": true
         },
         "frozenAt": {
           "type": "string",
+          "description": "The instant the accepted terms were frozen.",
           "format": "date-time",
           "nullable": true
         },
         "individuallyFrozen": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether this occurrence has individually frozen terms."
         },
         "abandonedAt": {
           "type": "string",
+          "description": "The instant the occurrence was abandoned.",
           "format": "date-time",
           "nullable": true
         },
@@ -641,23 +713,28 @@
               "nullable": true
             }
           ],
+          "description": "The loss retained in the accepted terms.",
           "format": "int32",
           "nullable": true
         },
         "lossCategoryId": {
           "type": "string",
+          "description": "The category to which the loss applies.",
           "nullable": true
         },
         "unaccepted": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the occurrence remains unaccepted."
         },
         "sourceAnchorId": {
           "type": "string",
+          "description": "The source recorded-clock anchor identifier.",
           "format": "uuid",
           "nullable": true
         },
         "deadlineZone": {
           "type": "string",
+          "description": "The time zone used to interpret the deadline.",
           "nullable": true
         }
       },
@@ -693,7 +770,8 @@
           ]
         },
         "canUndo": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the completion can currently be undone."
         },
         "planned": {
           "oneOf": [
@@ -720,14 +798,17 @@
       "type": "object",
       "properties": {
         "categoryId": {
-          "type": "string"
+          "type": "string",
+          "description": "The category identifier."
         },
         "startedAt": {
           "type": "string",
+          "description": "The beginning timestamp.",
           "format": "date-time"
         },
         "endedAt": {
           "type": "string",
+          "description": "The end timestamp, when present.",
           "format": "date-time",
           "nullable": true
         }
@@ -746,21 +827,26 @@
       "properties": {
         "occurrenceId": {
           "type": "string",
+          "description": "The occurrence identifier.",
           "format": "uuid"
         },
         "categoryId": {
-          "type": "string"
+          "type": "string",
+          "description": "The category identifier."
         },
         "lockedLoss": {
           "type": "integer",
+          "description": "The loss retained in the accepted terms.",
           "format": "int32"
         },
         "actualLoss": {
           "type": "integer",
+          "description": "The loss applied after the domain calculation.",
           "format": "int64"
         },
         "at": {
           "type": "string",
+          "description": "The instant associated with this event or calculation.",
           "format": "date-time"
         }
       },
@@ -777,20 +863,25 @@
       "type": "object",
       "properties": {
         "requested": {
-          "type": "string"
+          "type": "string",
+          "description": "The value requested by the caller."
         },
         "resolved": {
-          "type": "string"
+          "type": "string",
+          "description": "The resolved value or state."
         },
         "instant": {
           "type": "string",
+          "description": "The resolved instant.",
           "format": "date-time"
         },
         "adjusted": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the requested value was adjusted."
         },
         "repeated": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether this operation repeats an already recorded command."
         }
       },
       "description": "The public PlannedMoment JSON contract, independent of storage and domain behavior."
@@ -813,23 +904,28 @@
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "The account interests included in this snapshot."
         },
         "assessments": {
           "type": "object",
           "additionalProperties": {
             "$ref": "#/components/schemas/Experience"
-          }
+          },
+          "description": "The skill assessments included in this result."
         },
         "onboardingComplete": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the account has completed onboarding."
         },
         "badgeId": {
           "type": "string",
+          "description": "The badge identifier.",
           "nullable": true
         },
         "frameId": {
           "type": "string",
+          "description": "The recorded-clock frame identifier.",
           "nullable": true
         },
         "customSkills": {
@@ -837,6 +933,7 @@
           "items": {
             "$ref": "#/components/schemas/CustomSkill"
           },
+          "description": "The account-defined skills in this snapshot.",
           "nullable": true
         },
         "assessmentHistory": {
@@ -844,6 +941,7 @@
           "items": {
             "$ref": "#/components/schemas/SkillAssessment"
           },
+          "description": "The retained skill assessment history.",
           "nullable": true
         },
         "zoneHistory": {
@@ -851,21 +949,26 @@
           "items": {
             "$ref": "#/components/schemas/ZoneChange"
           },
+          "description": "The retained account time-zone transitions.",
           "nullable": true
         },
         "expiryWarnings": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "The warnings for expiring scheduled occurrences."
         },
         "characterName": {
           "type": "string",
+          "description": "The account character display name.",
           "nullable": true
         },
         "portraitId": {
           "type": "string",
+          "description": "The selected character portrait identifier, when present.",
           "nullable": true
         },
         "avatarCode": {
           "type": "string",
+          "description": "The selected character avatar code, when present.",
           "nullable": true
         }
       },
@@ -922,17 +1025,21 @@
       "properties": {
         "id": {
           "type": "string",
+          "description": "The identifier of the represented resource.",
           "format": "uuid"
         },
         "expectedVersion": {
-          "type": "string"
+          "type": "string",
+          "description": "The version required by optimistic concurrency validation."
         },
         "expectedDraftRevisionId": {
           "type": "string",
+          "description": "The draft revision the caller expects to modify.",
           "format": "uuid"
         },
         "published": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the system quest is published for discovery."
         }
       },
       "description": "Review of one saved draft and head version, to publish or withdraw future discovery."
@@ -955,16 +1062,20 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "The identifier of the represented resource."
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "The human-readable title."
         },
         "criterion": {
-          "type": "string"
+          "type": "string",
+          "description": "The criterion evaluated by the requirement."
         },
         "categoryId": {
-          "type": "string"
+          "type": "string",
+          "description": "The category identifier."
         },
         "rank": {
           "$ref": "#/components/schemas/Rank"
@@ -976,27 +1087,33 @@
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/Share"
-          }
+          },
+          "description": "The character attributes in this snapshot."
         },
         "skills": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/Share"
-          }
+          },
+          "description": "The skills included in this snapshot."
         },
         "isCustom": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether this resource is account-defined."
         },
         "description": {
           "type": "string",
+          "description": "The human-readable description.",
           "nullable": true
         },
         "penaltyPercent": {
           "type": "integer",
+          "description": "The penalty percentage in the quest terms.",
           "format": "int32"
         },
         "baseXp": {
           "type": "integer",
+          "description": "The experience before reward modifiers.",
           "format": "int32"
         }
       },
@@ -1011,26 +1128,32 @@
       "properties": {
         "operationId": {
           "type": "string",
+          "description": "The operation identifier used for idempotency.",
           "format": "uuid"
         },
         "action": {
-          "type": "string"
+          "type": "string",
+          "description": "The requested command action."
         },
         "occurrenceId": {
           "type": "string",
+          "description": "The occurrence identifier.",
           "format": "uuid",
           "nullable": true
         },
         "questId": {
           "type": "string",
+          "description": "The quest identifier.",
           "nullable": true
         },
         "dueDate": {
           "type": "string",
+          "description": "The due date interpreted in the applicable account time zone.",
           "nullable": true
         },
         "completionId": {
           "type": "string",
+          "description": "The completion identifier.",
           "format": "uuid",
           "nullable": true
         },
@@ -1063,11 +1186,13 @@
               "nullable": true
             }
           ],
+          "description": "The revision required by optimistic concurrency validation.",
           "format": "int32",
           "nullable": true
         },
         "skillId": {
           "type": "string",
+          "description": "The skill identifier.",
           "nullable": true
         },
         "experience": {
@@ -1088,23 +1213,28 @@
           "items": {
             "type": "string"
           },
+          "description": "The account interests included in this snapshot.",
           "nullable": true
         },
         "plannedTime": {
           "type": "string",
+          "description": "The planned occurrence time.",
           "nullable": true
         },
         "parentId": {
           "type": "string",
+          "description": "The parent resource identifier, when present.",
           "format": "uuid",
           "nullable": true
         },
         "rewardId": {
           "type": "string",
+          "description": "The reward identifier.",
           "nullable": true
         },
         "seriesId": {
           "type": "string",
+          "description": "The recurring quest series identifier.",
           "format": "uuid",
           "nullable": true
         },
@@ -1137,15 +1267,18 @@
               "nullable": true
             }
           ],
+          "description": "The number of cadence units between recurrences.",
           "format": "int32",
           "nullable": true
         },
         "categoryId": {
           "type": "string",
+          "description": "The category identifier.",
           "nullable": true
         },
         "confirmPenalty": {
           "type": "boolean",
+          "description": "Whether the caller confirms the displayed penalty.",
           "default": false
         },
         "acceptedLoss": {
@@ -1164,6 +1297,7 @@
               "nullable": true
             }
           ],
+          "description": "The loss fixed in the accepted quest terms.",
           "format": "int32",
           "nullable": true
         },
@@ -1182,6 +1316,7 @@
         },
         "skillName": {
           "type": "string",
+          "description": "The human-readable skill name.",
           "nullable": true
         },
         "acceptedQuest": {
@@ -1199,30 +1334,37 @@
         },
         "newZone": {
           "type": "string",
+          "description": "The requested new account time zone.",
           "nullable": true
         },
         "expectedZone": {
           "type": "string",
+          "description": "The account time zone the caller expects.",
           "nullable": true
         },
         "confirmZoneChange": {
           "type": "boolean",
+          "description": "Whether the caller confirms the time-zone change.",
           "default": false
         },
         "expiryWarnings": {
           "type": "boolean",
+          "description": "The warnings for expiring scheduled occurrences.",
           "nullable": true
         },
         "characterName": {
           "type": "string",
+          "description": "The account character display name.",
           "nullable": true
         },
         "portraitId": {
           "type": "string",
+          "description": "The selected character portrait identifier, when present.",
           "nullable": true
         },
         "avatarCode": {
           "type": "string",
+          "description": "The selected character avatar code, when present.",
           "nullable": true
         }
       },
@@ -1241,10 +1383,12 @@
         },
         "revision": {
           "type": "integer",
+          "description": "The immutable resource revision.",
           "format": "int32"
         },
         "archived": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the selected definition is archived."
         }
       },
       "description": "The public QuestDefinition JSON contract, independent of storage and domain behavior."
@@ -1266,18 +1410,22 @@
       "properties": {
         "schemaVersion": {
           "type": "integer",
+          "description": "The version of this serialized schema.",
           "format": "int32"
         },
         "generatedAt": {
           "type": "string",
+          "description": "The instant this snapshot was generated.",
           "format": "date-time"
         },
         "snapshotCutoff": {
           "type": "string",
+          "description": "The instant delimiting the retained snapshot.",
           "format": "date-time"
         },
         "accountId": {
           "type": "string",
+          "description": "The owning account identifier.",
           "format": "uuid"
         },
         "state": {
@@ -1287,28 +1435,33 @@
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/QuestDefinition"
-          }
+          },
+          "description": "The retained immutable quest definition revisions."
         },
         "completions": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/Completion"
-          }
+          },
+          "description": "The completion records included in this snapshot."
         },
         "undos": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/UndoEvent"
-          }
+          },
+          "description": "The retained undo events included in this snapshot."
         },
         "notice": {
-          "type": "string"
+          "type": "string",
+          "description": "The notice associated with this result."
         },
         "savedPlaces": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/SavedPlace"
-          }
+          },
+          "description": "The account saved places included in this snapshot."
         }
       },
       "description": "The public QuestExport JSON contract, independent of storage and domain behavior."
@@ -1327,16 +1480,20 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "The identifier of the represented resource."
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "The human-readable title."
         },
         "criterion": {
-          "type": "string"
+          "type": "string",
+          "description": "The criterion evaluated by the requirement."
         },
         "categoryId": {
-          "type": "string"
+          "type": "string",
+          "description": "The category identifier."
         },
         "rank": {
           "$ref": "#/components/schemas/Rank"
@@ -1348,20 +1505,24 @@
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/ShareInput"
-          }
+          },
+          "description": "The character attributes in this snapshot."
         },
         "skills": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/ShareInput"
-          }
+          },
+          "description": "The skills included in this snapshot."
         },
         "isCustom": {
           "type": "boolean",
+          "description": "Whether this resource is account-defined.",
           "default": false
         },
         "description": {
           "type": "string",
+          "description": "The human-readable description.",
           "nullable": true
         },
         "penaltyPercent": {
@@ -1374,6 +1535,7 @@
               "type": "string"
             }
           ],
+          "description": "The penalty percentage in the quest terms.",
           "format": "int32",
           "default": 0
         },
@@ -1387,6 +1549,7 @@
               "type": "string"
             }
           ],
+          "description": "The experience before reward modifiers.",
           "format": "int32",
           "default": 0
         }
@@ -1412,45 +1575,55 @@
       "properties": {
         "id": {
           "type": "string",
+          "description": "The identifier of the represented resource.",
           "format": "uuid"
         },
         "quest": {
           "$ref": "#/components/schemas/Quest"
         },
         "anchor": {
-          "type": "string"
+          "type": "string",
+          "description": "The recorded-clock anchor associated with the operation."
         },
         "cadence": {
           "$ref": "#/components/schemas/Cadence"
         },
         "interval": {
           "type": "integer",
+          "description": "The number of cadence units between recurrences.",
           "format": "int32"
         },
         "version": {
           "type": "integer",
+          "description": "The version of the represented state or resource.",
           "format": "int32"
         },
         "nextSequence": {
           "type": "integer",
+          "description": "The next event sequence number.",
           "format": "int32"
         },
         "pauseDays": {
           "type": "integer",
+          "description": "The requested pause duration in days.",
           "format": "int32"
         },
         "stopped": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether this recurring series is stopped."
         },
         "plannedTime": {
           "type": "string",
+          "description": "The planned occurrence time.",
           "nullable": true
         },
         "autoAcceptPenalty": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the caller accepts the associated penalty automatically."
         },
         "effectiveAt": {
           "type": "string",
+          "description": "The instant at which this state takes effect.",
           "format": "date-time",
           "nullable": true
         }
@@ -1481,42 +1654,50 @@
       "type": "object",
       "properties": {
         "zone": {
-          "type": "string"
+          "type": "string",
+          "description": "The applicable account time zone."
         },
         "today": {
-          "type": "string"
+          "type": "string",
+          "description": "The current date in the account time zone."
         },
         "occurrences": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/OccurrenceView"
-          }
+          },
+          "description": "The occurrences included in this snapshot."
         },
         "overallXp": {
           "type": "integer",
+          "description": "The total character experience.",
           "format": "int64"
         },
         "overallLevel": {
           "type": "integer",
+          "description": "The overall character progression level.",
           "format": "int32"
         },
         "categories": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/Balance"
-          }
+          },
+          "description": "The categories included in this snapshot."
         },
         "attributes": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/Balance"
-          }
+          },
+          "description": "The character attributes in this snapshot."
         },
         "skills": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/Balance"
-          }
+          },
+          "description": "The skills included in this snapshot."
         },
         "rank": {
           "$ref": "#/components/schemas/RankProgress"
@@ -1525,19 +1706,22 @@
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/Streak"
-          }
+          },
+          "description": "The streak projections included in this snapshot."
         },
         "entitlements": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/Entitlement"
-          }
+          },
+          "description": "The account entitlements in this snapshot."
         },
         "definitions": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/QuestDefinition"
-          }
+          },
+          "description": "The quest definitions included in this snapshot."
         },
         "profile": {
           "$ref": "#/components/schemas/PlayerProfile"
@@ -1549,13 +1733,15 @@
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/PenaltyAssessment"
-          }
+          },
+          "description": "The penalties included in this result."
         },
         "ledger": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/XpEntry"
-          }
+          },
+          "description": "The retained experience ledger entries."
         },
         "futureWarnings": {
           "type": "array",
@@ -1563,6 +1749,7 @@
             "type": "string",
             "format": "date-time"
           },
+          "description": "The warnings concerning future scheduled occurrences.",
           "nullable": true
         },
         "completionOutcome": {
@@ -1621,10 +1808,12 @@
         },
         "qualifyingCategories": {
           "type": "integer",
+          "description": "The categories that satisfy the requirement.",
           "format": "int32"
         },
         "total": {
           "type": "integer",
+          "description": "The total value represented by this result.",
           "format": "int64"
         }
       },
@@ -1644,14 +1833,17 @@
         },
         "count": {
           "type": "integer",
+          "description": "The number of matching items.",
           "format": "int32"
         },
         "floor": {
           "type": "integer",
+          "description": "The minimum value used by this calculation.",
           "format": "int64"
         },
         "total": {
           "type": "integer",
+          "description": "The total value represented by this result.",
           "format": "int64"
         }
       },
@@ -1665,6 +1857,7 @@
       "properties": {
         "id": {
           "type": "string",
+          "description": "The system quest identifier.",
           "format": "uuid"
         },
         "before": {
@@ -1683,6 +1876,7 @@
               "nullable": true
             }
           ],
+          "description": "The exclusive revision cursor; null requests the newest page.",
           "format": "int32",
           "nullable": true
         }
@@ -1701,10 +1895,12 @@
       "properties": {
         "anchorId": {
           "type": "string",
+          "description": "The recorded-clock anchor identifier.",
           "format": "uuid"
         },
         "bootId": {
           "type": "string",
+          "description": "The device boot identifier used by recorded-clock evidence.",
           "format": "uuid"
         },
         "ordinal": {
@@ -1717,6 +1913,7 @@
               "type": "string"
             }
           ],
+          "description": "The position within the ordered series.",
           "format": "int64"
         },
         "elapsedMilliseconds": {
@@ -1729,10 +1926,12 @@
               "type": "string"
             }
           ],
+          "description": "The device monotonic elapsed time in milliseconds.",
           "format": "double"
         },
         "deviceUtc": {
           "type": "string",
+          "description": "The device-reported UTC instant.",
           "format": "date-time"
         }
       },
@@ -1745,7 +1944,8 @@
       "type": "object",
       "properties": {
         "removed": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the resource was removed."
         }
       },
       "description": "Confirmation that a private saved place is absent."
@@ -1759,6 +1959,7 @@
       "properties": {
         "id": {
           "type": "string",
+          "description": "The identifier of the represented resource.",
           "format": "uuid"
         },
         "expectedRevision": {
@@ -1771,6 +1972,7 @@
               "type": "string"
             }
           ],
+          "description": "The revision required by optimistic concurrency validation.",
           "format": "int32"
         }
       },
@@ -1796,51 +1998,64 @@
       "properties": {
         "id": {
           "type": "string",
+          "description": "The identifier of the represented resource.",
           "format": "uuid"
         },
         "placeKey": {
-          "type": "string"
+          "type": "string",
+          "description": "The stable saved-place key."
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "The human-readable name."
         },
         "kind": {
-          "type": "string"
+          "type": "string",
+          "description": "The event or requirement classification."
         },
         "categoryId": {
-          "type": "string"
+          "type": "string",
+          "description": "The category identifier."
         },
         "latitude": {
           "type": "number",
+          "description": "The place latitude in degrees.",
           "format": "double"
         },
         "longitude": {
           "type": "number",
+          "description": "The place longitude in degrees.",
           "format": "double"
         },
         "notes": {
-          "type": "string"
+          "type": "string",
+          "description": "The caller-supplied notes."
         },
         "visitedAt": {
           "type": "string",
+          "description": "The recorded visit timestamp, when present.",
           "format": "date-time",
           "nullable": true
         },
         "questOccurrenceId": {
           "type": "string",
+          "description": "The linked quest occurrence identifier, when present.",
           "format": "uuid",
           "nullable": true
         },
         "revision": {
           "type": "integer",
+          "description": "The immutable resource revision.",
           "format": "int32"
         },
         "createdAt": {
           "type": "string",
+          "description": "The resource creation timestamp.",
           "format": "date-time"
         },
         "modifiedAt": {
           "type": "string",
+          "description": "The most recent modification timestamp.",
           "format": "date-time"
         }
       },
@@ -1864,19 +2079,24 @@
       "properties": {
         "id": {
           "type": "string",
+          "description": "The identifier of the represented resource.",
           "format": "uuid"
         },
         "placeKey": {
-          "type": "string"
+          "type": "string",
+          "description": "The stable saved-place key."
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "The human-readable name."
         },
         "kind": {
-          "type": "string"
+          "type": "string",
+          "description": "The event or requirement classification."
         },
         "categoryId": {
-          "type": "string"
+          "type": "string",
+          "description": "The category identifier."
         },
         "latitude": {
           "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
@@ -1888,6 +2108,7 @@
               "type": "string"
             }
           ],
+          "description": "The place latitude in degrees.",
           "format": "double"
         },
         "longitude": {
@@ -1900,16 +2121,20 @@
               "type": "string"
             }
           ],
+          "description": "The place longitude in degrees.",
           "format": "double"
         },
         "notes": {
-          "type": "string"
+          "type": "string",
+          "description": "The caller-supplied notes."
         },
         "visited": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the saved place has been visited."
         },
         "questOccurrenceId": {
           "type": "string",
+          "description": "The linked quest occurrence identifier, when present.",
           "format": "uuid",
           "nullable": true
         },
@@ -1923,6 +2148,7 @@
               "type": "string"
             }
           ],
+          "description": "The revision required by optimistic concurrency validation.",
           "format": "int32"
         }
       },
@@ -1937,6 +2163,7 @@
       "properties": {
         "id": {
           "type": "string",
+          "description": "The identifier of the represented resource.",
           "format": "uuid"
         },
         "quest": {
@@ -1944,6 +2171,7 @@
         },
         "expectedVersion": {
           "type": "string",
+          "description": "The version required by optimistic concurrency validation.",
           "nullable": true
         }
       },
@@ -1962,22 +2190,26 @@
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/QuestSeries"
-          }
+          },
+          "description": "The recurring quest series included in this result."
         },
         "pauses": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/PauseWindow"
-          }
+          },
+          "description": "The retained pause intervals."
         },
         "pausedCategories": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "The categories currently paused."
         },
         "accountPaused": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the account is paused."
         }
       },
       "description": "The public ScheduleState JSON contract, independent of storage and domain behavior."
@@ -1987,10 +2219,12 @@
       "properties": {
         "query": {
           "type": "string",
+          "description": "The query text or query parameters.",
           "nullable": true
         },
         "after": {
           "type": "string",
+          "description": "The pagination position after the last included item.",
           "nullable": true
         }
       },
@@ -2006,13 +2240,16 @@
       "type": "object",
       "properties": {
         "userId": {
-          "type": "string"
+          "type": "string",
+          "description": "The canonical account user identifier."
         },
         "suspended": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether account access is suspended."
         },
         "reason": {
-          "type": "string"
+          "type": "string",
+          "description": "The human-readable reason associated with this result."
         },
         "expectedRevision": {
           "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -2024,6 +2261,7 @@
               "type": "string"
             }
           ],
+          "description": "The revision required by optimistic concurrency validation.",
           "format": "int32"
         }
       },
@@ -2037,10 +2275,12 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "The identifier of the represented resource."
         },
         "basisPoints": {
           "type": "integer",
+          "description": "The rate expressed in basis points.",
           "format": "int32"
         }
       },
@@ -2054,7 +2294,8 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "The identifier of the represented resource."
         },
         "basisPoints": {
           "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -2066,6 +2307,7 @@
               "type": "string"
             }
           ],
+          "description": "The rate expressed in basis points.",
           "format": "int32"
         }
       },
@@ -2080,13 +2322,15 @@
       "type": "object",
       "properties": {
         "skillId": {
-          "type": "string"
+          "type": "string",
+          "description": "The skill identifier."
         },
         "experience": {
           "$ref": "#/components/schemas/Experience"
         },
         "at": {
           "type": "string",
+          "description": "The instant associated with this event or calculation.",
           "format": "date-time"
         }
       },
@@ -2102,17 +2346,21 @@
       "type": "object",
       "properties": {
         "categoryId": {
-          "type": "string"
+          "type": "string",
+          "description": "The category identifier."
         },
         "days": {
           "type": "integer",
+          "description": "The number of days involved in this schedule or pause.",
           "format": "int32"
         },
         "qualifiedToday": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the account qualified on the current local date."
         },
         "rate": {
           "type": "integer",
+          "description": "The rate used by this calculation.",
           "format": "int32"
         }
       },
@@ -2131,26 +2379,32 @@
       "properties": {
         "id": {
           "type": "string",
+          "description": "The identifier of the represented resource.",
           "format": "uuid"
         },
         "deviceId": {
           "type": "string",
+          "description": "The device identifier used by recorded-clock evidence.",
           "format": "uuid"
         },
         "bootId": {
           "type": "string",
+          "description": "The device boot identifier used by recorded-clock evidence.",
           "format": "uuid"
         },
         "serverUtc": {
           "type": "string",
+          "description": "The server UTC instant used by recorded-clock evidence.",
           "format": "date-time"
         },
         "deviceUtc": {
           "type": "string",
+          "description": "The device-reported UTC instant.",
           "format": "date-time"
         },
         "recordedTimeFloor": {
           "type": "string",
+          "description": "The lower bound for an accepted recorded instant.",
           "format": "date-time",
           "nullable": true
         }
@@ -2167,13 +2421,15 @@
       "properties": {
         "id": {
           "type": "string",
+          "description": "The system quest identifier.",
           "format": "uuid"
         },
         "revisions": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/AdminSystemQuestRevision"
-          }
+          },
+          "description": "The newest-first bounded page of retained revisions."
         },
         "nextBefore": {
           "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -2191,6 +2447,7 @@
               "nullable": true
             }
           ],
+          "description": "The exclusive cursor for the next page, when present.",
           "format": "int32",
           "nullable": true
         }
@@ -2208,7 +2465,8 @@
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/AdminSystemQuest"
-          }
+          },
+          "description": "The quests included in this snapshot."
         },
         "catalog": {
           "$ref": "#/components/schemas/CatalogResponse"
@@ -2226,14 +2484,17 @@
       "properties": {
         "id": {
           "type": "string",
+          "description": "The identifier of the represented resource.",
           "format": "uuid"
         },
         "completionId": {
           "type": "string",
+          "description": "The completion identifier.",
           "format": "uuid"
         },
         "recordedAt": {
           "type": "string",
+          "description": "The retained timestamp for this event.",
           "format": "date-time"
         }
       },
@@ -2252,24 +2513,30 @@
       "properties": {
         "eventId": {
           "type": "string",
+          "description": "The event identifier.",
           "format": "uuid"
         },
         "occurrenceId": {
           "type": "string",
+          "description": "The occurrence identifier.",
           "format": "uuid"
         },
         "at": {
           "type": "string",
+          "description": "The instant associated with this event or calculation.",
           "format": "date-time"
         },
         "track": {
-          "type": "string"
+          "type": "string",
+          "description": "The progression track associated with this operation."
         },
         "trackId": {
-          "type": "string"
+          "type": "string",
+          "description": "The progression track identifier."
         },
         "amount": {
           "type": "integer",
+          "description": "The amount applied by this operation.",
           "format": "int64"
         }
       },
@@ -2284,13 +2551,16 @@
       "type": "object",
       "properties": {
         "from": {
-          "type": "string"
+          "type": "string",
+          "description": "The beginning of the represented range or transition."
         },
         "to": {
-          "type": "string"
+          "type": "string",
+          "description": "The end of the represented range or transition."
         },
         "at": {
           "type": "string",
+          "description": "The instant associated with this event or calculation.",
           "format": "date-time"
         }
       },
@@ -2305,16 +2575,19 @@
       "type": "object",
       "properties": {
         "previousZone": {
-          "type": "string"
+          "type": "string",
+          "description": "The preceding account time zone."
         },
         "zone": {
-          "type": "string"
+          "type": "string",
+          "description": "The applicable account time zone."
         },
         "deadlines": {
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/DeadlineChange"
-          }
+          },
+          "description": "The deadlines included in this result."
         }
       },
       "description": "The public ZonePreview JSON contract, independent of storage and domain behavior."

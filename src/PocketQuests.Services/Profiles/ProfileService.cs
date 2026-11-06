@@ -13,10 +13,11 @@ namespace PocketQuests.Services.Profiles;
 
 /// <summary>Owns explicit account creation; reads never create profiles.</summary>
 /// <param name="data">Scoped account persistence.</param>
+/// <param name="accountState">Scoped lifecycle and retained-state reads.</param>
 /// <param name="quests">Shared operation access checks and source reads.</param>
 /// <param name="currentAccount">Authenticated identity.</param>
 /// <param name="clock">Host time.</param>
-public sealed class ProfileService(IAccountDataService data, QuestService quests, ICurrentAccount currentAccount, TimeProvider clock) : IProfileService
+public sealed class ProfileService(IAccountDataService data, IAccountStateDataService accountState, QuestService quests, ICurrentAccount currentAccount, TimeProvider clock) : IProfileService
 {
     /// <inheritdoc />
     public async Task<QuestState> Initialize(InitializeProfile request, CancellationToken token = default)
@@ -40,7 +41,7 @@ public sealed class ProfileService(IAccountDataService data, QuestService quests
             var account = AccountMapping.Create(Guid.NewGuid(), identity, canonicalZone, now.ToUniversalTime());
             account.CreatedAt = account.ModifiedAt = now.ToUniversalTime();
             await data.AddAsync(account, cancellationToken);
-            var barrier = await data.GetLifecycle(identity.Subject, cancellationToken);
+            var barrier = await accountState.GetLifecycle(identity.Subject, cancellationToken);
             if (barrier is not null)
                 barrier.AccountId = account.Id;
             return true;

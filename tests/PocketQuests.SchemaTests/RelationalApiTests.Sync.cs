@@ -18,7 +18,7 @@ using System.Net.Http.Json;
 
 namespace PocketQuests.SchemaTests;
 
-/// <summary>HTTP continuation, durable clock and private lifecycle boundaries.</summary>
+/// <content>HTTP continuation, durable clock and private lifecycle boundaries.</content>
 public sealed partial class RelationalApiTests
 {
     /// <summary>The enabled real hosted worker clears a retained backlog without any request-side write.</summary>

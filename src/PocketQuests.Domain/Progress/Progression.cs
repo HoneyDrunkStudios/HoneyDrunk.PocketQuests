@@ -23,7 +23,8 @@ public static class Progression
     /// <summary>Gets the global-rank breadth and total gates.</summary>
     public static ImmutableArray<RankRule> Rules { get; } = [
         new(Rank.F, 0, 0, 0), new(Rank.E, 2, 70, 300), new(Rank.D, 3, 250, 1800), new(Rank.C, 4, 600, 6000),
-        new(Rank.B, 5, 1300, 16000), new(Rank.A, 7, 3000, 45000), new(Rank.S, 10, 9000, 150000)];
+        new(Rank.B, 5, 1300, 16000), new(Rank.A, 7, 3000, 45000), new(Rank.S, 10, 9000, 150000)
+    ];
 
     /// <summary>Calculates the whole-number base reward for rank and effort.</summary>
     /// <param name="rank">The rank whose calibrated rule applies.</param>
@@ -137,7 +138,8 @@ public static class Progression
             E("B01", "Badge", "Curious Explorer", Count("c10"), 3, Rank.F),
             E("B02", "Badge", "Everyday Care", Count("c06"), 10, Rank.F),
             E("F01", "Frame", "Open Notebook", Count("c02"), 10, Rank.E),
-            E("F02", "Frame", "Quiet Horizon", Count("c07"), 10, Rank.D)];
+            E("F02", "Frame", "Quiet Horizon", Count("c07"), 10, Rank.D)
+        ];
         int Count(string id) => quests.Count(q => q.CategoryId == id);
         Entitlement E(string id, string kind, string name, int count, int required, Rank minimum) =>
             new($"PQ-CAT-{id}", kind, name, count, required, minimum, count >= required && rank >= minimum);

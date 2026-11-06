@@ -9,7 +9,7 @@ using System.Net.Http.Json;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Real SQL and authenticated two-service regressions for definitions and onboarding.</summary>
+/// <content>Real SQL and authenticated two-service regressions for definitions and onboarding.</content>
 public sealed partial class SqlApiTests
 {
     /// <summary>Definition management preserves unfinished commitments and existing eligibility/revision rules.</summary>

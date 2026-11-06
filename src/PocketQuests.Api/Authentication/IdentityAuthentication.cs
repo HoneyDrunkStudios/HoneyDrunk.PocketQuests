@@ -10,6 +10,12 @@ using System.Text.Encodings.Web;
 namespace PocketQuests.Api.Authentication;
 
 /// <summary>Resolves bearer credentials exclusively through the shared Identity boundary.</summary>
+/// <param name="options">The authentication scheme options.</param>
+/// <param name="logger">The logger for this component.</param>
+/// <param name="encoder">The URL encoder used by the authentication handler.</param>
+/// <param name="identity">The Identity client used to validate account access.</param>
+/// <param name="lifecycle">The scoped account lifecycle service.</param>
+/// <param name="access">The account access restriction service.</param>
 public sealed class IdentityAuthentication(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, IdentityClient identity, ILifecycleService lifecycle, IAccountAccessService access)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {

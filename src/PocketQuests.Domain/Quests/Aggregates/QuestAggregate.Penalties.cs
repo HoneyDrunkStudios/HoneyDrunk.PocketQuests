@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace PocketQuests.Domain.Quests.Aggregates;
 
-/// <summary>Explicitly accepted category losses and deterministic chronological replay.</summary>
+/// <content>Explicitly accepted category losses and deterministic chronological replay.</content>
 public sealed partial class QuestAggregate
 {
     private static int Loss(Quest quest) => ((quest.BaseXp * quest.PenaltyPercent) + 50) / 100;

@@ -29,6 +29,7 @@ public sealed class QuestService : IQuestService
 {
     internal const int ReconciliationLimit = 100;
     private readonly IAccountDataService data;
+    private readonly IAccountStateDataService accountState;
     private readonly ICurrentAccount currentAccount;
     private readonly TimeProvider clock;
     private readonly ProfileHistoryService profiles;
@@ -41,6 +42,7 @@ public sealed class QuestService : IQuestService
 
     internal QuestService(
         IAccountDataService data,
+        IAccountStateDataService accountState,
         ICurrentAccount currentAccount,
         TimeProvider clock,
         ProfileHistoryService profiles,
@@ -52,6 +54,7 @@ public sealed class QuestService : IQuestService
         PocketQuests.Data.DataServices.Quests.ISystemQuestDataService templates)
     {
         this.data = data;
+        this.accountState = accountState;
         this.currentAccount = currentAccount;
         this.clock = clock;
         this.profiles = profiles;
@@ -101,7 +104,7 @@ public sealed class QuestService : IQuestService
         {
             await RequireAccess(identity, false, cancellationToken);
             var account = await Account(identity, cancellationToken);
-            var rows = await data.ReadCurrentState(account.Id, cancellationToken);
+            var rows = await accountState.ReadCurrentState(account.Id, cancellationToken);
             var aggregate = Current(account, rows);
             var at = QuestClock.Max(now, account.LastRecordedAt);
             if (aggregate.Reconcile(at, ReconciliationLimit).HasMore)
@@ -117,8 +120,8 @@ public sealed class QuestService : IQuestService
             await data.AcquireCommandLock(identity.Subject, token);
         if (await data.IsAccessSuspended(identity.Subject, token))
             throw new UnauthorizedAccessException("Pocket Quests access is suspended.");
-        var marker = await data.GetErasure(identity.Subject, token);
-        var lifecycle = await data.GetLifecycle(identity.Subject, token);
+        var marker = await accountState.GetErasure(identity.Subject, token);
+        var lifecycle = await accountState.GetLifecycle(identity.Subject, token);
         if (marker is not null || (lifecycle is not null && lifecycle.StateCode != IdentityProtocol.Active))
             throw new UnauthorizedAccessException("Account lifecycle does not allow product access.");
     }
@@ -131,8 +134,8 @@ public sealed class QuestService : IQuestService
         var involved = change.Aggregate.Definitions.Select(row => row.Quest)
             .Concat(change.Aggregate.Occurrences.Select(row => row.Quest)).Concat(change.Aggregate.Schedule.Series.Select(row => row.Quest));
         var definitionIds = involved.Select(quest => QuestTermHistory.DefinitionId(change.Account.Id, quest)).Distinct().ToArray();
-        var retainedTerms = await data.ReadTerms(change.Account.Id, definitionIds, token);
-        var projections = await data.ReadProjections(change.Account.Id, token);
+        var retainedTerms = await accountState.ReadTerms(change.Account.Id, definitionIds, token);
+        var projections = await accountState.ReadProjections(change.Account.Id, token);
         await profiles.Record(change, rows, token);
         var terms = await definitions.Record(change, retainedTerms, token);
         var configurations = await series.Record(change, rows, terms, token);
@@ -161,7 +164,7 @@ public sealed class QuestService : IQuestService
 
     internal async Task StageLifecyclePause(AccountIdentity identity, AccountEntity account, DateTimeOffset pausedAt, DateTimeOffset now, CancellationToken token)
     {
-        var rows = await data.ReadCurrentState(account.Id, token);
+        var rows = await accountState.ReadCurrentState(account.Id, token);
         var aggregate = Current(account, rows);
         var command = new QuestCommand(Guid.NewGuid(), "$lifecycle-pause");
         var pending = aggregate.Apply(new(command.OperationId, QuestActions.Pause), pausedAt, 0);
@@ -188,16 +191,16 @@ public sealed class QuestService : IQuestService
     {
         await RequireAccess(identity, true, token);
         var account = await Account(identity, token);
-        var receipt = await data.GetReceipt(command.OperationId, token);
+        var receipt = await accountState.GetReceipt(command.OperationId, token);
         RequireMatchingReceipt(receipt, account, command, digest);
         if (receipt is not null)
         {
-            var retained = await data.ReadReplay(account.Id, receipt.AppliedMutationVersion, token);
+            var retained = await accountState.ReadReplay(account.Id, receipt.AppliedMutationVersion, token);
             var original = QuestReplay.Through(retained, account, QuestTerms.Read(retained), receipt.AppliedMutationVersion);
             return original.Aggregate.Project(receipt.ToOutcome().ProjectionAt) with { CompletionOutcome = original.Outcome };
         }
 
-        var rows = await data.ReadCurrentState(account.Id, token);
+        var rows = await accountState.ReadCurrentState(account.Id, token);
         var aggregate = Current(account, rows);
         var logicalNow = QuestClock.Max(now, account.LastRecordedAt);
         var reconciliation = aggregate.Reconcile(logicalNow, ReconciliationLimit);
@@ -209,7 +212,7 @@ public sealed class QuestService : IQuestService
             return null;
         }
 
-        var anchor = command.RecordedTime is { } proof ? await data.GetAnchor(account.Id, proof.AnchorId, token) : null;
+        var anchor = command.RecordedTime is { } proof ? await accountState.GetAnchor(account.Id, proof.AnchorId, token) : null;
         var anchored = await ReadAnchoredAggregate(account, command, anchor, token);
 
         var recordedAt = QuestClock.Resolve(account, command, aggregate, anchored, anchor, now, logicalNow);
@@ -231,7 +234,7 @@ public sealed class QuestService : IQuestService
     {
         if (anchor is null || command.Action != QuestActions.Complete)
             return null;
-        var retained = await data.ReadReplay(account.Id, anchor.IssuedMutationVersion, token);
+        var retained = await accountState.ReadReplay(account.Id, anchor.IssuedMutationVersion, token);
         return QuestReplay.Through(retained, account, QuestTerms.Read(retained), anchor.IssuedMutationVersion).Aggregate;
     }
 

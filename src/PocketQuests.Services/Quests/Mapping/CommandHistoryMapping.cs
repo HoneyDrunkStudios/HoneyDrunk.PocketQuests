@@ -51,8 +51,7 @@ internal static class CommandHistoryMapping
         var command = change.Command;
         var action = command.Action;
         var (system, custom) = action is QuestActions.SaveSkill or QuestActions.ArchiveSkill or QuestActions.AssessSkill ? QuestValues.Skill(command.SkillId!) : default;
-        target.QuestOccurrenceId = action is QuestActions.Accept or QuestActions.Complete or QuestActions.Undo or QuestActions.Plan or QuestActions.Link
-        or QuestActions.ResumeOccurrence or QuestActions.Abandon or QuestActions.AcceptOffer ? targetOccurrence?.Id : null;
+        target.QuestOccurrenceId = action is QuestActions.Accept or QuestActions.Complete or QuestActions.Undo or QuestActions.Plan or QuestActions.Link or QuestActions.ResumeOccurrence or QuestActions.Abandon or QuestActions.AcceptOffer ? targetOccurrence?.Id : null;
         target.QuestCompletionId = action == QuestActions.Undo ? command.CompletionId : null;
         target.QuestDefinitionRevisionId = quest is null ? null : termId;
         target.CompletionTermsRevisionId = action == QuestActions.Complete && command.RecordedTime is not null ? completionRevision : null;

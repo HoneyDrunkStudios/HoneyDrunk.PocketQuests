@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace PocketQuests.Data.Queries.Quests;
 
-internal static class QuestReplayQueries
+internal static class QuestReplayDataService
 {
     internal static async Task<QuestReplayRows> Read(AppDbContext context, Guid accountId, long version, CancellationToken token)
     {

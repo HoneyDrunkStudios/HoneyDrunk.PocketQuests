@@ -22,10 +22,12 @@ public sealed class PlanningService(IQuestService quests, TimeProvider clock) : 
         var now = clock.GetUtcNow();
         var pending = state.Occurrences.Where(row => (row.Status is QuestStatus.Active or QuestStatus.Frozen or QuestStatus.Offered)
             && row.Occurrence.DueDate is not null && (row.Status == QuestStatus.Frozen || row.Occurrence.Deadline is null || row.Occurrence.Deadline > now));
-        return new(state.Zone, selected, [.. pending.Select(row =>
+        return new(state.Zone, selected, [
+            .. pending.Select(row =>
         {
             var deadline = Scheduling.Deadline(Scheduling.ParseDate(row.Occurrence.DueDate!), selected);
             return new DeadlineChange(row.Occurrence.Id, row.Occurrence.Quest.Title, deadline, row.Status == QuestStatus.Active && deadline <= now);
-        })]);
+        })
+        ]);
     }
 }

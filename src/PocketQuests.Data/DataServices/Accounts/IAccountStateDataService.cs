@@ -5,7 +5,7 @@ using PocketQuests.Data.Queries.Quests;
 namespace PocketQuests.Data.DataServices.Accounts;
 
 /// <summary>Operation-specific account and retained-history queries within the shared unit of work.</summary>
-public partial interface IAccountDataService
+public interface IAccountStateDataService
 {
     /// <summary>The current private lifecycle barrier.</summary>
     /// <param name="identityUserId">Verified operation query key.</param>

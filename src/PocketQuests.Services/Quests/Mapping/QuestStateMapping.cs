@@ -21,12 +21,14 @@ internal static class QuestStateMapping
             rows.CurrentDefinitions.Select(row => new QuestDefinition(terms[row.Revision!.Id], row.Head.Revision, row.Head.ArchivedAt is not null)),
             rows.ToProfile(account),
             new ScheduleState(
-                [.. rows.CurrentSeries.Select(current =>
+                [
+                    .. rows.CurrentSeries.Select(current =>
                 {
                     var row = current.Head;
                     var revision = current.Revision!;
                     return new QuestSeries(row.Id, terms[revision.QuestDefinitionRevisionId], QuestValues.DateText(revision.AnchorOn)!, Enum.Parse<Cadence>(revision.CadenceCode), revision.Interval, revision.ScheduleVersion, row.NextSequence, row.PauseDays, row.StoppedAt is not null, QuestValues.TimeText(revision.PlannedTime), revision.HasAutoAcceptPenalty, revision.EffectiveAt);
-                })],
+                })
+                ],
                 [.. rows.Pauses.Select(row => new PauseWindow(row.CategoryId!, row.StartedAt, row.EndedAt))],
                 [.. pausedCategories],
                 account.IsAccountPaused));

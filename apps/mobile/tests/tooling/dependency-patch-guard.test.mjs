@@ -58,7 +58,7 @@ test("dependency patches reject absent guards, apply idempotently, and detect ta
     assert.equal(run().status, 0);
     assert.equal(run("--check").status, 0);
     fs.appendFileSync(
-      path.join(root, "node_modules/node-forge/lib/rsa.js"),
+      path.join(root, "node_modules/braces/lib/stringify.js"),
       "// tampered\n",
     );
     assert.match(run("--check").stderr, /Unexpected dependency source/);
@@ -69,7 +69,7 @@ test("unexpected later patch input prevents every earlier patch write", () =>
     const first = path.join(root, "node_modules/braces/lib/parse.js");
     const before = fs.readFileSync(first, "utf8");
     fs.appendFileSync(
-      path.join(root, "node_modules/node-forge/lib/rsa.js"),
+      path.join(root, "node_modules/braces/lib/stringify.js"),
       "// new upstream source\n",
     );
     assert.equal(run().status, 1);

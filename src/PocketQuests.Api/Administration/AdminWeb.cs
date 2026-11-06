@@ -36,8 +36,7 @@ public static class AdminWeb
             options.Cookie.Name = "PocketQuests.Admin";
             options.Cookie.HttpOnly = true;
             options.Cookie.SameSite = SameSiteMode.Lax;
-            options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing")
-                ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+            options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing") ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
             options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
             options.SlidingExpiration = false;
             options.Events.OnValidatePrincipal = ValidateSession;

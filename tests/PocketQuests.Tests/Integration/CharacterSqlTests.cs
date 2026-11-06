@@ -5,7 +5,7 @@ using System.Net.Http.Json;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Account-owned character persistence, replay and progression preservation.</summary>
+/// <content>Account-owned character persistence, replay and progression preservation.</content>
 public sealed partial class SqlApiTests
 {
     /// <summary>Character choices survive restart without changing quest progress or another account.</summary>

@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Opt-in loopback browser fixture using real SQL, API and Identity with test-only token keys.</summary>
+/// <content>Opt-in loopback browser fixture using real SQL, API and Identity with test-only token keys.</content>
 public sealed partial class SqlApiTests
 {
     /// <summary>Runs isolated real services until the browser writes its completion marker or the bound expires.</summary>

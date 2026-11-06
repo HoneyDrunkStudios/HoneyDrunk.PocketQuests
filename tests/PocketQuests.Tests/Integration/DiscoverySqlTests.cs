@@ -10,7 +10,7 @@ using System.Net.Http.Json;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Discovery API acceptance against the production DACPAC and real SQL.</summary>
+/// <content>Discovery API acceptance against the production DACPAC and real SQL.</content>
 public sealed partial class SqlApiTests
 {
     /// <summary>Saved notes, visit status and quest linkage survive a fresh API host without granting progress.</summary>
@@ -134,16 +134,21 @@ public sealed partial class SqlApiTests
     }
 
     /// <summary>Only an accepted occurrence can be linked, even when an offered occurrence belongs to this account.</summary>
+    /// <param name="utcNow">A fixed instant, including the UTC/New York date boundary.</param>
     /// <returns>Completion of the real API acceptance guard.</returns>
-    [Fact]
-    public async Task DiscoveriesRejectUnacceptedRecurringOffers()
+    [Theory]
+    [InlineData("2026-11-05T12:00:00Z")]
+    [InlineData("2026-11-06T00:00:00Z")]
+    public async Task DiscoveriesRejectUnacceptedRecurringOffers(string utcNow)
     {
-        using var host = new Host(Connection);
+        var clock = new RecoveryClock(DateTimeOffset.Parse(utcNow, System.Globalization.CultureInfo.InvariantCulture));
+        using var host = new Host(Connection, clock: clock);
         using var alice = host.Client("discovery-offer");
         await Setup(alice);
         var quest = new PocketQuests.Domain.Models.Quests.Quest(Guid.NewGuid().ToString(), "Unaccepted commitment", "Visit a garden", "c07", PocketQuests.Domain.Models.Progress.Rank.F, PocketQuests.Domain.Models.Quests.Effort.Small, [], [], true, PenaltyPercent: 50);
         await Command(alice, new(Guid.NewGuid(), QuestActions.SaveDefinition, Definition: quest, ExpectedRevision: 0));
-        var state = await Command(alice, new(Guid.NewGuid(), "save-series", QuestId: quest.Id, DueDate: DateTimeOffset.UtcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture), SeriesId: Guid.NewGuid(), Cadence: PocketQuests.Domain.Models.Schedules.Cadence.Days, Interval: 1, ExpectedRevision: 0));
+        var today = (await Read(alice)).Today;
+        var state = await Command(alice, new(Guid.NewGuid(), "save-series", QuestId: quest.Id, DueDate: today, SeriesId: Guid.NewGuid(), Cadence: PocketQuests.Domain.Models.Schedules.Cadence.Days, Interval: 1, ExpectedRevision: 0));
         Assert.Equal(PocketQuests.Domain.Models.Quests.QuestStatus.Offered, Assert.Single(state.Occurrences).Status);
         var offered = Assert.Single(state.Occurrences).Occurrence.Id;
         var request = DiscoveryRequest() with { QuestOccurrenceId = offered };

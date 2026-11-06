@@ -8,8 +8,10 @@ using System.Text.Json;
 namespace PocketQuests.Services.Quests;
 
 internal sealed class QuestDefinitionService(
-    IQuestDefinitionDataService definitionData, IQuestDefinitionRevisionDataService revisionData,
-    IQuestDefinitionAttributeAllocationDataService attributeData, IQuestDefinitionSkillAllocationDataService skillData)
+    IQuestDefinitionDataService definitionData,
+    IQuestDefinitionRevisionDataService revisionData,
+    IQuestDefinitionAttributeAllocationDataService attributeData,
+    IQuestDefinitionSkillAllocationDataService skillData)
 {
     internal async Task<QuestTermHistory> Record(QuestMutation change, QuestTermsRows rows, CancellationToken token)
     {

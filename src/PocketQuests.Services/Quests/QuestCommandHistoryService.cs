@@ -12,8 +12,10 @@ using QuestValues = PocketQuests.Domain.Quests.QuestValues;
 
 namespace PocketQuests.Services.Quests;
 
-internal sealed class QuestCommandHistoryService(IQuestCommandHistoryDataService historyData,
-    ICommandReceiptDataService receiptData, IAccountAuditRecordDataService auditData)
+internal sealed class QuestCommandHistoryService(
+    IQuestCommandHistoryDataService historyData,
+    ICommandReceiptDataService receiptData,
+    IAccountAuditRecordDataService auditData)
 {
     internal async Task Record(QuestMutation change, AccountIdentity identity, byte[] digest, AuditEntryId auditId, string? traceId, QuestTermHistory terms, IReadOnlyList<QuestOccurrenceEntity> occurrences, CancellationToken token)
     {
@@ -36,8 +38,7 @@ internal sealed class QuestCommandHistoryService(IQuestCommandHistoryDataService
         var (target, quest) = QuestHistory.CommandTargets(change);
         var command = change.Command;
         var termId = quest is null ? (Guid?)null : terms.Find(quest).Id;
-        var occurrence = command.Action == QuestActions.Complete && command.RecordedTime is not null
-            ? occurrences.Single(row => row.Id == target!.Id) : null;
+        var occurrence = command.Action == QuestActions.Complete && command.RecordedTime is not null ? occurrences.Single(row => row.Id == target!.Id) : null;
         var completionRevision = occurrence is null ? (Guid?)null : QuestValues.Derived(change.Account.Id, $"occurrence/{occurrence.Id:D}/revision/{occurrence.Revision}");
         var skillName = command.Action == QuestActions.SaveSkill ? change.Aggregate.Profile.CustomSkills!.Single(row => row.Id == command.SkillId).Name : null;
         var history = CommandHistoryMapping.ToHistory(change);

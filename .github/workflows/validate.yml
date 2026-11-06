@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           repository: HoneyDrunkStudios/HoneyDrunk.Identity
-          ref: 5cfc1da16f075b566e845df8ba81de5f0e4347a8
+          ref: 6e46977163da31949ce3b3d3bc833e69438bfec4
           path: identity
       - name: Read the declared SDK baseline
         id: dotnet_version
@@ -103,7 +103,7 @@ jobs:
         run: ./product/scripts/Test-RelationalSchema.ps1 -NoBuild
       - name: Install mobile dependencies and collect real LCOV coverage
         working-directory: product/apps/mobile
-        run: npm ci --ignore-scripts && node scripts/patch-dependencies.cjs && npm run test:coverage
+        run: npm install --global --ignore-scripts npm@11.16.0 && npm ci --ignore-scripts && node scripts/patch-dependencies.cjs && npm run test:coverage
       - name: Collect React admin interaction coverage
         working-directory: product/apps/admin
         run: npm run test:coverage
@@ -182,7 +182,7 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: apps/mobile/package-lock.json
-      - run: npm ci --ignore-scripts
+      - run: npm install --global --ignore-scripts npm@11.16.0 && npm ci --ignore-scripts
       - run: node scripts/patch-dependencies.cjs
       - run: npm run check:security-patch
       - run: npm run lint

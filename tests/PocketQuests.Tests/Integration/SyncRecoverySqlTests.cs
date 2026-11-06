@@ -9,7 +9,7 @@ using System.Text.Json;
 
 namespace PocketQuests.Tests.Integration;
 
-/// <summary>Verifies recoverable clock failures and permanent proof failures through the HTTP contract and SQL.</summary>
+/// <content>Verifies recoverable clock failures and permanent proof failures through the HTTP contract and SQL.</content>
 public sealed partial class SqlApiTests
 {
     /// <summary>Temporary clock lead retains an immutable command for retry, including Undo and receipt replay.</summary>

@@ -2,3 +2,7 @@
 # EF SQL binary/rowversion properties must expose byte arrays for provider mapping.
 [src/PocketQuests.Data/Entities/**/*.cs]
 dotnet_diagnostic.CA1819.severity = none
+
+# Preserve the security regression test's complete MIT legal header.
+[tests/PocketQuests.Tests/Unit/PkcsRuntimeSecurityTests.cs]
+file_header_template = Copyright (c) HoneyDrunk Studios. All rights reserved.\nLicensed under the MIT License. See LICENSE in the project root for license information.

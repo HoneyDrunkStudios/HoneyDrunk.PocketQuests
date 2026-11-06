@@ -20,7 +20,7 @@ using System.Text.Json.Serialization;
 
 namespace PocketQuests.SchemaTests;
 
-/// <summary>Real API and SQL with controlled Identity HTTP replies; not live provider/JWT/broker validation.</summary>
+/// <content>Real API and SQL with controlled Identity HTTP replies; not live provider/JWT/broker validation.</content>
 /// <param name="fixture">Explicitly isolated GUID database.</param>
 public sealed partial class RelationalApiTests(SchemaFixture fixture) : IClassFixture<SchemaFixture>
 {

@@ -13,17 +13,20 @@ public static class Catalog
     /// <summary>Gets the ten life categories.</summary>
     public static ImmutableArray<NamedItem> Categories { get; } = Names("c", [
         "Health & Fitness", "Learning", "Creativity", "Work & Purpose", "Relationships & Community",
-        "Everyday Life", "Rest & Recreation", "Reflection & Spirituality", "Finances", "Exploration & Adventure"]);
+        "Everyday Life", "Rest & Recreation", "Reflection & Spirituality", "Finances", "Exploration & Adventure"
+    ]);
 
     /// <summary>Gets the eight attributes in deterministic allocation order.</summary>
     public static ImmutableArray<NamedItem> Attributes { get; } = Names("a", [
-        "Strength", "Endurance", "Flexibility", "Dexterity", "Intelligence", "Wisdom", "Creativity", "Charisma"]);
+        "Strength", "Endurance", "Flexibility", "Dexterity", "Intelligence", "Wisdom", "Creativity", "Charisma"
+    ]);
 
     /// <summary>Gets the eighteen skills in deterministic allocation order.</summary>
     public static ImmutableArray<NamedItem> Skills { get; } = Names("s", [
         "Strength Training", "Running", "Language Learning", "Research", "Drawing", "Creative Writing",
         "Programming", "Project Planning", "Communication", "Conflict Resolution", "Cooking", "Home Maintenance",
-        "Meditation", "Journaling", "Budgeting", "Financial Planning", "Navigation", "Trip Planning"]);
+        "Meditation", "Journaling", "Budgeting", "Financial Planning", "Navigation", "Trip Planning"
+    ]);
 
     /// <summary>Gets the ten fixed starter quests and their immutable reward allocations.</summary>
     public static ImmutableArray<Quest> Quests { get; } = [

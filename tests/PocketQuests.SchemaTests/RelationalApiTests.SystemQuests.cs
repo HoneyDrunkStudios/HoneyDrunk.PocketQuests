@@ -14,7 +14,7 @@ using System.Text.Json;
 
 namespace PocketQuests.SchemaTests;
 
-/// <summary>Immutable studio drafts and server-authoritative preview against actual HTTP and deployed SQL.</summary>
+/// <content>Immutable studio drafts and server-authoritative preview against actual HTTP and deployed SQL.</content>
 public sealed partial class RelationalApiTests
 {
     /// <summary>Preview does not save, unauthorized callers cannot author, and stale saves preserve prior content.</summary>

@@ -3,6 +3,8 @@ using PocketQuests.Services.Lifecycle;
 namespace PocketQuests.Api.AccountLifecycle;
 
 /// <summary>Removes short-lived acknowledgment envelopes and expired minimal markers.</summary>
+/// <param name="scopes">The factory for scoped lifecycle maintenance operations.</param>
+/// <param name="logger">The logger for this component.</param>
 public sealed class LifecycleMaintenance(IServiceScopeFactory scopes, ILogger<LifecycleMaintenance> logger) : BackgroundService
 {
     /// <inheritdoc />

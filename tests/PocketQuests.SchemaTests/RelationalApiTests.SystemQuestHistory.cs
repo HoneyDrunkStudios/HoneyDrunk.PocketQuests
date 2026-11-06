@@ -6,7 +6,7 @@ using System.Net.Http.Json;
 
 namespace PocketQuests.SchemaTests;
 
-/// <summary>Bounded immutable history and restoration through the existing draft workflow.</summary>
+/// <content>Bounded immutable history and restoration through the existing draft workflow.</content>
 public sealed partial class RelationalApiTests
 {
     private static readonly int[] OlderHistoryRevisionNumbers = [2, 1];

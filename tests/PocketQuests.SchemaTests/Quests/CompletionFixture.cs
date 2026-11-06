@@ -26,6 +26,7 @@ internal static class CompletionFixture
 
     internal static QuestService Create(IServiceProvider services, DomainIdentity owner, DateTimeOffset at) => new(
         services.GetRequiredService<IAccountDataService>(),
+        services.GetRequiredService<IAccountStateDataService>(),
         new CurrentAccount(owner),
         new Clock(at),
         services.GetRequiredService<ProfileHistoryService>(),

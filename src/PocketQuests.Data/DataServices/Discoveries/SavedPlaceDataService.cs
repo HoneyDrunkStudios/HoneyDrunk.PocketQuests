@@ -4,6 +4,7 @@ using PocketQuests.Data.Entities.Discoveries;
 namespace PocketQuests.Data.DataServices.Discoveries;
 
 /// <summary>SQL-filtered saved-place queries sharing the account transaction context.</summary>
+/// <param name="context">The scoped NovOutbox persistence context.</param>
 public sealed class SavedPlaceDataService(AppDbContext context) : BaseDataService<SavedPlaceEntity>(context), ISavedPlaceDataService
 {
     private IQueryable<SavedPlaceEntity> SavedPlaces => DbSet;

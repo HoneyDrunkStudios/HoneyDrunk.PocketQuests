@@ -5,6 +5,8 @@ using PocketQuests.Services.Lifecycle;
 namespace PocketQuests.Api.AccountLifecycle;
 
 /// <summary>Receives Identity instructions only through the private, Identity-sender-authorized endpoint.</summary>
+/// <param name="lifecycle">The scoped account lifecycle service.</param>
+/// <param name="configuration">The private lifecycle transport configuration.</param>
 public sealed class LifecycleIntentHandler(ILifecycleService lifecycle, IConfiguration configuration) : IMessageHandler<LifecycleIntent>
 {
     /// <inheritdoc />

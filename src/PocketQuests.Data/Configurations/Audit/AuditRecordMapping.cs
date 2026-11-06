@@ -8,13 +8,13 @@ namespace PocketQuests.Data.Configurations.Audit;
 public sealed class AuditRecordMapping : IEntityTypeConfiguration<AuditRecord>
 {
     /// <inheritdoc />
-    public void Configure(EntityTypeBuilder<AuditRecord> entity)
+    public void Configure(EntityTypeBuilder<AuditRecord> builder)
     {
-        entity.ToTable("AuditRecords", "dbo");
-        entity.HasKey(row => row.Id);
-        entity.Property(row => row.Id).HasMaxLength(32).IsUnicode(false);
-        entity.Property(row => row.EventName).HasMaxLength(200);
-        entity.Property(row => row.TenantId).HasMaxLength(100);
-        entity.HasIndex(row => new { row.TenantId, row.OccurredAt });
+        builder.ToTable("AuditRecords", "dbo");
+        builder.HasKey(row => row.Id);
+        builder.Property(row => row.Id).HasMaxLength(32).IsUnicode(false);
+        builder.Property(row => row.EventName).HasMaxLength(200);
+        builder.Property(row => row.TenantId).HasMaxLength(100);
+        builder.HasIndex(row => new { row.TenantId, row.OccurredAt });
     }
 }
