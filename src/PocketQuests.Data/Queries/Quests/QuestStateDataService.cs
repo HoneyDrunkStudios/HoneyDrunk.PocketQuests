@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PocketQuests.Data.Entities.Quests;
 
 namespace PocketQuests.Data.Queries.Quests;
 
@@ -6,13 +7,7 @@ internal static class QuestStateDataService
 {
     internal static async Task<QuestStateRows> Read(AppDbContext context, Guid accountId, CancellationToken token)
     {
-        var terms = context.QuestDefinitionRevision.Where(revision => revision.AccountId == accountId
-            && (context.QuestDefinition.Any(head => head.AccountId == accountId && head.Id == revision.QuestDefinitionId && head.Revision == revision.Revision)
-                || context.QuestOccurrence.Any(occurrence => occurrence.AccountId == accountId && occurrence.QuestDefinitionRevisionId == revision.Id)
-                || context.QuestSeriesRevision.Any(series => series.AccountId == accountId && series.QuestDefinitionRevisionId == revision.Id
-                    && context.QuestSeries.Any(head => head.AccountId == accountId && head.Id == series.QuestSeriesId && head.Revision == series.Revision))
-                || context.QuestOccurrenceRevision.Any(occurrence => occurrence.AccountId == accountId && occurrence.QuestDefinitionRevisionId == revision.Id
-                    && context.QuestCompletion.Any(completion => completion.AccountId == accountId && completion.QuestOccurrenceRevisionId == occurrence.Id))));
+        var terms = RetainedTerms(context, accountId);
         var termIds = terms.Select(revision => revision.Id);
         return new()
         {
@@ -41,13 +36,13 @@ internal static class QuestStateDataService
                            orderby source.AccountMutationVersion
                            select row).ToListAsync(token),
             CurrentDefinitions = await (from row in context.QuestDefinition
-                                        join revision in context.QuestDefinitionRevision on new { row.AccountId, Id = row.Id, row.Revision } equals new { revision.AccountId, Id = revision.QuestDefinitionId, revision.Revision } into revisions
+                                        join revision in context.QuestDefinitionRevision on new { row.AccountId, row.Id, row.Revision } equals new { revision.AccountId, Id = revision.QuestDefinitionId, revision.Revision } into revisions
                                         from revision in revisions.DefaultIfEmpty()
                                         where row.AccountId == accountId && row.SystemQuestId == null
                                         orderby row.CreationOrdinal
                                         select new CurrentQuestDefinition(row, revision)).ToListAsync(token),
             CurrentSeries = await (from row in context.QuestSeries
-                                   join revision in context.QuestSeriesRevision on new { row.AccountId, Id = row.Id, row.Revision } equals new { revision.AccountId, Id = revision.QuestSeriesId, revision.Revision } into revisions
+                                   join revision in context.QuestSeriesRevision on new { row.AccountId, row.Id, row.Revision } equals new { revision.AccountId, Id = revision.QuestSeriesId, revision.Revision } into revisions
                                    from revision in revisions.DefaultIfEmpty()
                                    where row.AccountId == accountId
                                    orderby row.CreationOrdinal
@@ -66,4 +61,13 @@ internal static class QuestStateDataService
             PauseHistory = await context.QuestCommandHistory.Where(row => row.AccountId == accountId && row.CategoryId != null && (row.ActionCode == "pause" || row.ActionCode == "resume")).OrderBy(row => row.AccountMutationVersion).ToListAsync(token),
         };
     }
+
+    private static IQueryable<QuestDefinitionRevisionEntity> RetainedTerms(AppDbContext context, Guid accountId) =>
+        context.QuestDefinitionRevision.Where(revision => revision.AccountId == accountId
+            && (context.QuestDefinition.Any(head => head.AccountId == accountId && head.Id == revision.QuestDefinitionId && head.Revision == revision.Revision)
+                || context.QuestOccurrence.Any(occurrence => occurrence.AccountId == accountId && occurrence.QuestDefinitionRevisionId == revision.Id)
+                || context.QuestSeriesRevision.Any(series => series.AccountId == accountId && series.QuestDefinitionRevisionId == revision.Id
+                    && context.QuestSeries.Any(head => head.AccountId == accountId && head.Id == series.QuestSeriesId && head.Revision == series.Revision))
+                || context.QuestOccurrenceRevision.Any(occurrence => occurrence.AccountId == accountId && occurrence.QuestDefinitionRevisionId == revision.Id
+                    && context.QuestCompletion.Any(completion => completion.AccountId == accountId && completion.QuestOccurrenceRevisionId == occurrence.Id))));
 }

@@ -152,7 +152,15 @@ public sealed partial class QuestAggregate(
         var views = Occurrences.Select(occurrence =>
         {
             var completion = Surviving(occurrence.Id, now);
-            var status = occurrence.Lifecycle?.Unaccepted == true ? QuestStatus.Offered : completion is not null ? QuestStatus.Completed : occurrence.Lifecycle?.AbandonedAt is not null ? QuestStatus.Abandoned : occurrence.Lifecycle?.FrozenAt is not null ? QuestStatus.Frozen : occurrence.Deadline is { } deadline && now >= deadline ? QuestStatus.Missed : QuestStatus.Active;
+            var status = occurrence switch
+            {
+                _ when occurrence.Lifecycle?.Unaccepted == true => QuestStatus.Offered,
+                _ when completion is not null => QuestStatus.Completed,
+                _ when occurrence.Lifecycle?.AbandonedAt is not null => QuestStatus.Abandoned,
+                _ when occurrence.Lifecycle?.FrozenAt is not null => QuestStatus.Frozen,
+                _ when occurrence.Deadline is { } deadline && now >= deadline => QuestStatus.Missed,
+                _ => QuestStatus.Active,
+            };
             var canUndo = completion is not null && now >= completion.RecordedAt && now < completion.RecordedAt.Add(QuestRules.UndoWindow);
             return new OccurrenceView(occurrence, status, completion, canUndo, occurrence.DueDate is not null && occurrence.PlannedTime is not null ? Scheduling.Planned(occurrence.DueDate, occurrence.PlannedTime, occurrence.Lifecycle?.DeadlineZone ?? Zone) : null);
         }).ToImmutableArray();

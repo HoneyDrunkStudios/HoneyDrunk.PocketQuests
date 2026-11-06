@@ -52,7 +52,15 @@ public sealed class OccurrenceReadService(IAccountDataService data, IAccountStat
             var occurrence = row.ToModel(terms, seriesRows);
             var source = completionRows.SingleOrDefault(completion => completion.QuestOccurrenceId == row.Id);
             var completion = source?.ToModel(terms[completionRevisions[source.QuestOccurrenceRevisionId].QuestDefinitionRevisionId]);
-            var status = row.AcceptedAt is null ? QuestStatus.Offered : completion is not null ? QuestStatus.Completed : row.AbandonedAt is not null ? QuestStatus.Abandoned : row.FrozenAt is not null ? QuestStatus.Frozen : row.DeadlineAt <= at ? QuestStatus.Missed : QuestStatus.Active;
+            var status = row switch
+            {
+                _ when row.AcceptedAt is null => QuestStatus.Offered,
+                _ when completion is not null => QuestStatus.Completed,
+                _ when row.AbandonedAt is not null => QuestStatus.Abandoned,
+                _ when row.FrozenAt is not null => QuestStatus.Frozen,
+                _ when row.DeadlineAt <= at => QuestStatus.Missed,
+                _ => QuestStatus.Active,
+            };
             var canUndo = completion is not null && at >= completion.RecordedAt && at < completion.RecordedAt.AddHours(24);
             var planned = occurrence.DueDate is not null && occurrence.PlannedTime is not null ? Scheduling.Planned(occurrence.DueDate, occurrence.PlannedTime, row.DeadlineTimeZoneId!) : null;
             return occurrence.ToView(status, completion, canUndo, planned);
