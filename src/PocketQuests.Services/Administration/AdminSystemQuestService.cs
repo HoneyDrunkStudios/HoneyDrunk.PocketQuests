@@ -47,6 +47,18 @@ public sealed class AdminSystemQuestService(
     }
 
     /// <inheritdoc />
+    public async Task<SystemQuestHistory> History(ReadSystemQuestHistoryRequest request, CancellationToken token)
+    {
+        _ = access.Require();
+        SystemQuestValidator.ValidateHistory(request);
+        var code = SystemQuestValidator.Code(request.Id);
+        if (!await templates.Exists(code, token))
+            throw new QuestNotFoundException();
+        var rows = await revisions.History(code, request.Before ?? SystemQuestValidator.MaximumRevisions + 1, SystemQuestValidator.HistoryPageSize + 1, token);
+        return new(request.Id, [.. rows.Take(SystemQuestValidator.HistoryPageSize).Select(row => row.ToContract())], rows.Count > SystemQuestValidator.HistoryPageSize ? rows[SystemQuestValidator.HistoryPageSize - 1].Version : null);
+    }
+
+    /// <inheritdoc />
     public ContractQuest Preview(SaveSystemQuestRequest request)
     {
         _ = access.Require();

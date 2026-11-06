@@ -18,7 +18,7 @@
     <!-- Run the same operator SQL/API cases in both package and pinned-source
          modes; the source lane also measures their actual production coverage. -->
     <Compile Include="../PocketQuests.SchemaTests/SchemaFixture*.cs" Link="Administration/%(Filename)%(Extension)" />
-    <Compile Include="../PocketQuests.SchemaTests/RelationalApiTests.cs;../PocketQuests.SchemaTests/RelationalApiTests.Admin.cs;../PocketQuests.SchemaTests/RelationalApiTests.SystemQuests.cs;../PocketQuests.SchemaTests/SystemQuestRuntimeRoleTests.cs" Link="Administration/%(Filename)%(Extension)" />
+    <Compile Include="../PocketQuests.SchemaTests/RelationalApiTests.cs;../PocketQuests.SchemaTests/RelationalApiTests.Admin.cs;../PocketQuests.SchemaTests/RelationalApiTests.SystemQuests.cs;../PocketQuests.SchemaTests/RelationalApiTests.SystemQuestHistory.cs;../PocketQuests.SchemaTests/SystemQuestRuntimeRoleTests.cs" Link="Administration/%(Filename)%(Extension)" />
     <None Include="../../docs/schema/schema-contract.json" Link="schema-contract.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>

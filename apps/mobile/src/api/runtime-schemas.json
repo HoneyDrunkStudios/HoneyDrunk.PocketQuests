@@ -62,6 +62,36 @@
       },
       "description": "Saved studio draft and separate published terms, with an optimistic head version."
     },
+    "AdminSystemQuestRevision": {
+      "required": [
+        "id",
+        "number",
+        "createdAt",
+        "quest"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The immutable content revision identifier.",
+          "format": "uuid"
+        },
+        "number": {
+          "type": "integer",
+          "description": "The content revision number.",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The revision creation timestamp.",
+          "format": "date-time"
+        },
+        "quest": {
+          "$ref": "#/components/schemas/Quest"
+        }
+      },
+      "description": "One retained content revision, without operator account identifiers."
+    },
     "AdminUser": {
       "required": [
         "userId",
@@ -1819,6 +1849,40 @@
       },
       "description": "The public RankRule JSON contract, independent of storage and domain behavior."
     },
+    "ReadSystemQuestHistoryRequest": {
+      "required": [
+        "id"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The system quest identifier.",
+          "format": "uuid"
+        },
+        "before": {
+          "pattern": "^-?(?:0|[1-9]\\d*)$",
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "enum": [
+                null
+              ],
+              "nullable": true
+            }
+          ],
+          "description": "The exclusive revision cursor; null requests the newest page.",
+          "format": "int32",
+          "nullable": true
+        }
+      },
+      "description": "Reads immutable revisions before an exclusive version cursor; null starts at the newest revision."
+    },
     "RecordedActionTime": {
       "required": [
         "anchorId",
@@ -2347,6 +2411,49 @@
       },
       "description": "The public SyncAnchor JSON contract, independent of storage and domain behavior."
     },
+    "SystemQuestHistory": {
+      "required": [
+        "id",
+        "revisions",
+        "nextBefore"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The system quest identifier.",
+          "format": "uuid"
+        },
+        "revisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/AdminSystemQuestRevision"
+          },
+          "description": "The newest-first bounded page of retained revisions."
+        },
+        "nextBefore": {
+          "pattern": "^-?(?:0|[1-9]\\d*)$",
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "enum": [
+                null
+              ],
+              "nullable": true
+            }
+          ],
+          "description": "The exclusive cursor for the next page, when present.",
+          "format": "int32",
+          "nullable": true
+        }
+      },
+      "description": "A newest-first bounded page of immutable content; NextBefore is an exclusive version cursor."
+    },
     "SystemQuestStudio": {
       "required": [
         "quests",
@@ -2525,6 +2632,9 @@
     },
     "POST /api/admin/quests/list": {
       "$ref": "#/components/schemas/SystemQuestStudio"
+    },
+    "POST /api/admin/quests/history": {
+      "$ref": "#/components/schemas/SystemQuestHistory"
     },
     "POST /api/admin/quests/preview": {
       "$ref": "#/components/schemas/Quest"

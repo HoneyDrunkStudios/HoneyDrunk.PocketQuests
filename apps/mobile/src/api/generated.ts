@@ -10,6 +10,13 @@ export type AdminSystemQuest = {
   "modifiedAt": string;
 };
 
+export type AdminSystemQuestRevision = {
+  "id": string;
+  "number": number;
+  "createdAt": string;
+  "quest": Quest;
+};
+
 export type AdminUser = {
   "userId": string;
   "characterName": string | null;
@@ -330,6 +337,11 @@ export type RankRule = {
   "total": number;
 };
 
+export type ReadSystemQuestHistoryRequest = {
+  "id": string;
+  "before"?: number | string | null | null;
+};
+
 export type RecordedActionTime = {
   "anchorId": string;
   "bootId": string;
@@ -434,6 +446,12 @@ export type SyncAnchor = {
   "recordedTimeFloor": string | null;
 };
 
+export type SystemQuestHistory = {
+  "id": string;
+  "revisions": (AdminSystemQuestRevision)[];
+  "nextBefore": number | string | null | null;
+};
+
 export type SystemQuestStudio = {
   "quests": (AdminSystemQuest)[];
   "catalog": CatalogResponse;
@@ -478,6 +496,7 @@ export type ApiOperations = {
   "POST /api/discoveries/save": { body: SavePlaceRequest; query: undefined; response: SavedPlace };
   "POST /api/discoveries/remove": { body: RemovePlaceRequest; query: undefined; response: RemovalResult };
   "POST /api/admin/quests/list": { body: undefined; query: undefined; response: SystemQuestStudio };
+  "POST /api/admin/quests/history": { body: ReadSystemQuestHistoryRequest; query: undefined; response: SystemQuestHistory };
   "POST /api/admin/quests/preview": { body: SaveSystemQuestRequest; query: undefined; response: Quest };
   "POST /api/admin/quests/draft": { body: SaveSystemQuestRequest; query: undefined; response: AdminSystemQuest };
   "POST /api/admin/quests/publish": { body: PublishSystemQuestRequest; query: undefined; response: AdminSystemQuest };

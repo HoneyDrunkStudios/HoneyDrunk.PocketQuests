@@ -11,4 +11,9 @@ public sealed class SystemQuestRevisionDataService(AppDbContext context) : BaseD
 
     /// <inheritdoc />
     public Task<SystemQuestRevisionEntity?> Read(Guid id, CancellationToken token) => Revisions.AsNoTracking().SingleOrDefaultAsync(row => row.Id == id, token);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<SystemQuestRevisionEntity>> History(string questId, int before, int limit, CancellationToken token) =>
+        await Revisions.AsNoTracking().Where(row => row.SystemQuestId == questId && row.Version < before)
+            .OrderByDescending(row => row.Version).Take(limit).ToListAsync(token);
 }

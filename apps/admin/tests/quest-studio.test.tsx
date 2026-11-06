@@ -8,9 +8,15 @@ import {
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import fixtures from "../../../contracts/wire-fixtures.json";
 import { App } from "../src/App";
-import type { AdminSystemQuest, Quest } from "../src/api/admin-api";
+import type {
+  AdminSystemQuest,
+  AdminSystemQuestRevision,
+  Quest,
+} from "../src/api/admin-api";
 
 let saved: AdminSystemQuest | null;
+let history: AdminSystemQuestRevision[];
+let malformedHistory: boolean;
 let writes: number;
 let loseSave: boolean;
 let conflict: boolean;
@@ -19,6 +25,8 @@ let publications: number;
 let publicationFailure: "none" | "lost" | "malformed";
 beforeEach(() => {
   saved = null;
+  history = [];
+  malformedHistory = false;
   writes = 0;
   loseSave = false;
   conflict = false;
@@ -51,6 +59,18 @@ beforeEach(() => {
           quests: saved ? [saved] : [],
           catalog: fixtures.catalog,
         });
+      if (input.endsWith("/quests/history")) {
+        const rows = history
+          .filter((row) => row.number < (body.before ?? 1001))
+          .slice()
+          .reverse();
+        const page = rows.slice(0, 20);
+        return reply(200, {
+          id: malformedHistory ? crypto.randomUUID() : body.id,
+          revisions: page,
+          nextBefore: rows.length > 20 ? page.at(-1)!.number : null,
+        });
+      }
       if (input.endsWith("/quests/preview")) {
         if (!body.quest.title.trim())
           return reply(400, { detail: "Title: enter 1–120 characters." });
@@ -74,6 +94,12 @@ beforeEach(() => {
           published: saved?.published ?? null,
           modifiedAt: "2026-01-01T12:00:00Z",
         };
+        history.push({
+          id: saved.draftSystemQuestRevisionId,
+          number: saved.draftNumber,
+          createdAt: saved.modifiedAt,
+          quest: structuredClone(saved.draft),
+        });
         return loseSave ? reply(503, {}) : reply(200, saved);
       }
       if (input.endsWith("/quests/publish")) {
@@ -135,7 +161,11 @@ function enter(title: string) {
 }
 async function preview() {
   fireEvent.click(screen.getByRole("button", { name: "Validate and preview" }));
-  await screen.findByRole("heading", { name: /Walk/ });
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "Save draft" }).matches(":disabled"),
+    ).toBe(false),
+  );
 }
 
 it("creates, validates, previews and edits private drafts without publishing", async () => {
@@ -370,4 +400,81 @@ it("requires reload after a conflicting publication review", async () => {
     ).disabled,
   ).toBe(true);
   expect(saved?.published).toBeNull();
+});
+
+it("inspects immutable history and restores a new private draft only after explicit validation and save", async () => {
+  await savedQuest();
+  fireEvent.click(screen.getByRole("button", { name: "Review publication" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Publish reviewed draft" }),
+  );
+  await screen.findByText("Draft 1 is now published to players.");
+  enter("Walk with later terms");
+  await preview();
+  fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+  await screen.findByText("Draft 2 saved. The published version is unchanged.");
+  const originalId = history[0].id;
+  fireEvent.click(
+    screen.getByRole("button", { name: "Load revision history" }),
+  );
+  fireEvent.click(
+    await screen.findByRole("button", {
+      name: /Revision 1 · Walk from the workshop/,
+    }),
+  );
+  expect(writes).toBe(2);
+  const previewIds = [...document.querySelectorAll("[id]")].map(
+    (element) => element.id,
+  );
+  expect(new Set(previewIds).size).toBe(previewIds.length);
+  enter("Walk with unsaved text");
+  vi.mocked(window.confirm).mockReturnValueOnce(false);
+  fireEvent.click(
+    screen.getByRole("button", { name: "Use revision 1 as draft" }),
+  );
+  expect((screen.getByLabelText("Quest title") as HTMLInputElement).value).toBe(
+    "Walk with unsaved text",
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: "Use revision 1 as draft" }),
+  );
+  expect((screen.getByLabelText("Quest title") as HTMLInputElement).value).toBe(
+    "Walk from the workshop",
+  );
+  expect(document.activeElement).toBe(
+    screen.getByRole("button", { name: "Validate and preview" }),
+  );
+  expect(
+    screen.getByRole("button", { name: "Save draft" }).matches(":disabled"),
+  ).toBe(true);
+  expect(writes).toBe(2);
+  expect(publications).toBe(1);
+  await preview();
+  fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+  await screen.findByText("Draft 3 saved. The published version is unchanged.");
+  expect(saved?.publishedSystemQuestRevisionId).toBe(originalId);
+  expect(history[0].id).toBe(originalId);
+  expect(history[2].quest.title).toBe("Walk from the workshop");
+  expect(history[2].id).not.toBe(originalId);
+  const headings = [...document.querySelectorAll("[id]")].map(
+    (element) => element.id,
+  );
+  expect(new Set(headings).size).toBe(headings.length);
+});
+
+it("rejects history for another quest without locking the editor and clears history on session expiry", async () => {
+  await savedQuest();
+  malformedHistory = true;
+  fireEvent.click(
+    screen.getByRole("button", { name: "Load revision history" }),
+  );
+  await screen.findByText(/The revision history could not be verified/);
+  expect(screen.queryByRole("button", { name: /Use revision/ })).toBeNull();
+  expect(screen.getByLabelText("Quest title").matches(":disabled")).toBe(false);
+  authenticated = false;
+  fireEvent.click(
+    screen.getByRole("button", { name: "Load revision history" }),
+  );
+  await screen.findByText(/This session cannot access/);
+  expect(screen.queryByRole("region", { name: "Revision history" })).toBeNull();
 });

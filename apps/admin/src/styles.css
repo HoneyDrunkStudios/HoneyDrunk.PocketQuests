@@ -530,3 +530,22 @@ legend {
 [hidden] {
   display: none;
 }
+
+.revision-history {
+  border-top: 1px solid var(--line);
+  margin-top: 24px;
+  padding-top: 20px;
+}
+.revision-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.revision-list button {
+  width: 100%;
+  justify-content: flex-start;
+}
+.revision-list button[aria-pressed="true"] {
+  border-color: var(--gold);
+}
