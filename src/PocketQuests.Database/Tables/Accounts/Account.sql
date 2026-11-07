@@ -32,7 +32,7 @@ CREATE TABLE [pocketquests].[Account] (
     CONSTRAINT [UQ_Account_Id_IdentityUserId] UNIQUE ([Id], [IdentityUserId]),
     CONSTRAINT [CK_Account_FounderPlusGrantedAtUtc] CHECK ([FounderPlusGrantedAt] IS NULL OR DATEPART(TZOFFSET,[FounderPlusGrantedAt])=0),
     CONSTRAINT [CK_Account_StripeSubscriptionLink] CHECK ([StripeSubscriptionId] IS NULL OR ([StripeCustomerId] IS NOT NULL AND LEFT([StripeSubscriptionId],4)='sub_' AND LEN([StripeSubscriptionId])>4)),
-    CONSTRAINT [CK_Account_StripeCustomerId] CHECK ([StripeCustomerId] IS NULL OR (LEN([StripeCustomerId]) BETWEEN 5 AND 80 AND DATALENGTH([StripeCustomerId])=LEN([StripeCustomerId]) AND LEFT([StripeCustomerId],4)='cus_' AND SUBSTRING([StripeCustomerId],5,76) NOT LIKE '%[^0-9A-Za-z]%')),
+    CONSTRAINT [CK_Account_StripeCustomerId] CHECK ([StripeCustomerId] IS NULL OR (LEN([StripeCustomerId]) BETWEEN 5 AND 80 AND DATALENGTH([StripeCustomerId])=LEN([StripeCustomerId]) AND LEFT([StripeCustomerId],4)='cus_' AND PATINDEX('%[^0-9A-Za-z]%',ISNULL(SUBSTRING([StripeCustomerId],5,76),''))=0)),
     CONSTRAINT [CK_Account_PlusCheckoutReservation] CHECK (([PlusCheckoutStartedAt] IS NULL AND [PlusCheckoutInterval] IS NULL AND [StripeCheckoutSessionId] IS NULL) OR ([PlusCheckoutStartedAt] IS NOT NULL AND DATEPART(TZOFFSET,[PlusCheckoutStartedAt])=0 AND [PlusCheckoutInterval] IS NOT NULL AND [PlusCheckoutInterval] IN ('monthly','yearly'))),
     CONSTRAINT [CK_Account_SelectedBadgeKind] CHECK ([SelectedBadgeKind] IN ('Badge')),
     CONSTRAINT [CK_Account_SelectedFrameKind] CHECK ([SelectedFrameKind] IN ('Frame')),

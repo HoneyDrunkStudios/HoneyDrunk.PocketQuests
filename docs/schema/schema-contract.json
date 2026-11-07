@@ -1036,7 +1036,7 @@
         },
         {
           "name": "CK_Account_StripeCustomerId",
-          "expression": "[StripeCustomerId] IS NULL OR (LEN([StripeCustomerId]) BETWEEN 5 AND 80 AND DATALENGTH([StripeCustomerId])=LEN([StripeCustomerId]) AND LEFT([StripeCustomerId],4)='cus_' AND SUBSTRING([StripeCustomerId],5,76) NOT LIKE '%[^0-9A-Za-z]%')",
+          "expression": "[StripeCustomerId] IS NULL OR (LEN([StripeCustomerId]) BETWEEN 5 AND 80 AND DATALENGTH([StripeCustomerId])=LEN([StripeCustomerId]) AND LEFT([StripeCustomerId],4)='cus_' AND PATINDEX('%[^0-9A-Za-z]%',ISNULL(SUBSTRING([StripeCustomerId],5,76),''))=0)",
           "purpose": "Require the Stripe Customer ID format."
         },
         {

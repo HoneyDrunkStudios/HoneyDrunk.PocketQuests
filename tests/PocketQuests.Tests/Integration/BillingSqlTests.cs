@@ -1,4 +1,5 @@
 using HoneyDrunk.Payments.Abstractions;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,6 +51,12 @@ public sealed partial class SqlApiTests
         await using (var db = Context())
         {
             var account = await db.Read.Set<AccountEntity>().AsTracking().SingleAsync();
+            var invalidCustomer = await Assert.ThrowsAsync<SqlException>(() => db.Read.Database.ExecuteSqlRawAsync(
+                "UPDATE [pocketquests].[Account] SET [StripeCustomerId] = {0} WHERE [Id] = {1}",
+                "cus_bad_id",
+                account.Id));
+            Assert.Equal(547, invalidCustomer.Number);
+            Assert.Contains("CK_Account_StripeCustomerId", invalidCustomer.Message, StringComparison.Ordinal);
             account.FounderPlusGrantedAt = DateTimeOffset.UtcNow;
             Assert.Equal(1, await db.Read.SaveChangesAsync());
         }
