@@ -127,6 +127,41 @@ public sealed partial class SqlApiTests
         using var blocked = await subscriber.PostAsJsonAsync("/api/commands", BillingCustomQuest());
         Assert.Equal(HttpStatusCode.BadRequest, blocked.StatusCode);
 
+        clock.Now = clock.Now.AddMinutes(1);
+        using var monthly = await subscriber.PostAsJsonAsync("/api/billing/checkout", new StartBillingCheckout("monthly"));
+        monthly.EnsureSuccessStatusCode();
+        var reserved = payments.Checkouts[^1];
+        Assert.Equal("price_testmonthly", reserved.ProviderPriceId);
+        Assert.Equal("cus_PocketQuests", reserved.ProviderCustomerId);
+        Assert.Null(reserved.CustomerEmail);
+
+        var expiryMetadata = new Dictionary<string, string>
+        {
+            ["project_id"] = reserved.ProjectId,
+            ["payments_tenant_id"] = reserved.TenantId,
+            ["tier_name"] = reserved.TierName,
+        };
+        var staleExpiration = new PaymentWebhookEventSnapshot(
+            "stripe",
+            "evt_StaleExpiry",
+            "checkout.session.expired",
+            clock.Now.UtcDateTime,
+            false,
+            "cs_test_Unrelated",
+            "checkout.session",
+            expiryMetadata);
+        payments.Expiration = staleExpiration;
+        await Webhook("expiration", HttpStatusCode.NoContent);
+        Assert.Equal("monthly", (await subscriber.GetFromJsonAsync<BillingStatus>("/api/billing"))!.PendingInterval);
+
+        payments.Expiration = staleExpiration with { ProviderEventId = "evt_CurrentExpiry", ObjectId = "cs_test_PocketQuests" };
+        await Webhook("expiration", HttpStatusCode.NoContent);
+        Assert.Null((await subscriber.GetFromJsonAsync<BillingStatus>("/api/billing"))!.PendingInterval);
+        clock.Now = clock.Now.AddMinutes(1);
+        using var replacement = await subscriber.PostAsJsonAsync("/api/billing/checkout", new StartBillingCheckout("yearly"));
+        replacement.EnsureSuccessStatusCode();
+        Assert.NotEqual(reserved.IdempotencyKey, payments.Checkouts[^1].IdempotencyKey);
+
         async Task Webhook(string signature, HttpStatusCode expected)
         {
             using var webhook = new HttpRequestMessage(HttpMethod.Post, new Uri("/api/billing/stripe/webhook", UriKind.Relative))
@@ -155,6 +190,7 @@ public sealed partial class SqlApiTests
         internal bool FailNextCheckout { get; set; }
         internal bool Paid { get; set; }
         internal string Status { get; set; } = "active";
+        internal PaymentWebhookEventSnapshot? Expiration { get; set; }
 
         public ValueTask<PaymentCheckoutSessionSnapshot> CreateCheckoutSessionAsync(PaymentCheckoutSessionRequest request, CancellationToken cancellationToken)
         {
@@ -181,8 +217,11 @@ public sealed partial class SqlApiTests
             ValueTask.FromResult(new PaymentInvoiceReconciliationSnapshot("stripe", providerInvoiceId, "cus_PocketQuests", "sub_PocketQuests", Paid ? "paid" : "open", "usd", 3999, Paid ? 3999 : 0, Paid ? 0 : 3999, Created, Created.AddYears(1), Paid ? Created : null, null, null, null, null, null, Metadata));
 
         public ValueTask<PaymentWebhookEventSnapshot> ValidateWebhookEventAsync(string payload, string signatureHeader, CancellationToken cancellationToken) =>
-            signatureHeader is "sandbox" or "live"
-                ? ValueTask.FromResult(new PaymentWebhookEventSnapshot("stripe", "evt_PocketQuests", "invoice.paid", Created, signatureHeader == "live", "in_PocketQuests", "invoice", Metadata))
-                : throw new InvalidOperationException("Invalid test signature.");
+            signatureHeader switch
+            {
+                "sandbox" or "live" => ValueTask.FromResult(new PaymentWebhookEventSnapshot("stripe", "evt_PocketQuests", "invoice.paid", Created, signatureHeader == "live", "in_PocketQuests", "invoice", Metadata)),
+                "expiration" when Expiration is { } expiration => ValueTask.FromResult(expiration),
+                _ => throw new InvalidOperationException("Invalid test signature."),
+            };
     }
 }

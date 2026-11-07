@@ -9033,7 +9033,7 @@
     {
       "rule": "K03",
       "object": "pocketquests.Account.StripeSubscriptionId",
-      "reason": "External identifier for the Stripe Subscription linked to the account and customer by a verified event. Plus access checks the linked subscription and configured price through HoneyDrunk.Payments.",
+      "reason": "External identifier for the Stripe Subscription linked to the account and customer by a verified event. Plus access checks the linked subscription and paid invoice through HoneyDrunk.Payments.",
       "source": "Pocket Quests Plus billing schema review, PR #47",
       "review_status": "Locally reviewed; owning-repository CI review still required"
     },

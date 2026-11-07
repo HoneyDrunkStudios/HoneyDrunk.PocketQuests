@@ -4,9 +4,11 @@ using PocketQuests.Contracts.Responses.Billing;
 using PocketQuests.Data.DataServices.Accounts;
 using PocketQuests.Data.Entities.Accounts;
 using PocketQuests.Domain.Errors;
+using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Services.Accounts;
 using PocketQuests.Services.Quests;
 using PocketQuests.Services.Quests.Mapping;
+using System.Globalization;
 
 namespace PocketQuests.Services.Billing;
 
@@ -77,7 +79,7 @@ public sealed class BillingService
 
         var identity = viewer.Identity.ToModel();
         var now = clock.GetUtcNow();
-        var reservation = await accounts.ExecuteInTransaction(Reserve, token);
+        var reservation = await accounts.ExecuteInTransaction(tx => ReserveCheckout(identity, interval, now, tx), token);
 
         // Keep the reservation committed even if the provider responds and the request disconnects.
         var request = new PaymentCheckoutSessionRequest(
@@ -87,7 +89,7 @@ public sealed class BillingService
             (interval == "monthly" ? options.MonthlyPriceId : options.YearlyPriceId)!,
             options.ReturnUrl!,
             options.ReturnUrl!,
-            FormattableString.Invariant($"pq-{reservation.id:N}-{reservation.started.UtcTicks}"),
+            string.Create(CultureInfo.InvariantCulture, $"pq-{reservation.id:N}-{reservation.started.UtcTicks}"),
             reservation.customerId,
             CustomerEmail: reservation.customerId is null ? SandboxEmail(reservation.id) : null);
         var session = await PlusAccess.ProviderCall(() => subscriptions.CreateCheckoutSessionAsync(request, token), token);
@@ -97,30 +99,6 @@ public sealed class BillingService
 
         await accounts.ExecuteInTransaction(RecordSession, token);
         return new(url.AbsoluteUri);
-
-        async Task<(Guid id, string? customerId, DateTimeOffset started)> Reserve(CancellationToken tx)
-        {
-            await quests.RequireAccess(identity, true, tx);
-            var account = await quests.Account(identity, tx);
-            if (account.FounderPlusGrantedAt is not null || HasOpenSubscription(await access.ReadLinked(account, tx)))
-                throw new QuestValidationException("This account already has Plus or a subscription in progress.");
-            if (account.PlusCheckoutStartedAt is { } started)
-            {
-                var age = now - started;
-                if (account.PlusCheckoutInterval != interval || age >= ResumeWindow)
-                    throw new QuestValidationException("This account has a pending checkout. Finish that checkout or try again after it expires.");
-            }
-            else
-            {
-                account.StripeSubscriptionId = null;
-                account.PlusCheckoutStartedAt = now;
-                account.PlusCheckoutInterval = interval;
-                account.StripeCheckoutSessionId = null;
-                Touch(account, now);
-            }
-
-            return (id: account.Id, customerId: account.StripeCustomerId, started: account.PlusCheckoutStartedAt!.Value);
-        }
 
         async Task<bool> RecordSession(CancellationToken tx)
         {
@@ -169,33 +147,7 @@ public sealed class BillingService
         if (owner is null)
             return;
 
-        await accounts.ExecuteInTransaction(LinkSubscription, token);
-
-        async Task<bool> LinkSubscription(CancellationToken tx)
-        {
-            await accounts.AcquireCommandLock(owner, tx);
-            var account = await accounts.GetByIdentityUserId(owner, tx);
-            if (account is null || account.Id != accountId || account.FounderPlusGrantedAt is not null
-                || (account.StripeCustomerId is not null && account.StripeCustomerId != subscription.ProviderCustomerId)
-                || (account.StripeSubscriptionId is not null && account.StripeSubscriptionId != subscriptionId))
-                return false;
-
-            if (account.StripeSubscriptionId is null)
-            {
-                // A delayed event from a prior checkout cannot attach to a new reservation.
-                if (account.PlusCheckoutStartedAt is not { } started || subscription.CreatedAt < started.UtcDateTime.AddSeconds(-1)
-                    || subscription.TierName != $"plus-{account.PlusCheckoutInterval}")
-                    return false;
-                account.StripeCustomerId = subscription.ProviderCustomerId;
-                account.StripeSubscriptionId = subscriptionId;
-                account.PlusCheckoutStartedAt = null;
-                account.PlusCheckoutInterval = null;
-                account.StripeCheckoutSessionId = null;
-                Touch(account, clock.GetUtcNow());
-            }
-
-            return true;
-        }
+        await accounts.ExecuteInTransaction(tx => LinkSubscription(accountId, owner, subscription, tx), token);
     }
 
     private static bool HasOpenSubscription(PaymentSubscriptionSnapshot? subscription) =>
@@ -212,6 +164,53 @@ public sealed class BillingService
         value is not null && value.Length > prefix.Length && value.Length <= max
         && value.StartsWith(prefix, StringComparison.Ordinal)
         && value[prefix.Length..].All(char.IsAsciiLetterOrDigit);
+
+    private async Task<(Guid id, string? customerId, DateTimeOffset started)> ReserveCheckout(AccountIdentity identity, string interval, DateTimeOffset now, CancellationToken token)
+    {
+        await quests.RequireAccess(identity, true, token);
+        var account = await quests.Account(identity, token);
+        if (account.FounderPlusGrantedAt is not null || HasOpenSubscription(await access.ReadLinked(account, token)))
+            throw new QuestValidationException("This account already has Plus or a subscription in progress.");
+        if (account.PlusCheckoutStartedAt is { } started)
+        {
+            if (account.PlusCheckoutInterval != interval || now - started >= ResumeWindow)
+                throw new QuestValidationException("This account has a pending checkout. Finish that checkout or try again after it expires.");
+            return (id: account.Id, customerId: account.StripeCustomerId, started: started);
+        }
+
+        account.StripeSubscriptionId = null;
+        account.PlusCheckoutStartedAt = now;
+        account.PlusCheckoutInterval = interval;
+        account.StripeCheckoutSessionId = null;
+        Touch(account, now);
+        return (id: account.Id, customerId: account.StripeCustomerId, started: now);
+    }
+
+    private async Task<bool> LinkSubscription(Guid accountId, string owner, PaymentSubscriptionSnapshot subscription, CancellationToken token)
+    {
+        await accounts.AcquireCommandLock(owner, token);
+        var account = await accounts.GetByIdentityUserId(owner, token);
+        if (account is null || account.Id != accountId || account.FounderPlusGrantedAt is not null
+            || (account.StripeCustomerId is not null && account.StripeCustomerId != subscription.ProviderCustomerId)
+            || (account.StripeSubscriptionId is not null && account.StripeSubscriptionId != subscription.ProviderSubscriptionId))
+            return false;
+
+        if (account.StripeSubscriptionId is null)
+        {
+            // A delayed event from a prior checkout cannot attach to a new reservation.
+            if (account.PlusCheckoutStartedAt is not { } started || subscription.CreatedAt < started.UtcDateTime.AddSeconds(-1)
+                || subscription.TierName != $"plus-{account.PlusCheckoutInterval}")
+                return false;
+            account.StripeCustomerId = subscription.ProviderCustomerId;
+            account.StripeSubscriptionId = subscription.ProviderSubscriptionId;
+            account.PlusCheckoutStartedAt = null;
+            account.PlusCheckoutInterval = null;
+            account.StripeCheckoutSessionId = null;
+            Touch(account, clock.GetUtcNow());
+        }
+
+        return true;
+    }
 
     private async Task ExpireReservation(PaymentWebhookEventSnapshot message, CancellationToken token)
     {
