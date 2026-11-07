@@ -46,6 +46,19 @@ export type Balance = {
   "level": number;
 };
 
+export type BillingCheckout = {
+  "url": string;
+};
+
+export type BillingStatus = {
+  "plan": string;
+  "activeCustomQuests": number;
+  "freeQuestLimit": number;
+  "checkoutAvailable": boolean;
+  "pendingInterval": string | null;
+  "portalUrl": string | null;
+};
+
 export type Cadence = "Days" | "Weeks" | "Months" | "Years";
 
 export type CatalogResponse = {
@@ -430,6 +443,10 @@ export type SkillAssessment = {
   "at": string;
 };
 
+export type StartBillingCheckout = {
+  "interval": string;
+};
+
 export type Streak = {
   "categoryId": string;
   "days": number;
@@ -490,8 +507,10 @@ export type ApiOperations = {
   "POST /api/profile": { body: InitializeProfile; query: undefined; response: QuestState };
   "GET /api/state": { body: undefined; query: undefined; response: QuestState };
   "POST /api/commands": { body: QuestCommand; query: undefined; response: QuestState };
+  "GET /api/billing": { body: undefined; query: undefined; response: BillingStatus };
   "GET /api/planning/clock": { body: undefined; query: { "date": string; "time": string; "zone": string }; response: PlannedMoment };
   "GET /api/planning/zone": { body: undefined; query: { "zone": string }; response: ZonePreview };
+  "POST /api/billing/checkout": { body: StartBillingCheckout; query: undefined; response: BillingCheckout };
   "GET /api/discoveries": { body: undefined; query: undefined; response: (SavedPlace)[] };
   "POST /api/discoveries/save": { body: SavePlaceRequest; query: undefined; response: SavedPlace };
   "POST /api/discoveries/remove": { body: RemovePlaceRequest; query: undefined; response: RemovalResult };

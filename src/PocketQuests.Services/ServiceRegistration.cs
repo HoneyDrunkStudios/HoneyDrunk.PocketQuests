@@ -1,7 +1,9 @@
+using HoneyDrunk.Payments.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using PocketQuests.Data.DataServices.Accounts;
 using PocketQuests.Services.Accounts;
+using PocketQuests.Services.Billing;
 using PocketQuests.Services.Catalogs;
 using PocketQuests.Services.Exports;
 using PocketQuests.Services.Lifecycle;
@@ -34,6 +36,18 @@ public static class ServiceRegistration
         services.AddScoped<QuestOccurrenceService>();
         services.AddScoped<ProgressService>();
         services.AddScoped<QuestCommandHistoryService>();
+        services.AddOptions<BillingOptions>();
+        services.AddScoped(provider => new PlusAccess(
+            provider.GetService<IPaymentSubscriptionLifecycleClient>(),
+            provider.GetService<IPaymentInvoiceReconciliationClient>()));
+        services.AddScoped(provider => new BillingService(
+            provider.GetRequiredService<IAccountDataService>(),
+            provider.GetRequiredService<ICurrentAccount>(),
+            provider.GetRequiredService<QuestService>(),
+            provider.GetRequiredService<PlusAccess>(),
+            provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<BillingOptions>>(),
+            provider.GetService<IPaymentSubscriptionLifecycleClient>(),
+            provider.GetRequiredService<TimeProvider>()));
         services.AddScoped(provider => new QuestService(
             provider.GetRequiredService<IAccountDataService>(),
             provider.GetRequiredService<IAccountStateDataService>(),
@@ -45,7 +59,8 @@ public static class ServiceRegistration
             provider.GetRequiredService<QuestOccurrenceService>(),
             provider.GetRequiredService<ProgressService>(),
             provider.GetRequiredService<QuestCommandHistoryService>(),
-            provider.GetRequiredService<PocketQuests.Data.DataServices.Quests.ISystemQuestDataService>()));
+            provider.GetRequiredService<PocketQuests.Data.DataServices.Quests.ISystemQuestDataService>(),
+            provider.GetRequiredService<PlusAccess>()));
         services.AddScoped<IQuestService>(provider => provider.GetRequiredService<QuestService>());
         services.AddScoped<ProfileService>();
         services.AddScoped<IProfileService>(provider => provider.GetRequiredService<ProfileService>());

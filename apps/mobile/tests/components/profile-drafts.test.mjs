@@ -55,6 +55,9 @@ const {
 const {
   ProfileEditor,
 } = require("../../src/features/profile/profile-editor.tsx");
+const {
+  PlusSettings,
+} = require("../../src/features/profile/plus-settings.tsx");
 function reset() {
   sent = [];
   session = {
@@ -125,6 +128,54 @@ async function mount(Component) {
   await view.render();
   return view;
 }
+
+test("Plus Settings resumes the reserved web checkout and refreshes the paid plan", async (context) => {
+  reset();
+  let billing = {
+    plan: "Free",
+    activeCustomQuests: 5,
+    freeQuestLimit: 5,
+    checkoutAvailable: true,
+    pendingInterval: null,
+    portalUrl: null,
+  };
+  const checkoutUrl = "https://checkout.stripe.com/c/pay/cs_test_fixture";
+  const portalUrl = "https://billing.stripe.com/p/login/test_fixture";
+  const opened = [];
+  context.mock.method(nativeWeb.Linking, "openURL", async (url) => {
+    opened.push(url);
+  });
+  session.readBilling = async () => billing;
+  session.startBillingCheckout = async (interval) => {
+    sent.push(interval);
+    billing = { ...billing, pendingInterval: interval };
+    return { url: checkoutUrl };
+  };
+  const view = await mount(PlusSettings);
+  try {
+    assert.match(view.element.textContent, /5 active custom quests out of 5/);
+    await view.click("Choose yearly Plus");
+    assert.equal(view.button("Choose monthly Plus"), undefined);
+    await view.click("Resume yearly checkout");
+    assert.deepEqual(sent, ["yearly", "yearly"]);
+    assert.deepEqual(opened, [checkoutUrl, checkoutUrl]);
+
+    billing = {
+      ...billing,
+      plan: "Plus",
+      checkoutAvailable: false,
+      pendingInterval: null,
+      portalUrl,
+    };
+    await view.click("Refresh plan");
+    assert.equal(view.button("Resume yearly checkout"), undefined);
+    assert.doesNotMatch(view.element.textContent, /out of 5/);
+    await view.click("Manage subscription");
+    assert.equal(opened.at(-1), portalUrl);
+  } finally {
+    await view.close();
+  }
+});
 
 test("profile interests edit locally and double Save sends one final selection", async () => {
   reset();

@@ -2,7 +2,7 @@ namespace PocketQuests.DevelopmentHost;
 
 internal static class DevelopmentProxy
 {
-    internal static async Task Forward(HttpContext context, HttpClient client, string path)
+    internal static async Task Forward(HttpContext context, HttpClient client, string path, bool forwardStripeSignature = false)
     {
         using var request = new HttpRequestMessage(new HttpMethod(context.Request.Method), path);
         if (context.Request.ContentLength > 0 || context.Request.Headers.ContainsKey("Transfer-Encoding"))
@@ -14,6 +14,8 @@ internal static class DevelopmentProxy
 
         if (context.Request.Headers.Authorization.Count > 0)
             request.Headers.TryAddWithoutValidation("Authorization", context.Request.Headers.Authorization.ToArray());
+        if (forwardStripeSignature && context.Request.Headers.TryGetValue("Stripe-Signature", out var signature))
+            request.Headers.TryAddWithoutValidation("Stripe-Signature", signature.ToArray());
         using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted);
         context.Response.StatusCode = (int)response.StatusCode;
         context.Response.Headers.CacheControl = "no-store";

@@ -97,12 +97,12 @@ export function createSessionRequests({
       setBusy(false);
     }
   }
-  async function discoveryRequest<T>(
+  async function accountRequest<T>(
     mutation: boolean,
     request: () => Promise<T>,
   ): Promise<T> {
     if (!auth.session || signingOut.current)
-      throw new Error("Connect to use your saved places.");
+      throw new Error("Connect to use this account feature.");
     if (mutation && inFlight.current)
       throw new Error("Wait for the current action to finish.");
     const epoch = auth.epoch;
@@ -123,19 +123,19 @@ export function createSessionRequests({
     }
   }
   const readDiscoveries = () =>
-    discoveryRequest(false, () =>
+    accountRequest(false, () =>
       client("GET /api/discoveries", undefined, undefined),
     );
   const saveDiscovery = (
     request: import("../api/generated").SavePlaceRequest,
   ) =>
-    discoveryRequest(true, () =>
+    accountRequest(true, () =>
       client("POST /api/discoveries/save", request, undefined),
     );
   const removeDiscovery = (
     request: import("../api/generated").RemovePlaceRequest,
   ) =>
-    discoveryRequest(true, () =>
+    accountRequest(true, () =>
       client("POST /api/discoveries/remove", request, undefined),
     );
   return {
@@ -146,5 +146,13 @@ export function createSessionRequests({
     readDiscoveries,
     saveDiscovery,
     removeDiscovery,
+    readBilling: () =>
+      accountRequest(false, () =>
+        client("GET /api/billing", undefined, undefined),
+      ),
+    startBillingCheckout: (interval: "monthly" | "yearly") =>
+      accountRequest(true, () =>
+        client("POST /api/billing/checkout", { interval }, undefined),
+      ),
   };
 }

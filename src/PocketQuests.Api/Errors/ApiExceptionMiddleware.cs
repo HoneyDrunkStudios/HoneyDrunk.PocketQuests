@@ -1,6 +1,7 @@
 using PocketQuests.Domain.Errors;
 using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Models.Synchronization;
+using PocketQuests.Services.Billing;
 
 namespace PocketQuests.Api.Errors;
 
@@ -44,6 +45,9 @@ public sealed class ApiExceptionMiddleware(RequestDelegate next, ILogger<ApiExce
                     break;
                 case SyncClockNotReadyException clock:
                     result = Results.Problem(clock.Message, statusCode: 503);
+                    break;
+                case BillingUnavailableException billing:
+                    result = Results.Problem(billing.Message, statusCode: 503);
                     break;
                 case QuestValidationException validation:
                     result = Results.Problem(validation.Message, statusCode: 400);

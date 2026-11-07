@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="HoneyDrunk.Payments.Abstractions" Version="0.1.3" />
     <ProjectReference Include="../PocketQuests.Contracts/PocketQuests.Contracts.csproj" />
     <ProjectReference Include="../PocketQuests.Domain/PocketQuests.Domain.csproj" />
     <ProjectReference Include="../PocketQuests.Data/PocketQuests.Data.csproj" />

@@ -6,6 +6,7 @@ import { useSession } from "../session/session";
 import { Button, Label, colors, styles } from "../shared/ui";
 import { SettingsEditor } from "../features/profile/settings-editor";
 import { AccountSettings } from "../features/profile/account-settings";
+import { PlusSettings } from "../features/profile/plus-settings";
 import { ProfileEditor } from "../features/profile/profile-editor";
 import { AppearanceEditor } from "../features/profile/appearance-editor";
 export default function Settings() {
@@ -34,6 +35,10 @@ export default function Settings() {
       </Link>
       <AppearanceEditor />
       <SettingsEditor />
+      <Text accessibilityRole="header" style={styles.subtitle}>
+        Pocket Quests Plus
+      </Text>
+      <PlusSettings />
       <AccountSettings />
       <Text style={styles.subtitle}>Your private data</Text>
       <Label>

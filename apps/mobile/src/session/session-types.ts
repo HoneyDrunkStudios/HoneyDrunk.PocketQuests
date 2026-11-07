@@ -18,6 +18,10 @@ export type AccountStatus = {
 };
 export type SessionContext = {
   readDiscoveries(): Promise<import("../api/generated").SavedPlace[]>;
+  readBilling(): Promise<import("../api/generated").BillingStatus>;
+  startBillingCheckout(
+    interval: "monthly" | "yearly",
+  ): Promise<import("../api/generated").BillingCheckout>;
   saveDiscovery(
     request: import("../api/generated").SavePlaceRequest,
   ): Promise<import("../api/generated").SavedPlace>;

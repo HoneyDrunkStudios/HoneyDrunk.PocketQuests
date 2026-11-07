@@ -65,4 +65,22 @@ public sealed class AccountEntity
 
     /// <summary>Gets or sets one of the bundled portrait codes; null means no character selection.</summary>
     public string? PortraitId { get; set; }
+
+    /// <summary>Gets or sets the UTC instant of a complimentary lifetime Plus grant.</summary>
+    public DateTimeOffset? FounderPlusGrantedAt { get; set; }
+
+    /// <summary>Gets or sets the external Stripe customer linked to the account.</summary>
+    public string? StripeCustomerId { get; set; }
+
+    /// <summary>Gets or sets the linked Stripe subscription identifier.</summary>
+    public string? StripeSubscriptionId { get; set; }
+
+    /// <summary>Gets or sets when the current Checkout attempt was reserved.</summary>
+    public DateTimeOffset? PlusCheckoutStartedAt { get; set; }
+
+    /// <summary>Gets or sets the reserved billing interval.</summary>
+    public string? PlusCheckoutInterval { get; set; }
+
+    /// <summary>Gets or sets the provider session identifier for the current reservation.</summary>
+    public string? StripeCheckoutSessionId { get; set; }
 }

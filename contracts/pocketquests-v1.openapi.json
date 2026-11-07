@@ -452,6 +452,47 @@
         ]
       }
     },
+    "/api/billing": {
+      "get": {
+        "tags": [
+          "PocketQuests.Api"
+        ],
+        "operationId": "ReadBillingStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingStatus"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "IdentityBearer": []
+          }
+        ]
+      }
+    },
     "/api/planning/clock": {
       "get": {
         "tags": [
@@ -578,6 +619,67 @@
           },
           "404": {
             "description": "Not Found"
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "IdentityBearer": []
+          }
+        ]
+      }
+    },
+    "/api/billing/checkout": {
+      "post": {
+        "tags": [
+          "PocketQuests.Api"
+        ],
+        "operationId": "StartBillingCheckout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartBillingCheckout"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingCheckout"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "503": {
             "description": "Service Unavailable",
@@ -1616,6 +1718,61 @@
           }
         },
         "description": "The public Balance JSON contract, independent of storage and domain behavior."
+      },
+      "BillingCheckout": {
+        "required": [
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The hosted Stripe Checkout URL."
+          }
+        },
+        "description": "A hosted checkout URL returned to the account that started it."
+      },
+      "BillingStatus": {
+        "required": [
+          "plan",
+          "activeCustomQuests",
+          "freeQuestLimit",
+          "checkoutAvailable",
+          "pendingInterval",
+          "portalUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "string",
+            "description": "Free, Plus or Lifetime Plus."
+          },
+          "activeCustomQuests": {
+            "type": "integer",
+            "description": "Number of unarchived custom quests.",
+            "format": "int32"
+          },
+          "freeQuestLimit": {
+            "type": "integer",
+            "description": "Maximum active custom quests for Free accounts.",
+            "format": "int32"
+          },
+          "checkoutAvailable": {
+            "type": "boolean",
+            "description": "Whether hosted checkout can be started."
+          },
+          "pendingInterval": {
+            "type": "string",
+            "description": "The reserved interval, when an open checkout can be resumed.",
+            "nullable": true
+          },
+          "portalUrl": {
+            "type": "string",
+            "description": "Stripe-hosted account management entry point, when configured for the subscriber.",
+            "nullable": true
+          }
+        },
+        "description": "Account plan and permitted actions for the authenticated viewer."
       },
       "Cadence": {
         "enum": [
@@ -3730,6 +3887,19 @@
           }
         },
         "description": "The public SkillAssessment JSON contract, independent of storage and domain behavior."
+      },
+      "StartBillingCheckout": {
+        "required": [
+          "interval"
+        ],
+        "type": "object",
+        "properties": {
+          "interval": {
+            "type": "string",
+            "description": "Monthly or yearly."
+          }
+        },
+        "description": "Selects one of the server-configured Plus prices."
       },
       "Streak": {
         "required": [

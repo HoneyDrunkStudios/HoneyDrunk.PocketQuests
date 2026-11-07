@@ -6,6 +6,7 @@ using PocketQuests.Data.DataServices;
 using PocketQuests.Data.DataServices.Accounts;
 using PocketQuests.Services;
 using PocketQuests.Services.Accounts;
+using PocketQuests.Services.Billing;
 using PocketQuests.Services.Profiles;
 using PocketQuests.Services.Progress;
 using PocketQuests.Services.Quests;
@@ -35,7 +36,8 @@ internal static class CompletionFixture
         services.GetRequiredService<QuestOccurrenceService>(),
         services.GetRequiredService<ProgressService>(),
         services.GetRequiredService<QuestCommandHistoryService>(),
-        services.GetRequiredService<PocketQuests.Data.DataServices.Quests.ISystemQuestDataService>());
+        services.GetRequiredService<PocketQuests.Data.DataServices.Quests.ISystemQuestDataService>(),
+        services.GetRequiredService<PlusAccess>());
 
     // A single externally owned context lets fault-injection interceptors exercise every typed repository.
     internal static ServiceProvider Provider(AppDbContext db, string connection)

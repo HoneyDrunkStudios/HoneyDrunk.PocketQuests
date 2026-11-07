@@ -10,6 +10,7 @@ using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Quests.Aggregates;
 using PocketQuests.Services.Accounts;
 using PocketQuests.Services.Accounts.Validators;
+using PocketQuests.Services.Billing;
 using PocketQuests.Services.Commands.Mapping;
 using PocketQuests.Services.Profiles;
 using PocketQuests.Services.Progress;
@@ -39,6 +40,7 @@ public sealed class QuestService : IQuestService
     private readonly ProgressService progress;
     private readonly QuestCommandHistoryService history;
     private readonly PocketQuests.Data.DataServices.Quests.ISystemQuestDataService templates;
+    private readonly PlusAccess plusAccess;
 
     internal QuestService(
         IAccountDataService data,
@@ -51,7 +53,8 @@ public sealed class QuestService : IQuestService
         QuestOccurrenceService occurrences,
         ProgressService progress,
         QuestCommandHistoryService history,
-        PocketQuests.Data.DataServices.Quests.ISystemQuestDataService templates)
+        PocketQuests.Data.DataServices.Quests.ISystemQuestDataService templates,
+        PlusAccess plusAccess)
     {
         this.data = data;
         this.accountState = accountState;
@@ -64,6 +67,7 @@ public sealed class QuestService : IQuestService
         this.progress = progress;
         this.history = history;
         this.templates = templates;
+        this.plusAccess = plusAccess;
     }
 
     /// <inheritdoc />
@@ -202,6 +206,11 @@ public sealed class QuestService : IQuestService
 
         var rows = await accountState.ReadCurrentState(account.Id, token);
         var aggregate = Current(account, rows);
+        if (command.Action == QuestActions.SaveDefinition && command.Definition is { IsCustom: true } definition
+            && aggregate.Definitions.All(existing => existing.Quest.Id != definition.Id)
+            && aggregate.Definitions.Count(existing => existing.Quest.IsCustom && !existing.Archived) >= PlusAccess.FreeQuestLimit
+            && !await plusAccess.HasPlus(account, token))
+            throw new QuestValidationException("Free accounts can keep up to five active custom quests. Archive one or switch to Plus to create another.");
         var logicalNow = QuestClock.Max(now, account.LastRecordedAt);
         var reconciliation = aggregate.Reconcile(logicalNow, ReconciliationLimit);
         if (reconciliation.HasMore)
