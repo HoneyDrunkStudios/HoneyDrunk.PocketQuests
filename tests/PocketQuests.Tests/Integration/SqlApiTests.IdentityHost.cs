@@ -155,7 +155,9 @@ public sealed partial class SqlApiTests : IAsyncLifetime
             }
             else
             {
-                builder.ConfigureServices(services => services.AddHttpClient<IdentityClient>().ConfigurePrimaryHttpMessageHandler(() => identityHost.Server.CreateHandler()));
+                // The in-process Identity host and LocalDB share the instrumented test runner.
+                builder.ConfigureServices(services => services.AddHttpClient<IdentityClient>(client => client.Timeout = TimeSpan.FromMinutes(1))
+                    .ConfigurePrimaryHttpMessageHandler(() => identityHost.Server.CreateHandler()));
             }
         }
 
