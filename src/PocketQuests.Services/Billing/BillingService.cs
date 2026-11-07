@@ -6,9 +6,9 @@ using PocketQuests.Data.Entities.Accounts;
 using PocketQuests.Domain.Errors;
 using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Services.Accounts;
+using PocketQuests.Services.Billing.Mapping;
 using PocketQuests.Services.Quests;
 using PocketQuests.Services.Quests.Mapping;
-using System.Globalization;
 
 namespace PocketQuests.Services.Billing;
 
@@ -54,11 +54,11 @@ public sealed class BillingService
         var account = await quests.Account(identity, token);
         var active = await accounts.CountActiveCustomQuests(account.Id, token);
         if (account.FounderPlusGrantedAt is not null)
-            return new("Lifetime Plus", active, PlusAccess.FreeQuestLimit, false, null);
+            return BillingContractMapping.Status("Lifetime Plus", active, PlusAccess.FreeQuestLimit, false, null);
 
         var subscription = await access.ReadLinked(account, token);
         var paid = await access.IsPaid(account, subscription, token);
-        return new(
+        return BillingContractMapping.Status(
             paid ? "Plus" : "Free",
             active,
             PlusAccess.FreeQuestLimit,
@@ -82,23 +82,21 @@ public sealed class BillingService
         var reservation = await accounts.ExecuteInTransaction(tx => ReserveCheckout(identity, interval, now, tx), token);
 
         // Keep the reservation committed even if the provider responds and the request disconnects.
-        var request = new PaymentCheckoutSessionRequest(
-            reservation.id.ToString("D"),
-            PlusAccess.Project,
-            $"plus-{interval}",
+        var request = BillingContractMapping.CheckoutRequest(
+            reservation.id,
+            reservation.customerId,
+            interval,
             (interval == "monthly" ? options.MonthlyPriceId : options.YearlyPriceId)!,
             options.ReturnUrl!,
-            options.ReturnUrl!,
-            string.Create(CultureInfo.InvariantCulture, $"pq-{reservation.id:N}-{reservation.started.UtcTicks}"),
-            reservation.customerId,
-            CustomerEmail: reservation.customerId is null ? SandboxEmail(reservation.id) : null);
+            reservation.started,
+            reservation.customerId is null ? SandboxEmail(reservation.id) : null);
         var session = await PlusAccess.ProviderCall(() => subscriptions.CreateCheckoutSessionAsync(request, token), token);
         if (!Uri.TryCreate(session.Url, UriKind.Absolute, out var url) || url.Scheme != Uri.UriSchemeHttps
             || url.Host != "checkout.stripe.com" || url.UserInfo.Length != 0 || !ValidReference(session.SessionId, "cs_test_", 120))
             throw new BillingUnavailableException();
 
         await accounts.ExecuteInTransaction(RecordSession, token);
-        return new(url.AbsoluteUri);
+        return BillingContractMapping.Checkout(url);
 
         async Task<bool> RecordSession(CancellationToken tx)
         {
