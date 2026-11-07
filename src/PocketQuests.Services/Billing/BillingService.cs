@@ -52,7 +52,7 @@ public sealed class BillingService
         var account = await quests.Account(identity, token);
         var active = await accounts.CountActiveCustomQuests(account.Id, token);
         if (account.FounderPlusGrantedAt is not null)
-            return new("Lifetime Plus", active, PlusAccess.FreeQuestLimit, false, null, null);
+            return new("Lifetime Plus", active, PlusAccess.FreeQuestLimit, false, null);
 
         var subscription = await access.ReadLinked(account, token);
         var paid = await access.IsPaid(account, subscription, token);
@@ -61,8 +61,7 @@ public sealed class BillingService
             active,
             PlusAccess.FreeQuestLimit,
             options.Ready && subscriptions is not null && !HasOpenSubscription(subscription),
-            account.PlusCheckoutInterval,
-            account.StripeCustomerId is not null ? options.SafePortal : null);
+            account.PlusCheckoutInterval);
     }
 
     /// <summary>Reserves and starts a retry-safe hosted Checkout session for the current account.</summary>

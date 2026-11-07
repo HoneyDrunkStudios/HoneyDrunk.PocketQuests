@@ -15,11 +15,10 @@ The HoneyDrunk Studios Stripe sandbox product is `prod_pocket_quests_plus`. Its 
 | `Billing:ReturnUrl` | A trusted web Settings URL served by Pocket Quests; use HTTPS outside loopback. |
 | `Billing:StripeApiKeyName` | Vault secret name for a restricted Stripe sandbox API key. Allow Checkout Sessions creation, Subscription reads, and Invoice reads. |
 | `Billing:StripeWebhookSecretName` | Vault secret name for this sandbox endpoint's signing secret. |
-| `Billing:PortalUrl` | Optional Stripe-hosted sandbox Customer Portal login URL. |
 
 For a local Development or Testing host, `Billing:StripeApiKey` and `Billing:StripeWebhookSecret` can come from the host's private configuration instead of Vault. Never put credentials in the client or in tracked settings. Set `Billing:SandboxEnabled=true` after the sandbox keys, prices and return URL are configured.
 
-For a first sandbox Checkout, Pocket Quests supplies an account-specific address at `example.com` to satisfy the shared adapter's customer requirement. It does not send a sign-in email. Before enabling live billing, update HoneyDrunk.Payments to let hosted Checkout collect the email when creating a customer, or provide a verified billing contact through the product.
+For a first sandbox Checkout, Pocket Quests supplies an account-specific address at `example.com` to satisfy the shared adapter's customer requirement. The sandbox flow omits the Customer Portal because Stripe's hosted login sends a link to the customer's billing email. Before enabling live billing, update HoneyDrunk.Payments to let hosted Checkout collect the email when creating a customer, or provide a verified billing contact through the product.
 
 Use a dedicated Stripe sandbox endpoint or local Stripe CLI forwarding to `POST /api/billing/stripe/webhook`. Subscribe to `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`, and `checkout.session.expired`. The API verifies signatures through HoneyDrunk.Payments and rejects live events and live API keys.
 

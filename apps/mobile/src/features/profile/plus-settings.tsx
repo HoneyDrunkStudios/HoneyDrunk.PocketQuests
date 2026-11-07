@@ -79,18 +79,6 @@ export function PlusSettings() {
               )}
             </>
           )}
-          {Platform.OS === "web" && status.portalUrl && (
-            <Button
-              title="Manage subscription"
-              secondary
-              onPress={() => {
-                if (status.portalUrl)
-                  void Linking.openURL(status.portalUrl).catch(() =>
-                    setMessage("Couldn’t open subscription settings."),
-                  );
-              }}
-            />
-          )}
         </>
       ) : (
         <Label>

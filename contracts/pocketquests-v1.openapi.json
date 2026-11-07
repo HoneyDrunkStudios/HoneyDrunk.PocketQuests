@@ -1738,8 +1738,7 @@
           "activeCustomQuests",
           "freeQuestLimit",
           "checkoutAvailable",
-          "pendingInterval",
-          "portalUrl"
+          "pendingInterval"
         ],
         "type": "object",
         "properties": {
@@ -1764,11 +1763,6 @@
           "pendingInterval": {
             "type": "string",
             "description": "The reserved interval, when an open checkout can be resumed.",
-            "nullable": true
-          },
-          "portalUrl": {
-            "type": "string",
-            "description": "Stripe-hosted account management entry point, when configured for the subscriber.",
             "nullable": true
           }
         },

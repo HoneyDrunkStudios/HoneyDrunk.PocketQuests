@@ -56,7 +56,6 @@ export type BillingStatus = {
   "freeQuestLimit": number;
   "checkoutAvailable": boolean;
   "pendingInterval": string | null;
-  "portalUrl": string | null;
 };
 
 export type Cadence = "Days" | "Weeks" | "Months" | "Years";

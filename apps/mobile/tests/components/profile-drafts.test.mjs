@@ -137,10 +137,8 @@ test("Plus Settings resumes the reserved web checkout and refreshes the paid pla
     freeQuestLimit: 5,
     checkoutAvailable: true,
     pendingInterval: null,
-    portalUrl: null,
   };
   const checkoutUrl = "https://checkout.stripe.com/c/pay/cs_test_fixture";
-  const portalUrl = "https://billing.stripe.com/p/login/test_fixture";
   const opened = [];
   context.mock.method(nativeWeb.Linking, "openURL", async (url) => {
     opened.push(url);
@@ -165,13 +163,11 @@ test("Plus Settings resumes the reserved web checkout and refreshes the paid pla
       plan: "Plus",
       checkoutAvailable: false,
       pendingInterval: null,
-      portalUrl,
     };
     await view.click("Refresh plan");
     assert.equal(view.button("Resume yearly checkout"), undefined);
     assert.doesNotMatch(view.element.textContent, /out of 5/);
-    await view.click("Manage subscription");
-    assert.equal(opened.at(-1), portalUrl);
+    assert.equal(view.button("Manage subscription"), undefined);
   } finally {
     await view.close();
   }
