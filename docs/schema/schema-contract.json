@@ -9025,6 +9025,27 @@
     },
     {
       "rule": "K03",
+      "object": "pocketquests.Account.StripeCustomerId",
+      "reason": "External identifier for the Stripe Customer linked by a verified billing event. The filtered unique index prevents one Stripe customer from being linked to multiple Pocket Quests accounts.",
+      "source": "Pocket Quests Plus billing schema review, PR #47",
+      "review_status": "Locally reviewed; owning-repository CI review still required"
+    },
+    {
+      "rule": "K03",
+      "object": "pocketquests.Account.StripeSubscriptionId",
+      "reason": "External identifier for the Stripe Subscription linked to the account and customer by a verified event. Plus access checks the linked subscription and configured price through HoneyDrunk.Payments.",
+      "source": "Pocket Quests Plus billing schema review, PR #47",
+      "review_status": "Locally reviewed; owning-repository CI review still required"
+    },
+    {
+      "rule": "K03",
+      "object": "pocketquests.Account.StripeCheckoutSessionId",
+      "reason": "External identifier for the Stripe Checkout Session returned by HoneyDrunk.Payments. When present, it must match the signed expiration event before the reservation is cleared.",
+      "source": "Pocket Quests Plus billing schema review, PR #47",
+      "review_status": "Locally reviewed; owning-repository CI review still required"
+    },
+    {
+      "rule": "K03",
       "object": "pocketquests.Account.TimeZoneId",
       "reason": "External identifier: IANA timezone database; validated with the pinned NodaTime TZDB",
       "source": "Approved design direction and concrete blueprint review, 2026-10-04",
