@@ -47,6 +47,13 @@ app.MapPost("/development/sign-in", (PairingRequest request, HttpContext context
         ? Results.Ok(new { token = identity.IssueToken() })
         : Results.Unauthorized();
 }).RequireRateLimiting("pairing");
+
+// Only a disposable sandbox host may forward signed Stripe events. The retained
+// Expo Go host can be reachable through a phone tunnel and never forwards them.
+var forwardSandboxWebhooks = instance != "PocketQuests" && builder.Configuration.GetValue<bool>("Billing:SandboxEnabled");
+app.MapPost("/api/billing/stripe/webhook", context => forwardSandboxWebhooks
+    ? DevelopmentProxy.Forward(context, questClient, "/api/billing/stripe/webhook", forwardStripeSignature: true)
+    : Results.NotFound().ExecuteAsync(context));
 app.MapMethods("/api/{**path}", ["GET", "POST"], context => DevelopmentProxy.Forward(context, questClient, context.Request.Path + context.Request.QueryString));
 app.MapGet("/identity/users/me", context => DevelopmentProxy.Forward(context, identityClient, "/users/me"));
 app.MapGet("/identity/users/me/status", context => DevelopmentProxy.Forward(context, identityClient, "/users/me/status"));

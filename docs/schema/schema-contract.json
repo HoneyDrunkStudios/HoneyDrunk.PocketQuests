@@ -732,6 +732,66 @@
       "classification": "Restricted",
       "columns": [
         {
+          "name": "FounderPlusGrantedAt",
+          "type": "datetimeoffset(7)",
+          "nullable": true,
+          "default": null,
+          "description": "UTC time of the complimentary lifetime Plus grant. Null means no founder grant. Erased with the account.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "StripeCustomerId",
+          "type": "varchar(80)",
+          "nullable": true,
+          "default": null,
+          "description": "External Stripe Customer ID for the account. Null means billing has not been initialized. Restricted data erased with the account.",
+          "external_source": "Stripe Billing Customer.id",
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
+          "name": "StripeSubscriptionId",
+          "type": "varchar(80)",
+          "nullable": true,
+          "default": null,
+          "description": "External Stripe Subscription ID linked by verified billing events. Null means no linked subscription. Restricted data erased with the account.",
+          "external_source": "Stripe Billing Subscription.id",
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
+          "name": "PlusCheckoutStartedAt",
+          "type": "datetimeoffset(7)",
+          "nullable": true,
+          "default": null,
+          "description": "UTC time of the current Plus Checkout reservation. Null means no reservation. Replaced on a new attempt and erased with the account.",
+          "external_source": null,
+          "computed": null,
+          "collation": null
+        },
+        {
+          "name": "PlusCheckoutInterval",
+          "type": "varchar(7)",
+          "nullable": true,
+          "default": null,
+          "description": "Monthly or yearly interval reserved for hosted Checkout. Null means no reservation.",
+          "external_source": null,
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
+          "name": "StripeCheckoutSessionId",
+          "type": "varchar(120)",
+          "nullable": true,
+          "default": null,
+          "description": "Stripe Checkout Session ID for the current reservation once created. Null means creation has not been confirmed. Restricted data erased with the account.",
+          "external_source": "Stripe Checkout Session.id",
+          "computed": null,
+          "collation": "Latin1_General_100_BIN2"
+        },
+        {
           "name": "Id",
           "type": "uniqueidentifier",
           "nullable": false,
@@ -965,6 +1025,26 @@
       ],
       "checks": [
         {
+          "name": "CK_Account_FounderPlusGrantedAtUtc",
+          "expression": "[FounderPlusGrantedAt] IS NULL OR DATEPART(TZOFFSET,[FounderPlusGrantedAt])=0",
+          "purpose": "Require UTC for complimentary grants."
+        },
+        {
+          "name": "CK_Account_StripeSubscriptionLink",
+          "expression": "[StripeSubscriptionId] IS NULL OR ([StripeCustomerId] IS NOT NULL AND LEFT([StripeSubscriptionId],4)='sub_' AND LEN([StripeSubscriptionId])>4)",
+          "purpose": "Require a linked Stripe customer for a Stripe subscription."
+        },
+        {
+          "name": "CK_Account_StripeCustomerId",
+          "expression": "[StripeCustomerId] IS NULL OR (LEN([StripeCustomerId]) BETWEEN 5 AND 80 AND DATALENGTH([StripeCustomerId])=LEN([StripeCustomerId]) AND LEFT([StripeCustomerId],4)='cus_' AND PATINDEX('%[^0-9A-Za-z]%',ISNULL(SUBSTRING([StripeCustomerId],5,76),''))=0)",
+          "purpose": "Require the Stripe Customer ID format."
+        },
+        {
+          "name": "CK_Account_PlusCheckoutReservation",
+          "expression": "([PlusCheckoutStartedAt] IS NULL AND [PlusCheckoutInterval] IS NULL AND [StripeCheckoutSessionId] IS NULL) OR ([PlusCheckoutStartedAt] IS NOT NULL AND DATEPART(TZOFFSET,[PlusCheckoutStartedAt])=0 AND [PlusCheckoutInterval] IS NOT NULL AND [PlusCheckoutInterval] IN ('monthly','yearly'))",
+          "purpose": "Require a complete UTC reservation for the selected recurring interval."
+        },
+        {
           "name": "CK_Account_SelectedBadgeKind",
           "expression": "[SelectedBadgeKind] IN ('Badge')",
           "purpose": "Only the documented domain codes are permitted."
@@ -1061,6 +1141,16 @@
         }
       ],
       "indexes": [
+        {
+          "name": "UQ_Account_StripeCustomerId",
+          "columns": [
+            "StripeCustomerId"
+          ],
+          "unique": true,
+          "filter": "[StripeCustomerId] IS NOT NULL",
+          "include": [],
+          "purpose": "Binds a Stripe customer to at most one Pocket Quests account."
+        },
         {
           "name": "IX_Account_FK_ProfileReward_SelectedBadge",
           "columns": [
@@ -8931,6 +9021,27 @@
       "object": "pocketquests.Account.IdentityUserId",
       "reason": "External identifier: HoneyDrunk.Identity UserRecord.UserId (usr_ plus 26 ULID characters)",
       "source": "Approved design direction and concrete blueprint review, 2026-10-04",
+      "review_status": "Locally reviewed; owning-repository CI review still required"
+    },
+    {
+      "rule": "K03",
+      "object": "pocketquests.Account.StripeCustomerId",
+      "reason": "External identifier for the Stripe Customer linked by a verified billing event. The filtered unique index prevents one Stripe customer from being linked to multiple Pocket Quests accounts.",
+      "source": "Pocket Quests Plus billing schema review, PR #47",
+      "review_status": "Locally reviewed; owning-repository CI review still required"
+    },
+    {
+      "rule": "K03",
+      "object": "pocketquests.Account.StripeSubscriptionId",
+      "reason": "External identifier for the Stripe Subscription linked to the account and customer by a verified event. Plus access checks the linked subscription and paid invoice through HoneyDrunk.Payments.",
+      "source": "Pocket Quests Plus billing schema review, PR #47",
+      "review_status": "Locally reviewed; owning-repository CI review still required"
+    },
+    {
+      "rule": "K03",
+      "object": "pocketquests.Account.StripeCheckoutSessionId",
+      "reason": "External identifier for the Stripe Checkout Session returned by HoneyDrunk.Payments. When present, it must match the signed expiration event before the reservation is cleared.",
+      "source": "Pocket Quests Plus billing schema review, PR #47",
       "review_status": "Locally reviewed; owning-repository CI review still required"
     },
     {

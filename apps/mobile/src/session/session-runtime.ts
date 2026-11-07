@@ -203,6 +203,8 @@ export function createSessionRuntime(clockSource: ClockSource) {
     previewZone: requests.previewZone,
     previewClock: requests.previewClock,
     readDiscoveries: requests.readDiscoveries,
+    readBilling: requests.readBilling,
+    startBillingCheckout: requests.startBillingCheckout,
     saveDiscovery: requests.saveDiscovery,
     removeDiscovery: requests.removeDiscovery,
     dismissCompletion: () =>

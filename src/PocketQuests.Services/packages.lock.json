@@ -8,6 +8,12 @@
         "resolved": "0.1.0-alpha.5",
         "contentHash": "OUCM7DOS55DrS4s6uPWvynwgJ/jxSRk9hbtYdGLeEIq5dqVhcUQN7+PzWny4AwiXnvftgmYVF07X+AMRe1hVmg=="
       },
+      "HoneyDrunk.Payments.Abstractions": {
+        "type": "Direct",
+        "requested": "[0.1.3, )",
+        "resolved": "0.1.3",
+        "contentHash": "by/uJG+eVluJZtwyCx6BXS+zOPIXSMko5uFiuAd1k52nSXQuxP4VVtz1l6THAznSKF7osIV3pcPnDfF8eBvj/A=="
+      },
       "HoneyDrunk.Standards": {
         "type": "Direct",
         "requested": "[0.4.4, )",

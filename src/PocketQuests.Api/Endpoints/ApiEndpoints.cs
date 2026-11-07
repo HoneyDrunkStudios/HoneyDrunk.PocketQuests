@@ -1,3 +1,4 @@
+using PocketQuests.Api.Endpoints.Billing;
 using PocketQuests.Api.Endpoints.Catalogs;
 using PocketQuests.Api.Endpoints.Exports;
 using PocketQuests.Api.Endpoints.Profiles;
@@ -21,5 +22,6 @@ public static class ApiEndpoints
         app.MapQuestState();
         app.MapQuestCommands();
         app.MapExportEndpoints();
+        app.MapBilling();
     }
 }

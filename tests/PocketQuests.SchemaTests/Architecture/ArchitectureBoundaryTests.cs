@@ -40,6 +40,16 @@ public sealed class ArchitectureBoundaryTests
     public void Domain_DoesNotDependOnOuterLayersOrHostIo() => Assert.Empty(ArchitectureRules.Violations(
         typeof(QuestAggregate).Assembly.GetTypes(), ArchitectureRules.IsImpureDomainDependency));
 
+    /// <summary>Stripe stays behind HoneyDrunk.Payments, with provider composition in the API host.</summary>
+    [Fact]
+    public void Billing_UsesSharedPaymentsBoundary()
+    {
+        var api = typeof(PocketQuestsApiProgram).Assembly.GetReferencedAssemblies();
+        var services = typeof(IQuestService).Assembly.GetReferencedAssemblies();
+        Assert.DoesNotContain(api.Concat(services), reference => reference.Name == "Stripe.net");
+        Assert.DoesNotContain(services, reference => reference.Name == "HoneyDrunk.Payments.Stripe");
+    }
+
     /// <summary>Every production predicate rejects a deliberately invalid compiled fixture and accepts a valid one.</summary>
     [Fact]
     public void Rules_RejectViolationsAndAcceptSupportedBoundaries()

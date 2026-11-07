@@ -11,6 +11,14 @@ public sealed partial class AccountDataService(AppDbContext context) : BaseDataS
     private IQueryable<AccountEntity> Accounts => DbSet;
 
     /// <inheritdoc />
+    public Task<string?> GetIdentityByAccountId(Guid accountId, CancellationToken token) => Accounts.AsNoTracking()
+        .Where(account => account.Id == accountId).Select(account => account.IdentityUserId).SingleOrDefaultAsync(token);
+
+    /// <inheritdoc />
+    public Task<int> CountActiveCustomQuests(Guid accountId, CancellationToken token) => Context.QuestDefinition
+        .CountAsync(definition => definition.AccountId == accountId && definition.SystemQuestId == null && definition.ArchivedAt == null, token);
+
+    /// <inheritdoc />
     public Task<bool> IsAccessSuspended(string userId, CancellationToken token) => Accounts.AsNoTracking()
         .AnyAsync(account => account.IdentityUserId == userId && Context.AccountAccessRestriction.Any(restriction => restriction.AccountId == account.Id && restriction.IsSuspended), token);
 

@@ -5,6 +5,18 @@ namespace PocketQuests.Data.DataServices.Accounts;
 /// <summary>Persistence operations and entity-specific queries for Account.</summary>
 public partial interface IAccountDataService : IBaseDataService<AccountEntity>
 {
+    /// <summary>Resolves the canonical owner of an account by its product ID.</summary>
+    /// <param name="accountId">Product account ID.</param>
+    /// <param name="token">Cancellation.</param>
+    /// <returns>The verified owner ID, or null.</returns>
+    Task<string?> GetIdentityByAccountId(Guid accountId, CancellationToken token);
+
+    /// <summary>Counts editable custom definitions that have not been archived.</summary>
+    /// <param name="accountId">Verified product account.</param>
+    /// <param name="token">Cancellation.</param>
+    /// <returns>The active custom quest count.</returns>
+    Task<int> CountActiveCustomQuests(Guid accountId, CancellationToken token);
+
     /// <summary>Checks the current Pocket Quests suspension for an Identity-verified user.</summary>
     /// <param name="userId">Canonical verified Identity user identifier.</param>
     /// <param name="token">Cancellation.</param>
