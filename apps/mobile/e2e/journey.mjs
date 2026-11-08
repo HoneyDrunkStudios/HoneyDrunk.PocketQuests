@@ -33,6 +33,44 @@ const visibleText = (text, options) =>
     .getByText(text, options)
     .and(page.locator(':not([aria-hidden="true"], [aria-hidden="true"] *)'))
     .filter({ visible: true });
+const homeXp = visibleText("See your progress · 280 overall XP", {
+  exact: true,
+});
+
+function americanDate(isoDate) {
+  const [year, month, day] = isoDate.split("-");
+  return `${month}/${day}/${year}`;
+}
+
+async function verifyTravelerScene() {
+  const scene = page.getByTestId("traveler-scene");
+  const traveler = scene
+    .getByRole("img", {
+      name: "Your customizable traveler avatar",
+      exact: true,
+    })
+    .and(page.locator('[role="img"]'));
+  const progress = page.getByRole("progressbar", {
+    name: "Overall level progress",
+    exact: true,
+  });
+  await expect(traveler).toBeVisible();
+  await expect(progress).toBeVisible();
+  const backdrop = scene.locator(':scope > [aria-hidden="true"]');
+  await expect(backdrop).toBeVisible();
+  const [sceneBox, travelerBox, progressBox, backdropBox] = await Promise.all([
+    scene.boundingBox(),
+    traveler.boundingBox(),
+    progress.boundingBox(),
+    backdrop.boundingBox(),
+  ]);
+  const sceneCenter = sceneBox.x + sceneBox.width / 2;
+  const travelerCenter = travelerBox.x + travelerBox.width / 2;
+  expect(Math.abs(travelerCenter - sceneCenter)).toBeLessThanOrEqual(1);
+  expect(progressBox.y).toBeGreaterThanOrEqual(sceneBox.y + sceneBox.height);
+  expect(backdropBox.width).toBeGreaterThanOrEqual(sceneBox.width - 1);
+  expect(backdropBox.height).toBeGreaterThanOrEqual(sceneBox.height - 1);
+}
 page.setDefaultTimeout(15000);
 // A cold Metro compilation can exceed the action timeout; keep navigation bounded separately.
 page.setDefaultNavigationTimeout(60000);
@@ -566,11 +604,23 @@ try {
     .click();
   await page.getByRole("link", { name: "Back to Home", exact: true }).click();
   await expect(
-    visibleText("Browser adventurer", { exact: true }),
+    page.getByRole("heading", { name: "Hey, Browser adventurer!", exact: true }),
   ).toBeVisible();
-  await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
+  await expect(homeXp).toBeVisible();
   console.log("Verified completion response-loss retry and character totals.");
   diagnostics.checkpoint("character");
+  await verifyTravelerScene();
+  await page.setViewportSize({ width: 320, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({ path: path.join(artifacts, "character-narrow.png") });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: path.join(artifacts, "character-home.png") });
+  await page.getByRole("tab", { name: "Progress", exact: true }).click();
+  await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("progressbar", { name: / level progress$/ }),
   ).toHaveCount(1);
@@ -653,43 +703,12 @@ try {
     await section.click();
     await expect(section).toHaveAttribute("aria-expanded", "false");
   }
-  await page
-    .getByRole("heading", { name: "Browser adventurer", exact: true })
-    .scrollIntoViewIfNeeded();
-  await page.setViewportSize({ width: 320, height: 844 });
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
-  ).toBe(true);
-  await page.screenshot({ path: path.join(artifacts, "character-narrow.png") });
-  await page.setViewportSize({ width: 390, height: 844 });
-  const portrait = await page
-    .getByRole("img", {
-      name: "Your customizable traveler avatar",
-      exact: true,
-    })
-    // RN Web also emits an inner accessibility img. Measure the visible wrapper.
-    .and(page.locator('[role="img"]'))
-    .boundingBox();
-  const overallBar = await page
-    .getByRole("progressbar", { name: "Overall level progress", exact: true })
-    .boundingBox();
-  expect(portrait).not.toBeNull();
-  expect(overallBar).not.toBeNull();
-  expect(portrait.x + portrait.width).toBeLessThanOrEqual(overallBar.x);
-  await page
-    .getByRole("heading", { name: "Categories", exact: true })
-    .evaluate((element) => element.scrollIntoView({ block: "start" }));
-  await page.screenshot({
-    path: path.join(artifacts, "character-home.png"),
-    fullPage: false,
-  });
   diagnostics.checkpoint("export-timer");
-  // The overlaid gear must remain reachable above the decorative heading art.
+  await page.getByRole("tab", { name: "Home", exact: true }).click();
   await page
     .getByRole("link", { name: "Settings and profile", exact: true })
     .click();
+  await page.getByRole("button", { name: "Your traveler", exact: true }).click();
   await expect(
     visibleText("Your interests and experience", { exact: true }),
   ).toBeVisible();
@@ -705,6 +724,9 @@ try {
   expect(
     state.ledger.filter((entry) => entry.track === "Overall"),
   ).toHaveLength(1);
+  await page
+    .getByRole("button", { name: "Privacy & account", exact: true })
+    .click();
   const downloadEvent = page.waitForEvent("download");
   await page
     .getByRole("button", { name: "Download full JSON export", exact: true })
@@ -957,7 +979,7 @@ try {
   // Fresh adapter session, same isolated test account: verifies server persistence.
   await expect(signIn).toBeEnabled();
   await signIn.click();
-  await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
+  await expect(homeXp).toBeVisible();
   await page.getByRole("tab", { name: "Quests", exact: true }).click();
   await page.getByRole("tab", { name: "Active", exact: true }).click();
   await page.getByRole("link", { name: /^Quest details:/ }).click();
@@ -980,8 +1002,7 @@ try {
   )
     .toISOString()
     .slice(0, 10);
-  const [year, month, day] = plannedDate.split("-");
-  const displayPlannedDate = `${month}/${day}/${year}`;
+  const displayPlannedDate = americanDate(plannedDate);
   await page.getByLabel("Calendar date MM/DD/YYYY").fill("02/30/2026");
   await page.getByRole("button", { name: "Go to date", exact: true }).click();
   await expect(visibleText(/Enter a real date/)).toBeVisible();
@@ -1060,7 +1081,7 @@ try {
   await page.getByRole("tab", { name: "Quests", exact: true }).click();
   await page.getByRole("tab", { name: "Active", exact: true }).click();
   await expect(
-    visibleText(`Today · ${plannedState.today}`, { exact: true }),
+    visibleText(`Today · ${americanDate(plannedState.today)}`, { exact: true }),
   ).toBeVisible();
   await expect(visibleText("Unscheduled", { exact: true })).toBeVisible();
   await expect(visibleText("Upcoming", { exact: true })).toBeVisible();
@@ -1144,24 +1165,8 @@ try {
     [430, 932],
   ]) {
     await page.setViewportSize({ width, height });
-    await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
-    // Bundled images have intrinsic dimensions; artwork must fit its dynamic container.
-    for (const name of ["heading", "rank"]) {
-      const background = page
-        .getByTestId(`journal-background-${name}`)
-        .and(page.locator(':not([aria-hidden="true"], [aria-hidden="true"] *)'))
-        .filter({ visible: true });
-      const bounds = await background.evaluate((element) => {
-        const image = element.getBoundingClientRect();
-        const container = element.parentElement.getBoundingClientRect();
-        return {
-          widthDifference: Math.abs(image.width - container.width),
-          heightDifference: Math.abs(image.height - container.height),
-        };
-      });
-      expect(bounds.widthDifference).toBeLessThanOrEqual(1);
-      expect(bounds.heightDifference).toBeLessThanOrEqual(1);
-    }
+    await expect(homeXp).toBeVisible();
+    await verifyTravelerScene();
     await page.screenshot({
       path: path.join(artifacts, `home-${width}.png`),
     });

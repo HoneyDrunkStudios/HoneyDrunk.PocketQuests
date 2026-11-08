@@ -66,19 +66,19 @@ export async function verifyNextFeatures({
   await expect(
     page.getByTestId("today-quests").filter({ visible: true }),
   ).toBeVisible();
-  await visible("link", "See your active quests").click();
-  await expect(visible("tab", "Active")).toHaveAttribute(
+  await visible("link", "Browse all quests").click();
+  await expect(visible("tab", "Available")).toHaveAttribute(
     "aria-selected",
     "true",
   );
-  await visible("tab", "Available").click();
+  await visible("tab", "Active").click();
   await visible("tab", "Home").click();
-  await visible("link", "See your active quests").click();
-  await expect(visible("tab", "Active")).toHaveAttribute(
+  await visible("link", "Browse all quests").click();
+  await expect(visible("tab", "Available")).toHaveAttribute(
     "aria-selected",
     "true",
   );
-  await visible("tab", "Home").click();
+  await visible("tab", "Progress").click();
   await visible("link", "Open your reward journal").click();
   await expect(
     page
@@ -91,7 +91,7 @@ export async function verifyNextFeatures({
   await narrowCapture("reward-journal", "reward-journal");
   await visible("link", "Open your wardrobe").click();
   await page
-    .getByRole("button", { name: /^Change outfit, equipped:/ })
+    .getByRole("button", { name: /^Change clothing, equipped:/ })
     .filter({ visible: true })
     .click();
   const vest = visible("button", "Maker’s vest");
@@ -100,7 +100,9 @@ export async function verifyNextFeatures({
   } else {
     await expect(vest).toHaveCount(0);
   }
-  await expect(visibleText("Changes save automatically.", { exact: true })).toBeVisible();
+  await expect(
+    visibleText("Changes save automatically.", { exact: true }),
+  ).toBeVisible();
   await page.screenshot({ path: path.join(artifacts, "wardrobe.png") });
   await page.goBack();
   await page.goBack();
