@@ -9,7 +9,7 @@ public sealed partial class QuestAggregate
 {
     private void SaveAvatar(QuestCommand command, DateTimeOffset now)
     {
-        AvatarAppearance.Validate(command.AvatarCode, Project(now).Entitlements);
+        AvatarAppearance.Validate(command.AvatarCode, Project(now).Entitlements, LegacyCosmeticRewards);
         Profile = Profile with { AvatarCode = command.AvatarCode };
     }
 

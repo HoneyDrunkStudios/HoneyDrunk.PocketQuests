@@ -1,7 +1,8 @@
+import { RankInsignia } from "../../shared/rank-insignia";
 import { Pressable, Text, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import type { Quest } from "../../shared/contracts";
-import { Card, Label, colors, styles } from "../../shared/ui";
+import { Card, Label, useAppTheme } from "../../shared/ui";
 import { QuestCardArtwork } from "./quest-card-artwork";
 
 export function AvailableQuestCard({
@@ -17,6 +18,7 @@ export function AvailableQuestCard({
   onStart(): void;
   onDetails(): void;
 }>) {
+  const { styles, colors } = useAppTheme();
   const hasPenalty = (quest.penaltyPercent ?? 0) > 0;
   return (
     <Card style={{ padding: 0 }}>
@@ -60,9 +62,8 @@ export function AvailableQuestCard({
           >
             +{quest.baseXp} XP
           </Text>
-          <Text style={styles.muted}>
-            Rank {quest.rank} · {quest.effort}
-          </Text>
+          <RankInsignia rank={quest.rank} size={24} />
+          <Text style={styles.muted}>{quest.effort}</Text>
         </View>
         {locked && <Label>Requires higher progression. Open to review.</Label>}
         {hasPenalty && (

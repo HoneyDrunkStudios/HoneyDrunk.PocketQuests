@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Link, Redirect, useLocalSearchParams } from "expo-router";
 import { Text } from "react-native";
 import { useSession } from "../../session/session";
-import { Button, Label, styles } from "../../shared/ui";
+import { Button, Label, useAppTheme } from "../../shared/ui";
 import {
   QuestCompletionActions,
   QuestCompletionCriterion,
@@ -13,6 +13,7 @@ import {
 import { DefinitionManagement } from "../../features/quests/definition-management";
 import { QuestPlanEditor } from "../../features/quests/quest-plan-editor";
 export default function QuestDetails() {
+  const { styles } = useAppTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { state, catalog, command, busy, pending, signedIn } = useSession();
   const [confirmLoss, setConfirmLoss] = useState(false);

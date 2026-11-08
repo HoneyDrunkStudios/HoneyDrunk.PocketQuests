@@ -1,7 +1,7 @@
 import { Text, View } from "react-native";
 import { useState } from "react";
 import { Notice } from "@honeydrunk/ui-native";
-import { Button, Label, styles } from "../shared/ui";
+import { Button, Label, useAppTheme } from "../shared/ui";
 import { useSessionActions, useSessionStatus } from "./session";
 
 function RecoveryDetails({
@@ -13,6 +13,7 @@ function RecoveryDetails({
   label: string;
   reason?: string;
 }>) {
+  const { styles } = useAppTheme();
   const [expanded, setExpanded] = useState(false);
   return (
     <>
@@ -50,6 +51,7 @@ function recoveryMessage(
 }
 
 export function SessionRecovery() {
+  const { styles } = useAppTheme();
   const {
     error,
     pending,

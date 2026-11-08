@@ -442,6 +442,87 @@
         "requiredCount": 10,
         "requiredRank": "D",
         "earned": false
+      },
+      {
+        "id": "PQ-LEVEL-02",
+        "kind": "Achievement",
+        "name": "Level 2",
+        "count": 1,
+        "requiredCount": 2,
+        "requiredRank": "F",
+        "earned": false
+      },
+      {
+        "id": "PQ-LEVEL-03",
+        "kind": "Achievement",
+        "name": "Level 3",
+        "count": 1,
+        "requiredCount": 3,
+        "requiredRank": "F",
+        "earned": false
+      },
+      {
+        "id": "PQ-LEVEL-04",
+        "kind": "Achievement",
+        "name": "Level 4",
+        "count": 1,
+        "requiredCount": 4,
+        "requiredRank": "F",
+        "earned": false
+      },
+      {
+        "id": "PQ-LEVEL-05",
+        "kind": "Achievement",
+        "name": "Level 5",
+        "count": 1,
+        "requiredCount": 5,
+        "requiredRank": "F",
+        "earned": false
+      },
+      {
+        "id": "PQ-LEVEL-06",
+        "kind": "Achievement",
+        "name": "Level 6",
+        "count": 1,
+        "requiredCount": 6,
+        "requiredRank": "F",
+        "earned": false
+      },
+      {
+        "id": "PQ-LEVEL-07",
+        "kind": "Achievement",
+        "name": "Level 7",
+        "count": 1,
+        "requiredCount": 7,
+        "requiredRank": "F",
+        "earned": false
+      },
+      {
+        "id": "PQ-RANK-E",
+        "kind": "Achievement",
+        "name": "Rank E",
+        "count": 0,
+        "requiredCount": 0,
+        "requiredRank": "E",
+        "earned": false
+      },
+      {
+        "id": "PQ-RANK-D",
+        "kind": "Achievement",
+        "name": "Rank D",
+        "count": 0,
+        "requiredCount": 0,
+        "requiredRank": "D",
+        "earned": false
+      },
+      {
+        "id": "PQ-RANK-C",
+        "kind": "Achievement",
+        "name": "Rank C",
+        "count": 0,
+        "requiredCount": 0,
+        "requiredRank": "C",
+        "earned": false
       }
     ],
     "definitions": [],

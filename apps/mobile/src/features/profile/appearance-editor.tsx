@@ -1,108 +1,43 @@
-import { useRef, useState } from "react";
 import { Text, View } from "react-native";
-import {
-  useAccountSnapshot,
-  useSessionActions,
-  useSessionStatus,
-} from "../../session/session";
-import { Button, Label, styles } from "../../shared/ui";
-import { questActions } from "../quests/commands/quest-actions";
+import { useAccountSnapshot } from "../../session/session";
+import { Button, Label, useAppTheme } from "../../shared/ui";
+import { useAppearanceAutosave } from "./appearance-autosave";
 
 function RewardChoice({ kind }: Readonly<{ kind: "Badge" | "Frame" }>) {
+  const { styles } = useAppTheme();
   const { state } = useAccountSnapshot();
-  const { busy, pending, offline, queuedCount } = useSessionStatus();
-  const { command } = useSessionActions();
-  const [draft, setDraft] = useState<string | null | undefined>();
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const submitting = useRef(false);
+  const appearance = useAppearanceAutosave();
   if (!state) return null;
-  const saved =
-    kind === "Badge" ? state.profile.badgeId : state.profile.frameId;
-  const choice = draft === undefined ? saved : draft;
-  const dirty = choice !== saved;
-  if (draft !== undefined && !dirty && queuedCount === 0 && !saving)
-    setDraft(undefined);
-  const noun = kind.toLowerCase();
+  const choice = kind === "Badge" ? appearance.badgeId : appearance.frameId;
   const fallback = kind === "Badge" ? "No badge" : "Default frame";
-  const name =
-    state.entitlements.find((reward) => reward.id === choice)?.name ?? fallback;
-  async function save() {
-    if (!dirty || saving || busy || pending || offline || submitting.current)
-      return;
-    submitting.current = true;
-    setSaving(true);
-    setMessage("");
-    try {
-      await command({
-        action:
-          kind === "Badge"
-            ? questActions.selectBadge
-            : questActions.selectFrame,
-        rewardId: choice,
-      });
-    } catch {
-      setMessage(`We couldn’t save your ${noun}. Please try again.`);
-    } finally {
-      submitting.current = false;
-      setSaving(false);
-    }
-  }
   return (
     <View style={{ gap: 10 }}>
       <Text style={styles.subtitle}>{kind}</Text>
-      <Label>
-        {dirty ? "Preview" : "Selected"}: {name}
-      </Label>
       <Button
         title={fallback}
-        accessibilityLabel={`${choice === null ? "Selected: " : ""}${fallback}`}
         secondary={choice !== null}
-        disabled={saving}
-        onPress={() => setDraft(null)}
+        accessibilityLabel={`${choice === null ? "Selected: " : ""}${fallback}`}
+        onPress={() => appearance.changeReward(kind, null)}
       />
       {state.entitlements
-        .filter((reward) => reward.earned && reward.kind === kind)
-        .map((reward) => (
+        .filter((item) => item.earned && item.kind === kind)
+        .map((item) => (
           <Button
-            key={reward.id}
-            title={`${choice === reward.id ? "Selected" : "Choose"} ${noun}: ${reward.name}`}
-            secondary={choice !== reward.id}
-            disabled={saving}
-            onPress={() => setDraft(reward.id)}
+            key={item.id}
+            title={`${choice === item.id ? "Selected" : "Choose"} ${kind.toLowerCase()}: ${item.name}`}
+            secondary={choice !== item.id}
+            onPress={() => appearance.changeReward(kind, item.id)}
           />
         ))}
-      {dirty && <Label>You have an unsaved {noun} choice.</Label>}
-      <Button
-        title={`Save ${noun}`}
-        loading={saving}
-        disabled={!dirty || busy || pending || offline}
-        onPress={() => void save()}
-      />
-      {dirty && (
-        <Button
-          title={`Reset ${noun} choice`}
-          secondary
-          disabled={saving || queuedCount > 0}
-          onPress={() => {
-            setDraft(undefined);
-            setMessage("");
-          }}
-        />
-      )}
-      {!!message && <Label>{message}</Label>}
     </View>
   );
 }
-
 export function AppearanceEditor() {
+  const { styles } = useAppTheme();
   return (
-    <View style={styles.card}>
+    <View style={{ gap: 16 }}>
       <Text style={styles.subtitle}>Your look</Text>
-      <Label>
-        Try your earned badges and frames, then save each choice when you’re
-        happy with it.
-      </Label>
+      <Label>Choose a badge or frame. Changes save automatically.</Label>
       <RewardChoice kind="Badge" />
       <RewardChoice kind="Frame" />
     </View>

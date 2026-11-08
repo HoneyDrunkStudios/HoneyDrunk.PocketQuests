@@ -1,0 +1,896 @@
+{
+  "version": "room-v1",
+  "rooms": {
+    "tool": "builtin image_gen.imagegen",
+    "purpose": "Selectable opaque trophy-room wallpaper styles; no owned collectibles baked into art.",
+    "sourceCoordinateSystem": [
+      1312,
+      1199
+    ],
+    "surfaces": [
+      {
+        "id": "upper-left",
+        "anchor": [
+          378,
+          412
+        ],
+        "usableWidth": 240,
+        "surfacePolygon": [
+          [
+            250,
+            405
+          ],
+          [
+            503,
+            405
+          ],
+          [
+            520,
+            416
+          ],
+          [
+            236,
+            416
+          ]
+        ],
+        "objectBoundsAboveSurface": [
+          258,
+          307,
+          240,
+          105
+        ],
+        "normalizedAnchor": [
+          0.28810975609756095,
+          0.34361968306922436
+        ]
+      },
+      {
+        "id": "upper-right",
+        "anchor": [
+          942,
+          412
+        ],
+        "usableWidth": 240,
+        "surfacePolygon": [
+          [
+            813,
+            405
+          ],
+          [
+            1070,
+            405
+          ],
+          [
+            1086,
+            416
+          ],
+          [
+            799,
+            416
+          ]
+        ],
+        "objectBoundsAboveSurface": [
+          822,
+          307,
+          240,
+          105
+        ],
+        "normalizedAnchor": [
+          0.7179878048780488,
+          0.34361968306922436
+        ]
+      },
+      {
+        "id": "lower-left",
+        "anchor": [
+          319,
+          684
+        ],
+        "usableWidth": 210,
+        "surfacePolygon": [
+          [
+            212,
+            672
+          ],
+          [
+            452,
+            672
+          ],
+          [
+            433,
+            692
+          ],
+          [
+            184,
+            692
+          ]
+        ],
+        "objectBoundsAboveSurface": [
+          214,
+          569,
+          210,
+          115
+        ],
+        "normalizedAnchor": [
+          0.24314024390243902,
+          0.5704753961634695
+        ]
+      },
+      {
+        "id": "lower-right",
+        "anchor": [
+          995,
+          684
+        ],
+        "usableWidth": 210,
+        "surfacePolygon": [
+          [
+            861,
+            672
+          ],
+          [
+            1100,
+            672
+          ],
+          [
+            1127,
+            692
+          ],
+          [
+            890,
+            692
+          ]
+        ],
+        "objectBoundsAboveSurface": [
+          890,
+          569,
+          210,
+          115
+        ],
+        "normalizedAnchor": [
+          0.7583841463414634,
+          0.5704753961634695
+        ]
+      }
+    ],
+    "measurementMethod": "Visual measurement of source standing-surface top planes; edge-gradient rows verify the registered furniture positions across generated color/light edits. Anchors are approximate to2source pixels, not exact model guarantees.",
+    "requestedVsActual": "Generation kept the four displays but placed wall shelves around34.4%height and tables around57%height. Use measured anchors above rather than original37%/70%concept estimates.",
+    "avatarStage": {
+      "unobstructedCenterX": [
+        0.35,
+        0.65
+      ],
+      "floorAnchor": [
+        656,
+        1115
+      ],
+      "normalizedFloorAnchor": [
+        0.5,
+        0.9299416180150125
+      ],
+      "notes": "Broad flat rug/wood floor, no central furniture. Avatar/trophy size and overlaps must be verified in actual app."
+    },
+    "assets": [
+      {
+        "index": 0,
+        "name": "Traveler's Loft",
+        "path": "room-0.png",
+        "dimensions": [
+          1312,
+          1199
+        ],
+        "mode": "RGB",
+        "sha256": "84247221ab8e63665232f2f3c0dd8116e6209457327480e23ecbe88f60f49d23",
+        "sourceGeneratedPath": "exec-631a74c8-549f-4a93-be75-58bfc1dd67e5.png",
+        "prompt": "Use case: stylized-concept. Create a production background wallpaper for Pocket Quests' customizable trophy ROOM, called Traveler's Loft. Input1 is the fantasy mobile app illustration style reference only; input2 is the matching painted traveler style reference only. Output ONLY a finished cozy room interior, no people/avatars, NO text, logos, UI, collectibles, trophies, books/trinkets or items on display surfaces. Full opaque rectangular canvas1312x1200, approximately square, detailed appealing hand-painted fantasy game illustration, crisp soft brush texture, warm neutral timber and cream plaster, restrained lavender-blue accents. A small comfortable loft, viewed mostly front-on with gentle three-quarter room depth, open uncluttered floor through the CENTER35–65% for an avatar standing at x50%,y93%. Keep all central space unobstructed. Build four EMPTY collectible display places with clear horizontal surfaces: upper-left back-wall shelf centered x25%,y37%, upper-right back-wall shelf centered x76%,y37%; low-left small display table centered x23%, table surface y70%; matching low-right display table centered x77%, table surface y70%. Each shelf/table is about20%canvas width, decorative simple carved warm wood, EMPTY and clearly readable. The pair of upper wall shelves has top standing surfaces at EXACTLY37%height; the low table standing surfaces at EXACTLY70%height. Shelves on back wall, short tables on floor near sides; no center furniture. Soft small rug bottom center, broad flat warm wooden floor foreground suitable for full-body avatar; no step/platform in center. Side windows at far-left and far-right bring soft daylight, glimpses of floating islands/clouds outside. Slight cozy beams at ceiling edges, crafted furniture and appealing fantasy detail, NO giant plants, no clutter, no chairs blocking floor, no floor objects. Keep display surfaces free for separately rendered earned decorations. Composition and furniture anchors will be reused exactly for other room styles, so prioritize clear symmetrical anchor placement, an appealing game location and central avatar staging. Color and detail should fit the referenced Pocket Quests painted floating-island world, not photorealistic architecture. No transparency or feathered white vignette: full room art to every edge.",
+        "references": [
+          {
+            "role": "source style",
+            "path": "outputs/pocket-quests-comparison-3.png"
+          },
+          {
+            "role": "source style",
+            "path": "work/avatar-kit-v7/master-template.png"
+          }
+        ],
+        "transparentBackground": false
+      },
+      {
+        "index": 1,
+        "name": "Sunlit Workshop",
+        "path": "room-1.png",
+        "dimensions": [
+          1312,
+          1199
+        ],
+        "mode": "RGB",
+        "sha256": "a104e6d71036194979f8ab5733e941d8ff5a7f0d4d6dde3361025a0e87afd740",
+        "sourceGeneratedPath": "exec-04630646-2dea-453d-8341-779c8cc96b1a.png",
+        "prompt": "Use case: lighting-weather / precise-object-edit. Edit this exact Pocket Quests Traveler's Loft room background into a SUNLIT WORKSHOP visual theme. Preserve the SAME canvas1312x1200, exact camera/perspective, wall/floor/window boundaries, all furniture positions and sizes and exact four empty display surfaces, center open floor, rug location, roof beam positions. Do not move or add/remove furniture. This is a different room color/material style on the SAME registered layout so app decoration overlays remain aligned. Make honey-colored oak timbers, softly pale warm stone/plaster walls, clear blue daylight from the same windows and outside floating islands, subtle warm golden morning sun, restrained blue and honey accents. Recolor the existing draped banner and rug accents from lavender to soft slate/sky blue with fine golden trim while retaining same shapes and simple mountain motifs. Cozy handcrafted fantasy game workshop atmosphere, detailed inviting painterly illustration matching source, no photorealism. ALL shelves and low tables MUST REMAIN EMPTY; no tools, books, props, clutter, trophies, plants, people, text or UI. Center35–65% stays unobstructed for an avatar. Full opaque artwork to edges, no transparency, no vignette. Do not zoom/crop or change perspective. This is only palette/material/light variation; preserve every geometric anchor.",
+        "references": [
+          {
+            "role": "exact edit target / furniture registration",
+            "path": "room-0.png"
+          }
+        ],
+        "transparentBackground": false
+      },
+      {
+        "index": 2,
+        "name": "Moonlit Study",
+        "path": "room-2.png",
+        "dimensions": [
+          1312,
+          1199
+        ],
+        "mode": "RGB",
+        "sha256": "7b8895886d5936e28a0ce8c36dab29c83ac5bc809192050b72201b340aaa45d9",
+        "sourceGeneratedPath": "exec-8917ec43-da59-4091-98a3-a462c17a1684.png",
+        "prompt": "Use case: lighting-weather. Edit this EXACT Pocket Quests room background into the MOONLIT STUDY visual theme. Preserve the same canvas1312x1199 and EXACT camera, perspective, roof-beam geometry, wall-floor boundaries, windows, four empty display surfaces, furniture positions and sizes, rug and cloth-banner shapes, clear central floor. All overlay anchors must remain exactly pixel registered: upper-left shelf standing surface near(378,412), upper-right near(942,412), low-left table near(319,684), low-right near(995,684). Do NOT zoom/crop, move furniture or add/remove decor. Change only palette and time-of-day lighting: rich indigo/violet nighttime atmosphere, cool moonlight through side windows, softly luminous violet-blue floating-island sky outside with a small moon high in the far-right window. Warm muted walnut/oak furniture and floor with soft lavender highlights, subtle warm amber fill light from out of frame so room remains inviting and all empty shelf/table surfaces readable. Recolor existing cloth drapes/banner and rug borders to deeper royal violet with muted silver-lilac trim, retain same mountain motifs and shapes. Center35–65% remains unobstructed for avatar; bottom center rug/floor remains visible and well-lit enough. This is a cozy fantasy game STUDY atmosphere without books or study props because collectible items are app overlays. NO trophies, trinkets, tools, books, plants, people, lamps, candles, new furniture, text or UI. Detailed appealing hand-painted fantasy mobile-game art exactly matching source, not photorealistic, not spooky or gloomy black. Full opaque art to every edge; no transparency or white fading.",
+        "references": [
+          {
+            "role": "exact edit target / furniture registration",
+            "path": "room-0.png"
+          }
+        ],
+        "transparentBackground": false
+      }
+    ],
+    "edgeGradientChecks": {
+      "0": {
+        "upperLeft": [
+          {
+            "row": 405,
+            "meanRgbDifference": 46.25
+          },
+          {
+            "row": 424,
+            "meanRgbDifference": 42.02
+          },
+          {
+            "row": 407,
+            "meanRgbDifference": 38.46
+          },
+          {
+            "row": 406,
+            "meanRgbDifference": 37.16
+          },
+          {
+            "row": 409,
+            "meanRgbDifference": 28.63
+          },
+          {
+            "row": 408,
+            "meanRgbDifference": 22.56
+          }
+        ],
+        "upperRight": [
+          {
+            "row": 405,
+            "meanRgbDifference": 48.76
+          },
+          {
+            "row": 406,
+            "meanRgbDifference": 40.76
+          },
+          {
+            "row": 424,
+            "meanRgbDifference": 39.3
+          },
+          {
+            "row": 407,
+            "meanRgbDifference": 37.71
+          },
+          {
+            "row": 409,
+            "meanRgbDifference": 29.64
+          },
+          {
+            "row": 408,
+            "meanRgbDifference": 25.87
+          }
+        ],
+        "lowerLeft": [
+          {
+            "row": 672,
+            "meanRgbDifference": 49.94
+          },
+          {
+            "row": 692,
+            "meanRgbDifference": 38.51
+          },
+          {
+            "row": 706,
+            "meanRgbDifference": 30.19
+          },
+          {
+            "row": 705,
+            "meanRgbDifference": 28.95
+          },
+          {
+            "row": 693,
+            "meanRgbDifference": 28.76
+          },
+          {
+            "row": 671,
+            "meanRgbDifference": 22.25
+          }
+        ],
+        "lowerRight": [
+          {
+            "row": 672,
+            "meanRgbDifference": 50.03
+          },
+          {
+            "row": 692,
+            "meanRgbDifference": 41.76
+          },
+          {
+            "row": 705,
+            "meanRgbDifference": 33.17
+          },
+          {
+            "row": 693,
+            "meanRgbDifference": 29.74
+          },
+          {
+            "row": 706,
+            "meanRgbDifference": 27.89
+          },
+          {
+            "row": 671,
+            "meanRgbDifference": 24.45
+          }
+        ]
+      },
+      "1": {
+        "upperLeft": [
+          {
+            "row": 406,
+            "meanRgbDifference": 60.88
+          },
+          {
+            "row": 424,
+            "meanRgbDifference": 51.51
+          },
+          {
+            "row": 407,
+            "meanRgbDifference": 46.17
+          },
+          {
+            "row": 405,
+            "meanRgbDifference": 37.92
+          },
+          {
+            "row": 425,
+            "meanRgbDifference": 25.33
+          },
+          {
+            "row": 409,
+            "meanRgbDifference": 22.82
+          }
+        ],
+        "upperRight": [
+          {
+            "row": 406,
+            "meanRgbDifference": 59.87
+          },
+          {
+            "row": 424,
+            "meanRgbDifference": 50.88
+          },
+          {
+            "row": 407,
+            "meanRgbDifference": 48.59
+          },
+          {
+            "row": 405,
+            "meanRgbDifference": 39.81
+          },
+          {
+            "row": 409,
+            "meanRgbDifference": 22.63
+          },
+          {
+            "row": 425,
+            "meanRgbDifference": 21.4
+          }
+        ],
+        "lowerLeft": [
+          {
+            "row": 706,
+            "meanRgbDifference": 42.21
+          },
+          {
+            "row": 672,
+            "meanRgbDifference": 42.03
+          },
+          {
+            "row": 693,
+            "meanRgbDifference": 39.31
+          },
+          {
+            "row": 673,
+            "meanRgbDifference": 38.9
+          },
+          {
+            "row": 707,
+            "meanRgbDifference": 23.77
+          },
+          {
+            "row": 694,
+            "meanRgbDifference": 23.39
+          }
+        ],
+        "lowerRight": [
+          {
+            "row": 706,
+            "meanRgbDifference": 44.45
+          },
+          {
+            "row": 672,
+            "meanRgbDifference": 43.96
+          },
+          {
+            "row": 693,
+            "meanRgbDifference": 41.27
+          },
+          {
+            "row": 673,
+            "meanRgbDifference": 39.71
+          },
+          {
+            "row": 694,
+            "meanRgbDifference": 25.42
+          },
+          {
+            "row": 691,
+            "meanRgbDifference": 24.12
+          }
+        ]
+      },
+      "2": {
+        "upperLeft": [
+          {
+            "row": 409,
+            "meanRgbDifference": 59.88
+          },
+          {
+            "row": 407,
+            "meanRgbDifference": 59.39
+          },
+          {
+            "row": 424,
+            "meanRgbDifference": 46.2
+          },
+          {
+            "row": 406,
+            "meanRgbDifference": 24.6
+          },
+          {
+            "row": 410,
+            "meanRgbDifference": 20.69
+          },
+          {
+            "row": 405,
+            "meanRgbDifference": 20.62
+          }
+        ],
+        "upperRight": [
+          {
+            "row": 407,
+            "meanRgbDifference": 58.78
+          },
+          {
+            "row": 409,
+            "meanRgbDifference": 54.63
+          },
+          {
+            "row": 424,
+            "meanRgbDifference": 45.83
+          },
+          {
+            "row": 406,
+            "meanRgbDifference": 24.21
+          },
+          {
+            "row": 410,
+            "meanRgbDifference": 20.96
+          },
+          {
+            "row": 405,
+            "meanRgbDifference": 19.19
+          }
+        ],
+        "lowerLeft": [
+          {
+            "row": 693,
+            "meanRgbDifference": 57.0
+          },
+          {
+            "row": 706,
+            "meanRgbDifference": 41.19
+          },
+          {
+            "row": 672,
+            "meanRgbDifference": 37.92
+          },
+          {
+            "row": 692,
+            "meanRgbDifference": 33.42
+          },
+          {
+            "row": 673,
+            "meanRgbDifference": 29.64
+          },
+          {
+            "row": 691,
+            "meanRgbDifference": 18.43
+          }
+        ],
+        "lowerRight": [
+          {
+            "row": 693,
+            "meanRgbDifference": 58.86
+          },
+          {
+            "row": 706,
+            "meanRgbDifference": 41.43
+          },
+          {
+            "row": 672,
+            "meanRgbDifference": 39.57
+          },
+          {
+            "row": 692,
+            "meanRgbDifference": 33.43
+          },
+          {
+            "row": 673,
+            "meanRgbDifference": 28.91
+          },
+          {
+            "row": 691,
+            "meanRgbDifference": 23.24
+          }
+        ]
+      }
+    },
+    "qa": {
+      "inspectedAllThree": true,
+      "sameFurnitureCountAndCamera": true,
+      "surfacesEmpty": true,
+      "peoplePresent": false,
+      "trophiesBakedIn": false,
+      "fullOpaqueRectangle": true,
+      "sourceUnmodifiedAfterGeneration": true,
+      "fixedBackgroundFurnishings": [
+        "beams",
+        "windows",
+        "empty shelves and low tables",
+        "simple mountain banner/drapes",
+        "mountain rug",
+        "carved furniture hardware motifs"
+      ],
+      "caveats": [
+        "No real app overlay integration was performed in this asset-only task.",
+        "Lighting/material/color changes can alter edge contrast; primary furniture geometry appears stable within1–2source pixels.",
+        "Workshop and Study are palette/time variants on the exact same furnished layout, rather than different furniture sets."
+      ]
+    }
+  },
+  "decorations": {
+    "method": "Built-in image_gen; unchanged generated PNG",
+    "sourcePath": "exec-9a508456-fc23-4738-80d4-83ed7e54fbf3.png",
+    "path": "decorations.png",
+    "reference": "room-0.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "grid": [
+      3,
+      2
+    ],
+    "sha256": "2ca2b32be8cb8ea4fb87828a5e055ec25a1dffcc1265759037eb4be5c3c39c6a",
+    "alpha": {
+      "range": [
+        0,
+        254
+      ],
+      "zeroFraction": 0.4945812225341797
+    },
+    "items": [
+      {
+        "index": 0,
+        "name": "Maker's Crest",
+        "cell": [
+          0,
+          0,
+          512,
+          512
+        ],
+        "solidBounds": [
+          85,
+          33,
+          355,
+          446
+        ],
+        "visualBounds": [
+          84,
+          32,
+          356,
+          448
+        ],
+        "baselineAnchor": [
+          262.5,
+          479
+        ],
+        "baselineLocalY": 479,
+        "horizontalCenterLocalX": 262.5
+      },
+      {
+        "index": 1,
+        "name": "Restful Keepsake",
+        "cell": [
+          512,
+          0,
+          512,
+          512
+        ],
+        "solidBounds": [
+          532,
+          106,
+          471,
+          370
+        ],
+        "visualBounds": [
+          530,
+          104,
+          475,
+          373
+        ],
+        "baselineAnchor": [
+          767.5,
+          476
+        ],
+        "baselineLocalY": 476,
+        "horizontalCenterLocalX": 255.5
+      },
+      {
+        "index": 2,
+        "name": "Scholar's Books",
+        "cell": [
+          1024,
+          0,
+          512,
+          512
+        ],
+        "solidBounds": [
+          1103,
+          49,
+          392,
+          420
+        ],
+        "visualBounds": [
+          1103,
+          48,
+          393,
+          422
+        ],
+        "baselineAnchor": [
+          1299.0,
+          469
+        ],
+        "baselineLocalY": 469,
+        "horizontalCenterLocalX": 275.0
+      },
+      {
+        "index": 3,
+        "name": "Explorer's Compass",
+        "cell": [
+          0,
+          512,
+          512,
+          512
+        ],
+        "solidBounds": [
+          98,
+          535,
+          346,
+          443
+        ],
+        "visualBounds": [
+          97,
+          534,
+          348,
+          445
+        ],
+        "baselineAnchor": [
+          271.0,
+          978
+        ],
+        "baselineLocalY": 466,
+        "horizontalCenterLocalX": 271.0
+      },
+      {
+        "index": 4,
+        "name": "Everyday Toolkit",
+        "cell": [
+          512,
+          512,
+          512,
+          512
+        ],
+        "solidBounds": [
+          522,
+          599,
+          484,
+          359
+        ],
+        "visualBounds": [
+          521,
+          596,
+          486,
+          363
+        ],
+        "baselineAnchor": [
+          764.0,
+          958
+        ],
+        "baselineLocalY": 446,
+        "horizontalCenterLocalX": 252.0
+      },
+      {
+        "index": 5,
+        "name": "Horizon Lantern",
+        "cell": [
+          1024,
+          512,
+          512,
+          512
+        ],
+        "solidBounds": [
+          1140,
+          529,
+          278,
+          445
+        ],
+        "visualBounds": [
+          1140,
+          528,
+          279,
+          447
+        ],
+        "baselineAnchor": [
+          1279.0,
+          974
+        ],
+        "baselineLocalY": 462,
+        "horizontalCenterLocalX": 255.0
+      }
+    ],
+    "qa": "Navy composite clean; no baked background or outside cast shadows. Source baselines vary slightly, so use measured baselineAnchor rather than equal cell bottoms. Each item also inspected against room art. Source-art QA is not in-app acceptance.",
+    "prompt": "Production transparent RGBA game decoration sprite atlas for the supplied cozy Pocket Quests room. Use reference ONLY for its warm finely painted fantasy illustration, wood/brass/lavender palette and upper-left light. Generate NO room/background. EXACT 3columns x2rows of SIX isolated reward objects on transparent canvas, target1536x1024, six equal512square cells. Objects all centered horizontally in their cells, each object's lowest actual base touches the same local baseline y450, empty clear gutters; similar useful scale with full silhouettes and no cropping. Row0col0 Maker's Crest: little richly carved wooden mountain-emblem shield trophy on a small stable wood display stand, lavender accent, no letters. Row0col1 Restful Keepsake: folded blue and lavender cozy knitted blankets stacked neatly on a small matching soft cushion. Row0col2 Scholar's Books: three beautiful leatherbound books in plum, warm brown and blue, small quill tucked with them, decorative embossing but absolutely NO readable text. Row1col0 Explorer's Compass: standing antique brass compass mounted on a carved wood display base, attractive visible compass face without text, a few subtle geometric direction ticks. Row1col1 Everyday Toolkit: small opened leather artisan tool roll, neatly arranged tiny hammer/pliers/carving tools/brush, tidy coherent group, no tools floating away. Row1col2 Horizon Lantern: small warm glowing brass lantern with subtly violet glass, delicate handle, stable flat foot. Front three-quarter view consistent with objects sitting on the room shelves/tables. Detailed hand-painted materials, gentle restrained highlights and shading within each object, crisp silhouettes. No people, hands, shelving, tabletops, floor, platforms outside each object's own support, grid/labels/UI/text, background, smoke or cast/drop shadows outside objects. Preserve genuine alpha in all empty pixels and object gaps. Do not bake lighting glow as an opaque rectangle.",
+    "promptPath": "decorations-prompt.txt",
+    "qaArtifacts": [
+      "decorations-alpha-review.jpg",
+      "decorations-in-room-review.jpg"
+    ]
+  },
+  "files": {
+    "decorations.png": {
+      "sha256": "2ca2b32be8cb8ea4fb87828a5e055ec25a1dffcc1265759037eb4be5c3c39c6a",
+      "bytes": 2454622
+    },
+    "room-0.png": {
+      "sha256": "84247221ab8e63665232f2f3c0dd8116e6209457327480e23ecbe88f60f49d23",
+      "bytes": 2291685
+    },
+    "room-1.png": {
+      "sha256": "a104e6d71036194979f8ab5733e941d8ff5a7f0d4d6dde3361025a0e87afd740",
+      "bytes": 2409718
+    },
+    "room-2.png": {
+      "sha256": "7b8895886d5936e28a0ce8c36dab29c83ac5bc809192050b72201b340aaa45d9",
+      "bytes": 2298905
+    }
+  },
+  "runtimeProportionCorrection": {
+    "reason": "User rejected oversized head and childlike room scale after initial v7 visual pass.",
+    "headScaleFactor": 0.8108108108108109,
+    "pivot": [
+      200,
+      183
+    ],
+    "crownY": 93,
+    "headHeight": 90,
+    "roomFigureFraction": 0.76,
+    "roomFixedPixelCap": null,
+    "portraitViewBox": [
+      128,
+      64,
+      144,
+      164
+    ],
+    "skinHairClothingChoices": "unchanged"
+  },
+  "immersivePortraitRooms": {
+    "tool": "built-in image_gen.imagegen",
+    "mode": "edit; opaque",
+    "sourceEdits": "None: generated source PNGs copied unchanged.",
+    "prompts": {
+      "tool": "built-in image_gen.imagegen",
+      "mode": "edit",
+      "transparentBackground": false,
+      "base": "Adapt this exact Pocket Quests Traveler's Loft background into a FULL BLEED PORTRAIT mobile room illustration, target 1024x1792. This is an actual game room background, no UI, no text. Preserve the original detailed painted style, warm timber loft, lavender mountain banner, stone, daylight floating-island windows, warm wood floor and lavender rug. Redesign the composition to fit a tall narrow phone while keeping every functional surface visible: two EMPTY wall shelves centered around 25% and 75% of image width at 40% image height, and two EMPTY narrow display side tables centered around 23% and 77% width at 62% height. Shelves/tables must each stay wholly within the central 82% image width so modest phone cropping does not cut them off. Rug centered at 50% width around 91% image height, a grounded landing for a live adult traveler. Keep an open central standing lane from 33% to 67% width, from 43% to 94% height; no character or objects. Tall roof and upper banner use top third, shelves at middle wall, tables lower on wall, generous floor below. Keep all furniture normal adult scale; do not make a giant hall or tiny dollhouse. Camera straight-on, eye-level, consistent with reference. Opaque edge-to-edge art, no white margins, no frame, no vignetting, no trophies, no plants, no baked decorations or people. Do not stretch the square source; illustrate a coherent portrait composition with the same art quality and palette.",
+      "variants": [
+        {
+          "index": 1,
+          "prompt": "Edit ONLY the palette and lighting of this exact portrait Pocket Quests room to create Sunlit Workshop: rich warm honey timber, golden afternoon daylight, blue rather than lavender banner/drapery and blue rug border/mountain emblem. Keep exact same pixel dimensions and framing. Preserve all room geometry, camera, shelf/table positions and sizes, windows, floor and rug registration EXACTLY. All four surfaces stay empty. No people, characters, tools, text, UI, crops or extra objects. This will be swapped under the same live avatar and interactive shelf anchors, so no object may move. Full-bleed opaque illustration, same detailed painted quality."
+        },
+        {
+          "index": 2,
+          "prompt": "Edit ONLY the palette and lighting of this exact portrait Pocket Quests room to create Moonlit Study: night outside both windows, moonlit violet-indigo sky and floating islands, purple lavender banners and rug, warm amber reflected timber light balanced with cool blue moonlight. Retain readable rich shadows and clear wooden surfaces. Keep exact same pixel dimensions and framing. Preserve all room geometry, camera, shelf/table positions and sizes, windows, floor and rug registration EXACTLY. All four surfaces stay empty. No people, characters, books, candles, text, UI, crops or extra objects. This will be swapped under the same live avatar and interactive shelf anchors, so no object may move. Full-bleed opaque illustration, same detailed painted quality."
+        }
+      ]
+    },
+    "portraitAnchors": [
+      [
+        269,
+        653
+      ],
+      [
+        681,
+        653
+      ],
+      [
+        230,
+        945
+      ],
+      [
+        716,
+        945
+      ]
+    ],
+    "portraitFloor": [
+      474,
+      1538
+    ],
+    "assets": [
+      {
+        "index": 0,
+        "filename": "room-portrait-0.png",
+        "dimensions": [
+          948,
+          1659
+        ],
+        "source": "exec-b940f043-d65a-4676-a865-1ea5a91e4660.png",
+        "sha256": "604f0d931631c0eddbdfb6a1c6a90f4ff054e9cafde6ab6a61533a7c7bf02b19",
+        "bytes": 2282283
+      },
+      {
+        "index": 1,
+        "filename": "room-portrait-1.png",
+        "dimensions": [
+          948,
+          1659
+        ],
+        "source": "exec-463cf050-90bd-4d96-ab8b-6b107804445b.png",
+        "sha256": "88976381702dc14b64bac73238e9fee995a5b9c9c4a2536657bf6efa6983e314",
+        "bytes": 2376395
+      },
+      {
+        "index": 2,
+        "filename": "room-portrait-2.png",
+        "dimensions": [
+          948,
+          1660
+        ],
+        "source": "exec-1952c21d-d209-466c-8365-70d84f1c0a23.png",
+        "sha256": "140af082cd0a6045a771af2a6578091c021ec10a7abb78ebb48fba5651fb8853",
+        "bytes": 2337144
+      }
+    ]
+  }
+}

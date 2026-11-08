@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Text, View } from "react-native";
 import type { Quest } from "../../shared/contracts";
 import { useSession } from "../../session/session";
-import { Button, Card, Label, styles } from "../../shared/ui";
+import { Button, Card, Label, useAppTheme } from "../../shared/ui";
 import { questActions } from "./commands/quest-actions";
 import { eligible } from "./quest-rules";
 import { QuestRewards } from "./quest-rewards";
@@ -22,6 +22,7 @@ export function AvailableQuestDetails({
   initialDate: string;
   onBack(): void;
 }>) {
+  const { styles } = useAppTheme();
   const { catalog, state, command, busy, pending } = useSession();
   const [plan, setPlan] = useState<AcceptancePlan>({
     date: initialDate,

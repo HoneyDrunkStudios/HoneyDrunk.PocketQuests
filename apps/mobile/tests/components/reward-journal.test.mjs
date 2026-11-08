@@ -302,6 +302,25 @@ test("Home summary suggests an unearned reward without mutating state and handle
 
 test("reward journal names the clothing and accessories each milestone unlocks", async () => {
   reset();
+  for (const rank of ["E", "D", "C"])
+    session.state.entitlements.push({
+      id: `PQ-RANK-${rank}`,
+      kind: "Achievement",
+      name: `Rank ${rank}`,
+      count: 0,
+      requiredCount: 0,
+      requiredRank: rank,
+      earned: false,
+    });
+  session.state.entitlements.push({
+    id: "PQ-LEVEL-02",
+    kind: "Achievement",
+    name: "Level 2",
+    count: 1,
+    requiredCount: 2,
+    requiredRank: "F",
+    earned: false,
+  });
   const view = await mount();
   try {
     for (const name of [
@@ -312,7 +331,12 @@ test("reward journal names the clothing and accessories each milestone unlocks",
       "Everyday toolkit",
       "Horizon cape",
     ])
-      assert.ok(view.element.textContent.includes(`Wardrobe unlock: ${name}`));
+      assert.ok(view.element.textContent.includes(`Unlocks ${name}`));
+    assert.match(
+      view.element.textContent,
+      /Reach overall level 2.*Maker's Crest/,
+    );
+    assert.match(view.element.textContent, /Reach rank E.*Sunlit Workshop/);
   } finally {
     await view.close();
   }

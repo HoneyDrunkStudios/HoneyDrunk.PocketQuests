@@ -231,7 +231,7 @@ public sealed class RelationalSchemaTests(SchemaFixture fixture) : IClassFixture
         var quests = await db.Set<SystemQuestEntity>().OrderBy(r => r.Id).ToListAsync();
         Assert.Equal(Catalog.Quests.Select(r => (id: r.Id, title: r.Title, categoryId: r.CategoryId)), quests.Select(r => (id: r.Id, title: r.Title, categoryId: r.CategoryId)));
         var rewards = await db.Set<ProfileRewardEntity>().OrderBy(r => r.Id).ToListAsync();
-        var domain = Progression.Entitlements([], Rank.F);
+        var domain = Progression.Entitlements([], Rank.F, 1).OrderBy(reward => reward.Id, StringComparer.Ordinal);
         Assert.Equal(domain.Select(r => (id: r.Id, kind: r.Kind, name: r.Name, requiredCount: r.RequiredCount, r.RequiredRank.ToString())), rewards.Select(r => (id: r.Id, kindCode: r.KindCode, name: r.Name, requiredCount: r.RequiredCount, requiredRank: r.RequiredRank)));
         Assert.Empty(db.ChangeTracker.Entries());
 

@@ -19,7 +19,7 @@ export function planInputError(
   if (date && !isCalendarDate(date))
     return {
       field: "date",
-      message: "Enter a real due date in YYYY-MM-DD format.",
+      message: "Enter a real due date in MM/DD/YYYY format.",
     };
   if (date && date < today)
     return { field: "date", message: "Choose today or a future due date." };

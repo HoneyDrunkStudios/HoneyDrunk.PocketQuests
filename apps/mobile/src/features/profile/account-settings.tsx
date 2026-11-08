@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Text, View } from "react-native";
 import { useSession } from "../../session/session";
 import { ProviderSignIn } from "../../session/provider-sign-in";
-import { Button, Label, styles } from "../../shared/ui";
+import { Button, Label, useAppTheme } from "../../shared/ui";
 export function AccountSettings() {
+  const { styles } = useAppTheme();
   const { accountAction, verifyOwner, busy, pending, offline } = useSession();
   const [mode, setMode] = useState<"deletion" | "link" | "unlink" | null>(null);
   const [ownerProof, setOwnerProof] = useState<string | null>(null);
@@ -116,6 +117,7 @@ export function AccountSettings() {
   );
 }
 export function RecoveryPanel() {
+  const { styles } = useAppTheme();
   const { inactiveAccount, accountAction, busy } = useSession();
   if (!inactiveAccount) return null;
   const available =

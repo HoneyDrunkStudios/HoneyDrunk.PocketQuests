@@ -17,6 +17,7 @@ export type AccountStatus = {
   version: number;
 };
 export type SessionContext = {
+  appearanceOwnerId?: string | null;
   readDiscoveries(): Promise<import("../api/generated").SavedPlace[]>;
   readBilling(): Promise<import("../api/generated").BillingStatus>;
   startBillingCheckout(
@@ -53,7 +54,10 @@ export type SessionContext = {
   dismissCompletion(): void;
   connect(token: string | Credentials): Promise<void>;
   refresh(): Promise<void>;
-  command(command: Omit<Command, "operationId">): Promise<void>;
+  command(
+    command: Omit<Command, "operationId">,
+    expectedOwner?: string,
+  ): Promise<void>;
   retry(): Promise<void>;
   signOut(discard?: boolean): Promise<void>;
   discardPending(): Promise<void>;

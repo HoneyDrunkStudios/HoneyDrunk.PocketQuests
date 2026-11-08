@@ -55,14 +55,20 @@ Module._load = function (name, ...rest) {
     return { RecoveryPanel: () => null };
   if (name === "@honeydrunk/ui-native") return { Loading: () => null };
   if (name === "../shared/ui")
-    return {
-      Button: ({ title, onPress, disabled }) =>
-        React.createElement("button", { onClick: onPress, disabled }, title),
-      Label: container,
-      Card: container,
-      colors: {},
-      styles: {},
-    };
+    return (() => {
+      const value = {
+        Button: ({ title, onPress, disabled }) =>
+          React.createElement("button", { onClick: onPress, disabled }, title),
+        Label: container,
+        Card: container,
+        colors: {},
+        styles: {},
+      };
+      return {
+        ...value,
+        useAppTheme: () => ({ ...value, theme: {}, isDark: false }),
+      };
+    })();
   return originalLoad.call(this, name, ...rest);
 };
 const { useProviderSetup } = require("../../src/session/use-provider-setup.ts");

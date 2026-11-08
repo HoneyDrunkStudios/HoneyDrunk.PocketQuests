@@ -1,8 +1,10 @@
+import { displayDate } from "../../shared/date-format";
+import { DateInput } from "../../shared/date-input";
 import { useMemo, useState } from "react";
 import { Text, View } from "react-native";
 import { useAccountSnapshot } from "../../session/session";
 import { Page } from "../../session/session-page";
-import { Button, Input, Label, colors, styles } from "../../shared/ui";
+import { Button, Label, useAppTheme } from "../../shared/ui";
 import { MonthCalendar } from "./month-calendar";
 import { AvailableQuests } from "./available-quests";
 import { QuestHistory } from "./quest-history";
@@ -16,6 +18,7 @@ import {
 } from "./calendar-plan";
 
 export function CalendarPlanner() {
+  const { styles, colors } = useAppTheme();
   const { state } = useAccountSnapshot();
   const [date, setDate] = useState("");
   const [draft, setDraft] = useState("");
@@ -68,11 +71,11 @@ export function CalendarPlanner() {
     canPlanCalendarDate(day, state.today) ? (
       <View style={{ gap: 8 }}>
         <Button
-          title={`Choose a quest for ${day}`}
+          title={`Choose a quest for ${displayDate(day)}`}
           onPress={() => setPlanning({ date: day, create: false })}
         />
         <Button
-          title={`Create a quest for ${day}`}
+          title={`Create a quest for ${displayDate(day)}`}
           secondary
           onPress={() => setPlanning({ date: day, create: true })}
         />
@@ -83,7 +86,7 @@ export function CalendarPlanner() {
       sections={[
         ...plan.days.map((day) => ({
           key: day.key,
-          title: `${calendarDateLabel(day.date)} · ${day.date}`,
+          title: `${calendarDateLabel(day.date)} · ${displayDate(day.date)}`,
           data: day.data,
           emptyContent: <Label>No quests planned for this day.</Label>,
           footerContent: chooseActions(day.date),
@@ -132,12 +135,14 @@ export function CalendarPlanner() {
         />
       </View>
       <Label>
-        {selected}
-        {week && plan.days.length ? ` – ${plan.days.at(-1)?.date}` : ""}
+        {displayDate(selected)}
+        {week && plan.days.length
+          ? ` – ${displayDate(plan.days.at(-1)?.date)}`
+          : ""}
       </Label>
-      <Input
-        accessibilityLabel="Calendar date YYYY-MM-DD"
-        placeholder={selected}
+      <DateInput
+        accessibilityLabel="Calendar date MM/DD/YYYY"
+        placeholder={displayDate(selected)}
         value={draft}
         onChangeText={setDraft}
         style={styles.input}
@@ -149,7 +154,7 @@ export function CalendarPlanner() {
         onPress={() => {
           if (!isCalendarDate(draft))
             setError(
-              "Enter a real date in YYYY-MM-DD format. Your current calendar is unchanged.",
+              "Enter a real date in MM/DD/YYYY format. Your current calendar is unchanged.",
             );
           else selectDate(draft);
         }}

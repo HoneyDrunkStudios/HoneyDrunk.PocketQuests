@@ -16,6 +16,7 @@ public static class Progression
     private const int RankMultiplierScale = 10;
     private const int PercentDenominator = 100;
     private const int HalfPercentDenominator = PercentDenominator / 2;
+    private const string Achievement = "Achievement";
     private static readonly ImmutableArray<int> RewardMultipliersInTenths = [10, 13, 17, 22, 28, 35, 43];
     private static readonly ImmutableArray<int> BaseXpByEffort = [10, 80, 800];
     private static readonly ImmutableArray<int> MinimumLevelByRank = [1, 5, 10, 20, 35, 50, 70];
@@ -128,21 +129,35 @@ public static class Progression
     /// <summary>Recomputes catalog rewards from surviving completions and current rank.</summary>
     /// <param name="survivingOccurrences">Quest snapshots for completions that have not been reversed.</param>
     /// <param name="rank">The rank whose calibrated rule applies.</param>
+    /// <param name="overallLevel">Current overall level, or null when replaying the original reward rules.</param>
     /// <returns>All reward definitions with current eligibility.</returns>
-    public static ImmutableArray<Entitlement> Entitlements(IEnumerable<Quest> survivingOccurrences, Rank rank)
+    public static ImmutableArray<Entitlement> Entitlements(IEnumerable<Quest> survivingOccurrences, Rank rank, int? overallLevel = null)
     {
         var quests = survivingOccurrences.ToArray();
-        return [
-            E("A01", "Achievement", "A Quest of My Own", quests.Count(q => q.IsCustom), 1, Rank.F),
-            E("A02", "Achievement", "Room to Recharge", Count("c07"), 5, Rank.F),
+        ImmutableArray<Entitlement> questRewards = [
+            E("A01", Achievement, "A Quest of My Own", quests.Count(q => q.IsCustom), 1, Rank.F),
+            E("A02", Achievement, "Room to Recharge", Count("c07"), 5, Rank.F),
             E("B01", "Badge", "Curious Explorer", Count("c10"), 3, Rank.F),
             E("B02", "Badge", "Everyday Care", Count("c06"), 10, Rank.F),
             E("F01", "Frame", "Open Notebook", Count("c02"), 10, Rank.E),
             E("F02", "Frame", "Quiet Horizon", Count("c07"), 10, Rank.D)
         ];
+        if (overallLevel is not { } level)
+            return questRewards;
+
+        return [
+            .. questRewards,
+            LevelReward(2), LevelReward(3), LevelReward(4), LevelReward(5), LevelReward(6), LevelReward(7),
+            RankReward(Rank.E), RankReward(Rank.D), RankReward(Rank.C),
+        ];
+
         int Count(string id) => quests.Count(q => q.CategoryId == id);
         Entitlement E(string id, string kind, string name, int count, int required, Rank minimum) =>
             new($"PQ-CAT-{id}", kind, name, count, required, minimum, count >= required && rank >= minimum);
+        Entitlement LevelReward(int target) =>
+            new($"PQ-LEVEL-{target:00}", Achievement, $"Level {target}", level, target, Rank.F, level >= target);
+        Entitlement RankReward(Rank target) =>
+            new($"PQ-RANK-{target}", Achievement, $"Rank {target}", 0, 0, target, rank >= target);
     }
 
     /// <summary>Calculates the rounded category-only bonus, capped at twenty percent.</summary>

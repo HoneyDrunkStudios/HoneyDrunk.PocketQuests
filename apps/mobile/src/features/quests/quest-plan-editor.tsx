@@ -1,8 +1,10 @@
+import { displayDate } from "../../shared/date-format";
+import { DateInput } from "../../shared/date-input";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import type { OccurrenceView } from "../../shared/contracts";
 import { useSession } from "../../session/session";
-import { Button, Input, Label, colors, styles } from "../../shared/ui";
+import { Button, Input, Label, useAppTheme } from "../../shared/ui";
 import { questActions } from "./commands/quest-actions";
 import { PlannedPreview } from "./planned-preview";
 import { planInputError, planLockReason } from "./quest-plan";
@@ -17,6 +19,7 @@ type PlanDraft = {
 };
 
 export function QuestPlanEditor({ item }: Readonly<{ item: OccurrenceView }>) {
+  const { styles, colors } = useAppTheme();
   const { state, command, busy, pending } = useSession();
   const savedDate = item.occurrence.dueDate ?? "";
   const savedTime = item.occurrence.plannedTime ?? "";
@@ -68,8 +71,8 @@ export function QuestPlanEditor({ item }: Readonly<{ item: OccurrenceView }>) {
         <>
           <Label>Plan changes use your selected zone: {state?.zone}.</Label>
           <Label>Due day (blank means unscheduled)</Label>
-          <Input
-            accessibilityLabel="Quest due date YYYY-MM-DD"
+          <DateInput
+            accessibilityLabel="Quest due date MM/DD/YYYY"
             value={date}
             error={dirty && error?.field === "date" ? error.message : undefined}
             onChangeText={(value) => edit({ date: value })}
@@ -145,7 +148,7 @@ function SavedPlanSummary({
 }: Readonly<{ date: string; time: string; zone: string | undefined }>) {
   return (
     <Label>
-      {date ? `Due ${date}` : "Unscheduled · no deadline"}
+      {date ? `Due ${displayDate(date)}` : "Unscheduled · no deadline"}
       {date && time ? ` at ${time} (planned only)` : ""}
       {zone ? ` · ${zone}` : ""}
     </Label>

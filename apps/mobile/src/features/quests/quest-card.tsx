@@ -1,3 +1,5 @@
+import { RankInsignia } from "../../shared/rank-insignia";
+import { displayDate } from "../../shared/date-format";
 import { Pressable, Text, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Link } from "expo-router";
@@ -9,18 +11,19 @@ import {
   useAccountSnapshot,
 } from "../../session/session";
 import type { OccurrenceView } from "../../shared/contracts";
-import { Card, Button, Label, colors, styles } from "../../shared/ui";
+import { Card, Button, Label, useAppTheme } from "../../shared/ui";
 
 export function QuestCard({ item }: { item: OccurrenceView }) {
+  const { colors, styles } = useAppTheme();
   const { command } = useSessionActions();
   const { busy, pending } = useSessionStatus();
   const { catalog, state } = useAccountSnapshot();
   const q = item.occurrence.quest;
-  const accent = q.categoryId === "c03" ? "#BB91F4" : colors.gold;
+  const accent = colors.green;
   const due =
     item.occurrence.dueDate === state?.today
       ? "today"
-      : item.occurrence.dueDate;
+      : displayDate(item.occurrence.dueDate);
   let status: string = item.status;
   if (item.pendingCompletion)
     status = item.pendingTimingVerification
@@ -60,8 +63,9 @@ export function QuestCard({ item }: { item: OccurrenceView }) {
           </Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
             <Text style={[styles.muted, { color: colors.gold }]}>
-              {q.baseXp} base XP · Rank {q.rank} · {q.effort}
+              {q.baseXp} base XP · {q.effort}
             </Text>
+            <RankInsignia rank={q.rank} size={24} />
             <Text style={styles.muted}>{status}</Text>
           </View>
           <View

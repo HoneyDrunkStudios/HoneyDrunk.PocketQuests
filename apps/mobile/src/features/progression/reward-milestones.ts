@@ -14,11 +14,30 @@ const completionKinds: Record<string, string> = {
   "PQ-CAT-F02": "Rest & Recreation quest",
 };
 
+export function milestoneKind(rewardId: string) {
+  if (rewardId.startsWith("PQ-LEVEL-")) return "Level";
+  if (rewardId.startsWith("PQ-RANK-")) return "Rank";
+  return null;
+}
+
 export function rewardProgress(reward: Reward, currentRank: Rank) {
   const kind = completionKinds[reward.id] ?? "qualifying quest";
   const remaining = Math.max(0, reward.requiredCount - reward.count);
   const rankMet =
     ranks.indexOf(currentRank) >= ranks.indexOf(reward.requiredRank);
+  const milestone = milestoneKind(reward.id);
+  if (milestone === "Level")
+    return {
+      requirement: `Reach overall level ${reward.requiredCount}.`,
+      guidance: `Your overall level is ${reward.count}.`,
+      rankMet,
+    };
+  if (milestone === "Rank")
+    return {
+      requirement: `Reach rank ${reward.requiredRank}.`,
+      guidance: `Your rank is ${currentRank}.`,
+      rankMet,
+    };
   const requirement = `Complete ${reward.requiredCount} ${kind}${reward.requiredCount === 1 ? "" : "s"}.`;
   let guidance = "Completion requirement met.";
   if (remaining > 0)
@@ -37,7 +56,11 @@ export function nextReward(rewards: Reward[]) {
       const fraction = (reward: Reward) =>
         reward.requiredCount > 0
           ? Math.min(1, reward.count / reward.requiredCount)
-          : 1;
-      return fraction(b) - fraction(a) || a.id.localeCompare(b.id);
+          : 0;
+      const rankOrder =
+        milestoneKind(a.id) === "Rank" && milestoneKind(b.id) === "Rank"
+          ? ranks.indexOf(a.requiredRank) - ranks.indexOf(b.requiredRank)
+          : 0;
+      return fraction(b) - fraction(a) || rankOrder || a.id.localeCompare(b.id);
     })[0];
 }

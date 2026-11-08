@@ -27,7 +27,7 @@ public sealed class AccountEntitlementMapping : IEntityTypeConfiguration<Account
         builder.Property(row => row.Id).HasComment("Application-generated stable row UUID; never reused.").ValueGeneratedNever().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
         builder.Property(row => row.AccountId).HasComment("Pocket Quests account that exclusively owns this row; supplied by trusted server context.").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
         builder.Property(row => row.ProfileRewardId).HasComment("Reward definition whose eligibility is projected.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(40).IsUnicode(false);
-        builder.Property(row => row.QualifyingCount).HasComment("Nonnegative current count of surviving qualifying contributions.");
+        builder.Property(row => row.QualifyingCount).HasComment("Current qualifying completions or overall level. Zero for rank-only milestones.");
         builder.Property(row => row.IsEarned).HasComment("Current derived eligibility; may become false after Undo or rank change.");
         builder.Property(row => row.ProjectionVersion).HasComment("Account projection generation for this reward.");
         builder.Property(row => row.RulesetVersion).HasComment("Reviewed trigger version used for this eligibility.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(32).IsUnicode(false);

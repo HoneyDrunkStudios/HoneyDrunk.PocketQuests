@@ -1,8 +1,9 @@
+import { RankProgress } from "../../features/progression/rank-progress";
 import { Text, View } from "react-native";
 import { Link } from "expo-router";
 import { Page } from "../../session/session-page";
 import { useAccountSnapshot, useSessionStatus } from "../../session/session";
-import { Card, Label, colors, styles } from "../../shared/ui";
+import { Card, Label, useAppTheme } from "../../shared/ui";
 import { CharacterSection } from "../../features/progression/character-section";
 import {
   ProgressRow,
@@ -13,7 +14,8 @@ import { ActivityRecap } from "../../features/progression/activity-recap-view";
 import { RewardSummary } from "../../features/progression/reward-summary";
 
 export default function Profile() {
-  const { state } = useAccountSnapshot();
+  const { styles, colors } = useAppTheme();
+  const { state, catalog } = useAccountSnapshot();
   const { pending, offline } = useSessionStatus();
   if (!state) return null;
   return (
@@ -34,9 +36,7 @@ export default function Profile() {
         </Link>
       </View>
       <Card style={{ gap: 12, borderColor: colors.gold }}>
-        <Text style={styles.subtitle}>
-          Level {state.overallLevel} · Rank {state.rank.current}
-        </Text>
+        <Text style={styles.subtitle}>Level {state.overallLevel}</Text>
         <Label>{state.overallXp} overall XP</Label>
         <LevelProgress
           compact
@@ -46,6 +46,21 @@ export default function Profile() {
           level={state.overallLevel}
         />
       </Card>
+      <RankProgress
+        rank={state.rank}
+        categories={state.categories}
+        rules={catalog?.rules ?? []}
+        compact
+      />
+      <Link
+        href="/wardrobe"
+        style={[
+          styles.text,
+          { color: colors.green, minHeight: 48, paddingVertical: 14 },
+        ]}
+      >
+        Your wardrobe - view and change equipped items
+      </Link>
       <Link
         href="/avatar"
         style={[

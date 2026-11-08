@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { RewardProgress } from "./reward-progress";
 import { useCelebrationMotion } from "./use-celebration-motion";
 import { Text, View } from "react-native";
-import { Button, Card, Label, styles } from "../../shared/ui";
-import { pocketQuestsTheme } from "../../shared/theme";
+import { Button, Card, Label, useAppTheme } from "../../shared/ui";
 import type { CompletionFeedback } from "./completion-feedback";
 
 export function CompletionCelebration({
@@ -17,6 +16,7 @@ export function CompletionCelebration({
   onUndo(): void;
   onDismiss(): void;
 }) {
+  const { styles, theme } = useAppTheme();
   const [now, setNow] = useState(Date.now);
   const reduceMotion = useCelebrationMotion();
   useEffect(() => {
@@ -32,14 +32,14 @@ export function CompletionCelebration({
       testID="quest-celebration"
       style={{
         borderWidth: 2,
-        borderColor: pocketQuestsTheme.colors.accent,
+        borderColor: theme.colors.accent,
         gap: 12,
       }}
     >
       <Text
         style={[
           styles.muted,
-          { color: pocketQuestsTheme.colors.accent, fontWeight: "700" },
+          { color: theme.colors.accent, fontWeight: "700" },
         ]}
       >
         ✦ A MOMENT TO CELEBRATE ✦

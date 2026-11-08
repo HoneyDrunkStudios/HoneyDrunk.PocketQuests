@@ -7,7 +7,7 @@ import type {
   State,
 } from "../../shared/contracts";
 import { useSessionActions, useSessionStatus } from "../../session/session";
-import { Button, Card, Label, styles } from "../../shared/ui";
+import { Button, Card, Label, useAppTheme } from "../../shared/ui";
 import { questActions } from "./commands/quest-actions";
 import { FocusTimer } from "./focus-timer";
 import { QuestRewards } from "./quest-rewards";
@@ -15,6 +15,7 @@ import { QuestRewards } from "./quest-rewards";
 export function QuestCompletionCriterion({
   quest,
 }: Readonly<{ quest: Quest }>) {
+  const { styles } = useAppTheme();
   return (
     <Card>
       <Text accessibilityRole="header" style={styles.subtitle}>
@@ -82,6 +83,7 @@ export function QuestOccurrenceRewards({
   catalog: Catalog | null;
   state: State | null;
 }>) {
+  const { styles } = useAppTheme();
   return (
     <Card>
       <Text accessibilityRole="header" style={styles.subtitle}>

@@ -1,6 +1,7 @@
+import { displayDate } from "../../shared/date-format";
 import { useMemo } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { Button, Card, colors, styles } from "../../shared/ui";
+import { Button, Card, useAppTheme } from "../../shared/ui";
 import type { OccurrenceView } from "../../shared/contracts";
 import { monthDates, adjacentMonth } from "./month-grid";
 
@@ -19,6 +20,7 @@ export function MonthCalendar({
   onMonth(month: string): void;
   onSelect(date: string): void;
 }>) {
+  const { styles, colors } = useAppTheme();
   const dates = monthDates(month);
   const counts = useMemo(() => {
     const result = new Map<string, number>();
@@ -95,7 +97,7 @@ export function MonthCalendar({
                 {date ? (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`${date}${date === today ? ", today" : ""}, ${counts.get(date) ?? 0} quests`}
+                    accessibilityLabel={`${displayDate(date)}${date === today ? ", today" : ""}, ${counts.get(date) ?? 0} quests`}
                     accessibilityState={{ selected: date === selected }}
                     onPress={() => onSelect(date)}
                     style={({ pressed }) => ({
@@ -129,10 +131,9 @@ export function MonthCalendar({
                         height: 5,
                         marginTop: 3,
                         borderRadius: 3,
-                        backgroundColor: dateMarkerColor(
-                          counts.has(date),
-                          date === selected,
-                        ),
+                        backgroundColor:
+                          date === selected ? colors.onGold : colors.gold,
+                        opacity: counts.has(date) ? 1 : 0,
                       }}
                     />
                   </Pressable>
@@ -146,9 +147,4 @@ export function MonthCalendar({
       </ScrollView>
     </Card>
   );
-}
-
-function dateMarkerColor(hasQuests: boolean, selected: boolean) {
-  if (!hasQuests) return "transparent";
-  return selected ? colors.onGold : colors.gold;
 }

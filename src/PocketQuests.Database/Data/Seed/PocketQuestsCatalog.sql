@@ -103,7 +103,16 @@ FROM [pocketquests].[ProfileReward] AS target JOIN (VALUES
     (N'PQ-CAT-B01', N'Badge', N'Curious Explorer', 3, N'F', N'PQ-MVP-0.5'),
     (N'PQ-CAT-B02', N'Badge', N'Everyday Care', 10, N'F', N'PQ-MVP-0.5'),
     (N'PQ-CAT-F01', N'Frame', N'Open Notebook', 10, N'E', N'PQ-MVP-0.5'),
-    (N'PQ-CAT-F02', N'Frame', N'Quiet Horizon', 10, N'D', N'PQ-MVP-0.5')) AS source ([Id], [KindCode], [Name], [RequiredCount], [RequiredRank], [RulesetVersion]) ON target.Id=source.Id
+    (N'PQ-CAT-F02', N'Frame', N'Quiet Horizon', 10, N'D', N'PQ-MVP-0.5'),
+    (N'PQ-LEVEL-02', N'Achievement', N'Level 2', 2, N'F', N'1.1'),
+    (N'PQ-LEVEL-03', N'Achievement', N'Level 3', 3, N'F', N'1.1'),
+    (N'PQ-LEVEL-04', N'Achievement', N'Level 4', 4, N'F', N'1.1'),
+    (N'PQ-LEVEL-05', N'Achievement', N'Level 5', 5, N'F', N'1.1'),
+    (N'PQ-LEVEL-06', N'Achievement', N'Level 6', 6, N'F', N'1.1'),
+    (N'PQ-LEVEL-07', N'Achievement', N'Level 7', 7, N'F', N'1.1'),
+    (N'PQ-RANK-C', N'Achievement', N'Rank C', 0, N'C', N'1.1'),
+    (N'PQ-RANK-D', N'Achievement', N'Rank D', 0, N'D', N'1.1'),
+    (N'PQ-RANK-E', N'Achievement', N'Rank E', 0, N'E', N'1.1')) AS source ([Id], [KindCode], [Name], [RequiredCount], [RequiredRank], [RulesetVersion]) ON target.Id=source.Id
 WHERE target.[KindCode] <> source.[KindCode] OR target.[Name] <> source.[Name] OR target.[RequiredCount] <> source.[RequiredCount] OR target.[RequiredRank] <> source.[RequiredRank] OR target.[RulesetVersion] <> source.[RulesetVersion];
 INSERT [pocketquests].[ProfileReward] ([Id], [KindCode], [Name], [RequiredCount], [RequiredRank], [RulesetVersion])
 SELECT source.[Id], source.[KindCode], source.[Name], source.[RequiredCount], source.[RequiredRank], source.[RulesetVersion]
@@ -113,7 +122,16 @@ FROM (VALUES
     (N'PQ-CAT-B01', N'Badge', N'Curious Explorer', 3, N'F', N'PQ-MVP-0.5'),
     (N'PQ-CAT-B02', N'Badge', N'Everyday Care', 10, N'F', N'PQ-MVP-0.5'),
     (N'PQ-CAT-F01', N'Frame', N'Open Notebook', 10, N'E', N'PQ-MVP-0.5'),
-    (N'PQ-CAT-F02', N'Frame', N'Quiet Horizon', 10, N'D', N'PQ-MVP-0.5')) AS source ([Id], [KindCode], [Name], [RequiredCount], [RequiredRank], [RulesetVersion])
+    (N'PQ-CAT-F02', N'Frame', N'Quiet Horizon', 10, N'D', N'PQ-MVP-0.5'),
+    (N'PQ-LEVEL-02', N'Achievement', N'Level 2', 2, N'F', N'1.1'),
+    (N'PQ-LEVEL-03', N'Achievement', N'Level 3', 3, N'F', N'1.1'),
+    (N'PQ-LEVEL-04', N'Achievement', N'Level 4', 4, N'F', N'1.1'),
+    (N'PQ-LEVEL-05', N'Achievement', N'Level 5', 5, N'F', N'1.1'),
+    (N'PQ-LEVEL-06', N'Achievement', N'Level 6', 6, N'F', N'1.1'),
+    (N'PQ-LEVEL-07', N'Achievement', N'Level 7', 7, N'F', N'1.1'),
+    (N'PQ-RANK-C', N'Achievement', N'Rank C', 0, N'C', N'1.1'),
+    (N'PQ-RANK-D', N'Achievement', N'Rank D', 0, N'D', N'1.1'),
+    (N'PQ-RANK-E', N'Achievement', N'Rank E', 0, N'E', N'1.1')) AS source ([Id], [KindCode], [Name], [RequiredCount], [RequiredRank], [RulesetVersion])
 WHERE NOT EXISTS (SELECT 1 FROM [pocketquests].[ProfileReward] AS target WHERE target.Id=source.Id);
 
 UPDATE target SET [CategoryId]=source.[CategoryId], [Title]=source.[Title], [CatalogVersion]=source.[CatalogVersion], [ModifiedAt]=TODATETIMEOFFSET(SYSUTCDATETIME(),'+00:00')

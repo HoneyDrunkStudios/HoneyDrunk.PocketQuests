@@ -1,10 +1,11 @@
 import { Link, useLocalSearchParams } from "expo-router";
 import { useAccountSnapshot } from "../../../session/session";
 import { Page } from "../../../session/session-page";
-import { Label, colors, styles } from "../../../shared/ui";
+import { Label, useAppTheme } from "../../../shared/ui";
 import { AvailableQuests } from "../../../features/quests/available-quests";
 
 export default function DestinationQuests() {
+  const { styles, colors } = useAppTheme();
   const { categoryId } = useLocalSearchParams<{
     categoryId?: string | string[];
   }>();
@@ -26,7 +27,7 @@ export default function DestinationQuests() {
   return (
     <Page>
       <Link
-        href="/(tabs)/explore"
+        href="/explore"
         style={[
           styles.text,
           {

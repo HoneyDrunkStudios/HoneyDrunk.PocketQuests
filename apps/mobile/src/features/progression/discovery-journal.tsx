@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 import { Link } from "expo-router";
 import type { SavedPlace } from "../../api/generated";
 import { useAccountSnapshot, useSessionStatus } from "../../session/session";
-import { Button, Card, Input, Label, colors, styles } from "../../shared/ui";
+import { Button, Card, Input, Label, useAppTheme } from "../../shared/ui";
 import type { DiscoveryJournalState } from "./use-discoveries";
 
 export function DiscoveryJournal({
@@ -13,6 +13,7 @@ export function DiscoveryJournal({
   journal: DiscoveryJournalState;
   onShowMap?: (place: SavedPlace) => void;
 }>) {
+  const { styles } = useAppTheme();
   const [expanded, setExpanded] = useState<string | null>(null);
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
@@ -119,6 +120,7 @@ function SavedPlaceEditor({
   journal: DiscoveryJournalState;
   onShowMap?: (place: SavedPlace) => void;
 }>) {
+  const { styles, colors } = useAppTheme();
   const { state } = useAccountSnapshot();
   const { offline, busy } = useSessionStatus();
   const [notes, setNotes] = useState(place.notes);
