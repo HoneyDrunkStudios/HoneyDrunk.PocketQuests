@@ -45,19 +45,11 @@ function americanDate(isoDate) {
 async function verifyTravelerScene() {
   const sheet = page.getByTestId("character-sheet");
   const scene = sheet.getByTestId("traveler-scene");
-  const traveler = scene
-    .getByRole("img", {
-      name: "Your customizable traveler avatar",
-      exact: true,
-    })
-    .and(page.locator('[role="img"]'));
-  const progress = sheet.getByRole("progressbar", {
-    name: "Overall level progress",
-    exact: true,
-  });
+  const traveler = scene.getByTestId("traveler-avatar");
+  const progress = sheet.getByTestId("home-level-progress");
+  const backdrop = scene.getByTestId("traveler-backdrop");
   await expect(traveler).toBeVisible();
   await expect(progress).toBeVisible();
-  const backdrop = scene.locator(':scope > [aria-hidden="true"]');
   await expect(backdrop).toBeVisible();
   await expect
     .poll(async () => {

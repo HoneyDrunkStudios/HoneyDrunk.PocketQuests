@@ -39,6 +39,11 @@ import {
   type AvatarSection,
 } from "./avatar-customization";
 
+const editorTabLabels: Partial<Record<AvatarSection | "Looks", string>> = {
+  Identity: "Body",
+  Clothing: "Clothes",
+};
+
 function swatchPalette(slot: keyof AvatarLook) {
   if (slot === "skin") return skinTones;
   return slot === "scarfColor" ? scarfColors : hairColors;
@@ -619,11 +624,7 @@ function Wardrobe({
                 { fontWeight: section === name ? "700" : "400" },
               ]}
             >
-              {name === "Identity"
-                ? "Body"
-                : name === "Clothing"
-                  ? "Clothes"
-                  : name}
+              {editorTabLabels[name] ?? name}
             </Text>
           </Pressable>
         ))}

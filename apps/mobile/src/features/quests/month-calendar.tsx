@@ -131,11 +131,9 @@ export function MonthCalendar({
                         height: 5,
                         marginTop: 3,
                         borderRadius: 3,
-                        backgroundColor: !counts.has(date)
-                          ? "transparent"
-                          : date === selected
-                            ? colors.onGold
-                            : colors.gold,
+                        backgroundColor:
+                          date === selected ? colors.onGold : colors.gold,
+                        opacity: counts.has(date) ? 1 : 0,
                       }}
                     />
                   </Pressable>

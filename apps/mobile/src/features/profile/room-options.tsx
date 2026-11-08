@@ -69,12 +69,9 @@ export function RoomOptions({
       ({ item, index }) =>
         index > 0 && availableCosmetic(item.rewardId, state.entitlements),
     );
-  const title =
-    panel === "rooms"
-      ? "Your rooms"
-      : panel === "unlocks"
-        ? "Room unlocks"
-        : roomSlotNames[roomSlots.indexOf(selected!)];
+  let title = roomSlotNames[roomSlots.indexOf(selected!)];
+  if (panel === "rooms") title = "Your rooms";
+  else if (panel === "unlocks") title = "Room unlocks";
   return (
     <Modal transparent animationType="none" visible onRequestClose={onClose}>
       <View
@@ -184,6 +181,9 @@ export function RoomOptions({
                     const reward = state.entitlements.find(
                       (item) => item.id === room.rewardId,
                     );
+                    const lockedLabel = reward
+                      ? `Reach rank ${reward.requiredRank} to unlock this room.`
+                      : "Rank up to unlock this room.";
                     return (
                       <View
                         key={room.name}
@@ -196,11 +196,7 @@ export function RoomOptions({
                       >
                         <Text style={styles.subtitle}>{room.name}</Text>
                         <Label>
-                          {reward?.earned
-                            ? "Unlocked"
-                            : reward
-                              ? `Reach rank ${reward.requiredRank} to unlock this room.`
-                              : "Rank up to unlock this room."}
+                          {reward?.earned ? "Unlocked" : lockedLabel}
                         </Label>
                         {reward && !reward.earned && (
                           <Label>Your rank is {state.rank.current}.</Label>

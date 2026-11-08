@@ -19,6 +19,13 @@ import {
   visibleTiles,
 } from "./map-geometry";
 
+const moveByAction = new Map<string, readonly [number, number]>([
+  ["West", [-160, 0]],
+  ["East", [160, 0]],
+  ["North", [0, -160]],
+  ["South", [0, 160]],
+]);
+
 export function ExplorationMap({
   center,
   zoom,
@@ -135,15 +142,10 @@ export function ExplorationMap({
           const action = event.nativeEvent.actionName;
           if (action === "increment") onZoom(Math.min(18, zoom + 1));
           else if (action === "decrement") onZoom(Math.max(12, zoom - 1));
-          else
-            onMove(
-              moveCenter(
-                center,
-                zoom,
-                action === "West" ? -160 : action === "East" ? 160 : 0,
-                action === "North" ? -160 : action === "South" ? 160 : 0,
-              ),
-            );
+          else {
+            const [x, y] = moveByAction.get(action) ?? [0, 0];
+            onMove(moveCenter(center, zoom, x, y));
+          }
         }}
         style={{
           height: fill ? "100%" : mapHeight,

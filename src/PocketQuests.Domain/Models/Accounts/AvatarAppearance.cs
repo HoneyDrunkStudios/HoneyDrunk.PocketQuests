@@ -9,8 +9,16 @@ public static class AvatarAppearance
     /// <summary>The freely available starter appearance.</summary>
     public const string Starter = "v1:2:0:0:0:0";
 
-    private static readonly string[] LegacyDecorationRewards = [string.Empty, "PQ-CAT-A01", "PQ-CAT-A02", "PQ-CAT-F01", "PQ-CAT-B01", "PQ-CAT-B02", "PQ-CAT-F02"];
+    private const string OwnQuestReward = "PQ-CAT-A01";
+    private const string RechargeReward = "PQ-CAT-F02";
+    private const string PoseReward = "PQ-CAT-B01";
+    private static readonly string[] LegacyOutfitRewards = [string.Empty, OwnQuestReward, "PQ-CAT-A02", "PQ-CAT-F01"];
+    private static readonly string[] LegacyDecorationRewards = [string.Empty, OwnQuestReward, "PQ-CAT-A02", "PQ-CAT-F01", PoseReward, "PQ-CAT-B02", RechargeReward];
     private static readonly string[] LevelDecorationRewards = [string.Empty, "PQ-LEVEL-02", "PQ-LEVEL-03", "PQ-LEVEL-04", "PQ-LEVEL-05", "PQ-LEVEL-06", "PQ-LEVEL-07"];
+    private static readonly string[] RankOutfitRewards = [string.Empty, "PQ-RANK-E", "PQ-RANK-D", "PQ-RANK-C"];
+    private static readonly string[] RankRoomRewards = [string.Empty, "PQ-RANK-E", "PQ-RANK-D"];
+    private static readonly string[] LegacySceneRewards = [string.Empty, OwnQuestReward, RechargeReward];
+    private static readonly string[] AccessoryRewards = [string.Empty, PoseReward, "PQ-CAT-B02", RechargeReward];
 
     /// <summary>Validates the complete appearance and all selected reward cosmetics.</summary>
     /// <param name="code">The versioned appearance choice.</param>
@@ -37,69 +45,70 @@ public static class AvatarAppearance
         var compact = code[1] is '5' or '6';
         var outfit = compact ? 6 : 9;
         var accessory = compact ? 7 : 11;
-        var outfitReward = code[outfit] switch
-        {
-            '1' => legacyCosmetics ? "PQ-CAT-A01" : "PQ-RANK-E",
-            '2' => legacyCosmetics ? "PQ-CAT-A02" : "PQ-RANK-D",
-            '3' => legacyCosmetics ? "PQ-CAT-F01" : "PQ-RANK-C",
-            _ => null,
-        };
-        ClearLocked(result, outfit, outfitReward, earned);
-        ClearLocked(result, accessory, code[accessory] switch { '1' => "PQ-CAT-B01", '2' => "PQ-CAT-B02", '3' => "PQ-CAT-F02", _ => null }, earned);
+        ClearLocked(result, outfit, legacyCosmetics ? LegacyOutfitRewards : RankOutfitRewards, earned);
+        ClearLocked(result, accessory, AccessoryRewards, earned);
         if (compact || code[1] == '4')
-        {
-            var pose = compact ? 12 : 21;
-            var backdrop = compact ? 13 : 23;
-            ClearLocked(result, pose, code[pose] == '1' ? "PQ-CAT-B01" : null, earned);
-            ClearLocked(result, backdrop, code[backdrop] switch { '1' => "PQ-CAT-A01", '2' => "PQ-CAT-F02", _ => null }, earned);
-        }
+            ApplyStageRewards(result, compact, earned);
 
         if (compact)
-        {
-            var room = code[1] == '6' ? 16 : 15;
-            var roomReward = code[room] switch
-            {
-                '1' => legacyCosmetics ? "PQ-CAT-A01" : "PQ-RANK-E",
-                '2' => legacyCosmetics ? "PQ-CAT-F02" : "PQ-RANK-D",
-                _ => null,
-            };
-            ClearLocked(result, room, roomReward, earned);
-            var decorationRewards = legacyCosmetics ? LegacyDecorationRewards : LevelDecorationRewards;
-            for (var index = room + 1; index < result.Length; index++)
-            {
-                if (code[index] != '0')
-                    ClearLocked(result, index, decorationRewards[code[index] - '0'], earned);
-            }
-        }
+            ApplyRoomRewards(result, earned, legacyCosmetics);
 
         return new(result);
     }
 
-    private static void ClearLocked(char[] code, int index, string? reward, HashSet<string> earned)
+    private static void ApplyStageRewards(char[] code, bool compact, HashSet<string> earned)
     {
-        if (reward is not null && !earned.Contains(reward))
+        var pose = compact ? 12 : 21;
+        var backdrop = compact ? 13 : 23;
+        if (code[pose] == '1' && !earned.Contains(PoseReward))
+            code[pose] = '0';
+        ClearLocked(code, backdrop, LegacySceneRewards, earned);
+    }
+
+    private static void ApplyRoomRewards(char[] code, HashSet<string> earned, bool legacyCosmetics)
+    {
+        var room = code[1] == '6' ? 16 : 15;
+        ClearLocked(code, room, legacyCosmetics ? LegacySceneRewards : RankRoomRewards, earned);
+        var decorationRewards = legacyCosmetics ? LegacyDecorationRewards : LevelDecorationRewards;
+        for (var index = room + 1; index < code.Length; index++)
+            ClearLocked(code, index, decorationRewards, earned);
+    }
+
+    private static void ClearLocked(char[] code, int index, string[] rewards, HashSet<string> earned)
+    {
+        var selected = code[index] - '0';
+        if (selected > 0 && selected < rewards.Length && !earned.Contains(rewards[selected]))
             code[index] = '0';
     }
 
     private static bool IsValid(string? code) => IsLegacy(code) || IsExpanded(code) || IsLayered(code) || IsStaged(code) || IsCompact(code);
 
-    private static bool IsCompact(string? code)
+    // Limits follow the compact fields in order, from skin through backdrop (v5) or body type (v6).
+    private static bool IsCompact(string? code) => code?.Length switch
     {
-        if (code is not { Length: 20 or 21 })
-            return false;
-        var hasBodyType = code.Length == 21;
-        var room = hasBodyType ? 16 : 15;
-        return code.StartsWith(hasBodyType ? "v6:" : "v5:", StringComparison.Ordinal)
-            && code[3] is >= '0' and <= '5' && code[4] is >= '0' and <= '7'
-            && code[5] is >= '0' and <= '7' && code[6] is >= '0' and <= '5'
-            && code[7] is >= '0' and <= '5' && code[8] is >= '0' and <= '6'
-            && code[9] >= '0' && code[9] <= (hasBodyType ? '3' : '2')
-            && code[10] is >= '0' and <= '2' && code[11] is >= '0' and <= '7'
-            && code[12] >= '0' && code[12] <= (hasBodyType ? '2' : '1')
-            && code[13] is >= '0' and <= '2'
-            && (!hasBodyType || code[14] is >= '0' and <= '1')
-            && code[room - 1] == ':' && code[room] is >= '0' and <= '2'
-            && code[(room + 1)..].All(value => value is >= '0' and <= '6');
+        20 => IsCompact(code, "v5:", "57755622712"),
+        21 => IsCompact(code, "v6:", "577556327221"),
+        _ => false,
+    };
+
+    private static bool IsCompact(string code, string prefix, string limits)
+    {
+        var room = limits.Length + 4;
+        return code.StartsWith(prefix, StringComparison.Ordinal)
+            && WithinDigitRanges(code.AsSpan(3, limits.Length), limits)
+            && code[room - 1] == ':'
+            && WithinDigitRanges(code.AsSpan(room), "26666");
+    }
+
+    private static bool WithinDigitRanges(ReadOnlySpan<char> digits, ReadOnlySpan<char> limits)
+    {
+        for (var index = 0; index < digits.Length; index++)
+        {
+            if (digits[index] < '0' || digits[index] > limits[index])
+                return false;
+        }
+
+        return true;
     }
 
     private static bool IsStaged(string? code) => code is { Length: 24 } && code.StartsWith("v4:", StringComparison.Ordinal)

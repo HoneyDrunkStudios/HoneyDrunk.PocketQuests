@@ -16,7 +16,7 @@ export function AvatarSprite({
   const [sx, sy, sw, sh] = sprite.region;
   const id = `sprite-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const bounds = `${id}-${sprite.region.join("-")}`;
-  const shape = `${id}-skin-${Array.from(mask ?? "").reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) >>> 0, 0)}`;
+  const shape = `${id}-skin-${Array.from(mask ?? "").reduce((sum, char) => (sum * 31 + char.codePointAt(0)!) >>> 0, 0)}`;
   const scaleX = w / sw,
     scaleY = h / sh;
   return (

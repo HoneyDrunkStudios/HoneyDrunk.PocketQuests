@@ -28,8 +28,10 @@ export function TravelerBackdrop({
   );
   const wallpaperHeight =
     typeof height === "number" ? (wallpaperWidth * 1199) / 1312 : height;
+  const dimmed = look.backdrop !== 0 && isDark;
   return (
     <View
+      testID="traveler-backdrop"
       aria-hidden
       pointerEvents="none"
       style={{
@@ -39,7 +41,7 @@ export function TravelerBackdrop({
         width,
         height,
         overflow: "hidden",
-        opacity: look.backdrop === 0 ? 1 : isDark ? 0.58 : 1,
+        opacity: dimmed ? 0.58 : 1,
       }}
     >
       {look.backdrop === 0 ? (

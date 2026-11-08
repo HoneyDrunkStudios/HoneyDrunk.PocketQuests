@@ -68,6 +68,8 @@ export const journalTour = [
 
     next: "Next, see where your preferences live.",
 
+    action: "Open settings",
+
     tab: -1,
   },
 
@@ -80,15 +82,13 @@ export const journalTour = [
 
     next: "You're ready. Choose a quest when it fits your day.",
 
+    action: "Choose a quest",
+
     tab: -1,
   },
 ] as const;
 
-/** Guidance only: moving through the tour never accepts/completes a quest or grants XP. */
-
-export function AppTour() {
-  const { colors, styles } = useAppTheme();
-
+function useJournalTour() {
   const { state } = useAccountSnapshot();
 
   const { signedIn } = useSessionStatus();
@@ -98,8 +98,6 @@ export function AppTour() {
   const pathname = usePathname();
 
   const router = useRouter();
-
-  const insets = useSafeAreaInsets();
 
   const [step, setStep] = useState<number | null>(null);
   const [lastStart, setLastStart] = useState(tour);
@@ -131,9 +129,16 @@ export function AppTour() {
     if (tour === "start") router.setParams({ tour: undefined });
     if (starting) router.replace("/(tabs)");
   }, [tour, starting, router]);
-  if (step === null || !signedIn || !state?.profile.onboardingComplete)
-    return null;
+  const ready = signedIn && state?.profile.onboardingComplete;
+  return { step: ready ? step : null, setStep, pathname, router };
+}
 
+/** Guidance only: moving through the tour never accepts/completes a quest or grants XP. */
+export function AppTour() {
+  const { colors, styles } = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const { step, setStep, pathname, router } = useJournalTour();
+  if (step === null) return null;
   const page = journalTour[step];
 
   const inTabs =
@@ -217,16 +222,10 @@ export function AppTour() {
         <View style={{ flexDirection: "row", gap: 10 }}>
           <View style={{ flex: 1 }}>
             <Button
-              title={
-                step === 5
-                  ? "Choose a quest"
-                  : step === 4
-                    ? "Open settings"
-                    : "Next"
-              }
+              title={"action" in page ? page.action : "Next"}
 
               onPress={() => {
-                if (step === 5) {
+                if (step === journalTour.length - 1) {
                   setStep(null);
 
                   router.replace({

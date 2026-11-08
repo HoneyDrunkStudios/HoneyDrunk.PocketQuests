@@ -1,5 +1,5 @@
 import {
-  ImageBackground,
+  Image,
   Pressable,
   Text,
   View,
@@ -30,11 +30,8 @@ export function journalGreeting(now: Date, zone: string) {
       timeZone: zone,
     }).format(now),
   );
-  return hour < 12
-    ? "Good morning"
-    : hour < 18
-      ? "Good afternoon"
-      : "Good evening";
+  if (hour < 12) return "Good morning";
+  return hour < 18 ? "Good afternoon" : "Good evening";
 }
 /** Real traveler and confirmed progression in the selected illustrated quest-log layout. */
 export function CharacterHome() {
@@ -195,6 +192,7 @@ export function CharacterHome() {
                   {progress.earned} / {progress.required} XP
                 </Text>
                 <View
+                  testID="home-level-progress"
                   accessible
                   accessibilityRole="progressbar"
                   accessibilityLabel="Overall level progress"
@@ -277,15 +275,7 @@ export function CharacterHome() {
             </Link>
           </View>
         </View>
-        <ImageBackground
-          source={playfulArt.firstAdventure}
-          resizeMode="cover"
-          imageStyle={{
-            width: "100%",
-            height: "100%",
-            opacity: isDark ? 0.55 : 0.82,
-            borderRadius: 18,
-          }}
+        <View
           style={{
             minHeight: 124,
             marginHorizontal: -8,
@@ -297,6 +287,20 @@ export function CharacterHome() {
             gap: 2,
           }}
         >
+          <Image
+            source={playfulArt.firstAdventure}
+            resizeMode="cover"
+            accessible={false}
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              opacity: isDark ? 0.55 : 0.82,
+              borderRadius: 18,
+            }}
+          />
           <Text
             accessibilityRole="header"
             style={[
@@ -354,7 +358,7 @@ export function CharacterHome() {
               />
             </Pressable>
           </Link>
-        </ImageBackground>
+        </View>
         <TodayQuests
           compact
           state={state}

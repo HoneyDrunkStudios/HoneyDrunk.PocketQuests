@@ -71,6 +71,7 @@ export function AvatarFigure({
       : undefined;
   return (
     <View
+      testID="traveler-avatar"
       accessible
       accessibilityRole="image"
       accessibilityLabel="Your customizable traveler avatar"
@@ -214,7 +215,7 @@ export function AvatarFigure({
 }
 function scarfColorMatrix(color: string) {
   const channels = [1, 3, 5].map(
-    (offset) => parseInt(color.slice(offset, offset + 2), 16) / 255,
+    (offset) => Number.parseInt(color.slice(offset, offset + 2), 16) / 255,
   );
   return (
     channels

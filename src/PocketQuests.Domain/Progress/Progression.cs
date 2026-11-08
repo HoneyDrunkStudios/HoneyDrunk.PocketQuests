@@ -16,6 +16,7 @@ public static class Progression
     private const int RankMultiplierScale = 10;
     private const int PercentDenominator = 100;
     private const int HalfPercentDenominator = PercentDenominator / 2;
+    private const string Achievement = "Achievement";
     private static readonly ImmutableArray<int> RewardMultipliersInTenths = [10, 13, 17, 22, 28, 35, 43];
     private static readonly ImmutableArray<int> BaseXpByEffort = [10, 80, 800];
     private static readonly ImmutableArray<int> MinimumLevelByRank = [1, 5, 10, 20, 35, 50, 70];
@@ -134,8 +135,8 @@ public static class Progression
     {
         var quests = survivingOccurrences.ToArray();
         ImmutableArray<Entitlement> questRewards = [
-            E("A01", "Achievement", "A Quest of My Own", quests.Count(q => q.IsCustom), 1, Rank.F),
-            E("A02", "Achievement", "Room to Recharge", Count("c07"), 5, Rank.F),
+            E("A01", Achievement, "A Quest of My Own", quests.Count(q => q.IsCustom), 1, Rank.F),
+            E("A02", Achievement, "Room to Recharge", Count("c07"), 5, Rank.F),
             E("B01", "Badge", "Curious Explorer", Count("c10"), 3, Rank.F),
             E("B02", "Badge", "Everyday Care", Count("c06"), 10, Rank.F),
             E("F01", "Frame", "Open Notebook", Count("c02"), 10, Rank.E),
@@ -154,9 +155,9 @@ public static class Progression
         Entitlement E(string id, string kind, string name, int count, int required, Rank minimum) =>
             new($"PQ-CAT-{id}", kind, name, count, required, minimum, count >= required && rank >= minimum);
         Entitlement LevelReward(int target) =>
-            new($"PQ-LEVEL-{target:00}", "Achievement", $"Level {target}", level, target, Rank.F, level >= target);
+            new($"PQ-LEVEL-{target:00}", Achievement, $"Level {target}", level, target, Rank.F, level >= target);
         Entitlement RankReward(Rank target) =>
-            new($"PQ-RANK-{target}", "Achievement", $"Rank {target}", 0, 0, target, rank >= target);
+            new($"PQ-RANK-{target}", Achievement, $"Rank {target}", 0, 0, target, rank >= target);
     }
 
     /// <summary>Calculates the rounded category-only bonus, capped at twenty percent.</summary>

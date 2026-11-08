@@ -1,6 +1,6 @@
 import { playfulArt } from "../../shared/playful-art";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ImageBackground, ScrollView, Text, View } from "react-native";
+import { Image, ScrollView, Text, View } from "react-native";
 import { createPlacesClient } from "../../api/places-client";
 import type { SavedPlace } from "../../api/generated";
 import {
@@ -342,16 +342,18 @@ export function ExplorationScreen() {
           onSelect={setSelected}
         />
       ) : (
-        <ImageBackground
+        <Image
           source={playfulArt.islands}
+          accessible={false}
+          aria-hidden
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             width: "100%",
             height: "100%",
+            opacity: 0.4,
           }}
-          imageStyle={{ opacity: 0.4 }}
         />
       )}
       <View

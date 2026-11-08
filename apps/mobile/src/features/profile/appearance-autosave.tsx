@@ -16,6 +16,7 @@ import {
   useSessionStatus,
 } from "../../session/session";
 import { questActions } from "../quests/commands/quest-actions";
+import type { State } from "../../shared/contracts";
 import { canWear, decodeAvatar, starterAvatar } from "./avatar-look";
 
 type Field = "avatarCode" | "badgeId" | "frameId";
@@ -37,6 +38,81 @@ type Appearance = {
   retry(): void;
 };
 const AppearanceContext = createContext<Appearance | null>(null);
+const appearanceFields = ["avatarCode", "badgeId", "frameId"] as const;
+
+function remainingEdits(
+  edits: Edits | null,
+  owner: string | null | undefined,
+  profile: State["profile"] | undefined,
+  submittedKeys: Partial<Record<Field, string>>,
+) {
+  if (!edits || edits.owner !== owner) return null;
+  if (!profile) return edits;
+  const remaining = { ...edits };
+  let acknowledged = false;
+  for (const field of appearanceFields) {
+    const value = remaining[field];
+    if (
+      value !== undefined &&
+      value === (profile[field] ?? null) &&
+      submittedKeys[field] === JSON.stringify([owner, field, value])
+    ) {
+      delete remaining[field];
+      acknowledged = true;
+    }
+  }
+  if (!acknowledged) return edits;
+  return Object.keys(remaining).length === 1 ? null : remaining;
+}
+
+function nextAppearanceChange(
+  draft: Edits | null,
+  profile: State["profile"] | undefined,
+) {
+  if (!profile) return null;
+  for (const field of appearanceFields) {
+    const value = draft?.[field];
+    if (value !== undefined && value !== (profile[field] ?? null))
+      return { field, value };
+    if (
+      field === "avatarCode" &&
+      !profile.onboardingComplete &&
+      profile.avatarCode == null
+    )
+      return { field, value: starterAvatar };
+  }
+  return null;
+}
+
+function canSaveAppearance(
+  state: State | null,
+  field: Field | undefined,
+  value: string | null,
+) {
+  if (!state) return false;
+  if (field === "avatarCode")
+    return canWear(decodeAvatar(value), state.entitlements);
+  if (value === null) return true;
+  const kind = field === "badgeId" ? "Badge" : "Frame";
+  return state.entitlements.some(
+    (item) => item.id === value && item.earned && item.kind === kind,
+  );
+}
+
+function appearanceNotice(
+  key: string | null,
+  wearable: boolean,
+  offline: boolean,
+  failed: boolean,
+) {
+  if (!key) return "";
+  if (!wearable)
+    return "This item is no longer available. Choose something you own.";
+  if (offline)
+    return "Appearance changes are previewed on this device. Reconnect to save them.";
+  if (failed) return "Your appearance changes have not saved. Please retry.";
+  return "";
+}
 
 /** Three cosmetic fields, one quiet single-flight writer. Drafts survive screen navigation. */
 export function AppearanceAutosaveProvider({
@@ -77,22 +153,8 @@ export function AppearanceAutosaveProvider({
       if (alive.current === instance) alive.current = 0;
     };
   }, []);
-  if (edits && edits.owner !== owner) setEdits(null);
-  else if (edits && state) {
-    const confirmed = { ...edits };
-    for (const field of ["avatarCode", "badgeId", "frameId"] as const) {
-      if (
-        confirmed[field] !== undefined &&
-        confirmed[field] === (state.profile[field] ?? null) &&
-        submittedKeys[field] === JSON.stringify([owner, field, confirmed[field]])
-      )
-        delete confirmed[field];
-    }
-    if (Object.keys(confirmed).length !== Object.keys(edits).length) {
-      setEdits(Object.keys(confirmed).length === 1 ? null : confirmed);
-    }
-  }
-  const draft = edits?.owner === owner ? edits : null;
+  const draft = remainingEdits(edits, owner, state?.profile, submittedKeys);
+  if (draft !== edits) setEdits(draft);
   const avatarCode =
     draft?.avatarCode ?? state?.profile.avatarCode ?? starterAvatar;
   const badgeId =
@@ -103,44 +165,11 @@ export function AppearanceAutosaveProvider({
     draft?.frameId === undefined
       ? (state?.profile.frameId ?? null)
       : draft.frameId;
-  let field: Field | null = null;
-  let value: string | null = null;
-  if (
-    state &&
-    (draft?.avatarCode !== undefined ||
-      (!state.profile.onboardingComplete &&
-        state.profile.avatarCode == null)) &&
-    avatarCode !== state.profile.avatarCode
-  ) {
-    field = "avatarCode";
-    value = avatarCode;
-  } else if (
-    state &&
-    draft?.badgeId !== undefined &&
-    badgeId !== (state.profile.badgeId ?? null)
-  ) {
-    field = "badgeId";
-    value = badgeId;
-  } else if (
-    state &&
-    draft?.frameId !== undefined &&
-    frameId !== (state.profile.frameId ?? null)
-  ) {
-    field = "frameId";
-    value = frameId;
-  }
+  const change = nextAppearanceChange(draft, state?.profile);
+  const field = change?.field;
+  const value = change?.value ?? null;
   const key = field && owner ? JSON.stringify([owner, field, value]) : null;
-  const wearable =
-    !!state &&
-    (field === "avatarCode"
-      ? canWear(decodeAvatar(value), state.entitlements)
-      : value === null ||
-        state.entitlements.some(
-          (item) =>
-            item.id === value &&
-            item.earned &&
-            item.kind === (field === "badgeId" ? "Badge" : "Frame"),
-        ));
+  const wearable = canSaveAppearance(state, field, value);
   useEffect(() => {
     if (
       !state ||
@@ -165,16 +194,12 @@ export function AppearanceAutosaveProvider({
       setFlight({ owner, key });
       setAttempted(key);
       setSubmittedKeys((previous) => ({ ...previous, [field]: key }));
+      const rewardAction =
+        field === "badgeId" ? questActions.selectBadge : questActions.selectFrame;
       const input =
         field === "avatarCode"
           ? { action: questActions.saveAvatar, avatarCode: value! }
-          : {
-              action:
-                field === "badgeId"
-                  ? questActions.selectBadge
-                  : questActions.selectFrame,
-              rewardId: value,
-            };
+          : { action: rewardAction, rewardId: value };
       void command(input, owner)
         .catch(() => {
           if (alive.current === instance && currentOwner.current === owner)
@@ -238,15 +263,7 @@ export function AppearanceAutosaveProvider({
     !pending &&
     queuedCount === 0 &&
     ((failure?.owner === owner && failure.key === key) || attempted === key);
-  const notice = !key
-    ? ""
-    : !wearable
-      ? "This item is no longer available. Choose something you own."
-      : offline
-        ? "Appearance changes are previewed on this device. Reconnect to save them."
-        : failed
-          ? "Your appearance changes have not saved. Please retry."
-          : "";
+  const notice = appearanceNotice(key, wearable, offline, failed);
   const context = useMemo(
     () => ({
       previewAvatar: draft?.avatarCode,
