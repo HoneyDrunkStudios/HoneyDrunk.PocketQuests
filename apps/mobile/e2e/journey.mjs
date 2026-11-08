@@ -28,10 +28,13 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 // Native navigation retains hidden screens; assertions target the visible one.
+const activeRoute = page.locator(':not([aria-hidden="true"], [aria-hidden="true"] *)');
+const visibleRole = (role, options) =>
+  page.getByRole(role, options).and(activeRoute).filter({ visible: true });
 const visibleText = (text, options) =>
   page
     .getByText(text, options)
-    .and(page.locator(':not([aria-hidden="true"], [aria-hidden="true"] *)'))
+    .and(activeRoute)
     .filter({ visible: true });
 const homeXp = visibleText("See your progress · 280 overall XP", {
   exact: true,
@@ -731,10 +734,12 @@ try {
     await expect(section).toHaveAttribute("aria-expanded", "false");
   }
   diagnostics.checkpoint("export-timer");
-  await page.getByRole("tab", { name: "Home", exact: true }).click();
-  await page
-    .getByRole("link", { name: "Settings and profile", exact: true })
-    .click();
+  await visibleRole("tab", { name: "Home", exact: true }).click();
+  await expect(page).toHaveURL((url) => url.pathname === "/");
+  diagnostics.checkpoint("settings-link");
+  await visibleRole("link", { name: "Settings and profile", exact: true }).click();
+  await expect(page).toHaveURL((url) => url.pathname === "/settings");
+  diagnostics.checkpoint("settings-export");
   await page.getByRole("button", { name: "Your traveler", exact: true }).click();
   await expect(
     visibleText("Your interests and experience", { exact: true }),
@@ -767,8 +772,10 @@ try {
   expect(exported.completions[0].snapshot.title).toBe(
     "Browser verified custom quest",
   );
+  diagnostics.checkpoint("history-after-export");
   await page.goBack();
-  await page.getByRole("tab", { name: "Quests", exact: true }).click();
+  await expect(page).toHaveURL((url) => url.pathname === "/");
+  await visibleRole("tab", { name: "Quests", exact: true }).click();
   await page.getByRole("tab", { name: "Completed", exact: true }).click();
   await verifyHistorySearch("Completed");
   await expect(
