@@ -73,7 +73,7 @@ function SessionNavigator() {
       </Stack.Protected>
       <Stack.Protected
         guard={signedIn && !canEnterApp}
-        redirectTo={signedIn ? "/(tabs)/board" : "/"}
+        redirectTo={signedIn ? "/(tabs)" : "/"}
       >
         <Stack.Screen
           name="onboarding"

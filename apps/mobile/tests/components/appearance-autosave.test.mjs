@@ -163,6 +163,35 @@ test("an edit during a delayed save is preserved and sent after the first acknow
     await v.close();
   }
 });
+test("an avatar acknowledgement clears its draft after a badge edit during the save", async () => {
+  const v = await mount();
+  try {
+    const first = deferred();
+    const badge = { id: "badge", kind: "Badge", earned: true };
+    session.state.entitlements = [{ id: "PQ-RANK-C", earned: true }, badge];
+    session.command = (input) => {
+      sent.push(input);
+      return sent.length === 1 ? first.promise : Promise.resolve();
+    };
+    await v.render();
+    await v.edit("v1:2:0:0:3:0");
+    await v.flush();
+    await act(async () => probe.changeReward("Badge", badge.id));
+    await v.ack("avatarCode", sent[0].avatarCode);
+    assert.equal(probe.previewAvatar, undefined);
+
+    session.state.entitlements = [badge];
+    await v.ack("avatarCode", "v1:2:0:0:0:0");
+    await act(async () => first.resolve());
+    await v.flush();
+    assert.equal(probe.avatarCode, "v1:2:0:0:0:0");
+    assert.deepEqual(sent[1], { action: "select-badge", rewardId: badge.id });
+    await v.ack("badgeId", badge.id);
+    assert.equal(probe.notice, "");
+  } finally {
+    await v.close();
+  }
+});
 test("offline and queued commands retain cosmetic drafts until safe to send", async () => {
   const v = await mount();
   try {

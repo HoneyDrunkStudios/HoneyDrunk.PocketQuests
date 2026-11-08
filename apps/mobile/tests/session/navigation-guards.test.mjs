@@ -112,7 +112,7 @@ test("confirmed onboarding completion opens the app and removes onboarding and c
   const policy = routePolicy(true, true);
   for (const route of ["index", "callback"])
     assert.equal(destination(policy, route), "(tabs)");
-  assert.equal(destination(policy, "onboarding"), "(tabs)/board");
+  assert.equal(destination(policy, "onboarding"), "(tabs)");
   assert.equal(policy.get("quest/[id]").allowed, true);
 });
 

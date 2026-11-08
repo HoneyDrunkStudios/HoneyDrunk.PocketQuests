@@ -54,6 +54,9 @@ export function AppearanceAutosaveProvider({
   } = useSessionStatus();
   const [edits, setEdits] = useState<Edits | null>(null);
   const [attempted, setAttempted] = useState<string | null>(null);
+  const [submittedKeys, setSubmittedKeys] = useState<
+    Partial<Record<Field, string>>
+  >({});
   const [failure, setFailure] = useState<{ owner: string; key: string } | null>(
     null,
   );
@@ -81,7 +84,7 @@ export function AppearanceAutosaveProvider({
       if (
         confirmed[field] !== undefined &&
         confirmed[field] === (state.profile[field] ?? null) &&
-        attempted === JSON.stringify([owner, field, confirmed[field]])
+        submittedKeys[field] === JSON.stringify([owner, field, confirmed[field]])
       )
         delete confirmed[field];
     }
@@ -161,6 +164,7 @@ export function AppearanceAutosaveProvider({
       lock.current = true;
       setFlight({ owner, key });
       setAttempted(key);
+      setSubmittedKeys((previous) => ({ ...previous, [field]: key }));
       const input =
         field === "avatarCode"
           ? { action: questActions.saveAvatar, avatarCode: value! }
