@@ -85,6 +85,19 @@ test("every scenario checkpoint is wired into the existing journey", () => {
   const actual = [
     ...journey.matchAll(/diagnostics\.checkpoint\("([a-z-]+)"\)/g),
   ].map((match) => match[1]);
-  assert.deepEqual(actual, checkpoints);
+  const sceneFailures = checkpoints.filter((checkpoint) =>
+    checkpoint.startsWith("character-"),
+  );
+  assert.deepEqual(
+    actual,
+    checkpoints.filter((checkpoint) => !sceneFailures.includes(checkpoint)),
+  );
+  assert.deepEqual(
+    [...new Set(
+      [...journey.matchAll(/return "(character-[a-z]+)"/g)]
+        .map((match) => match[1]),
+    )],
+    sceneFailures,
+  );
   assert.match(journey, /catch \(error\) \{\s+diagnostics\.fail\(error\);/);
 });

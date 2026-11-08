@@ -43,34 +43,50 @@ function americanDate(isoDate) {
 }
 
 async function verifyTravelerScene() {
-  const sheet = page.getByTestId("character-sheet");
-  const scene = sheet.getByTestId("traveler-scene");
-  const traveler = scene.getByTestId("traveler-avatar");
-  const progress = sheet.getByTestId("home-level-progress");
-  const backdrop = scene.getByTestId("traveler-backdrop");
-  await expect(traveler).toBeVisible();
-  await expect(progress).toBeVisible();
-  await expect(backdrop).toBeVisible();
-  await expect
-    .poll(async () => {
-      const [sceneBox, travelerBox, progressBox, backdropBox] = await Promise.all([
-        scene.boundingBox(),
-        traveler.boundingBox(),
-        progress.boundingBox(),
-        backdrop.boundingBox(),
-      ]);
-      if (!sceneBox || !travelerBox || !progressBox || !backdropBox) return null;
-      const sceneCenter = sceneBox.x + sceneBox.width / 2;
-      const travelerCenter = travelerBox.x + travelerBox.width / 2;
-      return {
-        centered: Math.abs(travelerCenter - sceneCenter) <= 1,
-        progressBelow: progressBox.y >= sceneBox.y + sceneBox.height,
-        backdropCoversScene:
-          backdropBox.width >= sceneBox.width - 1 &&
-          backdropBox.height >= sceneBox.height - 1,
-      };
-    })
-    .toEqual({ centered: true, progressBelow: true, backdropCoversScene: true });
+  let checkpoint = "character-markup";
+  try {
+    await expect
+      .poll(async () => {
+        checkpoint = await page.evaluate(() => {
+          const sheet = document.querySelector('[data-testid="character-sheet"]');
+          const scene = sheet?.querySelector('[data-testid="traveler-scene"]');
+          const traveler = scene?.querySelector('[data-testid="traveler-avatar"]');
+          const progress = sheet?.querySelector(
+            '[data-testid="home-level-progress"]',
+          );
+          const backdrop = scene?.querySelector(
+            '[data-testid="traveler-backdrop"]',
+          );
+          if (!scene || !traveler || !progress || !backdrop)
+            return "character-markup";
+          const sceneBox = scene.getBoundingClientRect();
+          const avatarBox = traveler.getBoundingClientRect();
+          const progressBox = progress.getBoundingClientRect();
+          const backdropBox = backdrop.getBoundingClientRect();
+          if (![sceneBox, avatarBox, progressBox, backdropBox].every(
+            ({ width, height }) => width > 0 && height > 0,
+          ))
+            return "character-markup";
+          const sceneCenter = sceneBox.left + sceneBox.width / 2;
+          const avatarCenter = avatarBox.left + avatarBox.width / 2;
+          if (Math.abs(avatarCenter - sceneCenter) > 1) return "character-center";
+          if (progressBox.top < sceneBox.bottom) return "character-progress";
+          if (
+            backdropBox.left > sceneBox.left + 1 ||
+            backdropBox.right < sceneBox.right - 1 ||
+            backdropBox.top > sceneBox.top + 1 ||
+            backdropBox.bottom < sceneBox.bottom - 1
+          )
+            return "character-backdrop";
+          return "ready";
+        });
+        return checkpoint;
+      })
+      .toBe("ready");
+  } catch (error) {
+    diagnostics.checkpoint(checkpoint);
+    throw error;
+  }
 }
 page.setDefaultTimeout(15000);
 // A cold Metro compilation can exceed the action timeout; keep navigation bounded separately.
