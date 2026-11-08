@@ -244,6 +244,8 @@ export async function verifyNextFeatures({
   await visible("link", "Browse Rest & Recreation quests").click();
   await expect(page).toHaveURL(/\/quest\/discover\/c07/);
   await page.goBack();
+  await expect(page).toHaveURL(/\/explore$/);
+  await page.goBack();
   await visible("tab", "Home").click();
   const after = await api("state");
   await visibleText(/overall XP/).scrollIntoViewIfNeeded();

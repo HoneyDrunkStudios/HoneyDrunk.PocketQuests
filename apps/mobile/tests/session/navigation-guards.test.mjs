@@ -114,11 +114,12 @@ test("confirmed onboarding completion opens the app and removes onboarding and c
     assert.equal(destination(policy, route), "(tabs)");
   assert.equal(destination(policy, "onboarding"), "(tabs)");
   assert.equal(policy.get("quest/[id]").allowed, true);
+  assert.equal(policy.get("explore").allowed, true);
 });
 
 test("sign-out returns protected app and onboarding links to welcome while allowing OAuth callback", () => {
   const policy = routePolicy(false, false);
-  for (const route of ["(tabs)", "quest/[id]", "onboarding"])
+  for (const route of ["(tabs)", "quest/[id]", "explore", "onboarding"])
     assert.equal(destination(policy, route), "index");
   assert.equal(policy.get("callback").allowed, true);
 });

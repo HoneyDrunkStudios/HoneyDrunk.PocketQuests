@@ -43,14 +43,15 @@ function americanDate(isoDate) {
 }
 
 async function verifyTravelerScene() {
-  const scene = page.getByTestId("traveler-scene");
+  const sheet = page.getByTestId("character-sheet");
+  const scene = sheet.getByTestId("traveler-scene");
   const traveler = scene
     .getByRole("img", {
       name: "Your customizable traveler avatar",
       exact: true,
     })
     .and(page.locator('[role="img"]'));
-  const progress = page.getByRole("progressbar", {
+  const progress = sheet.getByRole("progressbar", {
     name: "Overall level progress",
     exact: true,
   });
@@ -58,18 +59,26 @@ async function verifyTravelerScene() {
   await expect(progress).toBeVisible();
   const backdrop = scene.locator(':scope > [aria-hidden="true"]');
   await expect(backdrop).toBeVisible();
-  const [sceneBox, travelerBox, progressBox, backdropBox] = await Promise.all([
-    scene.boundingBox(),
-    traveler.boundingBox(),
-    progress.boundingBox(),
-    backdrop.boundingBox(),
-  ]);
-  const sceneCenter = sceneBox.x + sceneBox.width / 2;
-  const travelerCenter = travelerBox.x + travelerBox.width / 2;
-  expect(Math.abs(travelerCenter - sceneCenter)).toBeLessThanOrEqual(1);
-  expect(progressBox.y).toBeGreaterThanOrEqual(sceneBox.y + sceneBox.height);
-  expect(backdropBox.width).toBeGreaterThanOrEqual(sceneBox.width - 1);
-  expect(backdropBox.height).toBeGreaterThanOrEqual(sceneBox.height - 1);
+  await expect
+    .poll(async () => {
+      const [sceneBox, travelerBox, progressBox, backdropBox] = await Promise.all([
+        scene.boundingBox(),
+        traveler.boundingBox(),
+        progress.boundingBox(),
+        backdrop.boundingBox(),
+      ]);
+      if (!sceneBox || !travelerBox || !progressBox || !backdropBox) return null;
+      const sceneCenter = sceneBox.x + sceneBox.width / 2;
+      const travelerCenter = travelerBox.x + travelerBox.width / 2;
+      return {
+        centered: Math.abs(travelerCenter - sceneCenter) <= 1,
+        progressBelow: progressBox.y >= sceneBox.y + sceneBox.height,
+        backdropCoversScene:
+          backdropBox.width >= sceneBox.width - 1 &&
+          backdropBox.height >= sceneBox.height - 1,
+      };
+    })
+    .toEqual({ centered: true, progressBelow: true, backdropCoversScene: true });
 }
 page.setDefaultTimeout(15000);
 // A cold Metro compilation can exceed the action timeout; keep navigation bounded separately.
@@ -610,6 +619,7 @@ try {
   console.log("Verified completion response-loss retry and character totals.");
   diagnostics.checkpoint("character");
   await verifyTravelerScene();
+  diagnostics.checkpoint("home-narrow");
   await page.setViewportSize({ width: 320, height: 844 });
   expect(
     await page.evaluate(
@@ -620,6 +630,7 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: path.join(artifacts, "character-home.png") });
   await page.getByRole("tab", { name: "Progress", exact: true }).click();
+  diagnostics.checkpoint("progress-details");
   await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("progressbar", { name: / level progress$/ }),

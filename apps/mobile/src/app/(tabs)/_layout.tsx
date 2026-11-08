@@ -134,7 +134,6 @@ export default function Layout() {
           tabBarIcon: RoomIcon,
         }}
       />
-      <Tabs.Screen name="explore" options={{ href: null }} />
       <Tabs.Screen
         name="profile"
         options={{

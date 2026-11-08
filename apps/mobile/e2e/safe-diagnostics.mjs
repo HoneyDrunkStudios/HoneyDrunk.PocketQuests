@@ -13,6 +13,8 @@ export const checkpoints = Object.freeze([
   "definition-edit",
   "completion-response-loss",
   "character",
+  "home-narrow",
+  "progress-details",
   "export-timer",
   "quest-discovery",
   "offline-undo",

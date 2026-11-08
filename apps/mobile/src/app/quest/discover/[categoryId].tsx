@@ -27,7 +27,7 @@ export default function DestinationQuests() {
   return (
     <Page>
       <Link
-        href="/(tabs)/explore"
+        href="/explore"
         style={[
           styles.text,
           {

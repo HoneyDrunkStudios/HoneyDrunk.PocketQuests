@@ -79,7 +79,7 @@ const { pocketQuestsTheme } = require("../../src/shared/theme.ts");
 const {
   ExplorationScreen,
 } = require("../../src/features/progression/exploration-screen.tsx");
-const Explore = require("../../src/app/(tabs)/explore.tsx").default;
+const Explore = require("../../src/app/explore.tsx").default;
 const area = { id: "test", name: "Test town", latitude: 35, longitude: -82 };
 const points = [
   {

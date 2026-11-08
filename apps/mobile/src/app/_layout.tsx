@@ -59,6 +59,7 @@ function SessionNavigator() {
           }}
         />
         <Stack.Screen name="rewards" options={{ title: "Rewards" }} />
+        <Stack.Screen name="explore" options={{ title: "Explore" }} />
         <Stack.Screen name="settings" options={{ title: "Settings" }} />
         <Stack.Screen name="character-setup" options={{ headerShown: false }} />
         <Stack.Screen name="quest/[id]" options={{ title: "Quest" }} />
