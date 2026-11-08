@@ -54,4 +54,6 @@ For local development, run `scripts/Deploy-LocalDatabase.ps1` in each repository
 
 ## Deployment proof still required
 
+For the Windows loopback environment, publish the API from a clean checkout, run the resulting `PocketQuests.Api.exe` on `127.0.0.1`, and run `pwsh -File scripts/Report-LocalDeployment.ps1 -Port 5217`. Use `-WhatIf` to verify the listener, readiness and serving assembly commit before making any GitHub changes. The operator's GitHub CLI session needs write access to Pocket Quests deployments. The script reports the verified build as `local-development`; it does not publish a hosted release. Use the same GitHub environment name in Admin and the actual Sentry producer environment label.
+
 Local SQL and provider-fixture tests are not proof of Azure configuration. Live sign-in, Graph permissions, broker RBAC/finite TTL, backups capped at 30 days, external deletion-ledger preservation and restore gating must be verified in the approved hosted environment. Restore markers must come from outside the backup being restored and be reapplied before traffic; recovering the marker table from the same old backup is insufficient. See the scoped lifecycle contract and canonical manual-actions ledger for the remaining external dependencies.
