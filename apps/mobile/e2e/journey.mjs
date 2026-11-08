@@ -232,11 +232,31 @@ try {
     .click();
   diagnostics.checkpoint("onboarding-save");
   await page.getByRole("button", { name: "Show me around", exact: true }).click();
-  for (let step = 0; step < 4; step++) {
-    await page.getByRole("button", { name: "Next", exact: true }).click();
+  const tour = page.getByTestId("journal-tour-panel");
+  for (const [route, title] of [
+    ["/", "Welcome to your journal"],
+    ["/board", "Find something that fits"],
+    ["/calendar", "Give it a little space"],
+    ["/room", "Make yourself at home"],
+  ]) {
+    await expect(page).toHaveURL((url) => url.pathname === route);
+    await expect(
+      tour.getByRole("heading", { name: title, exact: true }),
+    ).toBeVisible();
+    await tour.getByRole("button", { name: "Next", exact: true }).click();
   }
-  await page.getByRole("button", { name: "Open settings", exact: true }).click();
-  await page.getByRole("button", { name: "Choose a quest", exact: true }).click();
+  diagnostics.checkpoint("tour-settings");
+  await expect(page).toHaveURL((url) => url.pathname === "/profile");
+  await expect(
+    tour.getByRole("heading", { name: "Small steps add up", exact: true }),
+  ).toBeVisible();
+  await tour.getByRole("button", { name: "Open settings", exact: true }).click();
+  await expect(page).toHaveURL((url) => url.pathname === "/settings");
+  diagnostics.checkpoint("tour-finish");
+  await expect(
+    tour.getByRole("heading", { name: "Keep it your own", exact: true }),
+  ).toBeVisible();
+  await tour.getByRole("button", { name: "Choose a quest", exact: true }).click();
   await expect(page).toHaveURL(/\/board(?:\?view=Available)?$/);
   await expect(
     page.getByRole("heading", { name: "Pick your next quest", exact: true }),

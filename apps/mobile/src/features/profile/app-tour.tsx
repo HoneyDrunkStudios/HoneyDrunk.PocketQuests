@@ -170,6 +170,7 @@ export function AppTour() {
 
       <View
         accessibilityLiveRegion="polite"
+        testID="journal-tour-panel"
 
         style={{
           position: "absolute",

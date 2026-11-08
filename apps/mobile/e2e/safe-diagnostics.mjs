@@ -6,6 +6,8 @@ export const checkpoints = Object.freeze([
   "sign-in",
   "onboarding",
   "onboarding-save",
+  "tour-settings",
+  "tour-finish",
   "custom-quest",
   "save-retry",
   "definition-edit",
