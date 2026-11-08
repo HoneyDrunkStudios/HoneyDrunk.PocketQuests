@@ -319,6 +319,31 @@ test("revoking clothing before debounce prevents the write", async () => {
   }
 });
 
+test("returning to the saved look before debounce leaves no draft to mask a later revocation", async () => {
+  const v = await mount();
+  try {
+    const saved = "v1:2:0:0:3:0";
+    const starter = "v1:2:0:0:0:0";
+    const badge = { id: "badge", kind: "Badge", earned: true };
+    session.state.entitlements = [{ id: "PQ-RANK-C", earned: true }, badge];
+    await v.ack("avatarCode", saved);
+    await v.edit(starter);
+    await v.edit(saved);
+    assert.equal(probe.previewAvatar, undefined);
+    await v.flush();
+    assert.equal(sent.length, 0);
+
+    session.state.entitlements = [badge];
+    await v.ack("avatarCode", starter);
+    assert.equal(probe.avatarCode, starter);
+    await act(async () => probe.changeReward("Badge", badge.id));
+    await v.flush();
+    assert.deepEqual(sent, [{ action: "select-badge", rewardId: badge.id }]);
+  } finally {
+    await v.close();
+  }
+});
+
 test("returning to the original choice during a flight survives its late acknowledgement", async () => {
   const v = await mount();
   try {
@@ -331,6 +356,7 @@ test("returning to the original choice during a flight survives its late acknowl
     await v.edit("v1:5:0:0:0:0");
     await v.flush();
     await v.edit("v1:2:0:0:0:0");
+    assert.equal(probe.previewAvatar, "v1:2:0:0:0:0");
     await v.render();
     await v.ack("avatarCode", "v1:5:0:0:0:0");
     await act(async () => first.resolve());

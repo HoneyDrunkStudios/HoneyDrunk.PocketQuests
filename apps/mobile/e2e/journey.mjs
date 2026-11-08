@@ -48,7 +48,15 @@ async function verifyTravelerScene() {
     await expect
       .poll(async () => {
         checkpoint = await page.evaluate(() => {
-          const sheet = document.querySelector('[data-testid="character-sheet"]');
+          // Expo retains previous Home screens behind the active route.
+          const sheet = Array.from(
+            document.querySelectorAll('[data-testid="character-sheet"]'),
+          ).find(
+            (element) =>
+              !element.closest('[aria-hidden="true"]') &&
+              element.getClientRects().length > 0 &&
+              getComputedStyle(element).visibility === "visible",
+          );
           const scene = sheet?.querySelector('[data-testid="traveler-scene"]');
           const traveler = scene?.querySelector('[data-testid="traveler-avatar"]');
           const progress = sheet?.querySelector(

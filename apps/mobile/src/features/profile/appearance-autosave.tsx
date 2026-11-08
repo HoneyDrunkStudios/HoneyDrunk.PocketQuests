@@ -45,23 +45,24 @@ function remainingEdits(
   owner: string | null | undefined,
   profile: State["profile"] | undefined,
   submittedKeys: Partial<Record<Field, string>>,
+  writesOutstanding: boolean,
 ) {
   if (!edits || edits.owner !== owner) return null;
   if (!profile) return edits;
   const remaining = { ...edits };
-  let acknowledged = false;
+  let retired = false;
   for (const field of appearanceFields) {
     const value = remaining[field];
-    if (
-      value !== undefined &&
-      value === (profile[field] ?? null) &&
-      submittedKeys[field] === JSON.stringify([owner, field, value])
-    ) {
+    if (value === undefined || value !== (profile[field] ?? null)) continue;
+    const acknowledged =
+      submittedKeys[field] === JSON.stringify([owner, field, value]);
+    // A matching draft may be reversing an earlier write that can still arrive.
+    if (acknowledged || !writesOutstanding) {
       delete remaining[field];
-      acknowledged = true;
+      retired = true;
     }
   }
-  if (!acknowledged) return edits;
+  if (!retired) return edits;
   return Object.keys(remaining).length === 1 ? null : remaining;
 }
 
@@ -153,7 +154,14 @@ export function AppearanceAutosaveProvider({
       if (alive.current === instance) alive.current = 0;
     };
   }, []);
-  const draft = remainingEdits(edits, owner, state?.profile, submittedKeys);
+  const writesOutstanding = !!flight || busy || pending || queuedCount > 0;
+  const draft = remainingEdits(
+    edits,
+    owner,
+    state?.profile,
+    submittedKeys,
+    writesOutstanding,
+  );
   if (draft !== edits) setEdits(draft);
   const avatarCode =
     draft?.avatarCode ?? state?.profile.avatarCode ?? starterAvatar;
