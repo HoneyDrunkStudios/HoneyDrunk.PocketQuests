@@ -1,5 +1,6 @@
+import { usePreviewAvatar } from "./appearance-autosave";
 import { Image, View } from "react-native";
-import { colors } from "../../shared/ui";
+import { useAppTheme } from "../../shared/ui";
 import { AvatarFigure } from "./avatar-figure";
 import { journalArt } from "../../shared/journal-art";
 export const characterPortraits = [
@@ -37,11 +38,27 @@ export const characterPortraits = [
 export function CharacterPortrait({
   portraitId,
   avatarCode,
-}: Readonly<{ portraitId?: string | null; avatarCode?: string | null }>) {
-  if (avatarCode)
+  bust = false,
+  size,
+  pose = "relaxed",
+}: Readonly<{
+  portraitId?: string | null;
+  avatarCode?: string | null;
+  bust?: boolean;
+  size?: number;
+  pose?: "neutral" | "relaxed";
+}>) {
+  const { colors } = useAppTheme();
+  const previewAvatar = usePreviewAvatar(avatarCode);
+  if (previewAvatar)
     return (
-      <View style={{ width: 140 }}>
-        <AvatarFigure code={avatarCode} size={250} />
+      <View style={{ width: bust ? (size ?? 176) : (size ?? 250) * 0.55 }}>
+        <AvatarFigure
+          code={previewAvatar}
+          portrait={bust}
+          size={size ?? 250}
+          pose={pose}
+        />
       </View>
     );
   return (
@@ -63,3 +80,5 @@ export function CharacterPortrait({
     />
   );
 }
+
+export { TravelerBackdrop } from "./avatar-backdrop";

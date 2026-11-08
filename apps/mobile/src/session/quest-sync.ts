@@ -181,8 +181,18 @@ export function createQuestSync({
     setOffline(false);
     setNeedsSignIn(false);
   };
-  async function command(input: Omit<Command, "operationId">) {
+  async function command(
+    input: Omit<Command, "operationId">,
+    expectedOwner?: string,
+  ) {
     const current = localRef.current;
+    // Delayed UI work must never become a command for a different signed-in account.
+    if (
+      expectedOwner &&
+      (auth.session?.userId !== expectedOwner ||
+        current?.userId !== expectedOwner)
+    )
+      return;
     if (!auth.session || !current || inFlight.current) return;
     if (current.requiresReload) {
       setError(

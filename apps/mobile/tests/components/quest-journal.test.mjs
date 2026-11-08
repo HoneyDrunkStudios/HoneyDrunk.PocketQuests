@@ -177,7 +177,8 @@ test("journal cards expose one detail link, a short summary and confirmed reward
       "/quest/o",
     );
     assert.match(view.element.textContent, /Health[\s\S]*Active/);
-    assert.match(view.element.textContent, /10 base XP · Rank F · Small/);
+    assert.match(view.element.textContent, /10 base XP · Small/);
+    assert.ok(view.element.querySelector('[aria-label="Rank F"]'));
     assert.match(view.element.textContent, /Due today.*Planned 09:30/);
     assert.doesNotMatch(
       view.element.textContent,

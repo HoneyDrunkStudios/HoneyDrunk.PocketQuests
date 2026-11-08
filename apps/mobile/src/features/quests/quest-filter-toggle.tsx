@@ -1,5 +1,5 @@
 import { Pressable, Text } from "react-native";
-import { colors, styles } from "../../shared/ui";
+import { useAppTheme } from "../../shared/ui";
 
 export function QuestFilterToggle({
   expanded,
@@ -10,6 +10,7 @@ export function QuestFilterToggle({
   count: number;
   onPress(): void;
 }>) {
+  const { colors, styles } = useAppTheme();
   return (
     <Pressable
       accessibilityRole="button"

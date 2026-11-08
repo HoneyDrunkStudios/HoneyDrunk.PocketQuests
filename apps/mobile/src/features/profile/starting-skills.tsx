@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useSession } from "../../session/session";
 import type { Experience } from "../../shared/contracts";
-import { Button, Label, colors, styles } from "../../shared/ui";
+import { Button, Label, useAppTheme } from "../../shared/ui";
 import { questActions } from "../quests/commands/quest-actions";
 
 const experiences = ["New", "Practiced", "Experienced", "Expert"] as const;
@@ -11,6 +11,7 @@ const levels = { New: 1, Practiced: 10, Experienced: 35, Expert: 50 };
 export function StartingSkills({
   onContinue,
 }: Readonly<{ onContinue(): void }>) {
+  const { styles, colors } = useAppTheme();
   const {
     state,
     catalog,

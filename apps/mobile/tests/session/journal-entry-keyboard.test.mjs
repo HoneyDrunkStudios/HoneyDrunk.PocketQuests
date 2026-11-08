@@ -1,3 +1,4 @@
+import "../components/artwork-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import Module, { createRequire } from "node:module";
@@ -28,7 +29,13 @@ Module._load = function (name, ...rest) {
   if (name === "@expo/vector-icons/Ionicons") return "Icon";
   if (name.endsWith("signin-background.jpg")) return "illustration";
   if (name === "./ui" || name === "../shared/ui")
-    return { colors: {}, styles: {} };
+    return (() => {
+      const value = { colors: {}, styles: {} };
+      return {
+        ...value,
+        useAppTheme: () => ({ ...value, theme: {}, isDark: false }),
+      };
+    })();
   if (name === "./session-recovery") return { SessionRecovery: "Recovery" };
   return load.call(this, name, ...rest);
 };

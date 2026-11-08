@@ -1,8 +1,9 @@
+import { displayDate } from "../../shared/date-format";
 import { questActions } from "./commands/quest-actions";
 import { useMemo, useState } from "react";
 import { Text, View } from "react-native";
 import { useSession } from "../../session/session";
-import { Button, Label, styles } from "../../shared/ui";
+import { Button, Label, useAppTheme } from "../../shared/ui";
 import { QuestEditor } from "./quest-editor";
 import { SeriesEditor } from "./series-editor";
 import { AvailableQuestCard } from "./available-quest-card";
@@ -26,6 +27,7 @@ export function AvailableQuests({
   initialCreate?: boolean;
   initialCategoryId?: string;
 }> = {}) {
+  const { styles } = useAppTheme();
   const { catalog, state, command, busy, pending } = useSession();
   const [recurring, setRecurring] = useState<{
     quest: Quest;
@@ -95,8 +97,9 @@ export function AvailableQuests({
         onPress={() => setEditing("new")}
       />
       <Label>
-        Start plans a quest for {initialDate || state?.today}. Open quest
-        details to change its date, leave it unscheduled or set recurrence.
+        Start plans a quest for {displayDate(initialDate || state?.today)}. Open
+        quest details to change its date, leave it unscheduled or set
+        recurrence.
       </Label>
       {visibleQuests.length === 0 && (
         <Label>

@@ -4,7 +4,7 @@ import { QuestCategoryEffortFilters } from "./quest-category-effort-filters";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import type { Catalog } from "../../shared/contracts";
-import { Button, Input, Label, styles } from "../../shared/ui";
+import { Button, Input, Label, useAppTheme } from "../../shared/ui";
 import { discoveryFilterCount, type DiscoveryFilters } from "./quest-discovery";
 
 const sourceLabels = {
@@ -33,6 +33,7 @@ export function QuestDiscoveryControls({
   onChange(change: Partial<DiscoveryFilters>): void;
   onReset(): void;
 }>) {
+  const { styles } = useAppTheme();
   const [expanded, setExpanded] = useState(false);
   const count = discoveryFilterCount(filters);
   const summary = [

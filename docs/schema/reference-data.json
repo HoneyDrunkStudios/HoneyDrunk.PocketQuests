@@ -287,6 +287,78 @@
       "RequiredCount": 10,
       "RequiredRank": "D",
       "RulesetVersion": "PQ-MVP-0.5"
+    },
+    {
+      "Id": "PQ-LEVEL-02",
+      "KindCode": "Achievement",
+      "Name": "Level 2",
+      "RequiredCount": 2,
+      "RequiredRank": "F",
+      "RulesetVersion": "1.1"
+    },
+    {
+      "Id": "PQ-LEVEL-03",
+      "KindCode": "Achievement",
+      "Name": "Level 3",
+      "RequiredCount": 3,
+      "RequiredRank": "F",
+      "RulesetVersion": "1.1"
+    },
+    {
+      "Id": "PQ-LEVEL-04",
+      "KindCode": "Achievement",
+      "Name": "Level 4",
+      "RequiredCount": 4,
+      "RequiredRank": "F",
+      "RulesetVersion": "1.1"
+    },
+    {
+      "Id": "PQ-LEVEL-05",
+      "KindCode": "Achievement",
+      "Name": "Level 5",
+      "RequiredCount": 5,
+      "RequiredRank": "F",
+      "RulesetVersion": "1.1"
+    },
+    {
+      "Id": "PQ-LEVEL-06",
+      "KindCode": "Achievement",
+      "Name": "Level 6",
+      "RequiredCount": 6,
+      "RequiredRank": "F",
+      "RulesetVersion": "1.1"
+    },
+    {
+      "Id": "PQ-LEVEL-07",
+      "KindCode": "Achievement",
+      "Name": "Level 7",
+      "RequiredCount": 7,
+      "RequiredRank": "F",
+      "RulesetVersion": "1.1"
+    },
+    {
+      "Id": "PQ-RANK-C",
+      "KindCode": "Achievement",
+      "Name": "Rank C",
+      "RequiredCount": 0,
+      "RequiredRank": "C",
+      "RulesetVersion": "1.1"
+    },
+    {
+      "Id": "PQ-RANK-D",
+      "KindCode": "Achievement",
+      "Name": "Rank D",
+      "RequiredCount": 0,
+      "RequiredRank": "D",
+      "RulesetVersion": "1.1"
+    },
+    {
+      "Id": "PQ-RANK-E",
+      "KindCode": "Achievement",
+      "Name": "Rank E",
+      "RequiredCount": 0,
+      "RequiredRank": "E",
+      "RulesetVersion": "1.1"
     }
   ],
   "SystemQuest": [

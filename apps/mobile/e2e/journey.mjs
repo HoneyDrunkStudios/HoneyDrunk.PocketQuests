@@ -198,7 +198,7 @@ try {
   await page
     .getByRole("button", { name: "Save name and continue", exact: true })
     .click();
-  await page.getByRole("radio", { name: "Face: Oval", exact: true }).click();
+  await page.getByRole("radio", { name: /^(Selected: )?Face: Oval$/ }).click();
   await page
     .getByRole("radio", { name: "Skin tone: Tone 6", exact: true })
     .click();
@@ -206,17 +206,10 @@ try {
   await page
     .getByRole("radio", { name: "Hair color: Silver", exact: true })
     .click();
-  await page.getByRole("tab", { name: "Clothing", exact: true }).click();
+  await page.getByRole("tab", { name: "Clothes", exact: true }).click();
   await page.getByRole("button", { name: "Field shirt", exact: true }).click();
-  await page.getByRole("button", { name: "Save avatar", exact: true }).click();
-  await expect(
-    page.getByRole("button", {
-      name: "Continue with this avatar",
-      exact: true,
-    }),
-  ).toBeEnabled();
   await page
-    .getByRole("button", { name: "Continue with this avatar", exact: true })
+    .getByRole("button", { name: "Continue", exact: true })
     .click();
   await page
     .getByRole("checkbox", { name: "Work & Purpose", exact: true })
@@ -232,12 +225,12 @@ try {
     .getByRole("button", { name: "Continue with these skills", exact: true })
     .click();
   diagnostics.checkpoint("onboarding-save");
-  await page
-    .getByRole("button", {
-      name: "Choose my first quest",
-      exact: true,
-    })
-    .click();
+  await page.getByRole("button", { name: "Show me around", exact: true }).click();
+  for (let step = 0; step < 4; step++) {
+    await page.getByRole("button", { name: "Next", exact: true }).click();
+  }
+  await page.getByRole("button", { name: "Open settings", exact: true }).click();
+  await page.getByRole("button", { name: "Choose a quest", exact: true }).click();
   await expect(page).toHaveURL("http://localhost:8081/board");
   await expect(
     page.getByRole("heading", { name: "Pick your next quest", exact: true }),
@@ -961,14 +954,16 @@ try {
   )
     .toISOString()
     .slice(0, 10);
-  await page.getByLabel("Calendar date YYYY-MM-DD").fill("2026-02-30");
+  const [year, month, day] = plannedDate.split("-");
+  const displayPlannedDate = `${month}/${day}/${year}`;
+  await page.getByLabel("Calendar date MM/DD/YYYY").fill("02/30/2026");
   await page.getByRole("button", { name: "Go to date", exact: true }).click();
   await expect(visibleText(/Enter a real date/)).toBeVisible();
-  await page.getByLabel("Calendar date YYYY-MM-DD").fill(plannedDate);
+  await page.getByLabel("Calendar date MM/DD/YYYY").fill(displayPlannedDate);
   await page.getByRole("button", { name: "Go to date", exact: true }).click();
   await page
     .getByRole("button", {
-      name: `Create a quest for ${plannedDate}`,
+      name: `Create a quest for ${displayPlannedDate}`,
       exact: true,
     })
     .click();
@@ -991,8 +986,8 @@ try {
       exact: true,
     })
     .click();
-  await expect(page.getByLabel("Due date in YYYY-MM-DD format")).toHaveValue(
-    plannedDate,
+  await expect(page.getByLabel("Due date in MM/DD/YYYY format")).toHaveValue(
+    displayPlannedDate,
   );
   await page.getByLabel("Optional planned time HH:mm").fill("09:30");
   const startCalendarQuest = page.getByRole("button", {
@@ -1056,10 +1051,10 @@ try {
     page.getByRole("button", { name: "Save plan", exact: true }),
   ).toBeDisabled();
   await page
-    .getByRole("textbox", { name: "Quest due date YYYY-MM-DD", exact: true })
-    .fill("2026-02-30");
+    .getByRole("textbox", { name: "Quest due date MM/DD/YYYY", exact: true })
+    .fill("02/30/2026");
   await expect(
-    visibleText("Enter a real due date in YYYY-MM-DD format.", { exact: true }),
+    visibleText("Enter a real due date in MM/DD/YYYY format.", { exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Save plan", exact: true }),

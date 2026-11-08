@@ -64,6 +64,6 @@ internal static class ProgressMapping
         row.QualifyingCount = entitlement.Count;
         row.IsEarned = entitlement.Earned;
         row.ProjectionVersion = change.Version;
-        row.RulesetVersion = "1.0";
+        row.RulesetVersion = QuestReplay.CurrentRuleset;
     }
 }

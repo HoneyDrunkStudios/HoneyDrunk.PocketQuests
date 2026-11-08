@@ -365,7 +365,7 @@
           "type": "varchar(40)",
           "nullable": false,
           "default": null,
-          "description": "Stable reward code, including existing A01/A02/B01/B02/F01/F02 IDs.",
+          "description": "Stable code for a quest achievement, badge, frame, level milestone or rank milestone.",
           "external_source": null,
           "computed": null,
           "collation": "Latin1_General_100_BIN2"
@@ -395,7 +395,7 @@
           "type": "int",
           "nullable": false,
           "default": null,
-          "description": "Nonnegative qualifying count in the versioned reward rule.",
+          "description": "Required qualifying completions or overall level. Zero for rank-only milestones.",
           "external_source": null,
           "computed": null,
           "collation": null
@@ -993,10 +993,10 @@
         },
         {
           "name": "AvatarCode",
-          "type": "varchar(20)",
+          "type": "varchar(24)",
           "nullable": true,
           "default": null,
-          "description": "Versioned full-body appearance: v1 stores skin, hair color, hairstyle, outfit and accessory; v2 appends face and build with expanded bounded choices. Null means starter appearance. Private account preference, erased with account history. Version v3 appends an extra starter accessory and scarf color; earlier versions retain their exact meanings.",
+          "description": "Versioned full-body appearance: v1 stores skin, hair color, hairstyle, outfit and accessory; v2 appends face and build with expanded bounded choices. Null means starter appearance. Private account preference, erased with account history. Version v3 appends an extra starter accessory and scarf color; earlier versions retain their exact meanings. Version v4 appends pose 0-1 and backdrop 0-2; current server entitlements govern earned choices. No earlier code or history is rewritten. Version v5 compactly stores the same eleven avatar ordinals, then room style and four decoration ordinals; 20 ASCII bytes. Version v6 adds an independent body type 0-1 and extends build to 0-3 and pose to 0-2, retaining room and decorations in 21 ASCII bytes. All formats fit the existing column bound.",
           "external_source": null,
           "computed": null,
           "collation": "Latin1_General_100_BIN2"
@@ -1106,7 +1106,7 @@
         },
         {
           "name": "CK_Account_AvatarCode",
-          "expression": "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]') OR (DATALENGTH([AvatarCode])=20 AND [AvatarCode] LIKE 'v3:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]:[0-2]:[0-7]')",
+          "expression": "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]') OR (DATALENGTH([AvatarCode])=20 AND [AvatarCode] LIKE 'v3:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]:[0-2]:[0-7]') OR (DATALENGTH([AvatarCode])=24 AND [AvatarCode] LIKE 'v4:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]:[0-2]:[0-7]:[0-1]:[0-2]') OR (DATALENGTH([AvatarCode])=20 AND [AvatarCode] LIKE 'v5:[0-5][0-7][0-7][0-5][0-5][0-6][0-2][0-2][0-7][0-1][0-2]:[0-2][0-6][0-6][0-6][0-6]') OR (DATALENGTH([AvatarCode])=21 AND [AvatarCode] LIKE 'v6:[0-5][0-7][0-7][0-5][0-5][0-6][0-3][0-2][0-7][0-2][0-2][0-1]:[0-2][0-6][0-6][0-6][0-6]')",
           "purpose": "Constrain the versioned avatar selection to supported appearance and cosmetic slots."
         }
       ],
@@ -6654,7 +6654,7 @@
           "type": "int",
           "nullable": false,
           "default": null,
-          "description": "Nonnegative current count of surviving qualifying contributions.",
+          "description": "Current qualifying completions or overall level. Zero for rank-only milestones.",
           "external_source": null,
           "computed": null,
           "collation": null
@@ -7763,10 +7763,10 @@
         },
         {
           "name": "AvatarCode",
-          "type": "varchar(20)",
+          "type": "varchar(24)",
           "nullable": true,
           "default": null,
-          "description": "Original validated avatar appearance for save-avatar; null for other commands. Immutable private account history, erased with its owner. Version v3 appends an extra starter accessory and scarf color; earlier versions retain their exact meanings.",
+          "description": "Original validated avatar appearance for save-avatar; null for other commands. Immutable private account history, erased with its owner. Version v3 appends an extra starter accessory and scarf color; earlier versions retain their exact meanings. Version v4 appends pose 0-1 and backdrop 0-2; current server entitlements govern earned choices. No earlier code or history is rewritten. Version v5 compactly stores the same eleven avatar ordinals, then room style and four decoration ordinals; 20 ASCII bytes. Version v6 adds an independent body type 0-1 and extends build to 0-3 and pose to 0-2, retaining room and decorations in 21 ASCII bytes. All formats fit the existing column bound.",
           "external_source": null,
           "computed": null,
           "collation": "Latin1_General_100_BIN2"
@@ -7887,7 +7887,7 @@
         },
         {
           "name": "CK_QuestCommandHistory_AvatarCode",
-          "expression": "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]') OR (DATALENGTH([AvatarCode])=20 AND [AvatarCode] LIKE 'v3:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]:[0-2]:[0-7]')",
+          "expression": "[AvatarCode] IS NULL OR (DATALENGTH([AvatarCode])=12 AND [AvatarCode] LIKE 'v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]') OR (DATALENGTH([AvatarCode])=16 AND [AvatarCode] LIKE 'v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]') OR (DATALENGTH([AvatarCode])=20 AND [AvatarCode] LIKE 'v3:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]:[0-2]:[0-7]') OR (DATALENGTH([AvatarCode])=24 AND [AvatarCode] LIKE 'v4:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]:[0-2]:[0-7]:[0-1]:[0-2]') OR (DATALENGTH([AvatarCode])=20 AND [AvatarCode] LIKE 'v5:[0-5][0-7][0-7][0-5][0-5][0-6][0-2][0-2][0-7][0-1][0-2]:[0-2][0-6][0-6][0-6][0-6]') OR (DATALENGTH([AvatarCode])=21 AND [AvatarCode] LIKE 'v6:[0-5][0-7][0-7][0-5][0-5][0-6][0-3][0-2][0-7][0-2][0-2][0-1]:[0-2][0-6][0-6][0-6][0-6]')",
           "purpose": "Constrain the versioned avatar selection to supported appearance and cosmetic slots."
         },
         {

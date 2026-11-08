@@ -1,3 +1,4 @@
+import { displayDate } from "../../shared/date-format";
 import { Page } from "../../session/session-page";
 import { QuestHistory, type QuestHistorySection } from "./quest-history";
 import { useMemo, useState } from "react";
@@ -96,7 +97,7 @@ function QuestBoardContent({
       ? [
           {
             key: "today",
-            title: `Today · ${state.today}`,
+            title: `Today · ${displayDate(state.today)}`,
             data: plan.current,
             emptyContent: <Label>No quests planned for today.</Label>,
           },

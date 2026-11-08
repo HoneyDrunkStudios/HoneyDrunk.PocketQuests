@@ -1,7 +1,8 @@
+import { RankInsignia } from "../../shared/rank-insignia";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import type { Catalog, State } from "../../shared/contracts";
-import { Button, Label, Progress, styles } from "../../shared/ui";
+import { Button, Label, Progress, useAppTheme } from "../../shared/ui";
 
 /** Display API requirements and balances; promotion remains server-owned. */
 export function RankRequirements({
@@ -13,6 +14,7 @@ export function RankRequirements({
   categories: State["categories"];
   rules: Catalog["rules"];
 }>) {
+  const { styles } = useAppTheme();
   const [expanded, setExpanded] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
   const target = rank.requirement;
@@ -76,10 +78,18 @@ export function RankRequirements({
           {expanded &&
             rules.map((rule) => (
               <View key={rule.rank} style={{ gap: 4, paddingVertical: 8 }}>
-                <Text accessibilityRole="header" style={styles.subtitle}>
-                  Rank {rule.rank}
-                  {rule.rank === rank.current ? " · Current rank" : ""}
-                </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 12,
+                  }}
+                >
+                  <RankInsignia rank={rule.rank} size={36} />
+                  <Text style={styles.muted}>
+                    {rule.rank === rank.current ? " · Current rank" : ""}
+                  </Text>
+                </View>
                 <Label>
                   {rule.rank === "F"
                     ? "Your starting rank"

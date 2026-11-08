@@ -10,7 +10,7 @@ import {
 } from "./avatar-look";
 
 export const avatarSectionSlots = {
-  Identity: ["face", "build", "skin"],
+  Identity: ["bodyType", "face", "build", "skin"],
   Hair: ["hairColor", "hairStyle"],
   Clothing: ["outfit"],
   Accessories: ["accessory", "extra", "scarfColor"],

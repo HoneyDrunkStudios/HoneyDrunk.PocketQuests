@@ -245,11 +245,16 @@ test("lost-response acknowledgement retains exact level changes despite an alrea
 test("a confirmed milestone celebrates its exact wardrobe unlock without changing rewards", () => {
   const state = confirmed();
   state.completionOutcome.unlocks = [
-    { id: "PQ-CAT-A01", name: "A Quest of My Own" },
+    { id: "PQ-RANK-E", name: "Rank E" },
+    { id: "PQ-LEVEL-02", name: "Level 2" },
   ];
   const snapshot = structuredClone(state);
   const feedback = completionFeedback(before(), state, command);
-  assert.deepEqual(feedback.unlocks, ["A Quest of My Own", "Maker’s vest"]);
+  assert.deepEqual(feedback.unlocks, [
+    "Maker’s vest",
+    "Sunlit Workshop",
+    "Maker's Crest",
+  ]);
   assert.match(completionAnnouncement(feedback), /Maker’s vest unlocked/);
   assert.deepEqual(state, snapshot);
 });

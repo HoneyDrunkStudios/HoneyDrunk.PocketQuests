@@ -11,6 +11,9 @@ namespace PocketQuests.Services.Quests;
 
 internal static class QuestReplay
 {
+    internal const string LegacyRuleset = "1.0";
+    internal const string CurrentRuleset = "1.1";
+
     internal static ReplayResult Through(QuestReplayRows rows, AccountEntity account, IReadOnlyDictionary<Guid, Quest> terms, long version)
     {
         var history = rows.History.Where(row => row.AccountMutationVersion <= version).ToArray();
@@ -28,8 +31,9 @@ internal static class QuestReplay
         CompletionOutcome? outcome = null;
         foreach (var row in history)
         {
-            if (row.RulesetVersion != "1.0" || row.TimeZoneBefore != aggregate.Zone)
+            if (row.RulesetVersion is not (LegacyRuleset or CurrentRuleset) || row.TimeZoneBefore != aggregate.Zone)
                 throw new NotSupportedException("The original ruleset or coherent historical zone is required for replay.");
+            aggregate.LegacyCosmeticRewards = row.RulesetVersion == LegacyRuleset;
             if (row.ReconciliationLimit > 0)
                 _ = aggregate.Reconcile(row.ReconciledAt, row.ReconciliationLimit);
             outcome = null;
@@ -71,5 +75,8 @@ internal static class QuestReplay
     private static QuestAggregate RetainProjectedProfile(QuestAggregate aggregate, PlayerProfile profile) =>
         aggregate.Profile.BadgeId == profile.BadgeId && aggregate.Profile.FrameId == profile.FrameId && aggregate.Profile.AvatarCode == profile.AvatarCode
             ? aggregate
-            : new(aggregate.Zone, aggregate.Occurrences, aggregate.Completions, aggregate.Undos, aggregate.Definitions, profile, aggregate.Schedule);
+            : new(aggregate.Zone, aggregate.Occurrences, aggregate.Completions, aggregate.Undos, aggregate.Definitions, profile, aggregate.Schedule)
+            {
+                LegacyCosmeticRewards = aggregate.LegacyCosmeticRewards,
+            };
 }

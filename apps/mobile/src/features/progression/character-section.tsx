@@ -2,14 +2,10 @@ import { useState, type ReactNode } from "react";
 import { Image, Pressable, Text, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { focusAppearance } from "@honeydrunk/ui-native";
-import { Card, colors, styles } from "../../shared/ui";
-import { pocketQuestsTheme } from "../../shared/theme";
+import { Card, useAppTheme } from "../../shared/ui";
+
 import { journalArt } from "../../shared/journal-art";
-const paths = {
-  Categories: { image: journalArt.compass, color: colors.gold },
-  Attributes: { image: journalArt.books, color: "#7DC9B4" },
-  Skills: { image: journalArt.sketchbook, color: "#BB91F4" },
-};
+
 /** Headings remain outside buttons so native accessibility keeps heading navigation. */
 export function CharacterSection({
   title,
@@ -22,6 +18,13 @@ export function CharacterSection({
   count: number;
   children: ReactNode;
 }>) {
+  const { colors, styles } = useAppTheme();
+  const paths = {
+    Categories: { image: journalArt.compass, color: colors.gold },
+    Attributes: { image: journalArt.books, color: colors.green },
+    Skills: { image: journalArt.sketchbook, color: colors.ochre },
+  };
+  const { theme } = useAppTheme();
   const [expanded, setExpanded] = useState(false);
   const [focused, setFocused] = useState(false);
   const path = paths[title];
@@ -89,7 +92,7 @@ export function CharacterSection({
               gap: 4,
               opacity: pressed ? 0.8 : 1,
             },
-            focusAppearance(pocketQuestsTheme, focused),
+            focusAppearance(theme, focused),
           ]}
         ></Pressable>
       </View>

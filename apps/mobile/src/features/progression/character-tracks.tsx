@@ -1,5 +1,5 @@
 import { View } from "react-native";
-import { Label, colors, styles } from "../../shared/ui";
+import { Label, useAppTheme } from "../../shared/ui";
 import type { Balance, State } from "../../shared/contracts";
 import { LevelProgress } from "./level-progress-view";
 import type { ProgressionTrack } from "./level-progress";
@@ -7,6 +7,7 @@ export function ProgressRow({
   item,
   track,
 }: Readonly<{ item: Balance; track: ProgressionTrack }>) {
+  const { colors } = useAppTheme();
   return (
     <View
       style={{
@@ -46,6 +47,7 @@ export function CategoryProgress({
   item: Balance;
   streak?: State["streaks"][number];
 }>) {
+  const { styles } = useAppTheme();
   let guidance = "Complete a quest to start a streak.";
   if (streak?.qualifiedToday) guidance = "Done today.";
   else if (streak && streak.days > 0) guidance = "Complete today to continue.";

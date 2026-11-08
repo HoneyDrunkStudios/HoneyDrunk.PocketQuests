@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from "react-native";
-import { colors, styles } from "../../shared/ui";
+import { useAppTheme } from "../../shared/ui";
 
 export function QuestViewTabs<T extends string>({
   options,
@@ -10,6 +10,7 @@ export function QuestViewTabs<T extends string>({
   selected: T;
   onSelect(value: T): void;
 }>) {
+  const { colors, styles } = useAppTheme();
   return (
     <View
       accessibilityRole="tablist"

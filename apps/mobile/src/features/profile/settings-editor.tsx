@@ -2,10 +2,11 @@ import { questActions } from "../quests/commands/quest-actions";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { useSession } from "../../session/session";
-import { Button, Input, Label, styles } from "../../shared/ui";
+import { Button, Input, Label, useAppTheme } from "../../shared/ui";
 import { requestWarningPermission } from "../quests/notifications";
 import type { ZonePreview } from "../../shared/contracts";
 export function SettingsEditor() {
+  const { styles } = useAppTheme();
   const {
     state,
     command,

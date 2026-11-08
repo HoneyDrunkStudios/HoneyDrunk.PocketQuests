@@ -1,5 +1,6 @@
 import type { Balance, Command, State } from "../../shared/contracts";
 import { rewardCosmetics } from "../profile/avatar-look";
+import { milestoneKind } from "./reward-milestones";
 
 export type CompletionFeedback = {
   occurrenceId: string;
@@ -88,7 +89,11 @@ export function completionFeedback(
     levelUps: outcome?.levelUps ?? [],
     rankUp: outcome?.rankUp ?? null,
     unlocks:
-      outcome?.unlocks.flatMap((e) => [e.name, ...rewardCosmetics(e.id)]) ?? [],
+      outcome?.unlocks.flatMap((e) =>
+        milestoneKind(e.id)
+          ? rewardCosmetics(e.id)
+          : [e.name, ...rewardCosmetics(e.id)],
+      ) ?? [],
   };
 }
 

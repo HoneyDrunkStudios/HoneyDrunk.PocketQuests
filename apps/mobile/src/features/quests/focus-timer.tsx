@@ -7,11 +7,12 @@ import {
   Text,
   View,
 } from "react-native";
-import { Button, Input, Label, styles } from "../../shared/ui";
+import { Button, Input, Label, useAppTheme } from "../../shared/ui";
 import { pauseFocus, remainingFocus, type FocusClock } from "./focus-clock";
 
 /** Optional foreground aid. It has no quest-command or notification capability. */
 export function FocusTimer() {
+  const { styles } = useAppTheme();
   const [minutes, setMinutes] = useState("10");
   const [clock, setClock] = useState<FocusClock | null>(null);
   const [now, setNow] = useState(() => performance.now());

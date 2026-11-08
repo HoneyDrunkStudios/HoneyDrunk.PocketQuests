@@ -94,3 +94,12 @@ export const sessionStorage = {
   savePending: (userId: string, pending: Pending | null) =>
     write(`pocketquests.pending.${userId}`, pending),
 };
+
+export const displayPreferences = {
+  load: async (): Promise<import("../shared/theme").DisplayMode> => {
+    const value = await read("pocketquests.display-mode");
+    return value === "light" || value === "dark" ? value : "system";
+  },
+  save: (mode: import("../shared/theme").DisplayMode) =>
+    write("pocketquests.display-mode", mode),
+};

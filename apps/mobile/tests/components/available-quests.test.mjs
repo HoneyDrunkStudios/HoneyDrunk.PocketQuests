@@ -378,17 +378,17 @@ test("details show actual reward pools and submit the reviewed plan without losi
     assert.match(view.element.textContent, /Strength \+10 XP/);
     assert.match(view.element.textContent, /Finish one practice/);
     assert.equal(
-      view.field("Due date in YYYY-MM-DD format").value,
-      "2026-10-21",
+      view.field("Due date in MM/DD/YYYY format").value,
+      "10/21/2026",
     );
-    await view.fill("Due date in YYYY-MM-DD format", "2026-10-22");
+    await view.fill("Due date in MM/DD/YYYY format", "10/22/2026");
     await view.fill("Optional planned time HH:mm", "09:30");
     for (const action of ["Edit: Practice", "Set recurrence: Practice"]) {
       await view.click(action);
       await view.click("Back to quest details");
       assert.equal(
-        view.field("Due date in YYYY-MM-DD format").value,
-        "2026-10-22",
+        view.field("Due date in MM/DD/YYYY format").value,
+        "10/22/2026",
       );
       assert.equal(view.field("Optional planned time HH:mm").value, "09:30");
     }
@@ -429,7 +429,7 @@ test("penalty consent is invalidated by changed terms, due dates and unscheduled
     await view.render();
     disabled();
     await view.click("Confirm penalty terms: Practice");
-    await view.fill("Due date in YYYY-MM-DD format", "2026-10-24");
+    await view.fill("Due date in MM/DD/YYYY format", "10/24/2026");
     disabled();
     await view.click("Confirm penalty terms: Practice");
     await view.click("Leave unscheduled instead");

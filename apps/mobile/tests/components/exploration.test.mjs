@@ -15,11 +15,20 @@ const { act } = React;
 const { createRoot } = require("react-dom/client");
 const nativeWeb = require("react-native-web");
 const ts = require("typescript");
-let session, client, locate, calls, saved, journalActions;
+let session, client, locate, calls, saved, journalActions, mapGesture;
 process.env.EXPO_PUBLIC_APP_ENV = "development";
 const load = Module._load;
 Module._load = function (name, ...rest) {
-  if (name === "react-native") return nativeWeb;
+  if (name === "react-native")
+    return {
+      ...nativeWeb,
+      PanResponder: {
+        create: (handlers) => {
+          mapGesture = handlers;
+          return { panHandlers: {} };
+        },
+      },
+    };
   if (name.endsWith("/places-client"))
     return { createPlacesClient: () => client };
   if (name === "./map-location") return { locateOnce: () => locate() };
@@ -230,7 +239,14 @@ test("map moves do not search automatically; filters and zero results remain usa
   const view = await mount(ExplorationScreen);
   try {
     await loadArea(view);
-    await view.click("East");
+    await act(async () => {
+      mapGesture.onPanResponderGrant({ nativeEvent: { touches: [] } });
+      mapGesture.onPanResponderMove(
+        { nativeEvent: { touches: [] } },
+        { dx: -160, dy: 0 },
+      );
+      mapGesture.onPanResponderRelease();
+    });
     assert.equal(calls.length, 2);
     await view.click("Libraries");
     assert.equal(view.button("1. Test Park · Parks"), undefined);
@@ -375,7 +391,14 @@ test("a retained saved place reopens in-app without geocoding, GPS or writes and
         b.getAttribute("aria-label")?.includes("saved, visited"),
       ),
     );
-    await view.click("East");
+    await act(async () => {
+      mapGesture.onPanResponderGrant({ nativeEvent: { touches: [] } });
+      mapGesture.onPanResponderMove(
+        { nativeEvent: { touches: [] } },
+        { dx: -160, dy: 0 },
+      );
+      mapGesture.onPanResponderRelease();
+    });
     assert.ok(
       view.element.querySelector('[data-testid="map-center-indicator"]'),
     );

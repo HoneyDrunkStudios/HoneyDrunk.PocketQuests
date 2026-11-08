@@ -4,10 +4,11 @@ import { useRef, useState } from "react";
 import * as Crypto from "expo-crypto";
 import { Text, View } from "react-native";
 import { useSession } from "../../session/session";
-import { Button, Input, Label, styles } from "../../shared/ui";
+import { Button, Input, Label, useAppTheme } from "../../shared/ui";
 import type { Experience } from "../../shared/contracts";
 import { ProfileInterests } from "./profile-interests";
 export function ProfileEditor() {
+  const { styles } = useAppTheme();
   const { state, catalog, command, busy, pending, offline, queuedCount } =
     useSession();
   const [skillName, setSkillName] = useState("");

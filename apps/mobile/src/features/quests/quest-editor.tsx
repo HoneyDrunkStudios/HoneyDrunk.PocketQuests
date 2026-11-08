@@ -3,7 +3,7 @@ import { useState } from "react";
 import * as Crypto from "expo-crypto";
 import { Text, View } from "react-native";
 import { useSession } from "../../session/session";
-import { Button, Input, Label, styles } from "../../shared/ui";
+import { Button, Input, Label, useAppTheme } from "../../shared/ui";
 import type { Definition, Named, Quest, Share } from "../../shared/contracts";
 import {
   baseXp,
@@ -24,6 +24,7 @@ function Allocations({
   shares: Share[];
   onChange(value: Share[]): void;
 }) {
+  const { styles } = useAppTheme();
   const [inputs, setInputs] = useState<Record<string, string>>({});
   function toggle(id: string) {
     const ids = shares.some((s) => s.id === id)
@@ -107,6 +108,7 @@ export function QuestEditor({
   onClose(): void;
   closeLabel?: string;
 }) {
+  const { styles } = useAppTheme();
   const { state, catalog, command, busy, pending } = useSession();
   const [draft, setDraft] = useState<Quest>(
     () =>

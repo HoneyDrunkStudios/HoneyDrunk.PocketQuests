@@ -322,3 +322,21 @@ test("reconnection replaces the old process anchor before the next offline sessi
   assert.equal(restarted.disk.queue[0].recordedTime.anchorId, fresh.id);
   assert.equal(restarted.disk.queue[0].recordedTime.ordinal, 1);
 });
+
+test("a delayed cosmetic command for a different owner cannot enter the queue or reach transport", async () => {
+  const host = createHarness();
+  await host.mount();
+  await host
+    .render()
+    .command(
+      { action: "save-avatar", avatarCode: "v1:5:0:0:0:0" },
+      "old-owner",
+    );
+  assert.equal(host.sent.length, 0);
+  assert.equal(host.disk.queue.length, 0);
+  await host
+    .render()
+    .command({ action: "save-avatar", avatarCode: "v1:5:0:0:0:0" }, "owner");
+  assert.equal(host.sent.length, 1);
+  assert.equal(host.sent[0].action, "save-avatar");
+});

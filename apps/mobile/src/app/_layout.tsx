@@ -1,3 +1,8 @@
+import {
+  AppearanceAutosaveProvider,
+  AppearanceSaveNotice,
+} from "../features/profile/appearance-autosave";
+import { AppTour } from "../features/profile/app-tour";
 import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -7,12 +12,13 @@ import {
   useSessionStatus,
   useAccountSnapshot,
 } from "../session/session";
-import { ThemeProvider } from "@honeydrunk/ui-native";
-import { pocketQuestsTheme } from "../shared/theme";
-import { colors } from "../shared/ui";
+import { DisplayModeProvider } from "../session/display-mode";
+
+import { useAppTheme } from "../shared/ui";
 import { CompletionOverlay } from "../features/progression/completion-overlay";
 export { AppErrorBoundary as ErrorBoundary } from "../shared/error-boundary";
 function SessionNavigator() {
+  const { colors } = useAppTheme();
   const { signedIn, restoring } = useSessionStatus();
   const { state } = useAccountSnapshot();
   const canEnterApp = signedIn && state?.profile.onboardingComplete === true;
@@ -38,7 +44,20 @@ function SessionNavigator() {
         redirectTo={signedIn ? "/onboarding" : "/"}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="avatar" options={{ title: "Your traveler" }} />
+        <Stack.Screen
+          name="avatar"
+          options={{
+            title: "Create your traveler",
+            headerTitleStyle: { fontFamily: "QuestSansBold", fontSize: 24 },
+          }}
+        />
+        <Stack.Screen
+          name="wardrobe"
+          options={{
+            title: "Your wardrobe",
+            headerTitleStyle: { fontFamily: "QuestSansBold", fontSize: 24 },
+          }}
+        />
         <Stack.Screen name="rewards" options={{ title: "Rewards" }} />
         <Stack.Screen name="settings" options={{ title: "Settings" }} />
         <Stack.Screen name="character-setup" options={{ headerShown: false }} />
@@ -64,19 +83,29 @@ function SessionNavigator() {
     </Stack>
   );
 }
+function JournalStatusBar() {
+  const { isDark } = useAppTheme();
+  return <StatusBar style={isDark ? "light" : "dark"} />;
+}
 export default function Layout() {
   const [fontsLoaded, fontError] = useFonts({
     JournalSerifBold: require("../../assets/fonts/JournalSerifBold.ttf"),
+    QuestSans: require("../../assets/fonts/QuestSans.ttf"),
+    QuestSansBold: require("../../assets/fonts/QuestSansBold.ttf"),
     ...Ionicons.font,
   });
   if (!fontsLoaded && !fontError) return null;
   return (
-    <ThemeProvider theme={pocketQuestsTheme}>
-      <StatusBar style="light" />
+    <DisplayModeProvider>
+      <JournalStatusBar />
       <SessionProvider>
-        <SessionNavigator />
-        <CompletionOverlay />
+        <AppearanceAutosaveProvider>
+          <SessionNavigator />
+          <CompletionOverlay />
+          <AppTour />
+          <AppearanceSaveNotice />
+        </AppearanceAutosaveProvider>
       </SessionProvider>
-    </ThemeProvider>
+    </DisplayModeProvider>
   );
 }

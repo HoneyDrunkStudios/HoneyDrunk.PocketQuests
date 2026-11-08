@@ -81,14 +81,20 @@ Module._load = function (name, ...rest) {
   if (name === "../shared/journal-entry") return { JournalEntry: container };
   if (name === "@honeydrunk/ui-native") return { Loading: () => null };
   if (name === "../shared/ui")
-    return {
-      Label: container,
-      Input: (props) =>
-        React.createElement(require("react-native").TextInput, props),
-      styles: {},
-      Button: ({ title, onPress, disabled }) =>
-        React.createElement("button", { onClick: onPress, disabled }, title),
-    };
+    return (() => {
+      const value = {
+        Label: container,
+        Input: (props) =>
+          React.createElement(require("react-native").TextInput, props),
+        styles: {},
+        Button: ({ title, onPress, disabled }) =>
+          React.createElement("button", { onClick: onPress, disabled }, title),
+      };
+      return {
+        ...value,
+        useAppTheme: () => ({ ...value, theme: {}, isDark: false }),
+      };
+    })();
   return originalLoad.call(this, name, ...rest);
 };
 const Welcome = require("../../src/app/index.tsx").default;

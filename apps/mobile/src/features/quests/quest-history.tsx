@@ -1,7 +1,7 @@
 import { SectionList, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { OccurrenceView } from "../../shared/contracts";
-import { colors, styles } from "../../shared/ui";
+import { useAppTheme } from "../../shared/ui";
 import { SessionRecovery } from "../../session/session-recovery";
 import { QuestCard } from "./quest-card";
 
@@ -21,6 +21,7 @@ export function QuestHistory({
   children: React.ReactNode;
   header?: React.ReactNode;
 }>) {
+  const { styles, colors } = useAppTheme();
   const insets = useSafeAreaInsets();
   return (
     <SectionList
