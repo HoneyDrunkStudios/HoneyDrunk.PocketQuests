@@ -230,8 +230,19 @@ test("calendar day/week navigation keeps selected state and rejects impossible d
   const view = await mount();
   try {
     assert.equal(view.button("Day").getAttribute("aria-selected"), "true");
+    const today = view.element.querySelector(
+      '[aria-label="10/12/2026, today, 0 quests"]',
+    );
+    assert.equal(today.getAttribute("aria-selected"), "true");
     await view.click("Next day");
     assert.ok(view.element.querySelector('[data-day="2026-10-13"]'));
+    assert.equal(today.getAttribute("aria-selected"), "false");
+    assert.equal(
+      view.element
+        .querySelector('[aria-label="10/13/2026, 0 quests"]')
+        .getAttribute("aria-selected"),
+      "true",
+    );
     await view.click("7 days");
     assert.equal(view.button("7 days").getAttribute("aria-selected"), "true");
     assert.ok(view.element.querySelector('[data-day="2026-10-19"]'));

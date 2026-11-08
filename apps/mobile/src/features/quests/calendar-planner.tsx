@@ -109,7 +109,7 @@ export function CalendarPlanner() {
       />
       <MonthCalendar
         month={month || selected}
-        selected={displayDate(selected)}
+        selected={selected}
         today={state.today}
         occurrences={state.occurrences}
         onMonth={setMonth}

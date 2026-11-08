@@ -198,6 +198,10 @@ try {
   await page
     .getByRole("button", { name: "Save name and continue", exact: true })
     .click();
+  await page
+    .getByRole("button", { name: "More editing options", exact: true })
+    .click();
+  await page.getByRole("tab", { name: "Body", exact: true }).click();
   await page.getByRole("radio", { name: /^(Selected: )?Face: Oval$/ }).click();
   await page
     .getByRole("radio", { name: "Skin tone: Tone 6", exact: true })
@@ -207,7 +211,9 @@ try {
     .getByRole("radio", { name: "Hair color: Silver", exact: true })
     .click();
   await page.getByRole("tab", { name: "Clothes", exact: true }).click();
-  await page.getByRole("button", { name: "Field shirt", exact: true }).click();
+  await page
+    .getByRole("button", { name: /^(Selected preview: )?Field shirt$/ })
+    .click();
   await page
     .getByRole("button", { name: "Continue", exact: true })
     .click();
@@ -231,7 +237,7 @@ try {
   }
   await page.getByRole("button", { name: "Open settings", exact: true }).click();
   await page.getByRole("button", { name: "Choose a quest", exact: true }).click();
-  await expect(page).toHaveURL("http://localhost:8081/board");
+  await expect(page).toHaveURL(/\/board(?:\?view=Available)?$/);
   await expect(
     page.getByRole("heading", { name: "Pick your next quest", exact: true }),
   ).toBeVisible();
