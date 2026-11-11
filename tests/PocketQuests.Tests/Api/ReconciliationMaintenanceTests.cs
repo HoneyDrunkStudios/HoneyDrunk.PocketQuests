@@ -25,7 +25,7 @@ public sealed class ReconciliationMaintenanceTests
         await service.Started.Task.WaitAsync(TimeSpan.FromSeconds(10));
 
         await worker.StopAsync(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(10));
-        await worker.ExecuteTask!;
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => worker.ExecuteTask!);
 
         Assert.True(service.Token.IsCancellationRequested);
         Assert.True(service.Disposed);
@@ -94,6 +94,29 @@ public sealed class ReconciliationMaintenanceTests
         Assert.True(service.Token.IsCancellationRequested);
         Assert.True(service.Disposed);
         Assert.Empty(logs.Entries);
+    }
+
+    /// <summary>Recoverable provider failures retain the existing content-free diagnostic before shutdown.</summary>
+    /// <returns>Completion after the failure is reported and the worker stops through normal cancellation.</returns>
+    [Fact]
+    public async Task DirectProviderFailureKeepsContentFreeDiagnostics()
+    {
+        using var service = new ReconciliationStub(new ProviderFailure(), waitForShutdown: false);
+        await using var services = Services(service);
+        using var logs = new ApiTestLog();
+        using var logging = LoggerFactory.Create(builder => builder.AddProvider(logs));
+        using var worker = new ReconciliationMaintenance(services.GetRequiredService<IServiceScopeFactory>(), TimeProvider.System, logging.CreateLogger<ReconciliationMaintenance>());
+        await worker.StartAsync(CancellationToken.None);
+        await service.Started.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+        await worker.StopAsync(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(10));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => worker.ExecuteTask!);
+
+        Assert.True(service.Disposed);
+        var entry = Assert.Single(logs.Entries);
+        Assert.Equal(LogLevel.Error, entry.level);
+        Assert.Equal("Relational reconciliation failed (ProviderFailure).", entry.message);
+        Assert.Null(entry.error);
     }
 
     private static ServiceProvider Services(ReconciliationStub service) => new ServiceCollection()
