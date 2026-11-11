@@ -4,7 +4,6 @@ using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Services.Exports;
 using System.IO.Compression;
 using System.Net;
-using System.Net.Http.Json;
 
 namespace PocketQuests.Tests.Integration;
 

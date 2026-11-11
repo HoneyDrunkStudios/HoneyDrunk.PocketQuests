@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using PocketQuests.Api.Hosting;
 using PocketQuests.Contracts.Responses.Exports;
 using PocketQuests.Services.Exports;
+using System.Net.Mime;
 
 namespace PocketQuests.Api.Endpoints.Exports;
 
@@ -12,15 +13,18 @@ public static class ExportEndpoints
     /// <param name="app">The endpoint host.</param>
     public static void MapExportEndpoints(this WebApplication app) => app.MapGet("/api/export/{format}", Download)
         .WithName("ExportAccount").WithTags("PocketQuests.Api").RequireAuthorization().RequireRateLimiting(ApiHttpPolicy.Exports)
-        .Produces<QuestExport>(200, "application/json", "application/zip")
+        .Produces<QuestExport>(200, MediaTypeNames.Application.Json, MediaTypeNames.Application.Zip)
         .Produces(400).Produces(404).ProducesProblem(429).ProducesProblem(500).ProducesProblem(503)
         .AddOpenApiOperationTransformer((operation, context, token) =>
         {
-            operation.Responses!["200"].Content!["application/zip"].Schema = new Microsoft.OpenApi.OpenApiSchema
+            var content = operation.Responses!["200"].Content!;
+            var zip = (Microsoft.OpenApi.OpenApiMediaType)content[MediaTypeNames.Application.Zip].CreateShallowCopy();
+            zip.Schema = new Microsoft.OpenApi.OpenApiSchema
             {
                 Type = Microsoft.OpenApi.JsonSchemaType.String,
                 Format = "binary",
             };
+            content[MediaTypeNames.Application.Zip] = zip;
             return Task.CompletedTask;
         });
 
@@ -31,7 +35,7 @@ public static class ExportEndpoints
         var snapshot = await service.Read(token);
         context.Response.Headers.CacheControl = "no-store, private";
         return format == "json"
-            ? TypedResults.File(ExportFormatting.JsonBytes(snapshot), "application/json", "pocket-quests.json")
-            : TypedResults.File(ExportFormatting.CsvArchive(snapshot), "application/zip", "pocket-quests-csv.zip");
+            ? TypedResults.File(ExportFormatting.JsonBytes(snapshot), MediaTypeNames.Application.Json, "pocket-quests.json")
+            : TypedResults.File(ExportFormatting.CsvArchive(snapshot), MediaTypeNames.Application.Zip, "pocket-quests-csv.zip");
     }
 }

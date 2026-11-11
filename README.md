@@ -5,7 +5,7 @@
 Open `HoneyDrunk.PocketQuests.slnx` from the repository root. Production projects live in `src/`, test and canary projects in `tests/`, and examples in `samples/` where present. Shared build configuration stays at the root; project names, namespaces and package identities are unchanged. Existing documentation and release-history locations are retained.
 
 
-A self-improvement app with an Expo/React Native client, .NET 10 API and SQL Server persistence. This is an implementation foundation under review, not a completed or production-deployed product.
+A self-improvement app with an Expo/React Native client, .NET 11 API and SQL Server persistence. This is an implementation foundation under review, not a completed or production-deployed product.
 
 See the [October 26 progress checkpoint](docs/progress-2026-10-26.md) for the merged phone-testing, onboarding, saving and quest-search slices, the remaining development sign-in PR, and the evidence and release gates.
 
@@ -25,7 +25,7 @@ Home includes today's planned quests, confirmed completion counts and small ques
 
 ## First setup on Windows
 
-Requirements: .NET SDK 10.0.401, Node compatible with Expo SDK 58, SQL Server LocalDB and a matching [Identity source checkout](https://github.com/HoneyDrunkStudios/HoneyDrunk.Identity). CI pins an exact reviewed Identity revision in [validate.yml](.github/workflows/validate.yml).
+Requirements: .NET SDK 11.0.100, Node compatible with Expo SDK 58, SQL Server LocalDB and a matching [Identity source checkout](https://github.com/HoneyDrunkStudios/HoneyDrunk.Identity). CI pins an exact reviewed Identity revision in [validate.yml](.github/workflows/validate.yml).
 
 For an iPhone Expo Go walkthrough with the real backend and saved progress, use the optional [development pairing guide](docs/expo-go-development.md). It uses dedicated retained databases and a separate opt-in local executable; production APIs keep their existing provider authentication.
 

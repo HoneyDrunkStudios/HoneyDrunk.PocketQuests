@@ -34,9 +34,10 @@ $solution = [System.Xml.Linq.XDocument]::Load($solutionPath)
 $folder = @($solution.Root.Elements('Folder') | Where-Object { $_.Attribute('Name').Value -eq '/Identity/' })
 foreach ($item in $folder) { $item.Remove() }
 $solution.Save($solutionPath)
+# Register only the explicit list: SDK 11 otherwise recursively adds references.
 foreach ($name in @('HoneyDrunk.Identity.Abstractions', 'HoneyDrunk.Identity.Api', 'HoneyDrunk.Identity.Client', 'HoneyDrunk.Identity.Database', 'HoneyDrunk.Identity.Providers.Entra', 'HoneyDrunk.Identity')) {
     $extension = if ($name.EndsWith('.Database')) { 'sqlproj' } else { 'csproj' }
-    dotnet sln $solutionPath add (Join-Path $identityProjects "$name/$name.$extension") --solution-folder Identity
+    dotnet sln $solutionPath add (Join-Path $identityProjects "$name/$name.$extension") --solution-folder Identity --include-references false
     if ($LASTEXITCODE -ne 0) { throw "Adding $name to the development solution failed." }
 }
 dotnet restore $solutionPath
