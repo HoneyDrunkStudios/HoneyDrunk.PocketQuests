@@ -32,6 +32,8 @@ Use the existing app workflow's Identity checkout contract and a reviewed immuta
 
 Run `pwsh -NoProfile -File scripts/tests/Test-InitializeLocal.ps1` to verify setup mode selection and rejection of the retired candidate-directory option. This regression copies the initializer into unique temporary fixtures and mocks `dotnet`; it performs no real builds, package restores or SQL operations and removes its own fixtures afterward.
 
+The existing `scripts/tests/Invoke-DevelopmentToolingTests.ps1 -PesterModulePath <Pester-6.2.0-manifest>` lane also measures `Report-LocalDeployment.ps1`. Its reporter regressions use temporary assembly metadata and a fixture loopback listener, with process, readiness and GitHub responses replaced by test doubles. They cover pagination beyond 100 newer records, repeated reports, partial-write recovery, conflicting records and fail-closed verification. They never run a published API or read/write live GitHub deployments. Measured reporter lines are included in the same generic Sonar coverage report as the development launcher; Windows process discovery and live operator acceptance remain separate.
+
 ## Fixture inventory and isolation
 
 - `SqlApiTests` creates `PocketQuests_Tests_<guid>` and its corresponding isolated Identity database for each test. Production DACPACs build/deploy the schemas; disposal deletes only the test's databases. Existing tests cover API restart, concurrent hosts (12 completion requests), operation payload mismatch, account isolation, rollback/audit behavior, offline recorded-time validation, penalties/streaks, schema upgrade/backfill and Undo.

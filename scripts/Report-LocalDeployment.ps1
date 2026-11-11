@@ -89,9 +89,11 @@ try {
 
     $identity = [Text.Encoding]::UTF8.GetBytes("$([Environment]::MachineName):$($startedAt.Ticks):$($serving.Id):$commit")
     $reportKey = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($identity))
-    $deployments = gh api "$api/deployments?environment=$environment&task=deploy&per_page=30" | ConvertFrom-Json
+    # Slurp keeps all paginated arrays in one JSON document. Do not infer absence
+    # from the newest page, including when recovering a deployment without a status.
+    $pages = gh api "$api/deployments?environment=$environment&task=deploy&per_page=100" --paginate --slurp | ConvertFrom-Json
     if ($LASTEXITCODE -ne 0) { throw 'Could not read the local deployment records.' }
-    $previous = @($deployments | Where-Object { $_.payload.reportKey -eq $reportKey })
+    $previous = @($pages | ForEach-Object { $_ } | Where-Object { $_.payload.reportKey -eq $reportKey })
     if ($previous.Count -gt 1 -or ($previous.Count -eq 1 -and $previous[0].sha -ne $commit)) {
         throw 'Conflicting GitHub records exist for the running process.'
     }

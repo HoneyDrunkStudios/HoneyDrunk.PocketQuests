@@ -11,9 +11,13 @@ $evidence = (Resolve-Path -LiteralPath $EvidenceDirectory).Path
 $module = Import-Module $PesterModulePath -PassThru
 if ($module.Version -ne [version]'6.2.0') { throw 'This runner requires pinned Pester 6.2.0.' }
 . (Join-Path $PSScriptRoot 'Export-PesterCoverage.ps1')
-$sources = @('scripts/Start-ExpoGo.ps1', 'scripts/Test-ExpoGo.ps1', 'scripts/development-process.psm1')
+$sources = @('scripts/Start-ExpoGo.ps1', 'scripts/Test-ExpoGo.ps1', 'scripts/development-process.psm1', 'scripts/Report-LocalDeployment.ps1')
 $config = New-PesterConfiguration
-$config.Run.Path = @((Join-Path $PSScriptRoot 'DevelopmentTooling.Tests.ps1'), (Join-Path $PSScriptRoot 'CoverageReport.Tests.ps1'))
+$config.Run.Path = @(
+    (Join-Path $PSScriptRoot 'DevelopmentTooling.Tests.ps1'),
+    (Join-Path $PSScriptRoot 'CoverageReport.Tests.ps1'),
+    (Join-Path $PSScriptRoot 'LocalDeployment.Tests.ps1')
+)
 $config.Run.PassThru = $true
 # These tests need files, not a registry fixture or elevated registry access.
 $config.TestRegistry.Enabled = $false
