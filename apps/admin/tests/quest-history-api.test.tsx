@@ -122,3 +122,22 @@ it("rejects a cursor that skips revisions and rows outside the requested older p
     ),
   ).rejects.toThrow(/verified/);
 });
+
+
+it.each(["", " 3", "03", "3.0", "3e0", "NaN", "1001", "-3"])(
+  "rejects malformed or out-of-range legacy cursor %s",
+  async (nextBefore) => {
+    const entries = Array.from({ length: 20 }, (_, index) => revision(22 - index));
+    await expect(
+      api({ id, revisions: entries, nextBefore }).questHistory(
+        id, null, new AbortController().signal,
+      ),
+    ).rejects.toThrow(/verified/);
+  },
+);
+
+it("rejects a malformed history response before cursor normalization", async () => {
+  await expect(
+    api(null).questHistory(id, null, new AbortController().signal),
+  ).rejects.toThrow(/verified/);
+});
