@@ -358,6 +358,7 @@ try {
   await page.getByRole("button", { name: "Medium", exact: true }).click();
   let rejectSave = true;
   let loseCompletionResponse = true;
+  let completionResponseAborted = false;
   let skewNextCompletion = false;
   let clockRecordedAt = null;
   let clockAnchor = null;
@@ -419,7 +420,9 @@ try {
       loseCompletionResponse = false;
       const committed = await route.fetch();
       expect(committed.ok()).toBe(true);
-      return route.abort("failed"); // SQL committed, but the device receives no receipt.
+      await route.abort("failed"); // SQL committed, but the device receives no receipt.
+      completionResponseAborted = true;
+      return;
     }
     return route.continue();
   });
@@ -601,14 +604,23 @@ try {
       exact: true,
     })
     .click({ clickCount: 2 });
+  // The response must be committed and dropped before the UI can report recovery.
+  // Keep the API's 15-second budget separate from the unchanged UI assertions.
+  await expect
+    .poll(() => completionResponseAborted, { timeout: 15000 })
+    .toBe(true);
+  diagnostics.checkpoint("completion-offline-recovery");
   await expect(visibleText(/You’re offline.*saved progress/)).toBeVisible();
+  diagnostics.checkpoint("completion-unconfirmed-feedback");
   await expect(visibleText("Quest complete!", { exact: true })).toHaveCount(0);
+  diagnostics.checkpoint("completion-committed-state");
   const committed = await (
     await context.request.get("http://localhost:5217/api/state", {
       headers: { Authorization: `Bearer ${fixture.token}` },
     })
   ).json();
   expect(committed.overallXp).toBe(280);
+  diagnostics.checkpoint("completion-retry-anchor");
   const synchronized = page.waitForResponse(
     (response) =>
       response.url() === "http://localhost:5217/api/sync-anchor" &&
@@ -618,8 +630,11 @@ try {
     .getByRole("button", { name: "Try saving again", exact: true })
     .click();
   expect((await synchronized).ok()).toBe(true);
+  diagnostics.checkpoint("completion-feedback");
   await expect(visibleText("Quest complete!", { exact: true })).toBeVisible();
+  diagnostics.checkpoint("completion-level-up");
   await expect(visibleText("Level up!", { exact: true })).toBeVisible();
+  diagnostics.checkpoint("completion-level-transition");
   await expect(
     visibleText("Overall · Level 1 → 2", { exact: true }),
   ).toBeVisible();

@@ -101,3 +101,18 @@ test("every scenario checkpoint is wired into the existing journey", () => {
   );
   assert.match(journey, /catch \(error\) \{\s+diagnostics\.fail\(error\);/);
 });
+
+test("completion recovery assertions follow the committed and aborted response", () => {
+  const journey = readFileSync(
+    new URL("../../e2e/journey.mjs", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    journey,
+    /if \(command\.action === "complete" && loseCompletionResponse\) \{\s+loseCompletionResponse = false;\s+const committed = await route\.fetch\(\);\s+expect\(committed\.ok\(\)\)\.toBe\(true\);\s+await route\.abort\("failed"\);[^\n]*\n\s+completionResponseAborted = true;/,
+  );
+  assert.match(
+    journey,
+    /diagnostics\.checkpoint\("completion-response-loss"\);[\s\S]*?\.click\(\{ clickCount: 2 \}\);[\s\S]*?\.poll\(\(\) => completionResponseAborted, \{ timeout: 15000 \}\)\s+\.toBe\(true\);\s+diagnostics\.checkpoint\("completion-offline-recovery"\);\s+await expect\(visibleText\(\/You’re offline\.\*saved progress\/\)\)\.toBeVisible\(\);/,
+  );
+});
