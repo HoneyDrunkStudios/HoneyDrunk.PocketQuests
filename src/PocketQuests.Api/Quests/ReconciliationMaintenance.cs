@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using PocketQuests.Contracts.Models.Reconciliation;
 using PocketQuests.Services.Reconciliation;
 
@@ -23,6 +24,12 @@ public sealed class ReconciliationMaintenance(IServiceScopeFactory scopes, TimeP
                 cursor = batch.Next;
                 if (cursor is not null || batch.Deliveries > 0)
                     delay = TimeSpan.FromSeconds(1);
+            }
+            catch (DbUpdateException error) when (stoppingToken.IsCancellationRequested && error.InnerException is System.Data.Common.DbException)
+            {
+                // EF can wrap a provider cancellation during host shutdown; retain diagnostics without faulting the stopped worker.
+                logger.LogError("Relational reconciliation failed ({FailureType}).", error.GetType().Name);
+                return;
             }
             catch (Exception error) when (error is System.Data.Common.DbException or InvalidOperationException or TimeoutException)
             {
