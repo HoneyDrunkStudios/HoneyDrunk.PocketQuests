@@ -32,6 +32,8 @@ Use the existing app workflow's Identity checkout contract and a reviewed immuta
 
 Run `pwsh -NoProfile -File scripts/tests/Test-InitializeLocal.ps1` to verify setup mode selection and rejection of the retired candidate-directory option. This regression copies the initializer into unique temporary fixtures and mocks `dotnet`; it performs no real builds, package restores or SQL operations and removes its own fixtures afterward.
 
+The `PocketQuests.Tests` and `PocketQuests.BrowserHost` projects are source-only. The Tests project enforces `UseIdentitySource=true` and a nonempty `IdentitySourceRoot` through `RequireIdentityIntegrationSource`; BrowserHost references that project. `Directory.Build.props` places source-mode dependency locks at each project's ignored `.local/packages.source.lock.json`. Initialize or refresh those locks with the reviewed Identity checkout, then verify with `--locked-mode`. Obsolete committed package-mode locks for these two projects are removed; package-mode product and SchemaTests locks remain committed and enforced.
+
 ## Fixture inventory and isolation
 
 - `SqlApiTests` creates `PocketQuests_Tests_<guid>` and its corresponding isolated Identity database for each test. Production DACPACs build/deploy the schemas; disposal deletes only the test's databases. Existing tests cover API restart, concurrent hosts (12 completion requests), operation payload mismatch, account isolation, rollback/audit behavior, offline recorded-time validation, penalties/streaks, schema upgrade/backfill and Undo.

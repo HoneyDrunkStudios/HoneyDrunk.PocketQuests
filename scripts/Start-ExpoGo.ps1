@@ -20,7 +20,7 @@ if (-not $NoBuild) {
     & dotnet build $project -c Release --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Development host build failed.' }
 }
-$dll = Join-Path $repo 'tools/PocketQuests.DevelopmentHost/bin/Release/net10.0/PocketQuests.DevelopmentHost.dll'
+$dll = Join-Path $repo 'tools/PocketQuests.DevelopmentHost/bin/Release/net11.0/PocketQuests.DevelopmentHost.dll'
 $cli = Join-Path $repo 'apps/mobile/node_modules/expo/bin/cli'
 if (-not (Test-Path -LiteralPath $dll) -or -not (Test-Path -LiteralPath $cli)) {
     throw 'Build the development host and run npm ci in apps/mobile first.'

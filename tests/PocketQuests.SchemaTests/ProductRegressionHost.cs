@@ -9,7 +9,6 @@ using PocketQuests.Api;
 using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.SchemaTests;
 using System.Net;
-using System.Net.Http.Json;
 
 namespace PocketQuests.Tests.Integration;
 

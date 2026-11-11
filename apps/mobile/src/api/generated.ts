@@ -141,12 +141,12 @@ export type Occurrence = {
 
 export type OccurrenceLifecycle = {
   "seriesId": string | null;
-  "sequence": number | string | null | null;
-  "scheduleVersion": number | string | null | null;
+  "sequence": number | null;
+  "scheduleVersion": number | null;
   "frozenAt": string | null;
   "individuallyFrozen": boolean;
   "abandonedAt": string | null;
-  "lockedLoss": number | string | null | null;
+  "lockedLoss": number | null;
   "lossCategoryId": string | null;
   "unaccepted": boolean;
   "sourceAnchorId": string | null;
@@ -465,7 +465,7 @@ export type SyncAnchor = {
 export type SystemQuestHistory = {
   "id": string;
   "revisions": (AdminSystemQuestRevision)[];
-  "nextBefore": number | string | null | null;
+  "nextBefore": number | null;
 };
 
 export type SystemQuestStudio = {

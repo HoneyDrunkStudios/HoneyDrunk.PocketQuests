@@ -4,7 +4,6 @@ using PocketQuests.Domain.Commands;
 using PocketQuests.Domain.Models.Progress;
 using PocketQuests.Domain.Models.Quests;
 using System.Net;
-using System.Net.Http.Json;
 
 namespace PocketQuests.Tests.Integration;
 
@@ -108,7 +107,7 @@ public sealed partial class SqlApiTests
 
         // Simulate history created before the milestone rules were introduced.
         await using (var db = Context())
-            await db.Read.Database.ExecuteSqlInterpolatedAsync($"UPDATE pocketquests.QuestCommandHistory SET RulesetVersion = '1.0' WHERE AccountId = (SELECT AccountId FROM pocketquests.QuestCommandHistory WHERE Id = {first.OperationId})");
+            await db.Read.Database.ExecuteSqlAsync($"UPDATE pocketquests.QuestCommandHistory SET RulesetVersion = '1.0' WHERE AccountId = (SELECT AccountId FROM pocketquests.QuestCommandHistory WHERE Id = {first.OperationId})");
         var historical = await Command(client, first);
         Assert.Equal(80, historical.OverallXp);
         Assert.DoesNotContain(historical.Entitlements, reward => reward.Id.StartsWith("PQ-LEVEL-", StringComparison.Ordinal));

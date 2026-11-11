@@ -6,7 +6,6 @@ using PocketQuests.Data.DataServices.Accounts;
 using PocketQuests.Data.Entities.Discoveries;
 using PocketQuests.Domain.Commands;
 using System.Net;
-using System.Net.Http.Json;
 
 namespace PocketQuests.Tests.Integration;
 

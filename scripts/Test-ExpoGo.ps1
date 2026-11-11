@@ -12,7 +12,7 @@ if (-not $NoBuild) {
     & dotnet build (Join-Path $repo 'tools/PocketQuests.DevelopmentHost/PocketQuests.DevelopmentHost.csproj') -c Release --nologo *> (Join-Path $EvidenceDirectory 'build.log')
     if ($LASTEXITCODE -ne 0) { throw 'Development host build failed.' }
 }
-$dll = Join-Path $repo 'tools/PocketQuests.DevelopmentHost/bin/Release/net10.0/PocketQuests.DevelopmentHost.dll'
+$dll = Join-Path $repo 'tools/PocketQuests.DevelopmentHost/bin/Release/net11.0/PocketQuests.DevelopmentHost.dll'
 $instance = 'PQExpoGo_' + [guid]::NewGuid().ToString('N').Substring(0, 12)
 $pairingCode = [Security.Cryptography.RandomNumberGenerator]::GetInt32(1000000).ToString('D6', [Globalization.CultureInfo]::InvariantCulture)
 $baseUrl = 'http://127.0.0.1:15219'

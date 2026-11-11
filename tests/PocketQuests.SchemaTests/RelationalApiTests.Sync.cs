@@ -14,7 +14,6 @@ using PocketQuests.Domain.Models.Schedules;
 using PocketQuests.Domain.Models.Synchronization;
 using PocketQuests.Services.Lifecycle;
 using System.Net;
-using System.Net.Http.Json;
 
 namespace PocketQuests.SchemaTests;
 

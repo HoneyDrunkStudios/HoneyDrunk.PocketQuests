@@ -9,7 +9,7 @@ internal static class AccountLockDataService
         if (context.Database.CurrentTransaction is null)
             throw new InvalidOperationException("An explicit account transaction is required.");
         var resource = "pocketquests:" + identityUserId;
-        await context.Database.ExecuteSqlInterpolatedAsync(
+        await context.Database.ExecuteSqlAsync(
             $"""
             DECLARE @result int;
             EXEC @result=sys.sp_getapplock @Resource={resource}, @LockMode='Exclusive', @LockOwner='Transaction', @LockTimeout=10000;

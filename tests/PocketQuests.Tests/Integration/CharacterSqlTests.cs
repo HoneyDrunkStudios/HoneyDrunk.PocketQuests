@@ -1,7 +1,6 @@
 using PocketQuests.Domain.Catalogs;
 using PocketQuests.Domain.Models.Quests;
 using System.Net;
-using System.Net.Http.Json;
 
 namespace PocketQuests.Tests.Integration;
 

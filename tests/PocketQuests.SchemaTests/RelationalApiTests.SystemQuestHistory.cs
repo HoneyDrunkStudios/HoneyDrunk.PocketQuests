@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using PocketQuests.Contracts.Responses.Administration;
 using PocketQuests.Domain.Catalogs;
 using System.Net;
-using System.Net.Http.Json;
 
 namespace PocketQuests.SchemaTests;
 

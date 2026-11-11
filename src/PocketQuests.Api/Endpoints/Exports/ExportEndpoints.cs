@@ -16,11 +16,14 @@ public static class ExportEndpoints
         .Produces(400).Produces(404).ProducesProblem(429).ProducesProblem(500).ProducesProblem(503)
         .AddOpenApiOperationTransformer((operation, context, token) =>
         {
-            operation.Responses!["200"].Content!["application/zip"].Schema = new Microsoft.OpenApi.OpenApiSchema
+            var content = operation.Responses!["200"].Content!;
+            var zip = (Microsoft.OpenApi.OpenApiMediaType)content["application/zip"].CreateShallowCopy();
+            zip.Schema = new Microsoft.OpenApi.OpenApiSchema
             {
                 Type = Microsoft.OpenApi.JsonSchemaType.String,
                 Format = "binary",
             };
+            content["application/zip"] = zip;
             return Task.CompletedTask;
         });
 

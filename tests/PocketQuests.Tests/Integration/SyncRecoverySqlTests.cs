@@ -4,7 +4,6 @@ using PocketQuests.Data.Entities.Synchronization;
 using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Models.Synchronization;
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace PocketQuests.Tests.Integration;
