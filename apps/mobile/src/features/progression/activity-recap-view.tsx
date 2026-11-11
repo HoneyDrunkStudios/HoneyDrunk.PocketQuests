@@ -2,9 +2,8 @@ import { useMemo, useState } from "react";
 import { Link } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { buttonAppearance, focusAppearance } from "@honeydrunk/ui-native";
-import { pocketQuestsTheme } from "../../shared/theme";
 import type { State } from "../../shared/contracts";
-import { Button, Card, Label, colors, styles } from "../../shared/ui";
+import { Button, Card, Label, useAppTheme } from "../../shared/ui";
 import {
   activityRecap,
   recapDateLabel,
@@ -26,6 +25,7 @@ function RecapChoice({
   accessibilityLabel?: string;
   onPress(): void;
 }>) {
+  const { styles, colors, theme } = useAppTheme();
   const [focused, setFocused] = useState(false);
   return (
     <Pressable
@@ -38,12 +38,7 @@ function RecapChoice({
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
       style={({ pressed }) => {
-        const appearance = buttonAppearance(
-          pocketQuestsTheme,
-          !selected,
-          false,
-          pressed,
-        );
+        const appearance = buttonAppearance(theme, !selected, false, pressed);
         return [
           styles.button,
           detail ? { paddingHorizontal: 10, gap: 4 } : null,
@@ -51,7 +46,7 @@ function RecapChoice({
             backgroundColor: appearance.backgroundColor,
             opacity: appearance.opacity,
           },
-          focusAppearance(pocketQuestsTheme, focused),
+          focusAppearance(theme, focused),
         ];
       }}
     >
@@ -59,7 +54,7 @@ function RecapChoice({
         style={[
           styles.buttonText,
           {
-            color: selected ? pocketQuestsTheme.colors.onPrimary : colors.green,
+            color: selected ? theme.colors.onPrimary : colors.green,
           },
         ]}
       >
@@ -71,9 +66,7 @@ function RecapChoice({
             styles.buttonText,
             {
               fontSize: 12,
-              color: selected
-                ? pocketQuestsTheme.colors.onPrimary
-                : colors.green,
+              color: selected ? theme.colors.onPrimary : colors.green,
             },
           ]}
         >
@@ -93,6 +86,7 @@ export function ActivityRecap({
   pending: boolean;
   offline: boolean;
 }>) {
+  const { colors, styles } = useAppTheme();
   const [period, setPeriod] = useState<RecapPeriod>(7);
   const [category, setCategory] = useState<string | null>(null);
   const [day, setDay] = useState<string | null>(null);

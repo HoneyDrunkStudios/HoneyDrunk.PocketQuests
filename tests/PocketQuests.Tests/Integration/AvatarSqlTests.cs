@@ -4,7 +4,6 @@ using PocketQuests.Domain.Commands;
 using PocketQuests.Domain.Models.Progress;
 using PocketQuests.Domain.Models.Quests;
 using System.Net;
-using System.Net.Http.Json;
 
 namespace PocketQuests.Tests.Integration;
 
@@ -17,9 +16,9 @@ public sealed partial class SqlApiTests
     public async Task AvatarIntegration_PreservesNamesProgressRewardsAndHistory()
     {
         await CharacterSelection_PreservesProgressAndExactReplayAcrossRestart();
-        foreach (var code in new[] { "v1:5:3:2:0:0", "v2:5:7:7:5:5:2:2", "v2:1:5:4:4:0:3:0", "v2:2:0:3:5:4:4:1", "v2:3:1:7:0:5:5:2", "v2:4:5:2:5:4:6:0", "v3:5:7:6:5:4:6:2:2:7", "v3:1:1:1:4:5:3:1:1:2" })
+        foreach (var code in new[] { "v1:5:3:2:0:0", "v2:5:7:7:5:5:2:2", "v2:1:5:4:4:0:3:0", "v2:2:0:3:5:4:4:1", "v2:3:1:7:0:5:5:2", "v2:4:5:2:5:4:6:0", "v3:5:7:6:5:4:6:2:2:7", "v3:1:1:1:4:5:3:1:1:2", "v4:5:7:6:5:4:6:2:2:7:0:0", "v5:20000000000:00000", "v6:200000300000:00000", "v6:200000300001:00000", "v6:200000300201:00000" })
             await AvatarSaveSurvivesRestartAndIsAccountIsolated(code);
-        await AvatarUndoAndRecompletionPreserveHistoricalSelection();
+        await AvatarMilestonesFollowCustomXpRankAndUndo();
     }
 
     /// <summary>Persists free customization across restart and rejects locked items and payload substitution.</summary>
@@ -77,7 +76,7 @@ public sealed partial class SqlApiTests
             Assert.Equal("Rowan traveler", (await Read(legacyClient)).Profile.CharacterName);
         }
 
-        foreach (var invalid in new[] { "v2:5:8:7:5:5:2:2", "v2:5:7:7:6:5:2:2", "v2:5:7:7:5:5:7:2", "v2:5:7:7:5:5:2:3", "v3:5:7:6:5:4:6:2:3:7", "v3:5:7:6:5:4:6:2:2:8" })
+        foreach (var invalid in new[] { "v2:5:8:7:5:5:2:2", "v2:5:7:7:6:5:2:2", "v2:5:7:7:5:5:7:2", "v2:5:7:7:5:5:2:3", "v3:5:7:6:5:4:6:2:3:7", "v3:5:7:6:5:4:6:2:2:8", "v4:5:7:6:5:4:6:2:2:7:2:0", "v4:5:7:6:5:4:6:2:2:7:0:3", "v5:20000000000:30000", "v5:20000000000:07000", "v6:200000400001:00000", "v6:200000300002:00000", "v6:200000300301:00000" })
         {
             var exception = await Assert.ThrowsAsync<Microsoft.Data.SqlClient.SqlException>(() =>
                 db.Read.Database.ExecuteSqlRawAsync("UPDATE [pocketquests].[Account] SET [AvatarCode] = {0}", invalid));
@@ -85,27 +84,58 @@ public sealed partial class SqlApiTests
         }
     }
 
-    /// <summary>Undo removes an equipped cosmetic; old receipt replay remains exact and re-earning does not equip it.</summary>
+    /// <summary>Custom XP earns decor and rank unlocks; replay and Undo preserve the intended eligibility.</summary>
     /// <returns>A task completing after real SQL replay assertions.</returns>
-    private async Task AvatarUndoAndRecompletionPreserveHistoricalSelection()
+    private async Task AvatarMilestonesFollowCustomXpRankAndUndo()
     {
         using var host = new Host(Connection);
-        using var client = host.Client("avatar-rewards");
+        using var client = host.Client("avatar-milestones");
         await Setup(client);
-        var quest = new Quest(Guid.NewGuid().ToString("D"), "Make something", "Finish a small project", "c03", Rank.F, Effort.Small, [], [], true);
-        await Command(client, new(Guid.NewGuid(), QuestActions.SaveDefinition, Definition: quest, ExpectedRevision: 0));
-        var accepted = await Command(client, new(Guid.NewGuid(), QuestActions.Accept, QuestId: quest.Id));
-        var id = Assert.Single(accepted.Occurrences).Occurrence.Id;
-        var completed = await Command(client, new(Guid.NewGuid(), QuestActions.Complete, id));
-        var completion = Assert.Single(completed.Occurrences).Completion!.Id;
-        var save = new QuestCommand(Guid.NewGuid(), QuestActions.SaveAvatar, AvatarCode: "v2:4:7:6:1:0:6:1");
+        async Task<QuestCommand> AcceptCustom(string category)
+        {
+            var quest = new Quest(Guid.NewGuid().ToString("D"), "Make something", "Finish a project", category, Rank.F, Effort.Medium, [], [], true);
+            await Command(client, new(Guid.NewGuid(), QuestActions.SaveDefinition, Definition: quest, ExpectedRevision: 0));
+            var accepted = await Command(client, new(Guid.NewGuid(), QuestActions.Accept, QuestId: quest.Id));
+            var id = accepted.Occurrences.Single(view => view.Occurrence.Quest.Id == quest.Id).Occurrence.Id;
+            return new(Guid.NewGuid(), QuestActions.Complete, id);
+        }
+
+        const string decor = "v5:47600612701:01000";
+        const string outfitAndRoom = "v5:47610612701:11000";
+        var first = await AcceptCustom("c03");
+        Assert.Equal(80, (await Command(client, first)).OverallXp);
+
+        // Simulate history created before the milestone rules were introduced.
+        await using (var db = Context())
+            await db.Read.Database.ExecuteSqlAsync($"UPDATE pocketquests.QuestCommandHistory SET RulesetVersion = '1.0' WHERE AccountId = (SELECT AccountId FROM pocketquests.QuestCommandHistory WHERE Id = {first.OperationId})");
+        var historical = await Command(client, first);
+        Assert.Equal(80, historical.OverallXp);
+        Assert.DoesNotContain(historical.Entitlements, reward => reward.Id.StartsWith("PQ-LEVEL-", StringComparison.Ordinal));
+        Assert.Contains(historical.Entitlements, reward => reward.Id == "PQ-CAT-A01" && reward.Earned);
+
+        var level = await Command(client, await AcceptCustom("c03"));
+        Assert.Equal(2, level.OverallLevel);
+        Assert.Contains(level.CompletionOutcome!.Unlocks, reward => reward.Id == "PQ-LEVEL-02");
+        Assert.DoesNotContain(level.Entitlements, reward => reward.Id == "PQ-RANK-E" && reward.Earned);
+        Assert.Equal(decor, (await Command(client, new(Guid.NewGuid(), QuestActions.SaveAvatar, AvatarCode: decor))).Profile.AvatarCode);
+        using (var locked = await client.PostAsJsonAsync("/api/commands", new QuestCommand(Guid.NewGuid(), QuestActions.SaveAvatar, AvatarCode: outfitAndRoom), Json))
+            Assert.Equal(HttpStatusCode.BadRequest, locked.StatusCode);
+
+        await Command(client, await AcceptCustom("c07"));
+        var final = await AcceptCustom("c07");
+        var completed = await Command(client, final);
+        Assert.Equal(320, completed.OverallXp);
+        Assert.Contains(completed.CompletionOutcome!.Unlocks, reward => reward.Id == "PQ-RANK-E");
+        var completion = completed.Occurrences.Single(view => view.Occurrence.Id == final.OccurrenceId).Completion!.Id;
+        var save = new QuestCommand(Guid.NewGuid(), QuestActions.SaveAvatar, AvatarCode: outfitAndRoom);
         Assert.Equal(save.AvatarCode, (await Command(client, save)).Profile.AvatarCode);
-        var undone = await Command(client, new(Guid.NewGuid(), QuestActions.Undo, id, CompletionId: completion));
-        Assert.Equal("v2:4:7:6:0:0:6:1", undone.Profile.AvatarCode);
+        var undone = await Command(client, new(Guid.NewGuid(), QuestActions.Undo, final.OccurrenceId, CompletionId: completion));
+        Assert.Equal(decor, undone.Profile.AvatarCode);
         Assert.Equal(save.AvatarCode, (await Command(client, save)).Profile.AvatarCode);
-        Assert.Equal("v2:4:7:6:0:0:6:1", (await Read(client)).Profile.AvatarCode);
-        var recompleted = await Command(client, new(Guid.NewGuid(), QuestActions.Complete, id));
-        Assert.Contains(recompleted.Entitlements, reward => reward.Id == "PQ-CAT-A01" && reward.Earned);
-        Assert.Equal("v2:4:7:6:0:0:6:1", recompleted.Profile.AvatarCode);
+        Assert.Equal(decor, (await Read(client)).Profile.AvatarCode);
+        var recompleted = await Command(client, final with { OperationId = Guid.NewGuid() });
+        Assert.Contains(recompleted.Entitlements, reward => reward.Id == "PQ-RANK-E" && reward.Earned);
+        Assert.Equal(decor, recompleted.Profile.AvatarCode);
+        Assert.DoesNotContain((await Command(client, first)).Entitlements, reward => reward.Id == "PQ-RANK-E");
     }
 }

@@ -2,7 +2,7 @@ import { QuestFilterToggle } from "./quest-filter-toggle";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import type { Catalog } from "../../shared/contracts";
-import { Button, Input, Label, styles } from "../../shared/ui";
+import { Button, Input, Label, useAppTheme } from "../../shared/ui";
 import { QuestCategoryEffortFilters } from "./quest-category-effort-filters";
 import type { QuestSearchFilters } from "./quest-search";
 
@@ -21,6 +21,7 @@ export function QuestHistoryControls({
   onChange(change: Partial<QuestSearchFilters>): void;
   onReset(): void;
 }>) {
+  const { styles } = useAppTheme();
   const [expanded, setExpanded] = useState(false);
   const count = Number(!!filters.categoryId) + Number(!!filters.effort);
   const summary = [

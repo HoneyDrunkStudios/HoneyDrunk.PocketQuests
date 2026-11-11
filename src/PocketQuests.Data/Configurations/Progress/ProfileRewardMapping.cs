@@ -22,10 +22,10 @@ public sealed class ProfileRewardMapping : IEntityTypeConfiguration<ProfileRewar
         });
         builder.HasKey(row => row.Id).HasName("PK_ProfileReward").IsClustered();
         builder.HasAlternateKey(row => new { row.Id, row.KindCode }).HasName("UQ_ProfileReward_Id_KindCode");
-        builder.Property(row => row.Id).HasComment("Stable reward code, including existing A01/A02/B01/B02/F01/F02 IDs.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(40).IsUnicode(false).ValueGeneratedNever();
+        builder.Property(row => row.Id).HasComment("Stable code for a quest achievement, badge, frame, level milestone or rank milestone.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(40).IsUnicode(false).ValueGeneratedNever();
         builder.Property(row => row.KindCode).HasComment("Achievement, Badge or Frame; only Badge and Frame are selectable.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(12).IsUnicode(false);
         builder.Property(row => row.Name).HasComment("Public display name of this reward.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(120).IsUnicode(true);
-        builder.Property(row => row.RequiredCount).HasComment("Nonnegative qualifying count in the versioned reward rule.");
+        builder.Property(row => row.RequiredCount).HasComment("Required qualifying completions or overall level. Zero for rank-only milestones.");
         builder.Property(row => row.RequiredRank).HasColumnType("char(1)").HasComment("Minimum global rank in the versioned reward rule.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(1).IsUnicode(false);
         builder.Property(row => row.RulesetVersion).HasComment("Reviewed catalog/ruleset version that defines the qualifying predicate.").UseCollation("Latin1_General_100_BIN2").HasMaxLength(32).IsUnicode(false);
         builder.Property(row => row.CreatedAt).HasComment("Server UTC insertion time; not the effective time of a delayed offline action.").HasPrecision(7).HasDefaultValueSql("TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00')");

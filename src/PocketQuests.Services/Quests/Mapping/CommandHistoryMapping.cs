@@ -32,7 +32,7 @@ internal static class CommandHistoryMapping
         ReconciliationLimit = change.ReconciliationLimit,
         ActionReconciliationLimit = change.ActionReconciliationLimit,
         ActionCode = change.Command.Action,
-        RulesetVersion = "1.0",
+        RulesetVersion = QuestReplay.CurrentRuleset,
         TimeZoneBefore = change.TimeZoneBefore,
         ReconciledAt = change.ReconciledAt,
         RecordedAt = change.RecordedAt,

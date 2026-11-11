@@ -17,10 +17,16 @@ Module._load = function (name, ...rest) {
     const element = (type, props) => ({ type, props });
     return { jsx: element, jsxs: element };
   }
+  if (name === "../features/profile/appearance-autosave")
+    return {
+      AppearanceAutosaveProvider: "AppearanceAutosaveProvider",
+      AppearanceSaveNotice: "AppearanceSaveNotice",
+    };
+  if (name === "../features/profile/app-tour") return { AppTour: "AppTour" };
   if (name === "expo-router") return { Stack };
   if (name === "expo-font") return { useFonts: () => [true, null] };
   if (name === "@expo/vector-icons/Ionicons") return { font: {} };
-  if (name.endsWith("JournalSerifBold.ttf")) return "font";
+  if (name.endsWith(".ttf")) return "font";
   if (name === "expo-status-bar") return { StatusBar: "StatusBar" };
   if (name === "../session/session")
     return {
@@ -30,7 +36,14 @@ Module._load = function (name, ...rest) {
     };
   if (name === "@honeydrunk/ui-native") return { ThemeProvider: "Theme" };
   if (name === "../shared/theme") return { pocketQuestsTheme: {} };
-  if (name === "../shared/ui") return { colors: {} };
+  if (name === "../shared/ui")
+    return (() => {
+      const value = { colors: {} };
+      return {
+        ...value,
+        useAppTheme: () => ({ ...value, theme: {}, isDark: false }),
+      };
+    })();
   if (name === "../shared/error-boundary") return { AppErrorBoundary: null };
   if (name === "../features/progression/completion-overlay")
     return { CompletionOverlay: "CompletionOverlay" };
@@ -52,7 +65,7 @@ function routePolicy(
   const provider = Layout().props.children.find(
     (child) => child.type === "SessionProvider",
   );
-  const navigator = provider.props.children[0];
+  const navigator = provider.props.children.props.children[0];
   const stack = navigator.type(navigator.props);
   if (stack === null) return null;
   return new Map(
@@ -99,13 +112,14 @@ test("confirmed onboarding completion opens the app and removes onboarding and c
   const policy = routePolicy(true, true);
   for (const route of ["index", "callback"])
     assert.equal(destination(policy, route), "(tabs)");
-  assert.equal(destination(policy, "onboarding"), "(tabs)/board");
+  assert.equal(destination(policy, "onboarding"), "(tabs)");
   assert.equal(policy.get("quest/[id]").allowed, true);
+  assert.equal(policy.get("explore").allowed, true);
 });
 
 test("sign-out returns protected app and onboarding links to welcome while allowing OAuth callback", () => {
   const policy = routePolicy(false, false);
-  for (const route of ["(tabs)", "quest/[id]", "onboarding"])
+  for (const route of ["(tabs)", "quest/[id]", "explore", "onboarding"])
     assert.equal(destination(policy, route), "index");
   assert.equal(policy.get("callback").allowed, true);
 });

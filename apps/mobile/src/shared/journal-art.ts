@@ -1,5 +1,6 @@
 /** Static assets are bundled for offline use; decorative art never carries UI text. */
 export const journalArt = {
+  fieldPath: require("../../assets/journal/field-journal-path-v1.png"),
   landscape: require("../../assets/journal/landscape.png"),
   traveler: require("../../assets/journal/traveler.png"),
   compass: require("../../assets/journal/compass.png"),

@@ -1,3 +1,5 @@
+import { playfulArt } from "./playful-art";
+import { AppBrand } from "./app-brand";
 import type { ReactNode } from "react";
 import {
   Image,
@@ -8,17 +10,17 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { colors, styles } from "./ui";
+import { useAppTheme } from "./ui";
 
 /** Keep the full-screen illustration outside the scroll owner and its padding. */
 export function JournalEntry({ children }: Readonly<{ children: ReactNode }>) {
+  const { colors, styles } = useAppTheme();
   const insets = useSafeAreaInsets();
   return (
     <View style={{ flex: 1, backgroundColor: colors.paper }}>
       <View pointerEvents="none" style={{ position: "absolute", inset: 0 }}>
         <Image
-          source={require("../../assets/journal/signin-background.jpg")}
+          source={playfulArt.islands}
           resizeMode="cover"
           style={{ width: "100%", height: "100%" }}
           accessible={false}
@@ -26,7 +28,7 @@ export function JournalEntry({ children }: Readonly<{ children: ReactNode }>) {
       </View>
       <View
         pointerEvents="none"
-        style={{ position: "absolute", inset: 0, backgroundColor: "#091A2933" }}
+        style={{ position: "absolute", inset: 0, backgroundColor: "#17162C33" }}
       />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -56,25 +58,14 @@ export function JournalEntry({ children }: Readonly<{ children: ReactNode }>) {
               maxWidth: 420,
               padding: 24,
               gap: 20,
-              backgroundColor: "#091A29F0",
+              backgroundColor: colors.paper,
               borderColor: colors.gold,
               borderWidth: 1,
               borderRadius: 24,
             }}
           >
             <View style={{ alignItems: "center", gap: 12 }}>
-              <Ionicons
-                name="compass-outline"
-                size={44}
-                color={colors.gold}
-                accessible={false}
-              />
-              <Text
-                accessibilityRole="header"
-                style={[styles.title, { fontSize: 28, textAlign: "center" }]}
-              >
-                Pocket Quests
-              </Text>
+              <AppBrand />
               <Text
                 style={[
                   styles.muted,

@@ -9,8 +9,16 @@ export type AvatarLook = {
   accessory: number;
   face: number;
   build: number;
+  bodyType: number;
   extra: number;
   scarfColor: number;
+  pose: number;
+  backdrop: number;
+  room: number;
+  upperLeft: number;
+  upperRight: number;
+  lowerLeft: number;
+  lowerRight: number;
 };
 export const skinTones = [
   "#F5D5BC",
@@ -59,7 +67,9 @@ export const faceNames = [
   "Heart",
   "Oval",
 ];
-export const buildNames = ["Balanced", "Broad", "Full"];
+export const buildNames = ["Balanced", "Broad", "Full", "Petite"];
+export const bodyTypeNames = ["Male", "Female"];
+export const petiteBuild = 3;
 export const extraAccessories = [
   "No extra accessory",
   "Add round glasses",
@@ -87,9 +97,9 @@ export const scarfColors = [
 ];
 export const outfits = [
   { name: "Trail tunic", rewardId: null },
-  { name: "Maker’s vest", rewardId: "PQ-CAT-A01" },
-  { name: "Cozy knit", rewardId: "PQ-CAT-A02" },
-  { name: "Scholar’s coat", rewardId: "PQ-CAT-F01" },
+  { name: "Maker’s vest", rewardId: "PQ-RANK-E" },
+  { name: "Cozy knit", rewardId: "PQ-RANK-D" },
+  { name: "Scholar’s coat", rewardId: "PQ-RANK-C" },
   { name: "Field shirt", rewardId: null },
   { name: "City jacket", rewardId: null },
 ];
@@ -102,12 +112,41 @@ export const accessories = [
   { name: "Linen scarf", rewardId: null },
 ];
 
+export const frontPose = 2;
+export const poses = [
+  { name: "At ease", rewardId: null },
+  { name: "Relaxed stance", rewardId: "PQ-CAT-B01" },
+  { name: "Front-facing", rewardId: null },
+];
+export const backdrops = [
+  { name: "Floating islands", rewardId: null },
+  { name: "Golden horizon", rewardId: "PQ-CAT-A01" },
+  { name: "Moonlit sky", rewardId: "PQ-CAT-F02" },
+];
+
 export function decodeAvatar(code: unknown): AvatarLook {
+  const compact =
+    typeof code === "string" &&
+    ((code.length === 20 &&
+      /^v5:[0-5][0-7][0-7][0-5][0-5][0-6][0-2][0-2][0-7][0-1][0-2]:[0-2][0-6][0-6][0-6][0-6]$/.test(
+        code,
+      )) ||
+      (code.length === 21 &&
+        /^v6:[0-5][0-7][0-7][0-5][0-5][0-6][0-3][0-2][0-7][0-2][0-2][0-1]:[0-2][0-6][0-6][0-6][0-6]$/.test(
+          code,
+        )))
+      ? code.split(":")
+      : null;
+  const layout = compact ? compact[2].split("").map(Number) : [0, 0, 0, 0, 0];
   const value =
     typeof code === "string" &&
     ((code.length === 12 && /^v1:[0-5]:[0-3]:[0-3]:[0-3]:[0-3]$/.test(code)) ||
       (code.length === 16 &&
         /^v2:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]$/.test(code)) ||
+      (code.length === 24 &&
+        /^v4:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]:[0-2]:[0-7]:[0-1]:[0-2]$/.test(
+          code,
+        )) ||
       (code.length === 20 &&
         /^v3:[0-5]:[0-7]:[0-7]:[0-5]:[0-5]:[0-6]:[0-2]:[0-2]:[0-7]$/.test(
           code,
@@ -115,7 +154,6 @@ export function decodeAvatar(code: unknown): AvatarLook {
       ? code
       : starterAvatar;
   const [
-    ,
     skin,
     hairColor,
     hairStyle,
@@ -125,7 +163,10 @@ export function decodeAvatar(code: unknown): AvatarLook {
     build = 0,
     extra = 0,
     scarfColor = 0,
-  ] = value.split(":").map(Number);
+    pose = 0,
+    backdrop = 0,
+    bodyType = 0,
+  ] = (compact ? compact[1].split("") : value.split(":").slice(1)).map(Number);
   return {
     skin,
     hairColor,
@@ -134,12 +175,58 @@ export function decodeAvatar(code: unknown): AvatarLook {
     accessory,
     face,
     build,
+    bodyType,
     extra,
     scarfColor,
+    pose,
+    backdrop,
+    room: layout[0],
+    upperLeft: layout[1],
+    upperRight: layout[2],
+    lowerLeft: layout[3],
+    lowerRight: layout[4],
   };
 }
 export function encodeAvatar(look: AvatarLook) {
+  const needsExpandedCode =
+    look.bodyType === 1 ||
+    look.build === petiteBuild ||
+    look.pose === frontPose;
+  if (
+    needsExpandedCode ||
+    look.room ||
+    look.upperLeft ||
+    look.upperRight ||
+    look.lowerLeft ||
+    look.lowerRight
+  ) {
+    const core = [
+      look.skin,
+      look.hairColor,
+      look.hairStyle,
+      look.outfit,
+      look.accessory,
+      look.face,
+      look.build,
+      look.extra,
+      look.scarfColor,
+      look.pose,
+      look.backdrop,
+    ].join("");
+    const layout = [
+      look.room,
+      look.upperLeft,
+      look.upperRight,
+      look.lowerLeft,
+      look.lowerRight,
+    ].join("");
+    return needsExpandedCode
+      ? `v6:${core}${look.bodyType}:${layout}`
+      : `v5:${core}:${layout}`;
+  }
   const choices = `${look.skin}:${look.hairColor}:${look.hairStyle}:${look.outfit}:${look.accessory}`;
+  if (look.pose || look.backdrop)
+    return `v4:${choices}:${look.face}:${look.build}:${look.extra}:${look.scarfColor}:${look.pose}:${look.backdrop}`;
   if (look.extra || look.scarfColor)
     return `v3:${choices}:${look.face}:${look.build}:${look.extra}:${look.scarfColor}`;
   return look.face === 0 &&
@@ -153,17 +240,18 @@ export function encodeAvatar(look: AvatarLook) {
 }
 
 export const starterLooks = [
-  { name: "Quiet reader", code: "v2:1:1:0:4:4:0:0" },
-  { name: "City roamer", code: "v2:4:0:3:5:4:1:1" },
-  { name: "Garden day", code: "v2:3:3:6:4:5:2:2" },
-  { name: "Night maker", code: "v2:5:6:5:5:0:0:2" },
-  { name: "Trail walker", code: "v2:0:4:4:0:5:1:0" },
-  { name: "Fresh start", code: "v2:2:2:7:4:0:2:1" },
-  { name: "Morning stroll", code: "v2:1:5:4:4:0:3:0" },
-  { name: "Workshop day", code: "v2:2:0:3:5:4:4:1" },
-  { name: "Open road", code: "v2:3:1:7:0:5:5:2" },
-  { name: "Evening pages", code: "v2:4:5:2:5:4:6:0" },
+  { name: "Trail tunic", code: "v1:2:0:0:0:0" },
+  { name: "Field shirt", code: "v2:2:0:0:4:0:0:0" },
+  { name: "City jacket", code: "v2:2:0:0:5:0:0:0" },
 ];
+
+/** Clothing previews preserve the identity the player just chose. */
+export function outfitPreview(current: string, preset: string) {
+  return encodeAvatar({
+    ...decodeAvatar(current),
+    outfit: decodeAvatar(preset).outfit,
+  });
+}
 
 /** A local preview only; randomness never grants or saves an entitlement. */
 export function randomAvatar(
@@ -187,8 +275,16 @@ export function randomAvatar(
     accessory: extras[pick(extras.length)],
     face: pick(faceNames.length),
     build: pick(buildNames.length),
+    bodyType: pick(bodyTypeNames.length),
     extra: 0,
     scarfColor: 0,
+    pose: 0,
+    backdrop: 0,
+    room: 0,
+    upperLeft: 0,
+    upperRight: 0,
+    lowerLeft: 0,
+    lowerRight: 0,
   });
 }
 export function availableCosmetic(
@@ -200,16 +296,56 @@ export function availableCosmetic(
     rewards.some((reward) => reward.id === rewardId && reward.earned)
   );
 }
+export const roomStyles = [
+  { name: "Traveler's Loft", rewardId: null },
+  {
+    name: "Sunlit Workshop",
+    rewardId: "PQ-RANK-E",
+  },
+  {
+    name: "Moonlit Study",
+    rewardId: "PQ-RANK-D",
+  },
+];
+export const roomDecorations = [
+  { name: "Empty display", rewardId: null },
+  { name: "Maker's Crest", rewardId: "PQ-LEVEL-02" },
+  { name: "Restful Keepsake", rewardId: "PQ-LEVEL-03" },
+  { name: "Scholar's Books", rewardId: "PQ-LEVEL-04" },
+  { name: "Explorer's Compass", rewardId: "PQ-LEVEL-05" },
+  { name: "Everyday Toolkit", rewardId: "PQ-LEVEL-06" },
+  { name: "Horizon Lantern", rewardId: "PQ-LEVEL-07" },
+];
+export const roomSlots = [
+  "upperLeft",
+  "upperRight",
+  "lowerLeft",
+  "lowerRight",
+] as const;
+export type RoomSlot = (typeof roomSlots)[number];
 export function canWear(look: AvatarLook, rewards: State["entitlements"]) {
   return (
     availableCosmetic(outfits[look.outfit].rewardId, rewards) &&
-    availableCosmetic(accessories[look.accessory].rewardId, rewards)
+    availableCosmetic(accessories[look.accessory].rewardId, rewards) &&
+    availableCosmetic(poses[look.pose].rewardId, rewards) &&
+    availableCosmetic(backdrops[look.backdrop].rewardId, rewards) &&
+    availableCosmetic(roomStyles[look.room].rewardId, rewards) &&
+    roomSlots.every((slot) =>
+      availableCosmetic(roomDecorations[look[slot]].rewardId, rewards),
+    )
   );
 }
 
-/** Cosmetics share the existing reward milestone, including its current-rank gate. */
+/** Names of cosmetics linked to a server-confirmed reward milestone. */
 export function rewardCosmetics(rewardId: string) {
-  return [...outfits, ...accessories]
+  return [
+    ...outfits,
+    ...accessories,
+    ...poses,
+    ...backdrops,
+    ...roomStyles,
+    ...roomDecorations.slice(1),
+  ]
     .filter((item) => item.rewardId === rewardId)
     .map((item) => item.name);
 }

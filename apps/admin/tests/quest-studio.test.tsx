@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -305,7 +306,9 @@ async function savedQuest() {
   await openStudio();
   enter("Walk from the workshop");
   await preview();
-  fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+  });
   await screen.findByText("Draft 1 saved. It is not published to players.");
 }
 

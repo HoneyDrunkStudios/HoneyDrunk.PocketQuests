@@ -1,5 +1,5 @@
 import "./artwork-fixture.mjs";
-import test from "node:test";
+import test, { mock } from "node:test";
 import assert from "node:assert/strict";
 import Module, { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
@@ -15,6 +15,7 @@ const { act } = React;
 const { createRoot } = require("react-dom/client");
 const nativeWeb = require("react-native-web");
 const ts = require("typescript");
+mock.timers.enable({ apis: ["setTimeout"] });
 let session, sent;
 const load = Module._load;
 Module._load = function (name, ...rest) {
@@ -44,6 +45,10 @@ for (const extension of [".ts", ".tsx"])
       }).outputText,
       file,
     );
+const {
+  AppearanceAutosaveProvider,
+  AppearanceSaveNotice,
+} = require("../../src/features/profile/appearance-autosave.tsx");
 const { ThemeProvider } = require("@honeydrunk/ui-native");
 const { pocketQuestsTheme } = require("../../src/shared/theme.ts");
 const {
@@ -61,12 +66,15 @@ const {
 function reset() {
   sent = [];
   session = {
+    signedIn: true,
+    appearanceOwnerId: "traveler",
     busy: false,
     pending: false,
     offline: false,
     queuedCount: 0,
     state: {
       profile: {
+        avatarCode: "v1:2:0:0:0:0",
         onboardingComplete: true,
         interests: ["work"],
         assessments: {},
@@ -105,7 +113,12 @@ async function mount(Component) {
           React.createElement(
             ThemeProvider,
             { theme: pocketQuestsTheme },
-            React.createElement(Component),
+            React.createElement(
+              AppearanceAutosaveProvider,
+              null,
+              React.createElement(Component),
+              React.createElement(AppearanceSaveNotice),
+            ),
           ),
         ),
       );
@@ -119,6 +132,10 @@ async function mount(Component) {
       const button = view.button(name);
       assert.ok(button, name);
       await act(async () => button.click());
+    },
+    async flush() {
+      await act(async () => mock.timers.tick(700));
+      await view.render();
     },
     async close() {
       await act(async () => root.unmount());
@@ -251,7 +268,7 @@ test("interest drafts survive failure and refresh, and reset does not send a com
   }
 });
 
-test("badge and frame selections preview locally, saving only the changed field", async () => {
+test("badge and frame taps save only changed fields and hide unearned rewards", async () => {
   reset();
   session.command = async (input) => {
     sent.push(input);
@@ -265,21 +282,19 @@ test("badge and frame selections preview locally, saving only the changed field"
     await view.click("Choose badge: Reader");
     await view.click("Choose frame: Gold");
     assert.deepEqual(sent, []);
-    assert.match(view.element.textContent, /Preview: Reader/);
+    assert.ok(view.button("Selected badge: Reader"));
     assert.doesNotMatch(view.element.textContent, /Locked reward/);
-    await view.click("Save badge");
-    assert.deepEqual(sent, [{ action: "select-badge", rewardId: "badge-b" }]);
-    assert.equal(
-      view.button("Save badge").getAttribute("aria-disabled"),
-      "true",
-    );
-    await view.click("Save frame");
-    assert.deepEqual(sent[1], { action: "select-frame", rewardId: "frame-a" });
+    assert.equal(view.button("Save badge"), undefined);
+    await view.flush();
+    await view.flush();
+    assert.deepEqual(sent, [
+      { action: "select-badge", rewardId: "badge-b" },
+      { action: "select-frame", rewardId: "frame-a" },
+    ]);
     await view.click("No badge");
     await view.click("Default frame");
-    assert.equal(sent.length, 2);
-    await view.click("Save badge");
-    await view.click("Save frame");
+    await view.flush();
+    await view.flush();
     assert.deepEqual(sent.slice(2), [
       { action: "select-badge", rewardId: null },
       { action: "select-frame", rewardId: null },
@@ -288,8 +303,7 @@ test("badge and frame selections preview locally, saving only the changed field"
     await view.close();
   }
 });
-
-test("failed appearance saves retain the preview, guard double clicks and allow local reset", async () => {
+test("an unacknowledged appearance save preserves the choice and offers a quiet retry", async () => {
   reset();
   let finish;
   session.command = (input) => {
@@ -299,16 +313,14 @@ test("failed appearance saves retain the preview, guard double clicks and allow 
   const view = await mount(AppearanceEditor);
   try {
     await view.click("Choose badge: Explorer");
-    const save = view.button("Save badge");
-    await act(async () => {
-      save.click();
-      save.click();
-    });
+    await view.flush();
+    await view.flush();
     assert.equal(sent.length, 1);
     await act(async () => finish());
-    assert.match(view.element.textContent, /Preview: Explorer/);
-    await view.click("Reset badge choice");
-    assert.match(view.element.textContent, /Selected: No badge/);
+    assert.ok(view.button("Selected badge: Explorer"));
+    assert.match(view.element.textContent, /have not saved/);
+    await view.click("No badge");
+    await view.flush();
     assert.equal(sent.length, 1);
   } finally {
     await view.close();
@@ -354,13 +366,12 @@ test("newer local preferences survive an older queued save confirming after they
     {
       Component: AppearanceEditor,
       choose: "Choose badge: Explorer",
-      save: "Save badge",
+      save: null,
       edit: "No badge",
       confirm: () => {
         session.state.profile.badgeId = "badge-a";
       },
-      check: (view) =>
-        assert.match(view.element.textContent, /Preview: No badge/),
+      check: (view) => assert.ok(view.button("No badge")),
     },
     {
       Component: ProfileEditor,
@@ -380,7 +391,8 @@ test("newer local preferences survive an older queued save confirming after they
     const view = await mount(scenario.Component);
     try {
       await view.click(scenario.choose);
-      await view.click(scenario.save);
+      if (scenario.save) await view.click(scenario.save);
+      else await view.flush();
       session.queuedCount = 1;
       session.pending = true;
       await view.render();

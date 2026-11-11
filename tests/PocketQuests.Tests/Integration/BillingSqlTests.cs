@@ -10,7 +10,6 @@ using PocketQuests.Domain.Commands;
 using PocketQuests.Domain.Models.Progress;
 using PocketQuests.Domain.Models.Quests;
 using System.Net;
-using System.Net.Http.Json;
 
 namespace PocketQuests.Tests.Integration;
 

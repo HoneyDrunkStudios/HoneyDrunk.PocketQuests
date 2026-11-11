@@ -1,22 +1,52 @@
 import { foundation, type Theme } from "@honeydrunk/ui-tokens";
-/** Illustrated adventure journal; generic packages own no branding. */
+/** Playful Quest Log: indigo ink, violet actions, sky-blue surfaces and honey rewards. */
 export const pocketQuestsTheme: Theme = {
   ...foundation,
   colors: {
-    text: "#FFF5E9",
-    muted: "#B4C5E5",
-    background: "#091A29",
-    surface: "#102232",
-    primary: "#F7BB5D",
-    onPrimary: "#091A29",
-    border: "#71829B",
-    accent: "#F7BB5D",
-    danger: "#FF9CAD",
-    input: "#091A29",
-    progressTrack: "#091A29",
+    text: "#242153",
+    muted: "#5D5D88",
+    background: "#FAFAFF",
+    surface: "#F0EEFC",
+    primary: "#6536BB",
+    onPrimary: "#FFFFFF",
+    border: "#8580A6",
+    accent: "#985900",
+    danger: "#AD254C",
+    input: "#FFFFFF",
+    progressTrack: "#DDDFF1",
   },
-  typography: { ...foundation.typography, titleSize: 32, titleWeight: "800" },
-  shape: { ...foundation.shape, panelRadius: 14, controlRadius: 10 },
+  typography: {
+    ...foundation.typography,
+    fontFamily: "QuestSans",
+    titleSize: 32,
+    titleWeight: "800",
+  },
+  shape: { ...foundation.shape, panelRadius: 18, controlRadius: 14 },
   spacing: { ...foundation.spacing, panel: 16 },
-  controls: { ...foundation.controls, progressHeight: 12 },
+  controls: { ...foundation.controls, progressHeight: 8 },
 };
+export const pocketQuestsDarkTheme: Theme = {
+  ...pocketQuestsTheme,
+  colors: {
+    text: "#F1EEFF",
+    muted: "#B9B4D4",
+    background: "#17162C",
+    surface: "#25233F",
+    primary: "#C8AEFF",
+    onPrimary: "#24124B",
+    border: "#8780AC",
+    accent: "#FFC778",
+    danger: "#FF9BB5",
+    input: "#1D1C35",
+    progressTrack: "#423B63",
+  },
+};
+export type DisplayMode = "light" | "dark" | "system";
+export function resolveDisplayTheme(
+  mode: DisplayMode,
+  system: string | null | undefined,
+) {
+  return mode === "dark" || (mode === "system" && system === "dark")
+    ? pocketQuestsDarkTheme
+    : pocketQuestsTheme;
+}

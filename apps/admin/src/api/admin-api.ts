@@ -135,13 +135,18 @@ export class AdminApi {
     before: number | null,
     signal: AbortSignal,
   ): Promise<QuestHistoryPage> {
-    const page = decodeResponse(
-      "POST /api/admin/quests/history",
-      await request("quests/history", this.session.csrfToken, signal, {
-        id,
-        before,
-      }),
-    );
+    const value = await request("quests/history", this.session.csrfToken, signal, {
+      id,
+      before,
+    });
+    // Preserve the older cursor representation before checking the current schema.
+    const normalized =
+      isRecord(value) &&
+      typeof value.nextBefore === "string" &&
+      /^-?(?:0|[1-9]\d*)$/.test(value.nextBefore)
+        ? { ...value, nextBefore: Number(value.nextBefore) }
+        : value;
+    const page = decodeResponse("POST /api/admin/quests/history", normalized);
     const code = "PQ-ADM-" + id.replaceAll("-", "");
     const nextBefore =
       page.nextBefore === null ? null : Number(page.nextBefore);

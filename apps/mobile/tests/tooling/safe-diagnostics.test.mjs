@@ -85,6 +85,34 @@ test("every scenario checkpoint is wired into the existing journey", () => {
   const actual = [
     ...journey.matchAll(/diagnostics\.checkpoint\("([a-z-]+)"\)/g),
   ].map((match) => match[1]);
-  assert.deepEqual(actual, checkpoints);
+  const sceneFailures = checkpoints.filter((checkpoint) =>
+    checkpoint.startsWith("character-"),
+  );
+  assert.deepEqual(
+    actual,
+    checkpoints.filter((checkpoint) => !sceneFailures.includes(checkpoint)),
+  );
+  assert.deepEqual(
+    [...new Set(
+      [...journey.matchAll(/return "(character-[a-z]+)"/g)]
+        .map((match) => match[1]),
+    )],
+    sceneFailures,
+  );
   assert.match(journey, /catch \(error\) \{\s+diagnostics\.fail\(error\);/);
+});
+
+test("completion recovery assertions follow the committed and aborted response", () => {
+  const journey = readFileSync(
+    new URL("../../e2e/journey.mjs", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    journey,
+    /if \(command\.action === "complete" && loseCompletionResponse\) \{\s+loseCompletionResponse = false;\s+const committed = await route\.fetch\(\);\s+expect\(committed\.ok\(\)\)\.toBe\(true\);\s+await route\.abort\("failed"\);[^\n]*\n\s+completionResponseAborted = true;/,
+  );
+  assert.match(
+    journey,
+    /diagnostics\.checkpoint\("completion-response-loss"\);[\s\S]*?\.click\(\{ clickCount: 2 \}\);[\s\S]*?\.poll\(\(\) => completionResponseAborted, \{ timeout: 15000 \}\)\s+\.toBe\(true\);\s+diagnostics\.checkpoint\("completion-offline-recovery"\);\s+await expect\(visibleText\(\/You’re offline\.\*saved progress\/\)\)\.toBeVisible\(\);/,
+  );
 });

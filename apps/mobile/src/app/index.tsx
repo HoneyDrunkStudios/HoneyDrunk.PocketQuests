@@ -17,7 +17,7 @@ import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { useSession } from "../session/session";
 import { RecoveryPanel } from "../features/profile/account-settings";
-import { Button, Label, styles } from "../shared/ui";
+import { Button, Label, useAppTheme } from "../shared/ui";
 WebBrowser.maybeCompleteAuthSession();
 function SignIn({ config, discovery }: Readonly<ProviderSetup>) {
   const { connect, busy } = useSession();
@@ -85,6 +85,7 @@ function SignIn({ config, discovery }: Readonly<ProviderSetup>) {
   );
 }
 function ProviderWelcome() {
+  const { styles } = useAppTheme();
   const { signedIn, busy } = useSession();
   const { setup, error, retry } = useProviderSetup();
   // The root protected stack selects onboarding or the app after sign-in.

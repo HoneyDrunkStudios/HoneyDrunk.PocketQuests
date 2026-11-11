@@ -1,10 +1,11 @@
 import { Redirect, Tabs } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import type { ColorValue } from "react-native";
+import { useWindowDimensions, type ColorValue } from "react-native";
 import { useSession } from "../../session/session";
-import { colors } from "../../shared/ui";
+import { useAppTheme } from "../../shared/ui";
 type TabIconProps = Readonly<{ color: ColorValue; focused: boolean }>;
 function HomeIcon({ color, focused }: TabIconProps) {
+  const { colors } = useAppTheme();
   return (
     <Ionicons
       name={focused ? "home" : "home-outline"}
@@ -16,9 +17,10 @@ function HomeIcon({ color, focused }: TabIconProps) {
   );
 }
 function QuestsIcon({ color }: TabIconProps) {
+  const { colors } = useAppTheme();
   return (
     <Ionicons
-      name="compass-outline"
+      name="checkbox-outline"
       color={typeof color === "string" ? color : colors.muted}
       size={28}
       accessible={false}
@@ -27,6 +29,7 @@ function QuestsIcon({ color }: TabIconProps) {
   );
 }
 function CalendarIcon({ color }: TabIconProps) {
+  const { colors } = useAppTheme();
   return (
     <Ionicons
       name="calendar-outline"
@@ -38,6 +41,7 @@ function CalendarIcon({ color }: TabIconProps) {
   );
 }
 function ProgressIcon({ color }: TabIconProps) {
+  const { colors } = useAppTheme();
   return (
     <Ionicons
       name="stats-chart-outline"
@@ -48,10 +52,11 @@ function ProgressIcon({ color }: TabIconProps) {
     />
   );
 }
-function ExploreIcon({ color }: TabIconProps) {
+function RoomIcon({ color }: TabIconProps) {
+  const { colors } = useAppTheme();
   return (
     <Ionicons
-      name="map-outline"
+      name="albums-outline"
       color={typeof color === "string" ? color : colors.muted}
       size={26}
       accessible={false}
@@ -61,13 +66,16 @@ function ExploreIcon({ color }: TabIconProps) {
 }
 export const unstable_settings = { anchor: "index" };
 export default function Layout() {
+  const { colors } = useAppTheme();
   const { signedIn } = useSession();
+  const { width } = useWindowDimensions();
   if (!signedIn) return <Redirect href="/" />;
   return (
     <Tabs
       backBehavior="initialRoute"
       screenOptions={{
         tabBarActiveTintColor: colors.green,
+        tabBarActiveBackgroundColor: colors.sky,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
           backgroundColor: colors.paper,
@@ -78,8 +86,17 @@ export default function Layout() {
         headerStyle: { backgroundColor: colors.paper },
         headerTintColor: colors.ink,
         tabBarLabelPosition: "below-icon",
-        tabBarLabelStyle: { fontSize: 12 },
-        tabBarItemStyle: { minHeight: 48 },
+        tabBarLabelStyle: {
+          fontSize: width < 360 ? 11 : 12,
+          fontFamily: "QuestSansBold",
+        },
+        tabBarItemStyle: {
+          minHeight: 48,
+          borderRadius: 24,
+          overflow: "hidden",
+          marginHorizontal: width < 360 ? 1 : 4,
+          marginBottom: 6,
+        },
       }}
     >
       <Tabs.Screen
@@ -109,11 +126,12 @@ export default function Layout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="room"
         options={{
-          title: "Explore",
-          tabBarAccessibilityLabel: "Explore",
-          tabBarIcon: ExploreIcon,
+          title: "Room",
+          headerShown: false,
+          tabBarAccessibilityLabel: "Room",
+          tabBarIcon: RoomIcon,
         }}
       />
       <Tabs.Screen

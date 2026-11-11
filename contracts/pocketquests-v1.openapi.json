@@ -42,6 +42,9 @@
               }
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "500": {
             "description": "Internal Server Error",
             "content": {
@@ -61,9 +64,6 @@
                 }
               }
             }
-          },
-          "404": {
-            "description": "Not Found"
           },
           "401": {
             "description": "Authentication required"
@@ -167,8 +167,8 @@
               }
             }
           },
-          "500": {
-            "description": "Internal Server Error",
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/problem\u002Bjson": {
                 "schema": {
@@ -177,8 +177,8 @@
               }
             }
           },
-          "409": {
-            "description": "Conflict",
+          "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/problem\u002Bjson": {
                 "schema": {
@@ -238,6 +238,9 @@
               }
             }
           },
+          "404": {
+            "description": "Not Found"
+          },
           "500": {
             "description": "Internal Server Error",
             "content": {
@@ -247,9 +250,6 @@
                 }
               }
             }
-          },
-          "404": {
-            "description": "Not Found"
           },
           "503": {
             "description": "Service Unavailable",
@@ -386,9 +386,6 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request"
-          },
           "200": {
             "description": "OK",
             "content": {
@@ -404,6 +401,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad Request"
           },
           "404": {
             "description": "Not Found"
@@ -526,6 +526,16 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlannedMoment"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Bad Request",
             "content": {
@@ -542,16 +552,6 @@
               "application/problem\u002Bjson": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlannedMoment"
                 }
               }
             }
@@ -587,26 +587,6 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem\u002Bjson": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/problem\u002Bjson": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "200": {
             "description": "OK",
             "content": {
@@ -617,8 +597,28 @@
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "503": {
             "description": "Service Unavailable",
@@ -2188,41 +2188,13 @@
             "nullable": true
           },
           "sequence": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "enum": [
-                  null
-                ],
-                "nullable": true
-              }
-            ],
+            "type": "integer",
             "description": "The event sequence number.",
             "format": "int32",
             "nullable": true
           },
           "scheduleVersion": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "enum": [
-                  null
-                ],
-                "nullable": true
-              }
-            ],
+            "type": "integer",
             "description": "The version of the recurrence schedule.",
             "format": "int32",
             "nullable": true
@@ -2244,21 +2216,7 @@
             "nullable": true
           },
           "lockedLoss": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "enum": [
-                  null
-                ],
-                "nullable": true
-              }
-            ],
+            "type": "integer",
             "description": "The loss retained in the accepted terms.",
             "format": "int32",
             "nullable": true
@@ -3991,21 +3949,7 @@
             "description": "The newest-first bounded page of retained revisions."
           },
           "nextBefore": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "enum": [
-                  null
-                ],
-                "nullable": true
-              }
-            ],
+            "type": "integer",
             "description": "The exclusive cursor for the next page, when present.",
             "format": "int32",
             "nullable": true
@@ -4174,10 +4118,10 @@
   },
   "tags": [
     {
-      "name": "PocketQuests.Api"
+      "name": "PocketQuests.Admin"
     },
     {
-      "name": "PocketQuests.Admin"
+      "name": "PocketQuests.Api"
     }
   ]
 }

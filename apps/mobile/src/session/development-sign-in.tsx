@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { developmentSignInEnabled } from "../config/client";
-import { Button, Input, Label, styles } from "../shared/ui";
+import { Button, Input, Label, useAppTheme } from "../shared/ui";
 import { requestDevelopmentSession } from "./identity-client";
 import { useSession } from "./session";
 
 export function DevelopmentSignIn() {
+  const { styles } = useAppTheme();
   const { connect, busy } = useSession();
   const [pairingCode, setPairingCode] = useState("");
   const [working, setWorking] = useState(false);

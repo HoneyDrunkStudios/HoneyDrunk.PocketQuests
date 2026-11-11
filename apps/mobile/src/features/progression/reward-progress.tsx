@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Animated, Text, View } from "react-native";
-import { colors, styles } from "../../shared/ui";
+import { useAppTheme } from "../../shared/ui";
 import {
   levelProgress,
   rewardProgressStart,
@@ -22,6 +22,7 @@ export function RewardProgress({
   level?: number;
   reduceMotion: boolean | null;
 }>) {
+  const { styles, colors } = useAppTheme();
   const current =
     totalXp !== undefined && level !== undefined
       ? levelProgress(track.toLowerCase() as ProgressionTrack, totalXp, level)

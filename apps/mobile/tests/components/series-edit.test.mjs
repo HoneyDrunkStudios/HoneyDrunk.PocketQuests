@@ -20,28 +20,34 @@ Module._load = function (name, ...rest) {
   if (name === "expo-crypto") return { randomUUID: () => "new-series" };
   if (name.endsWith("/session")) return { useSession: () => session };
   if (name.endsWith("/planned-preview")) return { PlannedPreview: () => null };
-  if (name.endsWith("/shared/ui"))
-    return {
-      Label: native,
-      styles: {},
-      Input: (p) => {
-        inputs.push(p);
-        return React.createElement("input", {
-          value: p.value,
-          "aria-label": p.accessibilityLabel,
-          onInput: (e) => p.onChangeText(e.currentTarget.value),
-          onChange: () => {},
-        });
-      },
-      Button: (p) => {
-        buttons.push(p);
-        return React.createElement(
-          "button",
-          { disabled: p.disabled, onClick: p.onPress },
-          p.title,
-        );
-      },
-    };
+  if (name.endsWith("/shared/ui") || name === "./ui")
+    return (() => {
+      const value = {
+        Label: native,
+        styles: {},
+        Input: (p) => {
+          inputs.push(p);
+          return React.createElement("input", {
+            value: p.value,
+            "aria-label": p.accessibilityLabel,
+            onInput: (e) => p.onChangeText(e.currentTarget.value),
+            onChange: () => {},
+          });
+        },
+        Button: (p) => {
+          buttons.push(p);
+          return React.createElement(
+            "button",
+            { disabled: p.disabled, onClick: p.onPress },
+            p.title,
+          );
+        },
+      };
+      return {
+        ...value,
+        useAppTheme: () => ({ ...value, theme: {}, isDark: false }),
+      };
+    })();
   return original.call(this, name, ...rest);
 };
 for (const ext of [".ts", ".tsx"])
@@ -95,14 +101,14 @@ function render(anchor) {
     sent,
     html,
     date: inputs.find(
-      (p) => p.accessibilityLabel === "First delivery YYYY-MM-DD",
+      (p) => p.accessibilityLabel === "First delivery MM/DD/YYYY",
     ),
     save: buttons.find((p) => p.title === "Save future schedule"),
   };
 }
 test("saving an existing future monthly series retains its delivery anchor and revision", async () => {
   const view = render("2026-10-31");
-  assert.equal(view.date.value, "2026-10-31");
+  assert.equal(view.date.value, "10/31/2026");
   assert.equal(view.save.disabled, false);
   await view.save.onPress();
   assert.equal(view.sent[0].dueDate, "2026-10-31");

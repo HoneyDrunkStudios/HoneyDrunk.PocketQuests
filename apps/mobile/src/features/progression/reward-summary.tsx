@@ -1,10 +1,11 @@
 import { Link } from "expo-router";
 import { Text } from "react-native";
 import { useAccountSnapshot } from "../../session/session";
-import { Card, Label, colors, styles } from "../../shared/ui";
+import { Card, Label, useAppTheme } from "../../shared/ui";
 import { nextReward, rewardProgress } from "./reward-milestones";
 
 export function RewardSummary() {
+  const { styles, colors } = useAppTheme();
   const { state } = useAccountSnapshot();
   if (!state || state.entitlements.length === 0) return null;
   const earned = state.entitlements.filter((reward) => reward.earned).length;

@@ -1,3 +1,4 @@
+import { DateInput } from "../../shared/date-input";
 import { questActions } from "./commands/quest-actions";
 import { useState } from "react";
 import * as Crypto from "expo-crypto";
@@ -5,7 +6,7 @@ import { Text, View } from "react-native";
 import type { Cadence, Quest, Series } from "../../shared/contracts";
 import { PlannedPreview } from "./planned-preview";
 import { useSession } from "../../session/session";
-import { Button, Input, Label, styles } from "../../shared/ui";
+import { Button, Input, Label, useAppTheme } from "../../shared/ui";
 export function SeriesEditor({
   quest,
   initial,
@@ -17,6 +18,7 @@ export function SeriesEditor({
   onClose(): void;
   closeLabel?: string;
 }) {
+  const { styles } = useAppTheme();
   const { state, command, busy, pending } = useSession();
   const [id] = useState(initial?.id ?? Crypto.randomUUID());
   const [anchor, setAnchor] = useState(
@@ -55,8 +57,8 @@ export function SeriesEditor({
           Choose a delivery date today or later to save this schedule.
         </Label>
       )}
-      <Input
-        accessibilityLabel="First delivery YYYY-MM-DD"
+      <DateInput
+        accessibilityLabel="First delivery MM/DD/YYYY"
         value={anchor}
         onChangeText={setAnchor}
         style={styles.input}

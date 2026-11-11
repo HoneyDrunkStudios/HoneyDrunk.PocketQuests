@@ -1,6 +1,6 @@
 import { ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors } from "../shared/ui";
+import { useAppTheme } from "../shared/ui";
 import { SessionRecovery } from "./session-recovery";
 export function Page({
   children,
@@ -9,6 +9,7 @@ export function Page({
   children: React.ReactNode;
   header?: React.ReactNode;
 }) {
+  const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
   return (
     <ScrollView

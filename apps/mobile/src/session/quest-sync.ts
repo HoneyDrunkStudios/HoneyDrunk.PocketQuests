@@ -10,6 +10,7 @@ import {
 } from "../features/quests/commands/quest-actions";
 import type { Anchor, Command, State } from "../shared/contracts";
 import { recordedProof } from "./clock-proof";
+import type { LocalAccount } from "./offline-store";
 import { RequestError, isDefinitiveRejection } from "./request-error";
 import type { SessionInternals } from "./session-runtime";
 import { isolateRejection, rejectionBlockers } from "./sync-recovery";
@@ -181,40 +182,42 @@ export function createQuestSync({
     setOffline(false);
     setNeedsSignIn(false);
   };
-  async function command(input: Omit<Command, "operationId">) {
-    const current = localRef.current;
-    if (!auth.session || !current || inFlight.current) return;
-    if (current.requiresReload) {
-      setError(
-        "Reconnect to reload your history before recording another action. Existing pending actions are retained.",
-      );
-      return;
-    }
-    if (!storageReady.current) {
-      setError(
-        "Private storage must be reopened. Restart the app before recording another action.",
-      );
-      return;
-    }
-    if (!getOffline() && current.queue.length) {
-      setError(
-        "Synchronize or review the recorded actions before adding another change.",
-      );
-      return;
-    }
+  function blockedCommandReason(
+    current: LocalAccount,
+    input: Omit<Command, "operationId">,
+  ) {
+    if (current.requiresReload)
+      return "Reconnect to reload your history before recording another action. Existing pending actions are retained.";
+    if (!storageReady.current)
+      return "Private storage must be reopened. Restart the app before recording another action.";
+    const offline = getOffline();
+    if (!offline && current.queue.length)
+      return "Synchronize or review the recorded actions before adding another change.";
     if (
       rejectionBlockers({ ...input, operationId: "" }, current.rejected ?? [])
         .length
-    ) {
-      setError(
-        "Review the rejected actions for this quest before recording another related change. Each retained action can be discarded individually.",
-      );
+    )
+      return "Review the rejected actions for this quest before recording another related change. Each retained action can be discarded individually.";
+    if (offline && !offlineQuestActions.has(input.action))
+      return "Reconnect to change schedules, profile settings or existing plans.";
+    return null;
+  }
+  async function command(
+    input: Omit<Command, "operationId">,
+    expectedOwner?: string,
+  ) {
+    const current = localRef.current;
+    // Delayed UI work must never become a command for a different signed-in account.
+    if (
+      expectedOwner &&
+      (auth.session?.userId !== expectedOwner ||
+        current?.userId !== expectedOwner)
+    )
       return;
-    }
-    if (getOffline() && !offlineQuestActions.has(input.action)) {
-      setError(
-        "Reconnect to change schedules, profile settings or existing plans.",
-      );
+    if (!auth.session || !current || inFlight.current) return;
+    const blocked = blockedCommandReason(current, input);
+    if (blocked) {
+      setError(blocked);
       return;
     }
     inFlight.current = true;

@@ -1,7 +1,7 @@
 import { Text, View } from "react-native";
 import type { Catalog, Quest, State } from "../../shared/contracts";
 import { rewardPreview } from "./reward-preview";
-import { Label, styles } from "../../shared/ui";
+import { Label, useAppTheme } from "../../shared/ui";
 
 export function QuestRewards({
   quest,
@@ -12,6 +12,7 @@ export function QuestRewards({
   catalog: Catalog | null;
   state: State | null;
 }) {
+  const { styles } = useAppTheme();
   const reward = rewardPreview(quest);
   const names = (
     entries: { id: string; xp: number }[],

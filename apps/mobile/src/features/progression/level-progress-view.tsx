@@ -1,5 +1,5 @@
 import { View } from "react-native";
-import { Label, Progress, styles } from "../../shared/ui";
+import { Label, Progress, useAppTheme } from "../../shared/ui";
 import { levelProgress, type ProgressionTrack } from "./level-progress";
 
 export function LevelProgress({
@@ -15,6 +15,7 @@ export function LevelProgress({
   level: number;
   compact?: boolean;
 }>) {
+  const { styles } = useAppTheme();
   const progress = levelProgress(track, xp, level);
   if (!progress) return <Label>Level progress unavailable.</Label>;
   const progressName = track === "overall" ? name : `${name} ${track}`;

@@ -5,7 +5,7 @@ import {
   type Coordinate,
   type PointOfInterest,
 } from "../../api/places-contract";
-import { Button, Card, Label, colors, styles } from "../../shared/ui";
+import { Button, Card, Label, useAppTheme } from "../../shared/ui";
 import type { DiscoveryJournalState } from "./use-discoveries";
 
 export function ExplorationDetails({
@@ -25,6 +25,7 @@ export function ExplorationDetails({
   journal: DiscoveryJournalState;
   onSaved: () => void;
 }>) {
+  const { styles, colors } = useAppTheme();
   let discoveryLabel = "Undiscovered";
   if (saved)
     discoveryLabel = visited ? "Saved · Visited" : "Saved · Want to visit";

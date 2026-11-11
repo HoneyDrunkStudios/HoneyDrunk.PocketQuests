@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { focusAppearance } from "@honeydrunk/ui-native";
-import { journalArt } from "../../shared/journal-art";
-import { pocketQuestsTheme } from "../../shared/theme";
-import { colors, styles } from "../../shared/ui";
+import { RankInsignia } from "../../shared/rank-insignia";
+import { useAppTheme } from "../../shared/ui";
 export function RankSummary({
   rank,
   expanded,
   onPress,
 }: Readonly<{ rank: string; expanded: boolean; onPress(): void }>) {
+  const { styles, colors, theme } = useAppTheme();
   const [focused, setFocused] = useState(false);
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
@@ -21,17 +21,7 @@ export function RankSummary({
           justifyContent: "center",
         }}
       >
-        <View pointerEvents="none" style={{ position: "absolute", inset: 0 }}>
-          <Image
-            source={journalArt.shield}
-            resizeMode="contain"
-            accessible={false}
-            style={{ width: "100%", height: "100%" }}
-          />
-        </View>
-        <Text accessible={false} style={[styles.title, { fontSize: 32 }]}>
-          {rank}
-        </Text>
+        <RankInsignia rank={rank} size={56} label={false} />
       </View>
       <View style={{ flex: 1, gap: 4 }}>
         <Text accessibilityRole="header" style={styles.subtitle}>
@@ -78,7 +68,7 @@ export function RankSummary({
             borderRadius: 6,
             backgroundColor: pressed ? "#FFFFFF0A" : "transparent",
           },
-          focusAppearance(pocketQuestsTheme, focused),
+          focusAppearance(theme, focused),
         ]}
       />
     </View>

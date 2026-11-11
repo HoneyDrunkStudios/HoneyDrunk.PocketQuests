@@ -66,19 +66,19 @@ export async function verifyNextFeatures({
   await expect(
     page.getByTestId("today-quests").filter({ visible: true }),
   ).toBeVisible();
-  await visible("link", "See your active quests").click();
-  await expect(visible("tab", "Active")).toHaveAttribute(
+  await visible("link", "Browse all quests").click();
+  await expect(visible("tab", "Available")).toHaveAttribute(
     "aria-selected",
     "true",
   );
-  await visible("tab", "Available").click();
+  await visible("tab", "Active").click();
   await visible("tab", "Home").click();
-  await visible("link", "See your active quests").click();
-  await expect(visible("tab", "Active")).toHaveAttribute(
+  await visible("link", "Browse all quests").click();
+  await expect(visible("tab", "Available")).toHaveAttribute(
     "aria-selected",
     "true",
   );
-  await visible("tab", "Home").click();
+  await visible("tab", "Progress").click();
   await visible("link", "Open your reward journal").click();
   await expect(
     page
@@ -90,11 +90,20 @@ export async function verifyNextFeatures({
   await page.screenshot({ path: path.join(artifacts, "reward-journal.png") });
   await narrowCapture("reward-journal", "reward-journal");
   await visible("link", "Open your wardrobe").click();
-  await visible("tab", "Clothing").click();
-  expect(before.entitlements.find((reward) => reward.id === "PQ-CAT-A01").earned).toBe(true);
-  await expect(visible("button", "Maker’s vest")).toBeEnabled();
-  await expect(visible("button", "Save avatar")).toBeDisabled();
-  await page.screenshot({ path: path.join(artifacts, "wardrobe-unlocked.png") });
+  await page
+    .getByRole("button", { name: /^Change clothing, equipped:/ })
+    .filter({ visible: true })
+    .click();
+  const vest = visible("button", "Maker’s vest");
+  if (before.entitlements.find((reward) => reward.id === "PQ-RANK-E").earned) {
+    await expect(vest).toBeEnabled();
+  } else {
+    await expect(vest).toHaveCount(0);
+  }
+  await expect(
+    visibleText("Changes save automatically.", { exact: true }),
+  ).toBeVisible();
+  await page.screenshot({ path: path.join(artifacts, "wardrobe.png") });
   await page.goBack();
   await page.goBack();
   await visible("tab", "Progress").click();
@@ -161,7 +170,19 @@ export async function verifyNextFeatures({
       },
     });
   });
-  await visible("tab", "Explore").click();
+  await expect(visible("tab", "Explore")).toHaveCount(0);
+  await visible("tab", "Room").click();
+  await expect(visible("button", "Change room")).toBeVisible();
+  await visible("button", "Decorate room").click();
+  await expect(visible("button", "Finish decorating")).toBeVisible();
+  await visible("button", "Finish decorating").click();
+  await page.screenshot({ path: path.join(artifacts, "traveler-room.png") });
+
+  // Exercise the retained deep link in the active web session. Explore no longer has a tab.
+  await page.evaluate(() => {
+    window.history.pushState(null, "", "/explore");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
   await expect(visible("textbox", "Search area")).toBeVisible();
   expect(searches).toBe(0);
   await visible("textbox", "Search area").fill("Asheville");
@@ -223,9 +244,11 @@ export async function verifyNextFeatures({
   await visible("link", "Browse Rest & Recreation quests").click();
   await expect(page).toHaveURL(/\/quest\/discover\/c07/);
   await page.goBack();
+  await expect(page).toHaveURL(/\/explore$/);
+  await page.goBack();
   await visible("tab", "Home").click();
   const after = await api("state");
-  await visibleText(`${after.overallXp} overall XP`, { exact: true }).scrollIntoViewIfNeeded();
+  await visibleText(/overall XP/).scrollIntoViewIfNeeded();
   expect(after.overallXp).toBe(before.overallXp);
   expect(after.profile.avatarCode).toBe(before.profile.avatarCode);
   expect(after.occurrences).toHaveLength(before.occurrences.length);

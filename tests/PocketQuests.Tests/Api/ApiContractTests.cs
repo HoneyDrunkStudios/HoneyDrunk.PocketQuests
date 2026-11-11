@@ -8,7 +8,6 @@ using PocketQuests.Services.Commands.Mapping;
 using PocketQuests.Services.Exports.Mapping;
 using PocketQuests.Services.Projections.Mapping;
 using System.Net;
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -42,7 +41,9 @@ public sealed class ApiContractTests
         Assert.All(paths.SelectMany(path => path.Value!.AsObject()), operation => Assert.NotNull(operation.Value!["security"]));
         Assert.NotNull(paths["/api/commands"]!["post"]!["requestBody"]);
         Assert.NotNull(paths["/api/commands"]!["post"]!["responses"]!["429"]);
-        Assert.NotNull(paths["/api/export/{format}"]!["get"]!["responses"]!["200"]!["content"]!["application/zip"]);
+        var zipSchema = paths["/api/export/{format}"]!["get"]!["responses"]!["200"]!["content"]!["application/zip"]!["schema"]!;
+        Assert.Equal("string", zipSchema["type"]!.GetValue<string>());
+        Assert.Equal("binary", zipSchema["format"]!.GetValue<string>());
         Assert.NotNull(document["components"]!["schemas"]!["CatalogResponse"]!["properties"]!["rules"]);
         var generated = document.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n";
         var output = Environment.GetEnvironmentVariable("POCKETQUESTS_OPENAPI_OUTPUT");

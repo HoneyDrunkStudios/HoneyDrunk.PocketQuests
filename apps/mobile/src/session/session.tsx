@@ -115,6 +115,7 @@ export function SessionProvider({
   const status = useMemo(
     () => ({
       signedIn: !!session && !needsSignIn,
+      appearanceOwnerId: session?.userId ?? null,
       busy,
       restoring,
       error: error ?? recoveryNotice,

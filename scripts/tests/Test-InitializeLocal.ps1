@@ -87,7 +87,7 @@ try {
             $name = $names[$index]
             $extension = if ($name.EndsWith('.Database')) { 'sqlproj' } else { 'csproj' }
             $project = Join-Path $identityRoot "$identityLayout/$name/$name.$extension"
-            $expected = @('sln', $solutionPath, 'add', $project, '--solution-folder', 'Identity')
+            $expected = @('sln', $solutionPath, 'add', $project, '--solution-folder', 'Identity', '--include-references', 'false')
             Assert-Setup (($calls[$index + 1] -join '|') -ceq ($expected -join '|')) "${caseName}: incorrect Identity project registration for $name."
         }
         Assert-Setup (($calls[7][0] -ceq 'restore') -and ($calls[7][1] -ceq $solutionPath)) "${caseName}: incorrect solution restore target."

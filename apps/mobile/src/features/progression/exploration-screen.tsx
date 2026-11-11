@@ -1,5 +1,6 @@
+import { playfulArt } from "../../shared/playful-art";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Text, View } from "react-native";
+import { Image, ScrollView, Text, View } from "react-native";
 import { createPlacesClient } from "../../api/places-client";
 import type { SavedPlace } from "../../api/generated";
 import {
@@ -9,7 +10,7 @@ import {
 } from "../../api/places-contract";
 import { placesConfig } from "../../config/places";
 import { useAccountSnapshot } from "../../session/session";
-import { Button, Card, Input, Label, styles } from "../../shared/ui";
+import { Button, Card, Input, Label, useAppTheme } from "../../shared/ui";
 import { ExplorationMap } from "./exploration-map";
 import { ExplorationDetails } from "./exploration-details";
 import { ExplorationResults } from "./exploration-results";
@@ -19,6 +20,7 @@ import { DiscoveryJournal } from "./discovery-journal";
 import { mergeSavedMapPoints, savedMapPoint } from "./saved-map-points";
 
 export function ExplorationScreen() {
+  const { styles, colors } = useAppTheme();
   const { catalog } = useAccountSnapshot();
   const client = useMemo(() => createPlacesClient(), []);
   const active = useRef<AbortController | null>(null);
@@ -28,6 +30,7 @@ export function ExplorationScreen() {
   const [areas, setAreas] = useState<SearchArea[] | null>(null);
   const [center, setCenter] = useState<Coordinate | null>(null);
   const [areaName, setAreaName] = useState("");
+  const [mapHeaderHeight, setMapHeaderHeight] = useState(224);
   const [zoom, setZoom] = useState(14);
   const [points, setPoints] = useState<PointOfInterest[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -223,14 +226,6 @@ export function ExplorationScreen() {
             )}
           </Card>
         )}
-        {!choosingArea && (
-          <Button
-            title="Change area"
-            secondary
-            disabled={busy}
-            onPress={() => setChoosingArea(true)}
-          />
-        )}
         {busy && (
           <Label accessibilityLiveRegion="polite">
             Charting your surroundings…
@@ -246,17 +241,7 @@ export function ExplorationScreen() {
             <Text accessibilityRole="header" style={styles.subtitle}>
               {areaName}
             </Text>
-            <ExplorationMap
-              center={center}
-              zoom={zoom}
-              points={visible}
-              discovered={found}
-              visited={visited}
-              selected={selected?.id}
-              onMove={move}
-              onZoom={setZoom}
-              onSelect={setSelected}
-            />
+
             <Button
               title={searchButtonTitle(loaded, moved)}
               disabled={busy}
@@ -338,27 +323,97 @@ export function ExplorationScreen() {
   }
 
   return (
-    <View testID="exploration" style={{ gap: 16 }}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Explore nearby
-      </Text>
-      <Label>
-        Explore real places on your map. Reveal points of interest, collect
-        discoveries and bring a quest along.
-      </Label>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        <Button
-          title="Map"
-          secondary={showJournal}
-          onPress={() => setShowJournal(false)}
+    <View
+      testID="exploration"
+      style={{ flex: 1, backgroundColor: colors.paper }}
+    >
+      {center ? (
+        <ExplorationMap
+          fill
+          controlsTop={mapHeaderHeight + 12}
+          center={center}
+          zoom={zoom}
+          points={visible}
+          discovered={found}
+          visited={visited}
+          selected={selected?.id}
+          onMove={move}
+          onZoom={setZoom}
+          onSelect={setSelected}
         />
-        <Button
-          title="Saved places"
-          secondary={!showJournal}
-          onPress={() => setShowJournal(true)}
+      ) : (
+        <Image
+          source={playfulArt.islands}
+          accessible={false}
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            opacity: 0.4,
+          }}
         />
+      )}
+      <View
+        pointerEvents="box-none"
+        onLayout={(event) =>
+          setMapHeaderHeight(event.nativeEvent.layout.height)
+        }
+        style={{ padding: 16, paddingTop: center ? 48 : 24, gap: 10 }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colors.paper,
+              padding: 12,
+              borderRadius: 16,
+            }}
+          >
+            <Text
+              accessibilityRole="header"
+              style={[styles.subtitle, { fontSize: 24 }]}
+            >
+              Your next discovery
+            </Text>
+            <Text numberOfLines={1} style={styles.muted}>
+              {areaName || "A little adventure, close to home"}
+            </Text>
+          </View>
+          <Button
+            title={showJournal ? "Map" : "Saved places"}
+            secondary
+            onPress={() => setShowJournal(!showJournal)}
+          />
+        </View>
+        {center && !showJournal && (
+          <Button
+            title={choosingArea ? "Back to map" : "Change area"}
+            secondary
+            disabled={busy}
+            onPress={() => setChoosingArea(!choosingArea)}
+          />
+        )}
       </View>
-      {renderContent()}
+      <View
+        pointerEvents="box-none"
+        style={{ flex: 1, justifyContent: "flex-end" }}
+      >
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          style={{
+            maxHeight: center && !choosingArea && !showJournal ? "44%" : "82%",
+            backgroundColor: colors.paper,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+          }}
+          contentContainerStyle={{ padding: 18, gap: 12, paddingBottom: 28 }}
+        >
+          {renderContent()}
+        </ScrollView>
+      </View>
     </View>
   );
 }

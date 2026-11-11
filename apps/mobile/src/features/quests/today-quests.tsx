@@ -1,8 +1,9 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMemo } from "react";
 import { Link } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import type { Catalog, State } from "../../shared/contracts";
-import { Card, Label, colors, styles } from "../../shared/ui";
+import { Card, Label, useAppTheme } from "../../shared/ui";
 import { calendarDateLabel } from "./calendar-plan";
 import { dailyIdeas, dailyPlan } from "./daily-plan";
 import { QuestCardArtwork } from "./quest-card-artwork";
@@ -22,17 +23,164 @@ export function TodayQuests({
   catalog,
   completedToday,
   pending,
+  compact = false,
 }: Readonly<{
   state: State;
   catalog: Catalog | null;
   completedToday: number;
   pending: boolean;
+  compact?: boolean;
 }>) {
+  const { colors, styles } = useAppTheme();
   const plan = useMemo(() => dailyPlan(state), [state]);
   const ideas = useMemo(
     () => (plan.next.length ? [] : dailyIdeas(catalog, state)),
     [catalog, state, plan.next.length],
   );
+  if (compact)
+    return (
+      <View testID="today-quests" style={{ gap: 0 }}>
+        <Text
+          accessibilityRole="header"
+          style={[styles.subtitle, { fontSize: 25 }]}
+        >
+          {plan.next.length ? "Today's quests" : "Quest ideas for today"}
+        </Text>
+        {plan.next.map((item) => (
+          <Link
+            key={item.occurrence.id}
+            href={{
+              pathname: "/quest/[id]",
+              params: { id: item.occurrence.id },
+            }}
+            asChild
+          >
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel={`Open planned quest: ${item.occurrence.quest.title}`}
+              style={{
+                minHeight: 62,
+                paddingVertical: 4,
+                flexDirection: "row",
+                gap: 10,
+                alignItems: "center",
+                borderBottomWidth: 1,
+                borderBottomColor: colors.line,
+              }}
+            >
+              <QuestCardArtwork
+                categoryId={item.occurrence.quest.categoryId}
+                size={76}
+              />
+              <View style={{ flex: 1, gap: 3 }}>
+                <Text
+                  style={[
+                    styles.text,
+                    { fontFamily: "QuestSansBold", fontSize: 17 },
+                  ]}
+                >
+                  {item.occurrence.quest.title}
+                </Text>
+                <Text style={styles.muted}>
+                  Rank {item.occurrence.quest.rank} ·{" "}
+                  <Text style={{ color: colors.ochre }}>
+                    {item.occurrence.quest.baseXp} XP
+                  </Text>
+                </Text>
+                <Text style={styles.muted}>{plannedTimeLabel(item)}</Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={colors.green}
+                accessible={false}
+              />
+            </Pressable>
+          </Link>
+        ))}
+        {!plan.next.length && ideas.length === 0 && (
+          <Label style={styles.muted}>
+            {completedToday
+              ? "A little progress, already made today."
+              : "Nothing planned yet. Here are two places to begin."}
+          </Label>
+        )}
+        {!plan.next.length &&
+          ideas.slice(0, 2).map((quest) => (
+            <Link
+              key={quest.id}
+              href={{
+                pathname: "/quest/available/[id]",
+                params: { id: quest.id },
+              }}
+              asChild
+            >
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel={`Plan a suggested quest: ${quest.title}`}
+                style={{
+                  minHeight: 58,
+                  paddingVertical: 4,
+                  flexDirection: "row",
+                  gap: 10,
+                  alignItems: "center",
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.line,
+                }}
+              >
+                <QuestCardArtwork categoryId={quest.categoryId} size={76} />
+                <View style={{ flex: 1, gap: 3 }}>
+                  <Text
+                    style={[
+                      styles.text,
+                      { fontFamily: "QuestSansBold", fontSize: 17 },
+                    ]}
+                  >
+                    {quest.title}
+                  </Text>
+                  <Text style={styles.muted}>
+                    Rank {quest.rank} ·{" "}
+                    <Text style={{ color: colors.ochre }}>
+                      {quest.baseXp} XP
+                    </Text>
+                  </Text>
+                </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={colors.green}
+                  accessible={false}
+                />
+              </Pressable>
+            </Link>
+          ))}
+        {(plan.earlier > 0 || plan.paused > 0) && (
+          <Link
+            href={activeBoard}
+            style={[
+              styles.text,
+              { color: colors.green, paddingVertical: 12, minHeight: 48 },
+            ]}
+          >
+            Review your active and paused quests
+          </Link>
+        )}
+        {pending && (
+          <Label style={styles.muted}>
+            Your progress updates when changes finish saving.
+          </Label>
+        )}
+        <Link
+          href={availableBoard}
+          style={[
+            styles.text,
+            { color: colors.green, minHeight: 48, paddingVertical: 12 },
+          ]}
+        >
+          Browse all quests
+        </Link>
+      </View>
+    );
   return (
     <Card
       testID="today-quests"
@@ -176,15 +324,6 @@ export function TodayQuests({
           ))}
         </View>
       )}
-      <Link
-        href="/(tabs)/explore"
-        style={[
-          styles.text,
-          { color: colors.gold, minHeight: 48, paddingVertical: 12 },
-        ]}
-      >
-        Find a place to explore
-      </Link>
       <Link
         href={availableBoard}
         style={[

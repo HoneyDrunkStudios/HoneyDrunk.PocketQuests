@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using PocketQuests.Contracts.Models.Reconciliation;
 using PocketQuests.Services.Reconciliation;
 
@@ -16,6 +17,7 @@ public sealed class ReconciliationMaintenance(IServiceScopeFactory scopes, TimeP
         while (!stoppingToken.IsCancellationRequested)
         {
             var delay = TimeSpan.FromMinutes(1);
+            string? failureType = null;
             try
             {
                 await using var scope = scopes.CreateAsyncScope();
@@ -24,11 +26,19 @@ public sealed class ReconciliationMaintenance(IServiceScopeFactory scopes, TimeP
                 if (cursor is not null || batch.Deliveries > 0)
                     delay = TimeSpan.FromSeconds(1);
             }
-            catch (Exception error) when (error is System.Data.Common.DbException or InvalidOperationException or TimeoutException)
+            catch (Exception error) when (error is System.Data.Common.DbException or InvalidOperationException or TimeoutException
+                || (stoppingToken.IsCancellationRequested && error is DbUpdateException { InnerException: System.Data.Common.DbException }))
             {
-                logger.LogError("Relational reconciliation failed ({FailureType}).", error.GetType().Name);
+                // Preserve only content-free failure metadata; provider exceptions may contain private SQL values.
+                failureType = error.GetType().Name;
             }
 
+            if (failureType is not null)
+            {
+                logger.LogError("Relational reconciliation failed ({FailureType}).", failureType);
+            }
+
+            // EF can wrap provider cancellation; the canceled stopping token still ends the worker through its normal cancellation path.
             await Task.Delay(delay, clock, stoppingToken);
         }
     }

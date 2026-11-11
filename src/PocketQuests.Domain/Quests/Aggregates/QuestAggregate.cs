@@ -42,6 +42,9 @@ public sealed partial class QuestAggregate(
     /// <summary>Gets the account's validated IANA timezone.</summary>
     public string Zone { get; private set; } = Scheduling.Zone(zone).Id;
 
+    /// <summary>Gets or sets a value indicating whether replay uses the original cosmetic gates.</summary>
+    public bool LegacyCosmeticRewards { get; set; }
+
     /// <summary>Gets accepted occurrence snapshots within the current transaction.</summary>
     public List<Occurrence> Occurrences { get; } = occurrences?.ToList() ?? [];
 
@@ -171,13 +174,14 @@ public sealed partial class QuestAggregate(
             var days = creditedToday ? rateToday : has && ActiveDaysBetween(category.Id, last.day, activityToday) <= 1 ? last.count : 0;
             return new Streak(category.Id, days, creditedToday, Math.Clamp(days - 1, 0, Progression.MaximumStreakBonusPercent));
         }).ToImmutableArray();
-        var entitlements = Progression.Entitlements(surviving.Select(CompletionQuest), rank.Current);
+        var overallLevel = Progression.Level(overall, Track.Overall);
+        var entitlements = Progression.Entitlements(surviving.Select(CompletionQuest), rank.Current, LegacyCosmeticRewards ? null : overallLevel);
         return new(
             Zone,
             Scheduling.DateText(today),
             views,
             overall,
-            Progression.Level(overall, Track.Overall),
+            overallLevel,
             Balances(Catalog.Categories, categoryXp, Track.Category),
             Balances(Catalog.Attributes, attributeXp, Track.Attribute),
             Balances(skillItems, skillXp, Track.Skill),
@@ -188,7 +192,7 @@ public sealed partial class QuestAggregate(
             Profile with {
                 BadgeId = entitlements.Any(e => e.Id == Profile.BadgeId && e.Earned) ? Profile.BadgeId : null,
                 FrameId = entitlements.Any(e => e.Id == Profile.FrameId && e.Earned) ? Profile.FrameId : null,
-                AvatarCode = AvatarAppearance.Eligible(Profile.AvatarCode, entitlements) },
+                AvatarCode = AvatarAppearance.Eligible(Profile.AvatarCode, entitlements, LegacyCosmeticRewards) },
             Schedule,
             [.. penalties],
             [.. ledger],

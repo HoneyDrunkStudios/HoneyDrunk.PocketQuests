@@ -691,41 +691,13 @@
           "nullable": true
         },
         "sequence": {
-          "pattern": "^-?(?:0|[1-9]\\d*)$",
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "string"
-            },
-            {
-              "enum": [
-                null
-              ],
-              "nullable": true
-            }
-          ],
+          "type": "integer",
           "description": "The event sequence number.",
           "format": "int32",
           "nullable": true
         },
         "scheduleVersion": {
-          "pattern": "^-?(?:0|[1-9]\\d*)$",
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "string"
-            },
-            {
-              "enum": [
-                null
-              ],
-              "nullable": true
-            }
-          ],
+          "type": "integer",
           "description": "The version of the recurrence schedule.",
           "format": "int32",
           "nullable": true
@@ -747,21 +719,7 @@
           "nullable": true
         },
         "lockedLoss": {
-          "pattern": "^-?(?:0|[1-9]\\d*)$",
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "string"
-            },
-            {
-              "enum": [
-                null
-              ],
-              "nullable": true
-            }
-          ],
+          "type": "integer",
           "description": "The loss retained in the accepted terms.",
           "format": "int32",
           "nullable": true
@@ -2494,21 +2452,7 @@
           "description": "The newest-first bounded page of retained revisions."
         },
         "nextBefore": {
-          "pattern": "^-?(?:0|[1-9]\\d*)$",
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "string"
-            },
-            {
-              "enum": [
-                null
-              ],
-              "nullable": true
-            }
-          ],
+          "type": "integer",
           "description": "The exclusive cursor for the next page, when present.",
           "format": "int32",
           "nullable": true

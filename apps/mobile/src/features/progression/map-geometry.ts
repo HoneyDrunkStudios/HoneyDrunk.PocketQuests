@@ -36,6 +36,7 @@ export function mapPosition(
   center: Coordinate,
   zoom: number,
   width: number,
+  height = mapHeight,
 ) {
   const a = worldPoint(point, zoom),
     b = worldPoint(center, zoom),
@@ -43,17 +44,22 @@ export function mapPosition(
   let dx = a.x - b.x;
   if (dx > size / 2) dx -= size;
   if (dx < -size / 2) dx += size;
-  return { x: width / 2 + dx, y: mapHeight / 2 + a.y - b.y };
+  return { x: width / 2 + dx, y: height / 2 + a.y - b.y };
 }
-export function visibleTiles(center: Coordinate, zoom: number, width: number) {
+export function visibleTiles(
+  center: Coordinate,
+  zoom: number,
+  width: number,
+  height = mapHeight,
+) {
   const point = worldPoint(center, zoom),
     n = 2 ** zoom;
   const left = point.x - width / 2,
-    top = point.y - mapHeight / 2;
+    top = point.y - height / 2;
   const result = [];
   for (
     let y = Math.floor(top / 256);
-    y <= Math.floor((top + mapHeight - 1) / 256);
+    y <= Math.floor((top + height - 1) / 256);
     y++
   ) {
     if (y < 0 || y >= n) continue;

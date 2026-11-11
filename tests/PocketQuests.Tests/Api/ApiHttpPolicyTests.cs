@@ -4,7 +4,6 @@ using Microsoft.Extensions.Options;
 using PocketQuests.Api.Hosting;
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 
 namespace PocketQuests.Tests.Api;
 

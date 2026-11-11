@@ -1,5 +1,7 @@
+import { displayDate } from "../../shared/date-format";
+import { DateInput } from "../../shared/date-input";
 import { Text } from "react-native";
-import { Button, Card, Input, Label, styles } from "../../shared/ui";
+import { Button, Card, Input, Label, useAppTheme } from "../../shared/ui";
 import { PlannedPreview } from "./planned-preview";
 
 export type AcceptancePlan = {
@@ -18,15 +20,16 @@ export function QuestAcceptancePlan({
   zone: string;
   onChange(plan: AcceptancePlan): void;
 }>) {
+  const { styles } = useAppTheme();
   return (
     <Card>
       <Text accessibilityRole="header" style={styles.subtitle}>
         Plan before accepting
       </Text>
       <Label>Due date</Label>
-      <Input
-        accessibilityLabel="Due date in YYYY-MM-DD format"
-        placeholder={today || "YYYY-MM-DD"}
+      <DateInput
+        accessibilityLabel="Due date in MM/DD/YYYY format"
+        placeholder={today || "MM/DD/YYYY"}
         value={plan.date}
         onChangeText={(date) => onChange({ ...plan, date })}
         style={styles.input}
@@ -57,7 +60,7 @@ export function QuestAcceptancePlan({
       <Label>
         {plan.unscheduled
           ? "No deadline."
-          : `Due by the end of ${plan.date || today}.`}{" "}
+          : `Due by the end of ${displayDate(plan.date || today)}.`}{" "}
         Recurrence requires a separate opt-in below.
       </Label>
     </Card>

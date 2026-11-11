@@ -9,7 +9,6 @@ using PocketQuests.Domain.Models.Accounts;
 using PocketQuests.Domain.Models.Quests;
 using PocketQuests.Domain.Models.Schedules;
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace PocketQuests.SchemaTests;

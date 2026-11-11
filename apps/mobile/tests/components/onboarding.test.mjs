@@ -69,7 +69,7 @@ Module._load = function (name, ...rest) {
     };
   if (name === "expo-router")
     return {
-      useRouter: () => ({ replace() {} }),
+      useRouter: () => ({ replace() {}, setParams() {} }),
       Redirect: ({ href }) =>
         React.createElement("span", { "data-redirect": href }),
       Link: ({ children }) => children,
@@ -299,7 +299,7 @@ test("confirmed interests advance permanently while a later skill command is pen
     session.queuedCount = 0;
     await view.render();
     await view.click("Continue with these skills");
-    assert.ok(view.button("Choose my first quest"));
+    assert.ok(view.button("Show me around"));
     assert.equal(sent.length, 1);
   } finally {
     await view.unmount();
@@ -421,21 +421,21 @@ test("finishing waits for confirmed onboarding; errors stay visible and retry re
       await view.click("Continue with avatar");
     await view.click("Continue");
     await view.click("Continue with these skills");
-    await view.click("Choose my first quest");
+    await view.click("Show me around");
     assert.deepEqual(sent, [{ action: "finish-onboarding" }]);
     assert.equal(view.element.querySelector("[data-redirect]"), null);
     session.pending = true;
     session.error = "Waiting for confirmation";
     await view.render();
     assert.equal(
-      view.button("Choose my first quest").getAttribute("aria-disabled"),
+      view.button("Show me around").getAttribute("aria-disabled"),
       "true",
     );
     assert.match(view.element.textContent, /Waiting for confirmation/);
     session.pending = false;
     session.error = "Please try again";
     await view.render();
-    await view.click("Choose my first quest");
+    await view.click("Show me around");
     assert.equal(sent.length, 2);
     session.state.profile.onboardingComplete = true;
     await view.render();
@@ -443,7 +443,7 @@ test("finishing waits for confirmed onboarding; errors stay visible and retry re
       view.element
         .querySelector("[data-redirect]")
         .getAttribute("data-redirect"),
-      "/(tabs)/board",
+      "/(tabs)",
     );
   } finally {
     await view.unmount();
@@ -489,7 +489,7 @@ test("returning accounts bypass setup without issuing commands", async () => {
       view.element
         .querySelector("[data-redirect]")
         .getAttribute("data-redirect"),
-      "/(tabs)/board",
+      "/(tabs)",
     );
     assert.equal(sent.length, 0);
   } finally {
@@ -609,7 +609,10 @@ test("an older character confirmation cannot advance a newer edited draft", asyn
   }
 });
 
-for (const recovered of ["Timing check discarded", "Rejected action discarded"]) {
+for (const recovered of [
+  "Timing check discarded",
+  "Rejected action discarded",
+]) {
   test(`starting-skill setup resumes after ${recovered.toLowerCase()}`, async () => {
     reset();
     let advanced = 0;
@@ -620,7 +623,11 @@ for (const recovered of ["Timing check discarded", "Rejected action discarded"])
     };
     const view = await mount(StartingSkills, { onContinue: () => advanced++ });
     try {
-      await act(async () => view.element.querySelector('[aria-label="Programming: Practiced"]').click());
+      await act(async () =>
+        view.element
+          .querySelector('[aria-label="Programming: Practiced"]')
+          .click(),
+      );
       await view.click("Continue with these skills");
       await view.render();
       assert.equal(advanced, 0);
@@ -637,14 +644,23 @@ for (const recovered of ["Timing check discarded", "Rejected action discarded"])
       await view.render();
       assert.equal(advanced, 1);
       assert.equal(sent.length, 2);
-    } finally { await view.unmount(); }
+    } finally {
+      await view.unmount();
+    }
   });
 }
 
 test("starting-skill setup can continue unchanged after an informational recovery message", async () => {
-  reset(); session.error = "Rejected action discarded";
+  reset();
+  session.error = "Rejected action discarded";
   let advanced = 0;
   const view = await mount(StartingSkills, { onContinue: () => advanced++ });
-  try { await view.click("Continue with these skills"); await view.render(); assert.equal(advanced, 1); assert.equal(sent.length, 0); }
-  finally { await view.unmount(); }
+  try {
+    await view.click("Continue with these skills");
+    await view.render();
+    assert.equal(advanced, 1);
+    assert.equal(sent.length, 0);
+  } finally {
+    await view.unmount();
+  }
 });

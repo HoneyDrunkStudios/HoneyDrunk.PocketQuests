@@ -28,11 +28,77 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 // Native navigation retains hidden screens; assertions target the visible one.
+const activeRoute = page.locator(':not([aria-hidden="true"], [aria-hidden="true"] *)');
+const visibleRole = (role, options) =>
+  page.getByRole(role, options).and(activeRoute).filter({ visible: true });
 const visibleText = (text, options) =>
   page
     .getByText(text, options)
-    .and(page.locator(':not([aria-hidden="true"], [aria-hidden="true"] *)'))
+    .and(activeRoute)
     .filter({ visible: true });
+const homeXp = visibleText("See your progress · 280 overall XP", {
+  exact: true,
+});
+
+function americanDate(isoDate) {
+  const [year, month, day] = isoDate.split("-");
+  return `${month}/${day}/${year}`;
+}
+
+async function verifyTravelerScene() {
+  let checkpoint = "character-markup";
+  try {
+    await expect
+      .poll(async () => {
+        checkpoint = await page.evaluate(() => {
+          // Expo retains previous Home screens behind the active route.
+          const sheet = Array.from(
+            document.querySelectorAll('[data-testid="character-sheet"]'),
+          ).find(
+            (element) =>
+              !element.closest('[aria-hidden="true"]') &&
+              element.getClientRects().length > 0 &&
+              getComputedStyle(element).visibility === "visible",
+          );
+          const scene = sheet?.querySelector('[data-testid="traveler-scene"]');
+          const traveler = scene?.querySelector('[data-testid="traveler-avatar"]');
+          const progress = sheet?.querySelector(
+            '[data-testid="home-level-progress"]',
+          );
+          const backdrop = scene?.querySelector(
+            '[data-testid="traveler-backdrop"]',
+          );
+          if (!scene || !traveler || !progress || !backdrop)
+            return "character-markup";
+          const sceneBox = scene.getBoundingClientRect();
+          const avatarBox = traveler.getBoundingClientRect();
+          const progressBox = progress.getBoundingClientRect();
+          const backdropBox = backdrop.getBoundingClientRect();
+          if (![sceneBox, avatarBox, progressBox, backdropBox].every(
+            ({ width, height }) => width > 0 && height > 0,
+          ))
+            return "character-markup";
+          const sceneCenter = sceneBox.left + sceneBox.width / 2;
+          const avatarCenter = avatarBox.left + avatarBox.width / 2;
+          if (Math.abs(avatarCenter - sceneCenter) > 1) return "character-center";
+          if (progressBox.top < sceneBox.bottom) return "character-progress";
+          if (
+            backdropBox.left > sceneBox.left + 1 ||
+            backdropBox.right < sceneBox.right - 1 ||
+            backdropBox.top > sceneBox.top + 1 ||
+            backdropBox.bottom < sceneBox.bottom - 1
+          )
+            return "character-backdrop";
+          return "ready";
+        });
+        return checkpoint;
+      })
+      .toBe("ready");
+  } catch (error) {
+    diagnostics.checkpoint(checkpoint);
+    throw error;
+  }
+}
 page.setDefaultTimeout(15000);
 // A cold Metro compilation can exceed the action timeout; keep navigation bounded separately.
 page.setDefaultNavigationTimeout(60000);
@@ -198,7 +264,11 @@ try {
   await page
     .getByRole("button", { name: "Save name and continue", exact: true })
     .click();
-  await page.getByRole("radio", { name: "Face: Oval", exact: true }).click();
+  await page
+    .getByRole("button", { name: "More editing options", exact: true })
+    .click();
+  await page.getByRole("tab", { name: "Body", exact: true }).click();
+  await page.getByRole("radio", { name: /^(Selected: )?Face: Oval$/ }).click();
   await page
     .getByRole("radio", { name: "Skin tone: Tone 6", exact: true })
     .click();
@@ -206,17 +276,12 @@ try {
   await page
     .getByRole("radio", { name: "Hair color: Silver", exact: true })
     .click();
-  await page.getByRole("tab", { name: "Clothing", exact: true }).click();
-  await page.getByRole("button", { name: "Field shirt", exact: true }).click();
-  await page.getByRole("button", { name: "Save avatar", exact: true }).click();
-  await expect(
-    page.getByRole("button", {
-      name: "Continue with this avatar",
-      exact: true,
-    }),
-  ).toBeEnabled();
+  await page.getByRole("tab", { name: "Clothes", exact: true }).click();
   await page
-    .getByRole("button", { name: "Continue with this avatar", exact: true })
+    .getByRole("button", { name: /^(Selected preview: )?Field shirt$/ })
+    .click();
+  await page
+    .getByRole("button", { name: "Continue", exact: true })
     .click();
   await page
     .getByRole("checkbox", { name: "Work & Purpose", exact: true })
@@ -232,13 +297,33 @@ try {
     .getByRole("button", { name: "Continue with these skills", exact: true })
     .click();
   diagnostics.checkpoint("onboarding-save");
-  await page
-    .getByRole("button", {
-      name: "Choose my first quest",
-      exact: true,
-    })
-    .click();
-  await expect(page).toHaveURL("http://localhost:8081/board");
+  await page.getByRole("button", { name: "Show me around", exact: true }).click();
+  const tour = page.getByTestId("journal-tour-panel");
+  for (const [route, title] of [
+    ["/", "Welcome to your journal"],
+    ["/board", "Find something that fits"],
+    ["/calendar", "Give it a little space"],
+    ["/room", "Make yourself at home"],
+  ]) {
+    await expect(page).toHaveURL((url) => url.pathname === route);
+    await expect(
+      tour.getByRole("heading", { name: title, exact: true }),
+    ).toBeVisible();
+    await tour.getByRole("button", { name: "Next", exact: true }).click();
+  }
+  diagnostics.checkpoint("tour-settings");
+  await expect(page).toHaveURL((url) => url.pathname === "/profile");
+  await expect(
+    tour.getByRole("heading", { name: "Small steps add up", exact: true }),
+  ).toBeVisible();
+  await tour.getByRole("button", { name: "Open settings", exact: true }).click();
+  await expect(page).toHaveURL((url) => url.pathname === "/settings");
+  diagnostics.checkpoint("tour-finish");
+  await expect(
+    tour.getByRole("heading", { name: "Keep it your own", exact: true }),
+  ).toBeVisible();
+  await tour.getByRole("button", { name: "Choose a quest", exact: true }).click();
+  await expect(page).toHaveURL(/\/board(?:\?view=Available)?$/);
   await expect(
     page.getByRole("heading", { name: "Pick your next quest", exact: true }),
   ).toBeVisible();
@@ -273,6 +358,7 @@ try {
   await page.getByRole("button", { name: "Medium", exact: true }).click();
   let rejectSave = true;
   let loseCompletionResponse = true;
+  let completionResponseAborted = false;
   let skewNextCompletion = false;
   let clockRecordedAt = null;
   let clockAnchor = null;
@@ -334,7 +420,9 @@ try {
       loseCompletionResponse = false;
       const committed = await route.fetch();
       expect(committed.ok()).toBe(true);
-      return route.abort("failed"); // SQL committed, but the device receives no receipt.
+      await route.abort("failed"); // SQL committed, but the device receives no receipt.
+      completionResponseAborted = true;
+      return;
     }
     return route.continue();
   });
@@ -516,14 +604,23 @@ try {
       exact: true,
     })
     .click({ clickCount: 2 });
+  // The response must be committed and dropped before the UI can report recovery.
+  // Keep the API's 15-second budget separate from the unchanged UI assertions.
+  await expect
+    .poll(() => completionResponseAborted, { timeout: 15000 })
+    .toBe(true);
+  diagnostics.checkpoint("completion-offline-recovery");
   await expect(visibleText(/You’re offline.*saved progress/)).toBeVisible();
+  diagnostics.checkpoint("completion-unconfirmed-feedback");
   await expect(visibleText("Quest complete!", { exact: true })).toHaveCount(0);
+  diagnostics.checkpoint("completion-committed-state");
   const committed = await (
     await context.request.get("http://localhost:5217/api/state", {
       headers: { Authorization: `Bearer ${fixture.token}` },
     })
   ).json();
   expect(committed.overallXp).toBe(280);
+  diagnostics.checkpoint("completion-retry-anchor");
   const synchronized = page.waitForResponse(
     (response) =>
       response.url() === "http://localhost:5217/api/sync-anchor" &&
@@ -533,8 +630,11 @@ try {
     .getByRole("button", { name: "Try saving again", exact: true })
     .click();
   expect((await synchronized).ok()).toBe(true);
+  diagnostics.checkpoint("completion-feedback");
   await expect(visibleText("Quest complete!", { exact: true })).toBeVisible();
+  diagnostics.checkpoint("completion-level-up");
   await expect(visibleText("Level up!", { exact: true })).toBeVisible();
+  diagnostics.checkpoint("completion-level-transition");
   await expect(
     visibleText("Overall · Level 1 → 2", { exact: true }),
   ).toBeVisible();
@@ -547,11 +647,25 @@ try {
     .click();
   await page.getByRole("link", { name: "Back to Home", exact: true }).click();
   await expect(
-    visibleText("Browser adventurer", { exact: true }),
+    page.getByRole("heading", { name: "Hey, Browser adventurer!", exact: true }),
   ).toBeVisible();
-  await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
+  await expect(homeXp).toBeVisible();
   console.log("Verified completion response-loss retry and character totals.");
   diagnostics.checkpoint("character");
+  await verifyTravelerScene();
+  diagnostics.checkpoint("home-narrow");
+  await page.setViewportSize({ width: 320, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({ path: path.join(artifacts, "character-narrow.png") });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: path.join(artifacts, "character-home.png") });
+  await page.getByRole("tab", { name: "Progress", exact: true }).click();
+  diagnostics.checkpoint("progress-details");
+  await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("progressbar", { name: / level progress$/ }),
   ).toHaveCount(1);
@@ -634,43 +748,14 @@ try {
     await section.click();
     await expect(section).toHaveAttribute("aria-expanded", "false");
   }
-  await page
-    .getByRole("heading", { name: "Browser adventurer", exact: true })
-    .scrollIntoViewIfNeeded();
-  await page.setViewportSize({ width: 320, height: 844 });
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
-  ).toBe(true);
-  await page.screenshot({ path: path.join(artifacts, "character-narrow.png") });
-  await page.setViewportSize({ width: 390, height: 844 });
-  const portrait = await page
-    .getByRole("img", {
-      name: "Your customizable traveler avatar",
-      exact: true,
-    })
-    // RN Web also emits an inner accessibility img. Measure the visible wrapper.
-    .and(page.locator('[role="img"]'))
-    .boundingBox();
-  const overallBar = await page
-    .getByRole("progressbar", { name: "Overall level progress", exact: true })
-    .boundingBox();
-  expect(portrait).not.toBeNull();
-  expect(overallBar).not.toBeNull();
-  expect(portrait.x + portrait.width).toBeLessThanOrEqual(overallBar.x);
-  await page
-    .getByRole("heading", { name: "Categories", exact: true })
-    .evaluate((element) => element.scrollIntoView({ block: "start" }));
-  await page.screenshot({
-    path: path.join(artifacts, "character-home.png"),
-    fullPage: false,
-  });
   diagnostics.checkpoint("export-timer");
-  // The overlaid gear must remain reachable above the decorative heading art.
-  await page
-    .getByRole("link", { name: "Settings and profile", exact: true })
-    .click();
+  await visibleRole("tab", { name: "Home", exact: true }).click();
+  await expect(page).toHaveURL((url) => url.pathname === "/");
+  diagnostics.checkpoint("settings-link");
+  await visibleRole("link", { name: "Settings and profile", exact: true }).click();
+  await expect(page).toHaveURL((url) => url.pathname === "/settings");
+  diagnostics.checkpoint("settings-export");
+  await page.getByRole("button", { name: "Your traveler", exact: true }).click();
   await expect(
     visibleText("Your interests and experience", { exact: true }),
   ).toBeVisible();
@@ -686,6 +771,9 @@ try {
   expect(
     state.ledger.filter((entry) => entry.track === "Overall"),
   ).toHaveLength(1);
+  await page
+    .getByRole("button", { name: "Privacy & account", exact: true })
+    .click();
   const downloadEvent = page.waitForEvent("download");
   await page
     .getByRole("button", { name: "Download full JSON export", exact: true })
@@ -699,8 +787,10 @@ try {
   expect(exported.completions[0].snapshot.title).toBe(
     "Browser verified custom quest",
   );
+  diagnostics.checkpoint("history-after-export");
   await page.goBack();
-  await page.getByRole("tab", { name: "Quests", exact: true }).click();
+  await expect(page).toHaveURL((url) => url.pathname === "/");
+  await visibleRole("tab", { name: "Quests", exact: true }).click();
   await page.getByRole("tab", { name: "Completed", exact: true }).click();
   await verifyHistorySearch("Completed");
   await expect(
@@ -832,9 +922,7 @@ try {
   expect(duringTimer.overallXp).toBe(280);
   console.log("Verified completed list, export, and timer without XP award.");
   await page.getByRole("link", { name: "Back to Home", exact: true }).click();
-  await expect(
-    visibleText("Browser adventurer", { exact: true }),
-  ).toBeVisible();
+  await expect(homeXp).toBeVisible();
   await expect(page).toHaveURL("http://localhost:8081/");
   await page.goBack();
   await expect(
@@ -938,7 +1026,7 @@ try {
   // Fresh adapter session, same isolated test account: verifies server persistence.
   await expect(signIn).toBeEnabled();
   await signIn.click();
-  await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
+  await expect(homeXp).toBeVisible();
   await page.getByRole("tab", { name: "Quests", exact: true }).click();
   await page.getByRole("tab", { name: "Active", exact: true }).click();
   await page.getByRole("link", { name: /^Quest details:/ }).click();
@@ -961,14 +1049,15 @@ try {
   )
     .toISOString()
     .slice(0, 10);
-  await page.getByLabel("Calendar date YYYY-MM-DD").fill("2026-02-30");
+  const displayPlannedDate = americanDate(plannedDate);
+  await page.getByLabel("Calendar date MM/DD/YYYY").fill("02/30/2026");
   await page.getByRole("button", { name: "Go to date", exact: true }).click();
   await expect(visibleText(/Enter a real date/)).toBeVisible();
-  await page.getByLabel("Calendar date YYYY-MM-DD").fill(plannedDate);
+  await page.getByLabel("Calendar date MM/DD/YYYY").fill(displayPlannedDate);
   await page.getByRole("button", { name: "Go to date", exact: true }).click();
   await page
     .getByRole("button", {
-      name: `Create a quest for ${plannedDate}`,
+      name: `Create a quest for ${displayPlannedDate}`,
       exact: true,
     })
     .click();
@@ -991,8 +1080,8 @@ try {
       exact: true,
     })
     .click();
-  await expect(page.getByLabel("Due date in YYYY-MM-DD format")).toHaveValue(
-    plannedDate,
+  await expect(page.getByLabel("Due date in MM/DD/YYYY format")).toHaveValue(
+    displayPlannedDate,
   );
   await page.getByLabel("Optional planned time HH:mm").fill("09:30");
   const startCalendarQuest = page.getByRole("button", {
@@ -1039,7 +1128,7 @@ try {
   await page.getByRole("tab", { name: "Quests", exact: true }).click();
   await page.getByRole("tab", { name: "Active", exact: true }).click();
   await expect(
-    visibleText(`Today · ${plannedState.today}`, { exact: true }),
+    visibleText(`Today · ${americanDate(plannedState.today)}`, { exact: true }),
   ).toBeVisible();
   await expect(visibleText("Unscheduled", { exact: true })).toBeVisible();
   await expect(visibleText("Upcoming", { exact: true })).toBeVisible();
@@ -1056,10 +1145,10 @@ try {
     page.getByRole("button", { name: "Save plan", exact: true }),
   ).toBeDisabled();
   await page
-    .getByRole("textbox", { name: "Quest due date YYYY-MM-DD", exact: true })
-    .fill("2026-02-30");
+    .getByRole("textbox", { name: "Quest due date MM/DD/YYYY", exact: true })
+    .fill("02/30/2026");
   await expect(
-    visibleText("Enter a real due date in YYYY-MM-DD format.", { exact: true }),
+    visibleText("Enter a real due date in MM/DD/YYYY format.", { exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Save plan", exact: true }),
@@ -1123,24 +1212,8 @@ try {
     [430, 932],
   ]) {
     await page.setViewportSize({ width, height });
-    await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
-    // Bundled images have intrinsic dimensions; artwork must fit its dynamic container.
-    for (const name of ["heading", "rank"]) {
-      const background = page
-        .getByTestId(`journal-background-${name}`)
-        .and(page.locator(':not([aria-hidden="true"], [aria-hidden="true"] *)'))
-        .filter({ visible: true });
-      const bounds = await background.evaluate((element) => {
-        const image = element.getBoundingClientRect();
-        const container = element.parentElement.getBoundingClientRect();
-        return {
-          widthDifference: Math.abs(image.width - container.width),
-          heightDifference: Math.abs(image.height - container.height),
-        };
-      });
-      expect(bounds.widthDifference).toBeLessThanOrEqual(1);
-      expect(bounds.heightDifference).toBeLessThanOrEqual(1);
-    }
+    await expect(homeXp).toBeVisible();
+    await verifyTravelerScene();
     await page.screenshot({
       path: path.join(artifacts, `home-${width}.png`),
     });

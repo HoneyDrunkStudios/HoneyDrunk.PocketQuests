@@ -286,45 +286,22 @@ test("Home exposes compact character sections, a daily plan and no direct quest 
       total: 45,
     },
   };
+  state.today = "2026-11-06";
   const html = render(Home);
   assert.match(html, /aria-label="Illustrated traveler character portrait"/);
   assert.match(html, /role="img"/);
   assert.match(html, /role="heading"/);
   assert.match(html, /Level 2/);
-  assert.match(html, /Your day/);
-  for (const name of [
-    "Categories, 10",
-    "Attributes, 8",
-    "Skills, 18",
-    "Global rank F",
-  ])
-    assert.ok(html.includes(name));
-  assert.equal((html.match(/aria-expanded="false"/g) ?? []).length, 4);
-  assert.doesNotMatch(html, /Category 9|Attribute 7|Skill 17/);
-  assert.doesNotMatch(html, /Complete:|Today quests|No quests planned/);
-  const category = () =>
-    render(CategoryProgress, {
-      item: state.categories[0],
-      streak: state.streaks[0],
-    });
-  assert.match(category(), /1-day streak\. Done today\./);
-  state.streaks[0] = {
-    categoryId: "c0",
-    days: 20,
-    qualifiedToday: false,
-    rate: 19,
-  };
-  const ongoing = category();
-  assert.match(ongoing, /20-day streak\. Complete today to continue\./);
-  assert.notEqual(html, ongoing);
-  state.streaks[0] = {
-    categoryId: "c0",
-    days: 0,
-    qualifiedToday: false,
-    rate: 0,
-  };
-  assert.match(category(), /Complete a quest to start a streak\./);
+  assert.match(html, /Pocket Quests/);
+  assert.doesNotMatch(html, /Playful Quest Log/);
+  assert.match(html, /Start the tour/);
+  assert.match(html, /first adventure/);
+  assert.match(html, /Quest ideas for today/);
+  assert.match(html, /Friday, November 6, 2026/);
+  assert.match(html, /See your progress/);
+  assert.doesNotMatch(html, /role="button"[^>]*>Complete/);
 });
+
 test("quest sections expose selected tab semantics and onboarding remains reachable", () => {
   state = { profile: { onboardingComplete: true }, occurrences: [] };
   const html = render(Quests);

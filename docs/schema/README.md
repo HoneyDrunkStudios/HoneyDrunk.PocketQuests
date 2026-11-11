@@ -34,7 +34,7 @@ No numerical reward rules, recurrence interval, zero-share allocation behavior, 
 
 ## Validation and reproduction
 
-From the repository root, with .NET 10.0.401, Python and LocalDB installed:
+From the repository root, with .NET 11.0.100, Python and LocalDB installed:
 
 ```powershell
 python scripts/schema/validate_contract.py

@@ -4,10 +4,11 @@ import { questActions } from "./commands/quest-actions";
 import { QuestEditor } from "./quest-editor";
 import { SeriesEditor } from "./series-editor";
 import { useSession } from "../../session/session";
-import { Button, Label, styles } from "../../shared/ui";
+import { Button, Label, useAppTheme } from "../../shared/ui";
 
 /** Definition management remains reachable after an occurrence leaves Available. */
 export function DefinitionManagement({ questId }: { questId: string }) {
+  const { styles } = useAppTheme();
   const { state, command, busy, pending } = useSession();
   const [mode, setMode] = useState<"edit" | "recurrence" | null>(null);
   const definition = state?.definitions.find((d) => d.quest.id === questId);
