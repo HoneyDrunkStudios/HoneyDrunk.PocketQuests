@@ -4,6 +4,7 @@ Describe 'Verified local deployment reporting' {
         $script:originalProbe = $global:PocketQuestsDeploymentProbe
         $script:commit = '1234567890abcdef1234567890abcdef12345678'
         $script:fixtures = @{}
+        Add-Type -AssemblyName Microsoft.CodeAnalysis.CSharp
         foreach ($kind in @('valid', 'wrong-product', 'missing-commit')) {
             $directory = Join-Path $TestDrive $kind
             $null = New-Item -ItemType Directory -Path $directory
@@ -11,12 +12,31 @@ Describe 'Verified local deployment reporting' {
             $product = if ($kind -eq 'wrong-product') { 'Another.Api' } else { 'PocketQuests.Api' }
             $version = if ($kind -eq 'missing-commit') { '1.0.0' } else { "1.0.0+$script:commit" }
             $type = 'Fixture' + [guid]::NewGuid().ToString('N')
-            Add-Type -TypeDefinition @"
+            $source = @"
 using System.Reflection;
 [assembly: AssemblyProduct("$product")]
 [assembly: AssemblyInformationalVersion("$version")]
 public class $type { }
-"@ -OutputAssembly $assembly
+"@
+            # Windows FileVersionInfo reads VERSIONINFO, not managed attributes.
+            # Add-Type alone does not emit that resource for its output assembly.
+            $syntax = [Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree]::ParseText($source)
+            $reference = [Microsoft.CodeAnalysis.MetadataReference]::CreateFromFile([object].Assembly.Location)
+            $options = [Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions]::new([Microsoft.CodeAnalysis.OutputKind]::DynamicallyLinkedLibrary)
+            $compilation = [Microsoft.CodeAnalysis.CSharp.CSharpCompilation]::Create(
+                $type, [Microsoft.CodeAnalysis.SyntaxTree[]]@($syntax), [Microsoft.CodeAnalysis.MetadataReference[]]@($reference), $options)
+            $resources = $compilation.CreateDefaultWin32Resources($true, $true, $null, $null)
+            $output = [IO.File]::Create($assembly)
+            try {
+                $result = $compilation.Emit($output, $null, $null, $resources, $null, $null, [Threading.CancellationToken]::None)
+                if (-not $result.Success) { throw ($result.Diagnostics -join [Environment]::NewLine) }
+            } finally {
+                $output.Dispose()
+                $resources.Dispose()
+            }
+            $metadata = [Diagnostics.FileVersionInfo]::GetVersionInfo($assembly)
+            $metadata.ProductName | Should -Be $product
+            $metadata.ProductVersion | Should -Be $version
             $script:fixtures[$kind] = Join-Path $directory 'PocketQuests.Api.exe'
         }
 
