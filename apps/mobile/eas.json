@@ -2,16 +2,19 @@
   "cli": { "appVersionSource": "local" },
   "build": {
     "development": {
+      "node": "22.23.5",
       "developmentClient": true,
       "distribution": "internal",
       "env": { "EXPO_PUBLIC_APP_ENV": "development" }
     },
     "preview": {
+      "node": "22.23.5",
       "distribution": "internal",
       "environment": "preview",
       "env": { "EXPO_PUBLIC_APP_ENV": "preview" }
     },
     "production": {
+      "node": "22.23.5",
       "environment": "production",
       "env": { "EXPO_PUBLIC_APP_ENV": "production" }
     }

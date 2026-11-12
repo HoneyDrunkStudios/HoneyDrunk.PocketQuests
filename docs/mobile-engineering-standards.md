@@ -53,7 +53,7 @@ Board/calendar history uses one `SectionList` scroll owner with recovery/header 
 
 ## Verification and release evidence
 
-The jsdom 30 lifecycle test dependency requires Node `^22.22.2 || ^24.15.0 || >=26.0.0`; keep the CI Node 22 installation current.
+Use Node 22.23.5, pinned in the root `.nvmrc`, CI and every EAS build profile, with npm 11.16.0. The mobile and admin manifests require patched Node versions (`^22.23.5 || ^24.22.3 || >=26.13.1`), which also satisfy the jsdom lifecycle test dependency. These minimums include the [November 2026 Node security fixes](https://nodejs.org/en/blog/vulnerability/november-2026-security-releases). The EAS pre-install hook selects the same npm 11.16.0 resolver as CI before installing locked dependencies; Node 22's bundled npm 10 cannot resolve the version-qualified overrides.
 
 Run mobile lint, strict TypeScript, `check:ui`, `check:api`, `check:security-patch`, complete `test:ci` and an Expo export/build appropriate to the change. Preserve the deterministic fault-injection suite: it tests workflow races and durable failures but intentionally replaces React hooks. Real React DOM/`act` tests separately cover Strict Mode, cleanup, subscription identity, account switching, logout/sign-in races, stale notifications and cache recovery. Neither suite proves native storage/clock/provider behavior.
 
