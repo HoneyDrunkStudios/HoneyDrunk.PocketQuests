@@ -6,7 +6,7 @@ Before running, install a local development build on an isolated emulator/device
 
 Fixture preconditions: onboarding complete; exactly 90 overall XP from nine completed small F downtime quests; Health & Fitness and Strength Training still at zero; no active quests. Save one custom definition named `Maestro slice quest`, F/Small, Health & Fitness, with 100% Strength Training. Leave it available. Start from Home. The flow should earn 10 overall/category/skill XP, explicitly show level-ups, undo that completion, and retain 90 overall XP after restarting. Independently inspect the isolated ledger for one completion and one matching Undo; UI labels alone do not prove ledger correctness.
 
-From `apps/mobile`, run `maestro test .maestro/quest-slice.yaml`. Capture output, screenshots, device/OS/build versions, and exact Git commit. Retest selectors against the real accessibility hierarchy before considering this harness accepted. The final restart assumes the app resumes Home; adapt only that navigation expectation if native restoration correctly resumes details.
+From the repository root, run `pwsh -File scripts/Test-NativeJourney.ps1 -DeviceId <id> -BuildCommit <sha> -DisposableFixture`. The wrapper captures JUnit, screenshots and a run record. Record the actual device OS and build version, and verify the isolated ledger separately. Retest selectors against the real accessibility hierarchy before considering this harness accepted. The final restart assumes the app resumes Home; adapt only that navigation expectation if native restoration correctly resumes details.
 
 Additional device acceptance cases (still unrun):
 
