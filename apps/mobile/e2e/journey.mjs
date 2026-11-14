@@ -666,9 +666,11 @@ try {
   await page.getByRole("tab", { name: "Progress", exact: true }).click();
   diagnostics.checkpoint("progress-details");
   await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
+  diagnostics.checkpoint("progress-overall-bar");
   await expect(
     page.getByRole("progressbar", { name: / level progress$/ }),
   ).toHaveCount(1);
+  diagnostics.checkpoint("progress-sections");
   for (const [title, items] of [
     ["Categories", committed.categories],
     ["Attributes", committed.attributes],
@@ -686,6 +688,7 @@ try {
     await section.press(title === "Attributes" ? "Space" : "Enter");
     await expect(section).toHaveAttribute("aria-expanded", "true");
   }
+  diagnostics.checkpoint("progress-expanded-bars");
   await expect(
     page.getByRole("progressbar", { name: / level progress$/ }),
   ).toHaveCount(
@@ -697,16 +700,19 @@ try {
   await page
     .getByRole("button", { name: "View rank progress", exact: true })
     .click();
+  diagnostics.checkpoint("progress-rank-bars");
   const rankBars = page.getByRole("progressbar", {
     name: /^(Qualifying categories|Combined category XP)$/,
   });
   await expect(rankBars).toHaveCount(2);
+  diagnostics.checkpoint("progress-rank-value");
   await expect(
     page.getByRole("progressbar", {
       name: "Overall level progress",
       exact: true,
     }),
   ).toHaveAttribute("aria-valuetext", "180/300 XP toward level 3");
+  diagnostics.checkpoint("progress-rank-ladder");
   await page
     .getByRole("button", { name: "See the rank ladder", exact: true })
     .click();
@@ -723,6 +729,7 @@ try {
   await page
     .getByRole("button", { name: "Hide rank ladder", exact: true })
     .click();
+  diagnostics.checkpoint("progress-category-floor");
   await page
     .getByRole("button", { name: "See category requirements", exact: true })
     .click();
@@ -735,6 +742,7 @@ try {
   await page
     .getByRole("button", { name: "Hide rank progress", exact: true })
     .click();
+  diagnostics.checkpoint("progress-streak");
   await expect(page.getByRole("button", { name: /^Complete:/ })).toHaveCount(0);
   await expect(
     visibleText("1-day streak. Done today.", {
