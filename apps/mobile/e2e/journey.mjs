@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import { createDiagnostics } from "./safe-diagnostics.mjs";
+import { activeRole, activeRouteSelector } from "./active-route.mjs";
 import { verifyNextFeatures } from "./next-features.mjs";
 const diagnostics = createDiagnostics(
   process.env.POCKETQUESTS_JOURNEY_DIAGNOSTICS,
@@ -28,9 +29,9 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 // Native navigation retains hidden screens; assertions target the visible one.
-const activeRoute = page.locator(':not([aria-hidden="true"], [aria-hidden="true"] *)');
+const activeRoute = page.locator(activeRouteSelector);
 const visibleRole = (role, options) =>
-  page.getByRole(role, options).and(activeRoute).filter({ visible: true });
+  activeRole(page, role, options).and(activeRoute).filter({ visible: true });
 const visibleText = (text, options) =>
   page
     .getByText(text, options)
@@ -205,36 +206,32 @@ async function verifyHistorySearch(view) {
   };
   page.on("request", observe);
   try {
-    const search = page.getByRole("textbox", {
+    const search = activeRole(page, "textbox", {
       name: `Search ${view.toLowerCase()} quests`,
       exact: true,
     });
-    const link = page.getByRole("link", {
+    const link = activeRole(page, "link", {
       name: "Quest details: Browser verified custom quest",
       exact: true,
     });
     await search.fill("browser delivered");
     await expect(link).toBeVisible();
-    await page
-      .getByRole("button", { name: "Show quest filters", exact: true })
+    await activeRole(page, "button", { name: "Show quest filters", exact: true })
       .click();
-    await page
-      .getByRole("radio", { name: "Work & Purpose", exact: true })
+    await activeRole(page, "radio", { name: "Work & Purpose", exact: true })
       .click();
-    await page.getByRole("radio", { name: "Medium", exact: true }).click();
+    await activeRole(page, "radio", { name: "Medium", exact: true }).click();
     await expect(link).toBeVisible();
-    await page.getByRole("radio", { name: "Small", exact: true }).click();
+    await activeRole(page, "radio", { name: "Small", exact: true }).click();
     await expect(link).toHaveCount(0);
     await expect(
       visibleText("No quests match your search and filters.", { exact: true }),
     ).toBeVisible();
-    await page
-      .getByRole("button", { name: "Clear search and filters", exact: true })
+    await activeRole(page, "button", { name: "Clear search and filters", exact: true })
       .click();
     await expect(link).toBeVisible();
     await expect(search).toHaveValue("");
-    await page
-      .getByRole("button", { name: "Hide quest filters", exact: true })
+    await activeRole(page, "button", { name: "Hide quest filters", exact: true })
       .click();
     const after = await readState();
     expect(writes).toHaveLength(0);
@@ -249,7 +246,7 @@ async function verifyHistorySearch(view) {
 try {
   diagnostics.checkpoint("sign-in");
   await page.goto("http://localhost:8081");
-  const signIn = page.getByRole("button", {
+  const signIn = activeRole(page, "button", {
     name: "Sign in or create an account",
   });
   await expect(signIn).toBeEnabled({ timeout: 90000 });
@@ -258,46 +255,36 @@ try {
     visibleText("Create your character", { exact: true }),
   ).toBeVisible({ timeout: 30000 });
   diagnostics.checkpoint("onboarding");
-  await page
-    .getByRole("textbox", { name: "Character name", exact: true })
+  await activeRole(page, "textbox", { name: "Character name", exact: true })
     .fill("Browser adventurer");
-  await page
-    .getByRole("button", { name: "Save name and continue", exact: true })
+  await activeRole(page, "button", { name: "Save name and continue", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "More editing options", exact: true })
+  await activeRole(page, "button", { name: "More editing options", exact: true })
     .click();
-  await page.getByRole("tab", { name: "Body", exact: true }).click();
-  await page.getByRole("radio", { name: /^(Selected: )?Face: Oval$/ }).click();
-  await page
-    .getByRole("radio", { name: "Skin tone: Tone 6", exact: true })
+  await activeRole(page, "tab", { name: "Body", exact: true }).click();
+  await activeRole(page, "radio", { name: /^(Selected: )?Face: Oval$/ }).click();
+  await activeRole(page, "radio", { name: "Skin tone: Tone 6", exact: true })
     .click();
-  await page.getByRole("tab", { name: "Hair", exact: true }).click();
-  await page
-    .getByRole("radio", { name: "Hair color: Silver", exact: true })
+  await activeRole(page, "tab", { name: "Hair", exact: true }).click();
+  await activeRole(page, "radio", { name: "Hair color: Silver", exact: true })
     .click();
-  await page.getByRole("tab", { name: "Clothes", exact: true }).click();
-  await page
-    .getByRole("button", { name: /^(Selected preview: )?Field shirt$/ })
+  await activeRole(page, "tab", { name: "Clothes", exact: true }).click();
+  await activeRole(page, "button", { name: /^(Selected preview: )?Field shirt$/ })
     .click();
-  await page
-    .getByRole("button", { name: "Continue", exact: true })
+  await activeRole(page, "button", { name: "Continue", exact: true })
     .click();
-  await page
-    .getByRole("checkbox", { name: "Work & Purpose", exact: true })
+  await activeRole(page, "checkbox", { name: "Work & Purpose", exact: true })
     .click();
   await expect(
-    page.getByRole("checkbox", { name: "Work & Purpose", exact: true }),
+    activeRole(page, "checkbox", { name: "Work & Purpose", exact: true }),
   ).toBeChecked();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page
-    .getByRole("radio", { name: "Programming: Expert", exact: true })
+  await activeRole(page, "button", { name: "Continue", exact: true }).click();
+  await activeRole(page, "radio", { name: "Programming: Expert", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Continue with these skills", exact: true })
+  await activeRole(page, "button", { name: "Continue with these skills", exact: true })
     .click();
   diagnostics.checkpoint("onboarding-save");
-  await page.getByRole("button", { name: "Show me around", exact: true }).click();
+  await activeRole(page, "button", { name: "Show me around", exact: true }).click();
   const tour = page.getByTestId("journal-tour-panel");
   for (const [route, title] of [
     ["/", "Welcome to your journal"],
@@ -325,7 +312,7 @@ try {
   await tour.getByRole("button", { name: "Choose a quest", exact: true }).click();
   await expect(page).toHaveURL(/\/board(?:\?view=Available)?$/);
   await expect(
-    page.getByRole("heading", { name: "Pick your next quest", exact: true }),
+    activeRole(page, "heading", { name: "Pick your next quest", exact: true }),
   ).toBeVisible();
   const initialCharacter = await (
     await context.request.get("http://localhost:5217/api/state", {
@@ -339,8 +326,7 @@ try {
     12005,
   );
   diagnostics.checkpoint("custom-quest");
-  await page
-    .getByRole("button", { name: "Create a custom quest", exact: true })
+  await activeRole(page, "button", { name: "Create a custom quest", exact: true })
     .click();
   await page
     .getByLabel("Quest title", { exact: true })
@@ -348,14 +334,12 @@ try {
   await page
     .getByLabel("Completion criterion", { exact: true })
     .fill("I have delivered the working result");
-  await page
-    .getByRole("button", { name: "Work & Purpose", exact: true })
+  await activeRole(page, "button", { name: "Work & Purpose", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Add Programming", exact: true })
+  await activeRole(page, "button", { name: "Add Programming", exact: true })
     .click();
-  await page.getByRole("button", { name: "Rank A", exact: true }).click();
-  await page.getByRole("button", { name: "Medium", exact: true }).click();
+  await activeRole(page, "button", { name: "Rank A", exact: true }).click();
+  await activeRole(page, "button", { name: "Medium", exact: true }).click();
   let rejectSave = true;
   let loseCompletionResponse = true;
   let completionResponseAborted = false;
@@ -427,8 +411,7 @@ try {
     return route.continue();
   });
   diagnostics.checkpoint("save-retry");
-  await page
-    .getByRole("button", { name: "Save custom quest", exact: true })
+  await activeRole(page, "button", { name: "Save custom quest", exact: true })
     .click();
   await expect(
     visibleText(
@@ -444,22 +427,20 @@ try {
   await expect(
     page.getByLabel("Completion criterion", { exact: true }),
   ).toHaveValue("I have delivered the working result");
-  await page.getByRole("button", { name: "Try again", exact: true }).click();
+  await activeRole(page, "button", { name: "Try again", exact: true }).click();
   await expect(visibleText(/Saved revision 1/)).toBeVisible();
-  await page
-    .getByRole("button", { name: "Back to available quests", exact: true })
+  await activeRole(page, "button", { name: "Back to available quests", exact: true })
     .click();
-  await page
-    .getByRole("button", {
+  await activeRole(page, "button", {
       name: "Quest details: Browser verified custom quest",
       exact: true,
     })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Complete when", exact: true }),
+    activeRole(page, "heading", { name: "Complete when", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Completion rewards", exact: true }),
+    activeRole(page, "heading", { name: "Completion rewards", exact: true }),
   ).toBeVisible();
   await expect(
     visibleText("I have delivered the working result", { exact: true }),
@@ -476,14 +457,12 @@ try {
   await page.screenshot({
     path: path.join(artifacts, "available-quest-details.png"),
   });
-  await page
-    .getByRole("button", { name: "Back to available quests", exact: true })
+  await activeRole(page, "button", { name: "Back to available quests", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Complete when", exact: true }),
+    activeRole(page, "heading", { name: "Complete when", exact: true }),
   ).toBeHidden();
-  await page
-    .getByRole("heading", {
+  await activeRole(page, "heading", {
       name: "Browser verified custom quest",
       exact: true,
     })
@@ -491,26 +470,23 @@ try {
       element.parentElement.scrollIntoView({ block: "start" }),
     );
   await page.screenshot({ path: path.join(artifacts, "available-quests.png") });
-  await page
-    .getByRole("button", {
+  await activeRole(page, "button", {
       name: "Quest details: Browser verified custom quest",
       exact: true,
     })
     .click();
-  await page
-    .getByRole("button", {
+  await activeRole(page, "button", {
       name: "Start: Browser verified custom quest",
       exact: true,
     })
     .click();
   await expect(
-    page.getByRole("button", { name: "Open active quest", exact: true }),
+    activeRole(page, "button", { name: "Open active quest", exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Back to available quests", exact: true })
+  await activeRole(page, "button", { name: "Back to available quests", exact: true })
     .click();
-  await page.getByRole("tab", { name: "Active", exact: true }).click();
-  const activeQuestLink = page.getByRole("link", {
+  await activeRole(page, "tab", { name: "Active", exact: true }).click();
+  const activeQuestLink = activeRole(page, "link", {
     name: "Quest details: Browser verified custom quest",
     exact: true,
   });
@@ -532,25 +508,24 @@ try {
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: path.join(artifacts, "active-quests.png") });
-  await page.getByRole("link", { name: /^Quest details:/ }).click();
+  await activeRole(page, "link", { name: /^Quest details:/ }).click();
   await expect(
-    page.getByRole("heading", { name: "Complete when", exact: true }),
+    activeRole(page, "heading", { name: "Complete when", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", {
+    activeRole(page, "button", {
       name: "Complete: Browser verified custom quest",
       exact: true,
     }),
   ).toBeEnabled();
   await expect(
-    page.getByRole("heading", { name: "Completion rewards", exact: true }),
+    activeRole(page, "heading", { name: "Completion rewards", exact: true }),
   ).toBeVisible();
   await page.screenshot({
     path: path.join(artifacts, "active-quest-details.png"),
   });
   diagnostics.checkpoint("definition-edit");
-  await page
-    .getByRole("button", {
+  await activeRole(page, "button", {
       name: "Edit: Browser verified custom quest",
       exact: true,
     })
@@ -558,20 +533,17 @@ try {
   await page
     .getByLabel("Completion criterion", { exact: true })
     .fill("I have delivered and reviewed the working result");
-  await page
-    .getByRole("button", { name: "Save custom quest", exact: true })
+  await activeRole(page, "button", { name: "Save custom quest", exact: true })
     .click();
   await expect(visibleText(/Saved revision 2/)).toBeVisible();
-  await page
-    .getByRole("button", { name: "Back to quest details", exact: true })
+  await activeRole(page, "button", { name: "Back to quest details", exact: true })
     .click();
   await expect(
     visibleText("I have delivered and reviewed the working result", {
       exact: true,
     }),
   ).toBeVisible();
-  await page
-    .getByRole("button", {
+  await activeRole(page, "button", {
       name: "Set recurrence: Browser verified custom quest",
       exact: true,
     })
@@ -579,17 +551,15 @@ try {
   await expect(
     visibleText("Repeat: Browser verified custom quest", { exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Back to quest details", exact: true })
+  await activeRole(page, "button", { name: "Back to quest details", exact: true })
     .click();
-  await page
-    .getByRole("button", {
+  await activeRole(page, "button", {
       name: "Archive definition: Browser verified custom quest",
       exact: true,
     })
     .click();
   await expect(
-    page.getByRole("button", {
+    activeRole(page, "button", {
       name: "Edit: Browser verified custom quest",
       exact: true,
     }),
@@ -598,8 +568,7 @@ try {
     "Verified active definition editing, recurrence access and archival without losing its occurrence.",
   );
   diagnostics.checkpoint("completion-response-loss");
-  await page
-    .getByRole("button", {
+  await activeRole(page, "button", {
       name: "Complete: Browser verified custom quest",
       exact: true,
     })
@@ -626,8 +595,7 @@ try {
       response.url() === "http://localhost:5217/api/sync-anchor" &&
       response.request().method() === "POST",
   );
-  await page
-    .getByRole("button", { name: "Try saving again", exact: true })
+  await activeRole(page, "button", { name: "Try saving again", exact: true })
     .click();
   expect((await synchronized).ok()).toBe(true);
   diagnostics.checkpoint("completion-feedback");
@@ -642,12 +610,11 @@ try {
     path: path.join(artifacts, "completion-celebration.png"),
     fullPage: false,
   });
-  await page
-    .getByRole("button", { name: "Keep adventuring", exact: true })
+  await activeRole(page, "button", { name: "Keep adventuring", exact: true })
     .click();
-  await page.getByRole("link", { name: "Back to Home", exact: true }).click();
+  await activeRole(page, "link", { name: "Back to Home", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Hey, Browser adventurer!", exact: true }),
+    activeRole(page, "heading", { name: "Hey, Browser adventurer!", exact: true }),
   ).toBeVisible();
   await expect(homeXp).toBeVisible();
   console.log("Verified completion response-loss retry and character totals.");
@@ -663,12 +630,12 @@ try {
   await page.screenshot({ path: path.join(artifacts, "character-narrow.png") });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: path.join(artifacts, "character-home.png") });
-  await page.getByRole("tab", { name: "Progress", exact: true }).click();
+  await activeRole(page, "tab", { name: "Progress", exact: true }).click();
   diagnostics.checkpoint("progress-details");
   await expect(visibleText("280 overall XP", { exact: true })).toBeVisible();
   diagnostics.checkpoint("progress-overall-bar");
   await expect(
-    page.getByRole("progressbar", { name: / level progress$/ }),
+    activeRole(page, "progressbar", { name: / level progress$/ }),
   ).toHaveCount(1);
   diagnostics.checkpoint("progress-sections");
   for (const [title, items] of [
@@ -677,9 +644,9 @@ try {
     ["Skills", committed.skills],
   ]) {
     await expect(
-      page.getByRole("heading", { name: title, exact: true }),
+      activeRole(page, "heading", { name: title, exact: true }),
     ).toBeVisible();
-    const section = page.getByRole("button", {
+    const section = activeRole(page, "button", {
       name: `${title}, ${items.length}`,
       exact: true,
     });
@@ -690,31 +657,29 @@ try {
   }
   diagnostics.checkpoint("progress-expanded-bars");
   await expect(
-    page.getByRole("progressbar", { name: / level progress$/ }),
+    activeRole(page, "progressbar", { name: / level progress$/ }),
   ).toHaveCount(
     1 +
       committed.categories.length +
       committed.attributes.length +
       committed.skills.length,
   );
-  await page
-    .getByRole("button", { name: "View rank progress", exact: true })
+  await activeRole(page, "button", { name: "View rank progress", exact: true })
     .click();
   diagnostics.checkpoint("progress-rank-bars");
-  const rankBars = page.getByRole("progressbar", {
+  const rankBars = activeRole(page, "progressbar", {
     name: /^(Qualifying categories|Combined category XP)$/,
   });
   await expect(rankBars).toHaveCount(2);
   diagnostics.checkpoint("progress-rank-value");
   await expect(
-    page.getByRole("progressbar", {
+    activeRole(page, "progressbar", {
       name: "Overall level progress",
       exact: true,
     }),
   ).toHaveAttribute("aria-valuetext", "180/300 XP toward level 3");
   diagnostics.checkpoint("progress-rank-ladder");
-  await page
-    .getByRole("button", { name: "See the rank ladder", exact: true })
+  await activeRole(page, "button", { name: "See the rank ladder", exact: true })
     .click();
   await expect(
     visibleText("Rank F · Current rank", { exact: true }),
@@ -726,31 +691,27 @@ try {
     ),
   ).toBeVisible();
   await page.screenshot({ path: path.join(artifacts, "rank-ladder.png") });
-  await page
-    .getByRole("button", { name: "Hide rank ladder", exact: true })
+  await activeRole(page, "button", { name: "Hide rank ladder", exact: true })
     .click();
   diagnostics.checkpoint("progress-category-floor");
-  await page
-    .getByRole("button", { name: "See category requirements", exact: true })
+  await activeRole(page, "button", { name: "See category requirements", exact: true })
     .click();
   await expect(
     visibleText("280 XP · Floor met", { exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Hide category requirements", exact: true })
+  await activeRole(page, "button", { name: "Hide category requirements", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Hide rank progress", exact: true })
+  await activeRole(page, "button", { name: "Hide rank progress", exact: true })
     .click();
   diagnostics.checkpoint("progress-streak");
-  await expect(page.getByRole("button", { name: /^Complete:/ })).toHaveCount(0);
+  await expect(activeRole(page, "button", { name: /^Complete:/ })).toHaveCount(0);
   await expect(
     visibleText("1-day streak. Done today.", {
       exact: true,
     }),
   ).toBeVisible();
   for (const title of ["Categories", "Attributes", "Skills"]) {
-    const section = page.getByRole("button", {
+    const section = activeRole(page, "button", {
       name: new RegExp(`^${title}, `),
     });
     await section.click();
@@ -763,7 +724,7 @@ try {
   await visibleRole("link", { name: "Settings and profile", exact: true }).click();
   await expect(page).toHaveURL((url) => url.pathname === "/settings");
   diagnostics.checkpoint("settings-export");
-  await page.getByRole("button", { name: "Your traveler", exact: true }).click();
+  await activeRole(page, "button", { name: "Your traveler", exact: true }).click();
   await expect(
     visibleText("Your interests and experience", { exact: true }),
   ).toBeVisible();
@@ -779,12 +740,10 @@ try {
   expect(
     state.ledger.filter((entry) => entry.track === "Overall"),
   ).toHaveLength(1);
-  await page
-    .getByRole("button", { name: "Privacy & account", exact: true })
+  await activeRole(page, "button", { name: "Privacy & account", exact: true })
     .click();
   const downloadEvent = page.waitForEvent("download");
-  await page
-    .getByRole("button", { name: "Download full JSON export", exact: true })
+  await activeRole(page, "button", { name: "Download full JSON export", exact: true })
     .click();
   const download = await downloadEvent;
   const exported = JSON.parse(await fs.readFile(await download.path(), "utf8"));
@@ -799,16 +758,15 @@ try {
   await page.goBack();
   await expect(page).toHaveURL((url) => url.pathname === "/");
   await visibleRole("tab", { name: "Quests", exact: true }).click();
-  await page.getByRole("tab", { name: "Completed", exact: true }).click();
+  await activeRole(page, "tab", { name: "Completed", exact: true }).click();
   await verifyHistorySearch("Completed");
   await expect(
-    page.getByRole("link", {
+    activeRole(page, "link", {
       name: "Quest details: Browser verified custom quest",
       exact: true,
     }),
   ).toBeVisible();
-  await page
-    .getByRole("heading", {
+  await activeRole(page, "heading", {
       name: "Browser verified custom quest",
       exact: true,
     })
@@ -819,8 +777,8 @@ try {
   await expect(
     visibleText("Browser verified custom quest", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: /^Complete:/ })).toHaveCount(0);
-  await page.getByRole("tab", { name: "Available", exact: true }).click();
+  await expect(activeRole(page, "button", { name: /^Complete:/ })).toHaveCount(0);
+  await activeRole(page, "tab", { name: "Available", exact: true }).click();
   diagnostics.checkpoint("quest-discovery");
   const beforeDiscovery = await (
     await context.request.get("http://localhost:5217/api/state", {
@@ -837,11 +795,11 @@ try {
   };
   page.on("request", recordDiscoveryWrite);
   try {
-    const search = page.getByRole("textbox", {
+    const search = activeRole(page, "textbox", {
       name: "Search quests",
       exact: true,
     });
-    const downtime = page.getByRole("button", {
+    const downtime = activeRole(page, "button", {
       name: "Quest details: Enjoy some downtime",
       exact: true,
     });
@@ -852,36 +810,30 @@ try {
     await expect(downtime).toHaveCount(0);
     await search.fill("ENJOY downtime");
     await expect(downtime).toBeVisible();
-    await page
-      .getByRole("button", { name: "Show quest filters", exact: true })
+    await activeRole(page, "button", { name: "Show quest filters", exact: true })
       .click();
-    await page
-      .getByRole("radio", { name: "Custom quests", exact: true })
+    await activeRole(page, "radio", { name: "Custom quests", exact: true })
       .click();
     await expect(downtime).toHaveCount(0);
-    await page
-      .getByRole("radio", { name: "Starter quests", exact: true })
+    await activeRole(page, "radio", { name: "Starter quests", exact: true })
       .click();
-    await page.getByRole("radio", { name: "Small", exact: true }).click();
-    await page
-      .getByRole("checkbox", { name: "Ready to start", exact: true })
+    await activeRole(page, "radio", { name: "Small", exact: true }).click();
+    await activeRole(page, "checkbox", { name: "Ready to start", exact: true })
       .click();
-    await page
-      .getByRole("checkbox", { name: "No XP penalties", exact: true })
+    await activeRole(page, "checkbox", { name: "No XP penalties", exact: true })
       .click();
     await expect(downtime).toBeVisible();
-    await page
-      .getByRole("button", { name: "Clear search and filters", exact: true })
+    await activeRole(page, "button", { name: "Clear search and filters", exact: true })
       .click();
     await expect(search).toHaveValue("");
     await expect(
-      page.getByRole("radio", { name: "All quests", exact: true }),
+      activeRole(page, "radio", { name: "All quests", exact: true }),
     ).toBeChecked();
     await expect(
-      page.getByRole("radio", { name: "Any effort", exact: true }),
+      activeRole(page, "radio", { name: "Any effort", exact: true }),
     ).toBeChecked();
     await expect(
-      page.getByRole("checkbox", { name: "Ready to start", exact: true }),
+      activeRole(page, "checkbox", { name: "Ready to start", exact: true }),
     ).not.toBeChecked();
     await expect(downtime).toBeVisible();
     const afterDiscovery = await (
@@ -896,31 +848,26 @@ try {
   } finally {
     page.off("request", recordDiscoveryWrite);
   }
-  await page
-    .getByRole("button", {
+  await activeRole(page, "button", {
       name: "Quest details: Enjoy some downtime",
       exact: true,
     })
     .click();
-  await page
-    .getByRole("button", { name: "Start: Enjoy some downtime", exact: true })
+  await activeRole(page, "button", { name: "Start: Enjoy some downtime", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Open active quest", exact: true }),
+    activeRole(page, "button", { name: "Open active quest", exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Back to available quests", exact: true })
+  await activeRole(page, "button", { name: "Back to available quests", exact: true })
     .click();
-  await page.getByRole("tab", { name: "Active", exact: true }).click();
-  await page.getByRole("link", { name: /^Quest details:/ }).click();
-  await page
-    .getByRole("button", { name: "Do Now with an optional timer", exact: true })
+  await activeRole(page, "tab", { name: "Active", exact: true }).click();
+  await activeRole(page, "link", { name: /^Quest details:/ }).click();
+  await activeRole(page, "button", { name: "Do Now with an optional timer", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Start focus timer", exact: true })
+  await activeRole(page, "button", { name: "Start focus timer", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Pause focus timer", exact: true }),
+    activeRole(page, "button", { name: "Pause focus timer", exact: true }),
   ).toBeVisible();
   const duringTimer = await (
     await context.request.get("http://localhost:5217/api/state", {
@@ -929,20 +876,18 @@ try {
   ).json();
   expect(duringTimer.overallXp).toBe(280);
   console.log("Verified completed list, export, and timer without XP award.");
-  await page.getByRole("link", { name: "Back to Home", exact: true }).click();
+  await activeRole(page, "link", { name: "Back to Home", exact: true }).click();
   await expect(homeXp).toBeVisible();
   await expect(page).toHaveURL("http://localhost:8081/");
   await page.goBack();
   await expect(
-    page.getByRole("button", { name: "Resume focus timer", exact: true }),
+    activeRole(page, "button", { name: "Resume focus timer", exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Close focus timer", exact: true })
+  await activeRole(page, "button", { name: "Close focus timer", exact: true })
     .click();
   diagnostics.checkpoint("offline-undo");
   await context.setOffline(true);
-  await page
-    .getByRole("button", { name: "Complete: Enjoy some downtime", exact: true })
+  await activeRole(page, "button", { name: "Complete: Enjoy some downtime", exact: true })
     .click();
   await expect(visibleText(/You’re offline.*saved progress/)).toBeVisible();
   await expect(visibleText("Quest complete!", { exact: true })).toHaveCount(0);
@@ -956,11 +901,10 @@ try {
   await expect(visibleText("Quest complete!", { exact: true })).toBeVisible({
     timeout: 30000,
   });
-  await page
-    .getByRole("button", { name: "Undo recent completion", exact: true })
+  await activeRole(page, "button", { name: "Undo recent completion", exact: true })
     .click();
   await expect(
-    page.getByRole("button", {
+    activeRole(page, "button", {
       name: "Complete: Enjoy some downtime",
       exact: true,
     }),
@@ -982,8 +926,7 @@ try {
       response.url() === "http://localhost:5217/api/sync-anchor" &&
       response.request().method() === "POST",
   );
-  await page
-    .getByRole("button", { name: "Complete: Enjoy some downtime", exact: true })
+  await activeRole(page, "button", { name: "Complete: Enjoy some downtime", exact: true })
     .click();
   const clockAnchorResponse = await refreshedAfterSkew;
   expect(clockAnchorResponse.ok()).toBe(true);
@@ -992,19 +935,17 @@ try {
     Date.parse(clockRecordedAt),
   );
   await expect(visibleText("Quest complete!", { exact: true })).toBeVisible();
-  await page
-    .getByRole("button", { name: "Undo recent completion", exact: true })
+  await activeRole(page, "button", { name: "Undo recent completion", exact: true })
     .click();
   await expect(
-    page.getByRole("button", {
+    activeRole(page, "button", {
       name: "Try saving again",
       exact: true,
     }),
   ).toBeEnabled();
-  await page
-    .getByRole("button", { name: "Try saving again", exact: true })
+  await activeRole(page, "button", { name: "Try saving again", exact: true })
     .click();
-  const completeAgain = page.getByRole("button", {
+  const completeAgain = activeRole(page, "button", {
     name: "Complete: Enjoy some downtime",
     exact: true,
   });
@@ -1013,8 +954,7 @@ try {
   // A subsequent real command must drain normally; no discard or proof mutation is allowed.
   await completeAgain.click();
   await expect(visibleText("Quest complete!", { exact: true })).toBeVisible();
-  await page
-    .getByRole("button", { name: "Undo recent completion", exact: true })
+  await activeRole(page, "button", { name: "Undo recent completion", exact: true })
     .click();
   await expect(completeAgain).toBeEnabled();
   console.log(
@@ -1035,22 +975,22 @@ try {
   await expect(signIn).toBeEnabled();
   await signIn.click();
   await expect(homeXp).toBeVisible();
-  await page.getByRole("tab", { name: "Quests", exact: true }).click();
-  await page.getByRole("tab", { name: "Active", exact: true }).click();
-  await page.getByRole("link", { name: /^Quest details:/ }).click();
+  await activeRole(page, "tab", { name: "Quests", exact: true }).click();
+  await activeRole(page, "tab", { name: "Active", exact: true }).click();
+  await activeRole(page, "link", { name: /^Quest details:/ }).click();
   await expect(
-    page.getByRole("button", {
+    activeRole(page, "button", {
       name: "Complete: Enjoy some downtime",
       exact: true,
     }),
   ).toBeEnabled();
-  await page.getByRole("link", { name: "Back to Home", exact: true }).click();
+  await activeRole(page, "link", { name: "Back to Home", exact: true }).click();
   diagnostics.checkpoint("calendar-planning");
   // Calendar planning uses the same saved account and real SQL-backed commands.
-  await page.getByRole("tab", { name: "Calendar", exact: true }).click();
-  await page.getByRole("tab", { name: "7 days", exact: true }).click();
+  await activeRole(page, "tab", { name: "Calendar", exact: true }).click();
+  await activeRole(page, "tab", { name: "7 days", exact: true }).click();
   await expect(
-    page.getByRole("tab", { name: "7 days", exact: true }),
+    activeRole(page, "tab", { name: "7 days", exact: true }),
   ).toHaveAttribute("aria-selected", "true");
   const plannedDate = new Date(
     Date.parse(synced.today + "T00:00:00Z") + 3 * 86400000,
@@ -1059,12 +999,11 @@ try {
     .slice(0, 10);
   const displayPlannedDate = americanDate(plannedDate);
   await page.getByLabel("Calendar date MM/DD/YYYY").fill("02/30/2026");
-  await page.getByRole("button", { name: "Go to date", exact: true }).click();
+  await activeRole(page, "button", { name: "Go to date", exact: true }).click();
   await expect(visibleText(/Enter a real date/)).toBeVisible();
   await page.getByLabel("Calendar date MM/DD/YYYY").fill(displayPlannedDate);
-  await page.getByRole("button", { name: "Go to date", exact: true }).click();
-  await page
-    .getByRole("button", {
+  await activeRole(page, "button", { name: "Go to date", exact: true }).click();
+  await activeRole(page, "button", {
       name: `Create a quest for ${displayPlannedDate}`,
       exact: true,
     })
@@ -1075,15 +1014,12 @@ try {
   await page
     .getByLabel("Completion criterion", { exact: true })
     .fill("Finish the planned calendar action");
-  await page
-    .getByRole("button", { name: "Save custom quest", exact: true })
+  await activeRole(page, "button", { name: "Save custom quest", exact: true })
     .click();
   await expect(visibleText(/Saved revision 1/)).toBeVisible();
-  await page
-    .getByRole("button", { name: "Back to available quests", exact: true })
+  await activeRole(page, "button", { name: "Back to available quests", exact: true })
     .click();
-  await page
-    .getByRole("button", {
+  await activeRole(page, "button", {
       name: "Quest details: Calendar planned quest",
       exact: true,
     })
@@ -1092,18 +1028,16 @@ try {
     displayPlannedDate,
   );
   await page.getByLabel("Optional planned time HH:mm").fill("09:30");
-  const startCalendarQuest = page.getByRole("button", {
+  const startCalendarQuest = activeRole(page, "button", {
     name: "Start: Calendar planned quest",
     exact: true,
   });
   await expect(startCalendarQuest).toBeEnabled();
   await startCalendarQuest.click();
   await expect(startCalendarQuest).toBeHidden();
-  await page
-    .getByRole("button", { name: "Back to available quests", exact: true })
+  await activeRole(page, "button", { name: "Back to available quests", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Back to calendar", exact: true })
+  await activeRole(page, "button", { name: "Back to calendar", exact: true })
     .click();
   await expect(
     visibleText("Calendar planned quest", { exact: true }),
@@ -1131,10 +1065,10 @@ try {
   await page.screenshot({
     path: path.join(artifacts, "calendar-seven-days.png"),
   });
-  await page.getByRole("tab", { name: "Day", exact: true }).click();
+  await activeRole(page, "tab", { name: "Day", exact: true }).click();
   await page.screenshot({ path: path.join(artifacts, "calendar-day.png") });
-  await page.getByRole("tab", { name: "Quests", exact: true }).click();
-  await page.getByRole("tab", { name: "Active", exact: true }).click();
+  await activeRole(page, "tab", { name: "Quests", exact: true }).click();
+  await activeRole(page, "tab", { name: "Active", exact: true }).click();
   await expect(
     visibleText(`Today · ${americanDate(plannedState.today)}`, { exact: true }),
   ).toBeVisible();
@@ -1144,33 +1078,30 @@ try {
     visibleText("Calendar planned quest", { exact: true }),
   ).toBeVisible();
   await page.screenshot({ path: path.join(artifacts, "active-planning.png") });
-  await page
-    .getByRole("link", { name: /^Quest details:/ })
+  await activeRole(page, "link", { name: /^Quest details:/ })
     .and(page.locator(`a[href="/quest/${calendarQuest.occurrence.id}"]`))
     .click();
   diagnostics.checkpoint("plan-edit");
   await expect(
-    page.getByRole("button", { name: "Save plan", exact: true }),
+    activeRole(page, "button", { name: "Save plan", exact: true }),
   ).toBeDisabled();
-  await page
-    .getByRole("textbox", { name: "Quest due date MM/DD/YYYY", exact: true })
+  await activeRole(page, "textbox", { name: "Quest due date MM/DD/YYYY", exact: true })
     .fill("02/30/2026");
   await expect(
     visibleText("Enter a real due date in MM/DD/YYYY format.", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Save plan", exact: true }),
+    activeRole(page, "button", { name: "Save plan", exact: true }),
   ).toBeDisabled();
-  await page
-    .getByRole("button", { name: "Leave this quest unscheduled", exact: true })
+  await activeRole(page, "button", { name: "Leave this quest unscheduled", exact: true })
     .click();
   await expect(
-    page.getByRole("textbox", {
+    activeRole(page, "textbox", {
       name: "Quest planned time HH:mm",
       exact: true,
     }),
   ).toHaveValue("");
-  await page.getByRole("button", { name: "Save plan", exact: true }).click();
+  await activeRole(page, "button", { name: "Save plan", exact: true }).click();
   async function waitForSavedPlan(dueDate, plannedTime) {
     await expect
       .poll(async () => {
@@ -1191,22 +1122,20 @@ try {
       .toEqual({ dueDate, plannedTime, xp: synced.overallXp });
   }
   await waitForSavedPlan(null, null);
-  await page
-    .getByRole("button", { name: "Plan for today", exact: true })
+  await activeRole(page, "button", { name: "Plan for today", exact: true })
     .click();
-  await page
-    .getByRole("textbox", { name: "Quest planned time HH:mm", exact: true })
+  await activeRole(page, "textbox", { name: "Quest planned time HH:mm", exact: true })
     .fill("08:15");
-  await page.getByRole("button", { name: "Save plan", exact: true }).click();
+  await activeRole(page, "button", { name: "Save plan", exact: true }).click();
   await waitForSavedPlan(plannedState.today, "08:15");
   await expect(
-    page.getByRole("button", { name: "Save plan", exact: true }),
+    activeRole(page, "button", { name: "Save plan", exact: true }),
   ).toBeDisabled();
   await page.screenshot({
     path: path.join(artifacts, "quest-plan-editor.png"),
   });
-  await page.getByRole("link", { name: "Back to Home", exact: true }).click();
-  await page.getByRole("tab", { name: "Home", exact: true }).click();
+  await activeRole(page, "link", { name: "Back to Home", exact: true }).click();
+  await activeRole(page, "tab", { name: "Home", exact: true }).click();
   console.log(
     "Calendar day/week navigation, invalid-date recovery and selected-date custom creation/acceptance passed against real SQL; planning awarded no XP.",
   );
