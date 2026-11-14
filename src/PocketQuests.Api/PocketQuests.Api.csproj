@@ -25,8 +25,8 @@
     <ProjectReference Include="$(IdentityProjectsRoot)/HoneyDrunk.Identity.Client/HoneyDrunk.Identity.Client.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="HoneyDrunk.Data.Outbox.Dispatcher" Version="0.7.2" />
-    <PackageReference Include="HoneyDrunk.Transport.AzureServiceBus" Version="0.7.3" />
+    <PackageReference Include="HoneyDrunk.Data.Outbox.Dispatcher" Version="0.8.0" />
+    <PackageReference Include="HoneyDrunk.Transport.AzureServiceBus" Version="0.8.0" />
   </ItemGroup>
   <ItemGroup>
     <_AdminFrontendInput Include="../../apps/admin/src/**/*;../../apps/admin/*.json;../../apps/admin/*.ts;../../apps/admin/index.html" />
