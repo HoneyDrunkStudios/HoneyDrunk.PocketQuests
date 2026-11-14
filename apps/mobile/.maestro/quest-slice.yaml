@@ -8,16 +8,25 @@ env:
     clearState: false
     permissions:
       all: deny
-- assertVisible: Your character
+- extendedWaitUntil:
+    visible: "See your progress · 90 overall XP"
+    timeout: 30000
 - tapOn: Quests
 - tapOn: Available
+- scrollUntilVisible:
+    element:
+      text: "Quest details: ${QUEST_TITLE}"
+    direction: DOWN
+- tapOn: "Quest details: ${QUEST_TITLE}"
 - scrollUntilVisible:
     element:
       text: "Start: ${QUEST_TITLE}"
     direction: DOWN
 - tapOn: "Start: ${QUEST_TITLE}"
-- tapOn: Active
-- tapOn: Open quest
+- extendedWaitUntil:
+    visible: Open active quest
+    timeout: 30000
+- tapOn: Open active quest
 - doubleTapOn: "Complete: ${QUEST_TITLE}"
 - extendedWaitUntil:
     visible: Quest complete!
@@ -42,5 +51,6 @@ env:
     clearState: false
     permissions:
       all: deny
-- assertVisible: Your character
-- assertVisible: 90 overall XP earned
+- extendedWaitUntil:
+    visible: "See your progress · 90 overall XP"
+    timeout: 30000
