@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test";
 import path from "node:path";
+import { activeRole } from "./active-route.mjs";
 
 // Public map transport is deterministic here; account reads/writes use the real
 // authenticated API and disposable SQL. Live provider probing is a separate lane.
@@ -11,7 +12,7 @@ export async function verifyNextFeatures({
   visibleText,
 }) {
   const visible = (role, name) =>
-    page.getByRole(role, { name, exact: true }).filter({ visible: true });
+    activeRole(page, role, { name, exact: true }).filter({ visible: true });
   async function narrowCapture(name, testId) {
     await page.setViewportSize({ width: 320, height: 844 });
     const content = page.getByTestId(testId).filter({ visible: true });
@@ -90,8 +91,7 @@ export async function verifyNextFeatures({
   await page.screenshot({ path: path.join(artifacts, "reward-journal.png") });
   await narrowCapture("reward-journal", "reward-journal");
   await visible("link", "Open your wardrobe").click();
-  await page
-    .getByRole("button", { name: /^Change clothing, equipped:/ })
+  await activeRole(page, "button", { name: /^Change clothing, equipped:/ })
     .filter({ visible: true })
     .click();
   const vest = visible("button", "Maker’s vest");
