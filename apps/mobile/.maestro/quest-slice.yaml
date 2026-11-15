@@ -8,9 +8,12 @@ env:
     clearState: false
     permissions:
       all: deny
-- extendedWaitUntil:
-    visible: "See your progress · 90 overall XP"
+- scrollUntilVisible:
+    element:
+      text: "See your progress · 90 overall XP"
+    direction: DOWN
     timeout: 30000
+- assertVisible: "See your progress · 90 overall XP"
 - tapOn: Quests
 - tapOn: Available
 - scrollUntilVisible:
@@ -51,6 +54,9 @@ env:
     clearState: false
     permissions:
       all: deny
-- extendedWaitUntil:
-    visible: "See your progress · 90 overall XP"
+- scrollUntilVisible:
+    element:
+      text: "See your progress · 90 overall XP"
+    direction: DOWN
     timeout: 30000
+- assertVisible: "See your progress · 90 overall XP"
