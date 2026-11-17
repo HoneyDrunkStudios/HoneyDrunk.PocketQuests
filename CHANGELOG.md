@@ -1,5 +1,10 @@
 # Changelog
 
+## Quest search punctuation — November 17, 2026
+
+- Find available and accepted quests using either straight or smart apostrophes and ordinary or nonbreaking hyphens, alongside existing case/accent matching.
+- Preserve original quest text, recommendation order and category/effort filters; this changes only the local search index and query normalization.
+
 ## Quest revision history — November 4, 2026
 
 - Inspect saved quest revisions, including the current draft and published version, in bounded newest-first pages.
