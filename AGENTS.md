@@ -10,6 +10,8 @@ Follow the user's current scope and publication instructions. Task-specific revi
 
 ## Verification entrypoints
 
+Use the [feature map](docs/feature-map.md) to select a browser or native journey. When navigation, user-visible behavior, selectors, or fixture setup change, update the affected map entry and journey in the same change. During review, compare the map and runner with the actual changed path.
+
 Use [the testing contract](docs/testing-contract.md) for the backend solution, pinned Identity-source prerequisites and disposable SQL fixtures. For fast compiled backend boundaries without SQL, run `pwsh -NoProfile -File scripts/Test-BackendArchitecture.ps1` (or `-NoBuild` after a current Release build). For mobile work, run commands from `apps/mobile`: `npm ci`, `npm run lint`, `npm run check:architecture`, `npm run typecheck`, `npm run check:ui`, `npm run check:api`, `npm run check:security-patch`, `npm run test:ci`, plus the appropriate Expo export/build. Native/device/provider acceptance remains separate.
 
 ## Shared conventions and delivery
@@ -19,6 +21,8 @@ Read the [shared engineering conventions](https://github.com/HoneyDrunkStudios/H
 Work within the selected request. Preserve unrelated changes and use a separate worktree when needed. Review the final diff, use Conventional Commits and ready-for-review PRs with exactly one accurate `Authorship:` line and a `Request:` line; include the authorship in commit trailers. Run meaningful checks for the affected behavior and report the reviewed/tested revision, failures and unrun checks. For documentation-only changes, check links, paths and instruction consistency. Preserve required checks and inspect actual latest-head Sonar new-code findings where analysis applies; do not suppress findings or weaken gates to obtain a pass. Legacy Grid Review is retired; do not restore its workers, queues or bypass labels. A configured replacement reviewer is not evidence of a completed review or enforcing merge check.
 
 ## Code Review Rules
+
+When an entry point, fixture, or expected outcome changes, check that its feature map and executable verification steps still match the code. Report a concrete mismatch with the affected route or scenario.
 
 Apply the [shared review criteria](https://github.com/HoneyDrunkStudios/HoneyDrunk.Standards/blob/main/HoneyDrunk.Standards/docs/CONVENTIONS.md#code-review) to changed behavior, using the repository boundaries above. Report actionable findings with the failing path, concrete impact and a small corrective action; disclose unavailable evidence. These rules grant no cross-repository access or merge authority.
 
